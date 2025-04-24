@@ -5,10 +5,10 @@ import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'a
 import TextArea from 'antd/es/input/TextArea';
 import { useState } from 'react';
 import { fetchAddEmployee, fetchEmployees } from '../../../features/employees/EmployeeSlice';
-import { RootState, useAppDispatch } from '../../../stores/store';
+import { useAppDispatch } from '../../../stores/store';
 import { UploadImage } from '../../../utils/uploadImage';
 import { toast } from 'react-toastify';
-import { useSelector } from 'react-redux';
+import { useQueryParams } from '../../../hooks/QueryParamsContext';
 
 
 interface IEmployee {
@@ -24,15 +24,17 @@ interface IEmployee {
 interface UploadState {
     file: File | null;
     image: string;
-  }
+}
 
 
 export default function ContentModalEmployee() {
     const [loading, setLoading] = useState(false);
     const dispatch = useAppDispatch();
-    const [filesUpload, setFilesUpload] = useState<UploadState | null>(null);;
+    const [filesUpload, setFilesUpload] = useState<UploadState | null>(null);
+    const { queryParams } = useQueryParams();
 
-    const {error} = useSelector((state : RootState) => state.employee);
+
+
     const [form] = Form.useForm();
 
     const handlePreviewUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,18 +42,18 @@ export default function ContentModalEmployee() {
         const files = e.target?.files;
 
         console.log(files);
-        
-        
-        if(files !== null && files.length > 0){
+
+
+        if (files !== null && files.length > 0) {
             const newFiles = URL.createObjectURL(files[0]);
-            setFilesUpload({file: files[0], image: newFiles});
-            
+            setFilesUpload({ file: files[0], image: newFiles });
+
         }
-        
+
     }
 
-    const deleteFileUpload = () => { 
-        setFilesUpload({file: null, image: ""});
+    const deleteFileUpload = () => {
+        setFilesUpload({ file: null, image: "" });
     }
 
     const layout = {
@@ -65,21 +67,22 @@ export default function ContentModalEmployee() {
 
     const handleAdd = async (data: IEmployee) => {
         setLoading(true);
-        const avatarUrl : string = await UploadImage((filesUpload?.file) as File); // nếu chắc chắn có file, dùng !
-        const employee = {
-            ...data,
-            gender: data.gender ? "Nam" : "Nữ",
-            avatar: avatarUrl
-        }
         try {
+            const avatarUrl: string = await UploadImage((filesUpload?.file) as File);
+
+            const employee = {
+                ...data,
+                gender: data.gender ? "Nam" : "Nữ",
+                avatar: avatarUrl
+            };
+
             await dispatch(fetchAddEmployee(employee)).unwrap();
-            toast.success("Thêm nhân viên thành công !!");
-            form.resetFields(); // reset form
-            dispatch(fetchEmployees());
+
+            toast.success("Thêm nhân viên thành công!!");
+            form.resetFields();
+        } finally {
             setLoading(false);
-        } catch (err) {
-            toast.error("Thêm nhân viên thất bại do lỗi: " + error +  " " + err)
-            setLoading(false);
+            dispatch(fetchEmployees("?" + queryParams.toString())); // luôn reload danh sách dù thành công hay lỗi
         }
     }
 
@@ -88,9 +91,9 @@ export default function ContentModalEmployee() {
         <>
             <Spin size='large' spinning={loading}>
                 <h2 className='text-lg font-bold my-4'>Thêm mới nhân viên:</h2>
-                <Form 
-                    onFinish={handleAdd} 
-                    className='border-b-2 border-solid border-slate-200' 
+                <Form
+                    onFinish={handleAdd}
+                    className='border-b-2 border-solid border-slate-200'
                     {...layout}
                     initialValues={{
                         name: "",
@@ -100,6 +103,7 @@ export default function ContentModalEmployee() {
                         role: "Employee",
                         gender: true, // Switch true = MALE, false = FEMALE
                     }}
+                    form={form}
                 >
                     <Form.Item label="Tên nhân viên" name="name" className='font-sans text-lg'>
                         <Input placeholder='Nhập tên nhân viên ...' />
@@ -110,7 +114,7 @@ export default function ContentModalEmployee() {
                     <Form.Item label="Upload ảnh" className='font-sans text-lg'>
                         <Input onChange={handlePreviewUpload} placeholder='Chọn ảnh cần upload ...' type='file' accept='image/*' />
                         <div className='preview_upload grid grid-cols-12 grid-flow-row gap-2'>
-                            {filesUpload?.image && filesUpload?.image !== "" && 
+                            {filesUpload?.image && filesUpload?.image !== "" &&
                                 <div className='col-span-3 relative mt-2 p-2 border border-slate-300'>
                                     <Image className='aspect-video upload_image' src={filesUpload?.image} alt='' />
                                     <div onClick={deleteFileUpload} className='cursor-pointer absolute -top-2 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-white bg-red-500'>X</div>

@@ -12,6 +12,12 @@ yarn-error.log*
 # Next.js
 .next/
 
+# Next.js
+client/.next/
+
+# Bỏ qua lock file nếu không muốn commit
+package-lock.json
+
 # VSCode
 .vscode/
 *.code-workspace

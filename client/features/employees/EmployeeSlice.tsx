@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-const API_ROUTE = "http://localhost:8080/api/v1/admin/employee";
+import axios from '../../config/configError';
+const API_ROUTE = "employee";
 
 interface Employee {
     avatar: string;
@@ -30,8 +30,8 @@ const initialState: EmployeeState = {
 // thunk để gọi API
 export const fetchEmployees = createAsyncThunk(
   'employees/fetchEmployees',
-  async () => {
-    const response = await axios.get(API_ROUTE)
+  async (queryParams: string) => {
+    const response = await axios.get(API_ROUTE + queryParams)
     const data = await response.data;
     return data;
   }

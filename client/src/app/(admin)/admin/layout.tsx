@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation';
 import { Provider } from 'react-redux';
 import { store } from '../../../../stores/store';
 import {ToastContainer} from 'react-toastify';
+import { QueryParamsProvider } from '../../../../hooks/QueryParamsContext';
 
 
 const geistSans = Geist({
@@ -43,22 +44,24 @@ export default function AdminLayout({
 
 
         <ToastContainer position='top-right'></ToastContainer>
-        
-        <Provider store={store}>
-          <Header></Header>
-          <div className="pt-20 grid grid-cols-12 grid-flow-row">
-            <div className="col-span-2">
-              <Sidebar></Sidebar>
-            </div>
-            <div className="col-span-10 pl-3">
-              <div className="overflow-y-scroll max-h-[550px]">
-                <AntdRegistry>{children}</AntdRegistry>
-              </div>
-              <Footer></Footer>
-            </div>
-          </div>
 
+        <Provider store={store}>
+          <QueryParamsProvider>
+            <Header></Header>
+            <div className="pt-20 grid grid-cols-12 grid-flow-row">
+              <div className="col-span-2">
+                <Sidebar></Sidebar>
+              </div>
+              <div className="col-span-10 pl-3">
+                <div className="overflow-y-scroll max-h-[550px]">
+                  <AntdRegistry>{children}</AntdRegistry>
+                </div>
+                <Footer></Footer>
+              </div>
+            </div>
+          </QueryParamsProvider>
         </Provider>
+        
 
 
       </body>

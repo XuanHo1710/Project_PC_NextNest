@@ -1,15 +1,18 @@
 'use client'
-import { Avatar, Modal, Popconfirm, Spin, TableProps } from "antd";
+import { Avatar, Modal, Popconfirm, Spin, TableProps, Tag } from "antd";
 import Filterbar from "../../../../../components/Filterbar/Filterbar";
 import TableContent from "../../../../../components/TableContent/TableContent";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
 import ContentModalEmployee from "../../../../../components/ContentModal/employee/ContentModalEmployee";
 import { RootState, useAppDispatch } from "../../../../../stores/store";
 import { useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { fetchDeleteEmployee, fetchEmployees } from "../../../../../features/employees/EmployeeSlice";
 import { toast } from "react-toastify";
 import UpdateModalEmployee from "../../../../../components/ContentModal/employee/UpdateModalEmployee";
+import EditSortEmployee from "../../../../../components/EditSort/EditSortEmployee";
+import { useQueryParams } from "../../../../../hooks/QueryParamsContext";
+import FilterEmployee from "../../../../../components/Filterbar/FilterEmployee";
 
 export interface DataType {
     key: string;
@@ -22,28 +25,35 @@ export interface DataType {
     role: string;
     _id?: string
 }
-  
+
+type SelectedContextType = {
+    selectedRows: Array<string>;
+    setSelectedRows: React.Dispatch<React.SetStateAction<Array<string>>>;
+};
+
+const SelectedContext = createContext<SelectedContextType | undefined>(undefined);
+
 
 export default function Employee() {
     const dispatch = useAppDispatch();
     const [loading, setLoading] = useState(true);
     const [isOpen, setOpen] = useState(false);
     const [dataClick, setDataClick] = useState<null | DataType>(null);
-
-    const {employees, status, error} = useSelector((state : RootState) => state.employee);
-    
+    const { employees, status, error } = useSelector((state: RootState) => state.employee);
+    const { queryParams } = useQueryParams();
+    const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
 
 
     useEffect(() => {
-        dispatch(fetchEmployees())
+        dispatch(fetchEmployees("?" + queryParams.toString() as string))
         setLoading(false);
-    }, [dispatch])
+    }, [dispatch, queryParams])
 
     const handleDelete = async (id: string) => {
         try {
             await dispatch(fetchDeleteEmployee(id)).unwrap();
             toast.success("Xóa nhân viên này thành công !!");
-            dispatch(fetchEmployees())
+            dispatch(fetchEmployees("?" + queryParams.toString() as string))
         } catch (err) {
             toast.error("Xóa nhân viên này thất bại do lỗi: " + error + " " + err);
         }
@@ -54,7 +64,7 @@ export default function Employee() {
             title: 'Họ tên',
             dataIndex: 'name',
             key: 'name',
-            render: (_, {name, avatar}) => {
+            render: (_, { name, avatar }) => {
                 return (
                     <div className="flex items-center gap-4">
                         <Avatar src={avatar} alt={name} />
@@ -67,11 +77,21 @@ export default function Employee() {
             title: 'Tuổi',
             dataIndex: 'age',
             key: 'age',
+            render: (_, { age }) => {
+                return (
+                    <Tag color="cyan">{age}</Tag>
+                )
+            }
         },
         {
             title: 'Giới tính',
             dataIndex: 'gender',
             key: 'gender',
+            render: (_, { gender }) => {
+                return (
+                    <Tag color={gender === "Nam" ? "blue" : "pink"}>{gender}</Tag>
+                )
+            }
         },
         {
             title: 'Email',
@@ -94,7 +114,7 @@ export default function Employee() {
             render: (_, record) => (
                 <>
                     <div key={record._id} className='flex items-center gap-5'>
-                        <FaPen onClick={() => {setOpen(true); setDataClick(record);}} className='hover:text-blue-500 cursor-pointer'/>
+                        <FaPen onClick={() => { setOpen(true); setDataClick(record); }} className='hover:text-blue-500 cursor-pointer' />
                         <Popconfirm
                             title="Xóa dòng của bạn"
                             description="Bạn có chắc chắn muốn xóa dòng này ?"
@@ -103,7 +123,7 @@ export default function Employee() {
                             okText="Xóa"
                             cancelText="Không"
                         >
-                         <FaTrashAlt className='hover:text-red-500 cursor-pointer'/>
+                            <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
                         </Popconfirm>
                     </div>
                 </>
@@ -111,11 +131,9 @@ export default function Employee() {
         },
     ];
 
-    console.log(dataClick);
-    
 
-   let dataTable: DataType[] = [];
-   if(status === "success" && employees.length > 0){
+    let dataTable: DataType[] = [];
+    if (status === "success" && employees.length > 0) {
         dataTable = employees.map((item, index) => (
             {
                 key: index.toString(),
@@ -129,21 +147,32 @@ export default function Employee() {
                 gender: item.gender
             }
         ))
-   }
+    }
 
 
-  return ( 
-    <>
-        <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen}>
-            <UpdateModalEmployee setOpen={setOpen} dataEmployee={dataClick} />
-        </Modal>
-        <div className="py-2">
-            <h2 className="text-center text-2xl font-bold">Trang nhân viên</h2>
-            <Filterbar ContentModal={<ContentModalEmployee />}></Filterbar>
-            <Spin size="large" spinning={loading}>
-                <TableContent columns={columns} data={dataTable}></TableContent>
-            </Spin>
-        </div>
-    </>
-  );
+    return (
+        <>
+            <SelectedContext.Provider value={{ selectedRows, setSelectedRows }} >
+                <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen}>
+                    <UpdateModalEmployee setOpen={setOpen} dataEmployee={dataClick} />
+                </Modal>
+                <div className="py-2">
+                    <h2 className="text-center text-2xl font-bold">Trang nhân viên</h2>
+                    <Filterbar Filter={<FilterEmployee />} EditSort={<EditSortEmployee />} ContentModal={<ContentModalEmployee />}></Filterbar>
+                    <Spin size="large" spinning={loading}>
+                        <TableContent columns={columns} data={dataTable}></TableContent>
+                    </Spin>
+                </div>
+            </SelectedContext.Provider>
+        </>
+    );
 }
+
+// Custom hook để dùng trong các component khác
+export const useSelectedRowsEmployee = () => {
+    const context = useContext(SelectedContext);
+    if (!context) {
+        throw new Error("useQueryParams phải được dùng trong QueryParamsProvider");
+    }
+    return context;
+};
