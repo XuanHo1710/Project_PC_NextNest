@@ -63,16 +63,18 @@ export class EmployeeService {
 
     switch (type) {
       case "delete": {
-        console.log("DELETE");
-        console.log(dataUpdate.ids);
+        return await this.employeeModel.deleteMany({ _id: { $in: dataUpdate.ids } });
       }
       case "update": {
-        console.log("UPDATE");
         const keyUpdate = dataUpdate.typeUpdate.split(":")[1].split("_")[0];
         const valueUpdate = dataUpdate.typeUpdate.split(":")[1].split("_")[1];
-        console.log(keyUpdate);
-        console.log(valueUpdate);
-        console.log(dataUpdate.ids);
+
+        const update = {
+        };
+
+        update[keyUpdate] = valueUpdate;
+
+        return await this.employeeModel.updateMany({ _id: { $in: dataUpdate.ids } }, update);
       }
     }
 

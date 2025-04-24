@@ -3,14 +3,14 @@ import axios from '../../config/configError';
 const API_ROUTE = "employee";
 
 interface Employee {
-    avatar: string;
-    name: string;
-    email: string;
-    age: number;
-    address: string;
-    gender: string;
-    role: string;
-    _id?: string;
+  avatar: string;
+  name: string;
+  email: string;
+  age: number;
+  address: string;
+  gender: string;
+  role: string;
+  _id?: string;
 }
 
 interface EmployeeState {
@@ -27,6 +27,12 @@ const initialState: EmployeeState = {
   status: ""
 };
 
+
+interface TypeUpdateMany {
+  ids: Array<string>,
+  typeUpdate: string
+}
+
 // thunk để gọi API
 export const fetchEmployees = createAsyncThunk(
   'employees/fetchEmployees',
@@ -38,18 +44,18 @@ export const fetchEmployees = createAsyncThunk(
 );
 
 export const fetchAddEmployee = createAsyncThunk(
-    'employees/fetchAddEmployee',
-    async (employee : Employee) => {
-      const response = await axios.post(API_ROUTE, employee)
-      const data = await response.data;
-      
-      return data;
-    }
+  'employees/fetchAddEmployee',
+  async (employee: Employee) => {
+    const response = await axios.post(API_ROUTE, employee)
+    const data = await response.data;
+
+    return data;
+  }
 );
 
 export const fetchDeleteEmployee = createAsyncThunk(
   'employees/fetchDeleteEmployee',
-  async (_id:string) => {
+  async (_id: string) => {
     const response = await axios.delete(API_ROUTE + "/" + _id)
     const data = await response.data;
     return data;
@@ -58,8 +64,18 @@ export const fetchDeleteEmployee = createAsyncThunk(
 
 export const fetchUpdateEmployee = createAsyncThunk(
   'employees/fetchUpdateEmployee',
-  async (employee : Employee) => {
+  async (employee: Employee) => {
     const response = await axios.patch(API_ROUTE + "/" + employee._id, employee)
+    const data = await response.data;
+    return data;
+  }
+);
+
+
+export const fetchUpdateManyEmployee = createAsyncThunk(
+  'employees/fetchUpdateManyEmployee',
+  async (dataUpdate: TypeUpdateMany) => {
+    const response = await axios.post(API_ROUTE + "/updateMany", dataUpdate)
     const data = await response.data;
     return data;
   }
@@ -72,7 +88,7 @@ const employeeSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
-    // Get all list employees
+      // Get all list employees
       .addCase(fetchEmployees.pending, state => {
         state.loading = true;
         state.error = null;
@@ -103,7 +119,7 @@ const employeeSlice = createSlice({
       .addCase(fetchAddEmployee.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message as string;
-        state.status = "pending";
+        state.status = "error";
       })
 
       // Delete employee
@@ -119,11 +135,11 @@ const employeeSlice = createSlice({
       .addCase(fetchDeleteEmployee.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message as string;
-        state.status = "pending";
+        state.status = "error";
       })
 
-       // Update employee
-       .addCase(fetchUpdateEmployee.pending, state => {
+      // Update employee
+      .addCase(fetchUpdateEmployee.pending, state => {
         state.loading = true;
         state.error = null;
         state.status = "pending";
@@ -135,7 +151,24 @@ const employeeSlice = createSlice({
       .addCase(fetchUpdateEmployee.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message as string;
+        state.status = "error";
+      })
+
+
+      // Update many employee
+      .addCase(fetchUpdateManyEmployee.pending, state => {
+        state.loading = true;
+        state.error = null;
         state.status = "pending";
+      })
+      .addCase(fetchUpdateManyEmployee.fulfilled, (state) => {
+        state.loading = false;
+        state.status = "success";
+      })
+      .addCase(fetchUpdateManyEmployee.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message as string;
+        state.status = "error";
       });
   }
 });

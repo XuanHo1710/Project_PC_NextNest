@@ -131,7 +131,6 @@ export default function Employee() {
         },
     ];
 
-
     let dataTable: DataType[] = [];
     if (status === "success" && employees.length > 0) {
         dataTable = employees.map((item, index) => (

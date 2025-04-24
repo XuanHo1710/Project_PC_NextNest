@@ -24,40 +24,40 @@ const instance = axios.create({
 // );
 
 instance.interceptors.response.use(
-    response => response,
-    error => {
-      if (error.response) {
-        const { status, data } = error.response;
-  
-        switch (status) {
-          case 400:
-            if(data.message.length > 0){
-                toast.error(data.message[0] || 'Yêu cầu không hợp lệ (400)');
-            } else toast.error(data.message || 'Yêu cầu không hợp lệ (400)');
-            break;
-          case 401:
-            toast.warning('Chưa đăng nhập hoặc phiên đã hết hạn (401)');
-            break;
-          case 403:
-            toast.error('Không có quyền truy cập (403)');
-            break;
-          case 404:
-            toast.info('Không tìm thấy tài nguyên (404)');
-            break;
-          case 500:
-            toast.error('Lỗi máy chủ (500). Vui lòng thử lại sau.');
-            break;
-          default:
-            toast.error(data.message || 'Đã xảy ra lỗi không xác định');
-        }
-      } else if (error.request) {
-        toast.error('Không thể kết nối đến máy chủ.');
-      } else {
-        toast.error('Lỗi khi gửi yêu cầu: ' + error.message);
+  response => response,
+  error => {
+    if (error.response) {
+      const { status, data } = error.response;
+
+      switch (status) {
+        case 400:
+          if (data.message.length > 0) {
+            toast.error(data.message[0] || 'Yêu cầu không hợp lệ (400)');
+          } else toast.error(data.message || 'Yêu cầu không hợp lệ (400)');
+          break;
+        case 401:
+          toast.warning('Chưa đăng nhập hoặc phiên đã hết hạn (401)');
+          break;
+        case 403:
+          toast.error('Không có quyền truy cập (403)');
+          break;
+        case 404:
+          toast.info('Không tìm thấy tài nguyên (404)');
+          break;
+        case 500:
+          toast.error('Lỗi máy chủ (500). Vui lòng thử lại sau.');
+          break;
+        default:
+          toast.error(data.message || 'Đã xảy ra lỗi không xác định');
       }
-  
-      return Promise.reject(error);
+    } else if (error.request) {
+      toast.error('Không thể kết nối đến máy chủ.');
+    } else {
+      toast.error('Lỗi khi gửi yêu cầu: ' + error.message);
     }
+
+    return Promise.reject(error);
+  }
 );
 
 // instance.interceptors.response.use(

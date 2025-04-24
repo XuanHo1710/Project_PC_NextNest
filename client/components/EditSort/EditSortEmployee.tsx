@@ -3,11 +3,15 @@
 import { Button, Form, Select } from "antd";
 import { useQueryParams } from "../../hooks/QueryParamsContext";
 import { useSelectedRowsEmployee } from "@/app/(admin)/admin/employee/page";
+import { useAppDispatch } from "../../stores/store";
+import { toast } from "react-toastify";
+import { fetchEmployees, fetchUpdateManyEmployee } from "../../features/employees/EmployeeSlice";
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EditSortEmployee = () => {
     const { queryParams, setQueryParams } = useQueryParams();
+    const dispatch = useAppDispatch();
     const { selectedRows } = useSelectedRowsEmployee();
     const handleSortChange = (value: string) => {
         if (value !== "all") {
@@ -26,7 +30,7 @@ const EditSortEmployee = () => {
         }
     }
 
-    const handleEditMulti = (values: { typeChange: string }) => {
+    const handleEditMulti = async (values: { typeChange: string }) => {
         const type = values.typeChange;
 
         if (type === undefined) {
@@ -34,8 +38,13 @@ const EditSortEmployee = () => {
         }
 
         if (selectedRows.length > 0) {
-            console.log(type.split(":")[0]);
-            console.log(selectedRows);
+            try {
+                await dispatch(fetchUpdateManyEmployee({ ids: selectedRows, typeUpdate: type })).unwrap();
+                toast.success("Cập nhật nhân viên này thành công !!");
+                dispatch(fetchEmployees("?" + queryParams.toString() as string))
+            } catch (err) {
+                console.log(err);
+            }
         }
     }
     return (

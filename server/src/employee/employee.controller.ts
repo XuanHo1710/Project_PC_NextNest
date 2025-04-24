@@ -30,7 +30,7 @@ export class EmployeeController {
   }
 
 
-  @Patch('/updateMany')
+  @Post('/updateMany')
   updateMany(@Body() dataUpdate: TypeUpdateManyEmployee) {
     return this.employeeService.updateMany(dataUpdate);
   }
