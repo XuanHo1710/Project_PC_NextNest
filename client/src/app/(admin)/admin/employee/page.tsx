@@ -4,15 +4,14 @@ import Filterbar from "../../../../../components/Filterbar/Filterbar";
 import TableContent from "../../../../../components/TableContent/TableContent";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
 import ContentModalEmployee from "../../../../../components/ContentModal/employee/ContentModalEmployee";
-import { RootState, useAppDispatch } from "../../../../../stores/store";
-import { useSelector } from "react-redux";
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchDeleteEmployee, fetchEmployees } from "../../../../../features/employees/EmployeeSlice";
 import { toast } from "react-toastify";
-import UpdateModalEmployee from "../../../../../components/ContentModal/employee/UpdateModalEmployee";
-import EditSortEmployee from "../../../../../components/EditSort/EditSortEmployee";
+
 import { useQueryParams } from "../../../../../hooks/QueryParamsContext";
 import FilterEmployee from "../../../../../components/Filterbar/FilterEmployee";
+import UpdateModalEmployee from "../../../../../components/ContentModal/employee/UpdateModalEmployee";
+import EditSortEmployee from "../../../../../components/EditSort/EditSortEmployee";
+import { useEmployeeStore } from "../../../../../stores/employeeStore";
 
 export interface DataType {
     key: string;
@@ -35,27 +34,28 @@ const SelectedContext = createContext<SelectedContextType | undefined>(undefined
 
 
 export default function Employee() {
-    const dispatch = useAppDispatch();
-    const [loading, setLoading] = useState(true);
+
     const [isOpen, setOpen] = useState(false);
     const [dataClick, setDataClick] = useState<null | DataType>(null);
-    const { employees, status, error } = useSelector((state: RootState) => state.employee);
+    // const { employees, status, error } = useSelector((state: RootState) => state.employee);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
 
+    const { employees, deleteEmployee, fetchEmployees, loading, message } = useEmployeeStore()
+
 
     useEffect(() => {
-        dispatch(fetchEmployees("?" + queryParams.toString() as string))
-        setLoading(false);
-    }, [dispatch, queryParams])
+        fetchEmployees("?" + queryParams.toString() as string)
+    }, [fetchEmployees, queryParams, message]);
+
 
     const handleDelete = async (id: string) => {
         try {
-            await dispatch(fetchDeleteEmployee(id)).unwrap();
-            toast.success("Xóa nhân viên này thành công !!");
-            dispatch(fetchEmployees("?" + queryParams.toString() as string))
+            const status = await deleteEmployee(id);
+            if (status !== 500)
+                toast.success("Xóa nhân viên này thành công !!");
         } catch (err) {
-            toast.error("Xóa nhân viên này thất bại do lỗi: " + error + " " + err);
+            toast.error("Xóa nhân viên này thất bại do lỗi: " + err);
         }
     }
 
@@ -132,7 +132,7 @@ export default function Employee() {
     ];
 
     let dataTable: DataType[] = [];
-    if (status === "success" && employees.length > 0) {
+    if (!loading && employees.length > 0) {
         dataTable = employees.map((item, index) => (
             {
                 key: index.toString(),

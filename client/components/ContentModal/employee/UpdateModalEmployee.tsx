@@ -4,12 +4,10 @@ import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useEffect, useState } from 'react';
-import { fetchEmployees, fetchUpdateEmployee } from '../../../features/employees/EmployeeSlice';
-import { RootState, useAppDispatch } from '../../../stores/store';
 import { UploadImage } from '../../../utils/uploadImage';
 import { toast } from 'react-toastify';
-import { useSelector } from 'react-redux';
 import { DataType } from '@/app/(admin)/admin/employee/page';
+import { useEmployeeStore } from '../../../stores/employeeStore';
 
 
 export interface IEmployee {
@@ -25,16 +23,14 @@ export interface IEmployee {
 interface UploadState {
     file: File | null;
     image: string;
-  }
+}
 
 
-export default function UpdateModalEmployee({dataEmployee, setOpen} : {dataEmployee: DataType | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
-    const [loading, setLoading] = useState<boolean>(false);
-    const dispatch = useAppDispatch();
+export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmployee: DataType | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [filesUpload, setFilesUpload] = useState<UploadState | null>(null);;
-
-    const {error} = useSelector((state : RootState) => state.employee);
     const [form] = Form.useForm();
+    const { updateEmployee, loading } = useEmployeeStore();
+
 
     useEffect(() => {
         if (dataEmployee !== null) {
@@ -57,15 +53,15 @@ export default function UpdateModalEmployee({dataEmployee, setOpen} : {dataEmplo
 
     const handlePreviewUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target?.files;
-        if(files !== null && files.length > 0){
+        if (files !== null && files.length > 0) {
             const newFiles = URL.createObjectURL(files[0]);
-            setFilesUpload({file: files[0], image: newFiles});
+            setFilesUpload({ file: files[0], image: newFiles });
         }
-        
+
     }
 
-    const deleteFileUpload = () => { 
-        setFilesUpload({file: null, image: ""});
+    const deleteFileUpload = () => {
+        setFilesUpload({ file: null, image: "" });
     }
 
     const layout = {
@@ -78,8 +74,7 @@ export default function UpdateModalEmployee({dataEmployee, setOpen} : {dataEmplo
     };
 
     const handleUpdate = async (data: IEmployee) => {
-        setLoading(true);
-        let avatarUrl : string= dataEmployee?.avatar || ""; // giữ ảnh cũ mặc định
+        let avatarUrl: string = dataEmployee?.avatar || ""; // giữ ảnh cũ mặc định
 
         // Nếu có file mới => upload và thay avatarUrl
         if (filesUpload?.file) {
@@ -91,30 +86,29 @@ export default function UpdateModalEmployee({dataEmployee, setOpen} : {dataEmplo
             avatar: avatarUrl,
             _id: dataEmployee?._id
         }
-        
+
         try {
-            await dispatch(fetchUpdateEmployee(employee)).unwrap();
-            toast.success("Sửa nhân viên thành công !!");
-            form.resetFields(); // reset form
-            dispatch(fetchEmployees());
-            setOpen(false);
-            setLoading(false);
+            const status = await updateEmployee(employee);
+            if (status !== 500) {
+                toast.success("Sửa nhân viên thành công !!");
+                form.resetFields(); // reset form
+                setOpen(false);
+            }
         } catch (err) {
-            toast.error("Sửa nhân viên thất bại do lỗi: " + error +  " " + err)
-            setLoading(false);
+            toast.error("Sửa nhân viên thất bại do lỗi: " + err)
         }
     }
-    
+
 
 
     return (
         <>
             <Spin size='large' spinning={loading}>
                 <h2 className='text-lg font-bold my-4'>Cập nhật nhân viên:</h2>
-                {dataEmployee !== null && 
-                    <Form 
-                        onFinish={handleUpdate} 
-                        className='border-b-2 border-solid border-slate-200' 
+                {dataEmployee !== null &&
+                    <Form
+                        onFinish={handleUpdate}
+                        className='border-b-2 border-solid border-slate-200'
                         {...layout}
                         form={form}
                     >
@@ -127,7 +121,7 @@ export default function UpdateModalEmployee({dataEmployee, setOpen} : {dataEmplo
                         <Form.Item label="Upload ảnh" className='font-sans text-lg'>
                             <Input onChange={handlePreviewUpload} placeholder='Chọn ảnh cần upload ...' type='file' accept='image/*' />
                             <div className='preview_upload grid grid-cols-12 grid-flow-row gap-2'>
-                                {filesUpload?.image && filesUpload?.image !== "" && 
+                                {filesUpload?.image && filesUpload?.image !== "" &&
                                     <div className='col-span-3 relative mt-2 p-2 border border-slate-300'>
                                         <Image className='aspect-video upload_image' src={filesUpload.image} alt='' />
                                         <div onClick={deleteFileUpload} className='cursor-pointer absolute -top-2 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-white bg-red-500'>X</div>
@@ -156,7 +150,7 @@ export default function UpdateModalEmployee({dataEmployee, setOpen} : {dataEmplo
                         </div>
                     </Form>
                 }
-                
+
             </Spin>
         </>
     );

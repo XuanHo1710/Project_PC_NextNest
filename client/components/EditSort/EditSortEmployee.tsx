@@ -3,16 +3,16 @@
 import { Button, Form, Select } from "antd";
 import { useQueryParams } from "../../hooks/QueryParamsContext";
 import { useSelectedRowsEmployee } from "@/app/(admin)/admin/employee/page";
-import { useAppDispatch } from "../../stores/store";
 import { toast } from "react-toastify";
-import { fetchEmployees, fetchUpdateManyEmployee } from "../../features/employees/EmployeeSlice";
+import { useEmployeeStore } from "../../stores/employeeStore";
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EditSortEmployee = () => {
     const { queryParams, setQueryParams } = useQueryParams();
-    const dispatch = useAppDispatch();
     const { selectedRows } = useSelectedRowsEmployee();
+    const { updateManyEmployee, fetchEmployees } = useEmployeeStore();
+
     const handleSortChange = (value: string) => {
         if (value !== "all") {
             // Lấy các tham số hiện tại từ queryParams
@@ -39,9 +39,12 @@ const EditSortEmployee = () => {
 
         if (selectedRows.length > 0) {
             try {
-                await dispatch(fetchUpdateManyEmployee({ ids: selectedRows, typeUpdate: type })).unwrap();
-                toast.success("Cập nhật nhân viên này thành công !!");
-                dispatch(fetchEmployees("?" + queryParams.toString() as string))
+                const status = await updateManyEmployee(selectedRows, type);
+
+                if (status !== 500) {
+                    toast.success("Cập nhật thành công !!");
+                    fetchEmployees("?" + queryParams.toString() as string);
+                }
             } catch (err) {
                 console.log(err);
             }
@@ -70,7 +73,7 @@ const EditSortEmployee = () => {
                     <div className="flex items-center justify-center w-2/5">
                         <Form onFinish={handleEditMulti} className='flex items-center justify-center'>
                             <Form.Item name="typeChange" className='!m-0' label="Thay đổi: ">
-                                <Select style={{ width: 300 }} defaultValue={"Chọn tiêu chí thay đổi"}>
+                                <Select style={{ width: 300 }} placeholder={"Chọn tiêu chí thay đổi"}>
                                     <Select.Option value="update:gender_Nam">Giới tính nam</Select.Option>
                                     <Select.Option value="update:gender_Nữ">Giới tính nữ</Select.Option>
                                     <Select.Option value="delete">Xóa</Select.Option>

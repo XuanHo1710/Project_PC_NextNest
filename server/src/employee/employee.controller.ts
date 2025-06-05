@@ -19,21 +19,22 @@ export class EmployeeController {
     return this.employeeService.findAll(filter);
   }
 
+  @Patch('/updateMany')
+  updateMany(@Body() dataUpdate: TypeUpdateManyEmployee) {
+    return this.employeeService.updateMany(dataUpdate);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.employeeService.findOne(+id);
   }
+
 
   @Patch(':id')
   update(@Param('id') id: mongoose.Types.ObjectId, @Body() updateEmployeeDto: UpdateEmployeeDto) {
     return this.employeeService.update(id, updateEmployeeDto);
   }
 
-
-  @Post('/updateMany')
-  updateMany(@Body() dataUpdate: TypeUpdateManyEmployee) {
-    return this.employeeService.updateMany(dataUpdate);
-  }
 
   @Delete(':id')
   remove(@Param('id') id: mongoose.Types.ObjectId) {

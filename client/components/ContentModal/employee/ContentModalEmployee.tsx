@@ -4,11 +4,9 @@ import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useState } from 'react';
-import { fetchAddEmployee, fetchEmployees } from '../../../features/employees/EmployeeSlice';
-import { useAppDispatch } from '../../../stores/store';
 import { UploadImage } from '../../../utils/uploadImage';
 import { toast } from 'react-toastify';
-import { useQueryParams } from '../../../hooks/QueryParamsContext';
+import { useEmployeeStore } from '../../../stores/employeeStore';
 
 
 interface IEmployee {
@@ -28,22 +26,14 @@ interface UploadState {
 
 
 export default function ContentModalEmployee() {
-    const [loading, setLoading] = useState(false);
-    const dispatch = useAppDispatch();
     const [filesUpload, setFilesUpload] = useState<UploadState | null>(null);
-    const { queryParams } = useQueryParams();
-
-
+    const { addEmployee, loading } = useEmployeeStore();
 
     const [form] = Form.useForm();
 
     const handlePreviewUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 
         const files = e.target?.files;
-
-        console.log(files);
-
-
         if (files !== null && files.length > 0) {
             const newFiles = URL.createObjectURL(files[0]);
             setFilesUpload({ file: files[0], image: newFiles });
@@ -66,24 +56,25 @@ export default function ContentModalEmployee() {
     };
 
     const handleAdd = async (data: IEmployee) => {
-        setLoading(true);
+        const avatarUrl: string = await UploadImage((filesUpload?.file) as File);
+
+        const employee = {
+            ...data,
+            gender: data.gender ? "Nam" : "Nữ",
+            avatar: avatarUrl
+        };
+
         try {
-            const avatarUrl: string = await UploadImage((filesUpload?.file) as File);
+            const status = await addEmployee(employee);
+            if (status !== 500) {
+                toast.success("Thêm nhân viên thành công!!");
+                form.resetFields();
+            }
 
-            const employee = {
-                ...data,
-                gender: data.gender ? "Nam" : "Nữ",
-                avatar: avatarUrl
-            };
-
-            await dispatch(fetchAddEmployee(employee)).unwrap();
-
-            toast.success("Thêm nhân viên thành công!!");
-            form.resetFields();
-        } finally {
-            setLoading(false);
-            dispatch(fetchEmployees("?" + queryParams.toString())); // luôn reload danh sách dù thành công hay lỗi
+        } catch (error) {
+            toast.error(error as string);
         }
+
     }
 
 

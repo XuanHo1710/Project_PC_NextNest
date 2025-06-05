@@ -61,6 +61,7 @@ export class EmployeeService {
 
     const type = dataUpdate.typeUpdate.split(':')[0];
 
+
     switch (type) {
       case "delete": {
         return await this.employeeModel.deleteMany({ _id: { $in: dataUpdate.ids } });
@@ -73,7 +74,6 @@ export class EmployeeService {
         };
 
         update[keyUpdate] = valueUpdate;
-
         return await this.employeeModel.updateMany({ _id: { $in: dataUpdate.ids } }, update);
       }
     }
