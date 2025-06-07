@@ -1,8 +1,6 @@
 'use client'
-import { Switch } from '@/components/ui/switch';
 import '@ant-design/v5-patch-for-react-19';
-
-// import type { SwitchRef } from 'antd/es/switch';
+import { Switch } from 'antd';
 
 
 export default function ConfigModalEmployee({ ConfigFields }: { ConfigFields: { fields: Array<string>, setFields: React.Dispatch<React.SetStateAction<Array<string>>> } }) {
@@ -22,42 +20,42 @@ export default function ConfigModalEmployee({ ConfigFields }: { ConfigFields: { 
                     <h2 className='text-base font-semibold'>Name:</h2>
                     <Switch
                         defaultChecked={ConfigFields.fields.includes("name")}
-                        onCheckedChange={(isActive) => handleSwitch("name", isActive)}
+                        onClick={(isActive) => handleSwitch("name", isActive)}
                     />
                 </div>
                 <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
                     <h2 className='text-base font-semibold'>Age:</h2>
                     <Switch
                         defaultChecked={ConfigFields.fields.includes("age")}
-                        onCheckedChange={(isActive) => handleSwitch("age", isActive)}
+                        onClick={(isActive) => handleSwitch("age", isActive)}
                     />
                 </div>
                 <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
                     <h2 className='text-base font-semibold'>Gender:</h2>
                     <Switch
                         defaultChecked={ConfigFields.fields.includes("gender")}
-                        onCheckedChange={(isActive) => handleSwitch("gender", isActive)}
+                        onClick={(isActive) => handleSwitch("gender", isActive)}
                     />
                 </div>
                 <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
                     <h2 className='text-base font-semibold'>Address:</h2>
                     <Switch
                         defaultChecked={ConfigFields.fields.includes("address")}
-                        onCheckedChange={(isActive) => handleSwitch("address", isActive)}
+                        onClick={(isActive) => handleSwitch("address", isActive)}
                     />
                 </div>
                 <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
                     <h2 className='text-base font-semibold'>Email:</h2>
                     <Switch
                         defaultChecked={ConfigFields.fields.includes("email")}
-                        onCheckedChange={(isActive) => handleSwitch("email", isActive)}
+                        onClick={(isActive) => handleSwitch("email", isActive)}
                     />
                 </div>
                 <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
                     <h2 className='text-base font-semibold'>Role:</h2>
                     <Switch
                         defaultChecked={ConfigFields.fields.includes("role")}
-                        onCheckedChange={(isActive) => handleSwitch("role", isActive)}
+                        onClick={(isActive) => handleSwitch("role", isActive)}
                     />
                 </div>
             </div>

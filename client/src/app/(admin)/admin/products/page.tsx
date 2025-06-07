@@ -1,9 +1,7 @@
 'use client'
+import TableContent from "@/components/TableContent/TableContent";
 import { Popconfirm, TableProps, Tag } from "antd";
-import Filterbar from "../../../../../components/ActionFilter/employee/ActionEmployee";
-import TableContent from "../../../../../components/TableContent/TableContent";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import ContentModalProduct from "../../../../../components/ContentModal/product/ContentModalProduct";
 
 
 interface DataType {
@@ -117,7 +115,7 @@ export default function Product() {
         <>
             <div className="py-2">
                 <h2 className="text-center text-2xl font-bold">Trang sản phẩm</h2>
-                <Filterbar ContentModal={<ContentModalProduct />}></Filterbar>
+                {/* <ActionEmployee ContentModal={<ContentModalProduct />}></ActionEmployee> */}
                 <TableContent data={data} columns={columns} ></TableContent>
             </div>
         </>
