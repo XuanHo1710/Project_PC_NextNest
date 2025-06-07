@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -13,6 +13,10 @@ export class EmployeeService {
 
 
   async create(createEmployeeDto: CreateEmployeeDto) {
+    const existingUser = await this.employeeModel.findOne({ email: createEmployeeDto.email });
+    if (existingUser) {
+      throw new BadRequestException("Email đã tồn tại. Vui lòng chọn email khác.");
+    }
     const employee = await this.employeeModel.create(createEmployeeDto)
     return employee;
   }

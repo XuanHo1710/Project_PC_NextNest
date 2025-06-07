@@ -1,28 +1,20 @@
 'use client'
 import { Avatar, Modal, Popconfirm, Spin, TableProps, Tag } from "antd";
-import Filterbar from "../../../../../components/Filterbar/Filterbar";
-import TableContent from "../../../../../components/TableContent/TableContent";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import ContentModalEmployee from "../../../../../components/ContentModal/employee/ContentModalEmployee";
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { IEmployee, useEmployeeStore } from "@/stores/employeeStore";
+import { useQueryParams } from "@/hooks/QueryParamsContext";
+import UpdateModalEmployee from "@/components/ContentModal/employee/UpdateModalEmployee";
+import ActionEmployee from "@/components/ActionFilter/employee/ActionEmployee";
+import FilterEmployee from "@/components/ActionFilter/employee/FilterEmployee";
+import EditSortEmployee from "@/components/EditSort/employee/EditSortEmployee";
+import ContentModalEmployee from "@/components/ContentModal/employee/ContentModalEmployee";
+import TableContent from "@/components/TableContent/TableContent";
 
-import { useQueryParams } from "../../../../../hooks/QueryParamsContext";
-import FilterEmployee from "../../../../../components/Filterbar/FilterEmployee";
-import UpdateModalEmployee from "../../../../../components/ContentModal/employee/UpdateModalEmployee";
-import EditSortEmployee from "../../../../../components/EditSort/EditSortEmployee";
-import { useEmployeeStore } from "../../../../../stores/employeeStore";
 
-export interface DataType {
+export interface DataType extends IEmployee {
     key: string;
-    avatar: string;
-    name: string;
-    email: string;
-    age: number;
-    address: string;
-    gender: string;
-    role: string;
-    _id?: string
 }
 
 type SelectedContextType = {
@@ -156,9 +148,9 @@ export default function Employee() {
                 </Modal>
                 <div className="py-2">
                     <h2 className="text-center text-2xl font-bold">Trang nhân viên</h2>
-                    <Filterbar Filter={<FilterEmployee />} EditSort={<EditSortEmployee />} ContentModal={<ContentModalEmployee />}></Filterbar>
+                    <ActionEmployee Filter={<FilterEmployee />} EditSort={<EditSortEmployee />} ContentModal={<ContentModalEmployee />}></ActionEmployee>
                     <Spin size="large" spinning={loading}>
-                        <TableContent columns={columns} data={dataTable}></TableContent>
+                        <TableContent<DataType> columns={columns} data={dataTable}></TableContent>
                     </Spin>
                 </div>
             </SelectedContext.Provider>

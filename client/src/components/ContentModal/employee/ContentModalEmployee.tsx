@@ -1,12 +1,12 @@
 'use client'
+import { useEmployeeStore } from '@/stores/employeeStore';
+import { UploadImage } from '@/utils/uploadImage';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useState } from 'react';
-import { UploadImage } from '../../../utils/uploadImage';
 import { toast } from 'react-toastify';
-import { useEmployeeStore } from '../../../stores/employeeStore';
 
 
 interface IEmployee {

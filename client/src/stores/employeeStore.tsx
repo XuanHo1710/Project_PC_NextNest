@@ -1,12 +1,12 @@
 // stores/productStore.ts
 'use client'
-import axios from '../config/configError';
+import axios from '@/config/configError';
 import { create } from 'zustand'
 
 const BASE_URL = 'employee';
 
 
-export interface Employee {
+export interface IEmployee {
     avatar: string;
     name: string;
     email: string;
@@ -17,19 +17,19 @@ export interface Employee {
     _id?: string;
 }
 
-interface EmployeeState {
-    employees: Employee[],
-    employee: Employee | null,
+interface IEmployeeState {
+    employees: IEmployee[],
+    employee: IEmployee | null,
     loading: boolean,
     message: string,
     fetchEmployees: (queryParams: string) => Promise<void>,
-    addEmployee: (employee: Omit<Employee, 'id'>) => Promise<number>,
-    updateEmployee: (employee: Employee) => Promise<number>,
+    addEmployee: (employee: Omit<IEmployee, 'id'>) => Promise<number>,
+    updateEmployee: (employee: IEmployee) => Promise<number>,
     deleteEmployee: (id: string) => Promise<number>,
     updateManyEmployee: (ids: Array<string>, typeUpdate: string) => Promise<number>,
 }
 
-export const useEmployeeStore = create<EmployeeState>((set) => ({
+export const useEmployeeStore = create<IEmployeeState>((set) => ({
     employees: [],
     loading: false,
     employee: null,
@@ -84,7 +84,7 @@ export const useEmployeeStore = create<EmployeeState>((set) => ({
         try {
             const res = await axios.patch(`${BASE_URL}/${employee._id}`, employee)
             set((state) => ({
-                employees: state.employees.map((p: Employee) =>
+                employees: state.employees.map((p: IEmployee) =>
                     p._id === employee._id ? employee : p
                 ),
             }))

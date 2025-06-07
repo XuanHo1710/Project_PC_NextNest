@@ -1,8 +1,8 @@
 'use client';
 
+import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { Button, Form, Input } from "antd";
 import { useState } from "react";
-import { useQueryParams } from "../../hooks/QueryParamsContext";
 
 const FilterEmployee = () => {
 

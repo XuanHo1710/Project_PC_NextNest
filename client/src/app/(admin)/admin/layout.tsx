@@ -1,14 +1,14 @@
 'use client'
 import '@ant-design/v5-patch-for-react-19';
 import { Geist, Geist_Mono } from "next/font/google";
-import Header from "../../../../components/Header/Header";
-import Footer from "../../../../components/Footer/Footer";
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import { Sidebar } from "../../../../components/Sidebar/Sidebar";
 import { usePathname } from 'next/navigation';
 import { ToastContainer } from 'react-toastify';
-import { QueryParamsProvider } from '../../../../hooks/QueryParamsContext';
 import { useState } from 'react';
+import { QueryParamsProvider } from '@/hooks/QueryParamsContext';
+import Header from '@/components/Header/Header';
+import { Sidebar } from '@/components/Sidebar/Sidebar';
+import Footer from '@/components/Footer/Footer';
 
 
 const geistSans = Geist({

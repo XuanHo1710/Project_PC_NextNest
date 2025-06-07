@@ -1,6 +1,6 @@
 'use client'
+import { GroupCollapse } from "@/components/GroupCollapse/GroupCollapse";
 import { Select } from "antd";
-import { GroupCollapse } from "../GroupCollapse/GroupCollapse";
 
 
 
@@ -22,7 +22,7 @@ export default function SelectRole() {
             <div className="bg-slate-50 shadow-xl py-5 px-3 my-10 rounded-2xl">
                 <h2 className="pb-2 border-b-2 border-solid border-slate-300">Danh sách các quyền:</h2>
                 <div className="my-4">
-                   <GroupCollapse></GroupCollapse>
+                    <GroupCollapse />
                 </div>
 
             </div>

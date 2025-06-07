@@ -31,7 +31,7 @@ instance.interceptors.response.use(
 
       switch (status) {
         case 400:
-          if (data.message.length > 0) {
+          if (Array.isArray(data.message) && data.message.length > 0) {
             toast.error(data.message[0] || 'Yêu cầu không hợp lệ (400)');
           } else toast.error(data.message || 'Yêu cầu không hợp lệ (400)');
           break;

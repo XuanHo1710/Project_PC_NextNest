@@ -1,10 +1,10 @@
 'use client'
 
-import { Button, Form, Select } from "antd";
-import { useQueryParams } from "../../hooks/QueryParamsContext";
 import { useSelectedRowsEmployee } from "@/app/(admin)/admin/employee/page";
+import { useQueryParams } from "@/hooks/QueryParamsContext";
+import { useEmployeeStore } from "@/stores/employeeStore";
+import { Button, Form, Select } from "antd";
 import { toast } from "react-toastify";
-import { useEmployeeStore } from "../../stores/employeeStore";
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

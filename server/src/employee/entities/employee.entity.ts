@@ -8,7 +8,7 @@ export class Employee {
     avatar: string;
     @Prop()
     name: string;
-    @Prop({ required: true })
+    @Prop({ required: true, unique: true })
     email: string;
     @Prop()
     age: number;
@@ -19,7 +19,7 @@ export class Employee {
     @Prop({ default: 'Employee' })
     role: string;
 
-    @Prop({default: "a"})
+    @Prop({ default: "a" })
     refreshToken: string;
 
     @Prop({ type: Object })

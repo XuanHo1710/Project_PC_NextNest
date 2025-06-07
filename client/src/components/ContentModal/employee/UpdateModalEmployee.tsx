@@ -4,10 +4,10 @@ import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useEffect, useState } from 'react';
-import { UploadImage } from '../../../utils/uploadImage';
 import { toast } from 'react-toastify';
 import { DataType } from '@/app/(admin)/admin/employee/page';
-import { useEmployeeStore } from '../../../stores/employeeStore';
+import { useEmployeeStore } from '@/stores/employeeStore';
+import { UploadImage } from '@/utils/uploadImage';
 
 
 export interface IEmployee {
