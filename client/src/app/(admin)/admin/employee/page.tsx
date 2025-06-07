@@ -1,5 +1,6 @@
 'use client'
-import { Avatar, Modal, Popconfirm, Spin, TableProps, Tag } from "antd";
+import { Avatar, Modal, Popconfirm, Spin, Tag } from "antd";
+import type { ColumnsType, ColumnType } from "antd/es/table";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -31,6 +32,14 @@ export default function Employee() {
     const [dataClick, setDataClick] = useState<null | DataType>(null);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
+    const [fields, setFields] = useState<Array<string>>([
+        "name",
+        "age",
+        "address",
+        "email",
+        "role",
+        "gender",
+    ]);
 
     const { employees, deleteEmployee, fetchEmployees, loading, message } = useEmployeeStore()
 
@@ -50,93 +59,80 @@ export default function Employee() {
         }
     }
 
-    const columns: TableProps<DataType>['columns'] = [
-        {
-            title: 'Họ tên',
-            dataIndex: 'name',
-            key: 'name',
-            render: (_, { name, avatar }) => {
-                return (
+
+
+    const columns: ColumnsType<DataType> = [
+        ...fields.map((field) => {
+            const columnConfig: ColumnType<DataType> = {
+                title: field.charAt(0).toUpperCase() + field.slice(1), // Tạo title từ field
+                dataIndex: field,
+                key: field,
+            };
+
+            // Thêm render tùy chỉnh cho các trường cụ thể
+            if (field === "name") {
+                columnConfig.render = (_: unknown, { name, avatar }: { name: string, avatar: string }) => (
                     <div className="flex items-center gap-4">
                         <Avatar src={avatar} alt={name} />
                         <h2 className="text-md">{name}</h2>
                     </div>
-                )
-            },
-        },
-        {
-            title: 'Tuổi',
-            dataIndex: 'age',
-            key: 'age',
-            render: (_, { age }) => {
-                return (
+                );
+            } else if (field === "age") {
+                columnConfig.render = (_: unknown, { age }: { age: number }) => (
                     <Tag color="cyan">{age}</Tag>
-                )
-            }
-        },
-        {
-            title: 'Giới tính',
-            dataIndex: 'gender',
-            key: 'gender',
-            render: (_, { gender }) => {
-                return (
+                );
+            } else if (field === "gender") {
+                columnConfig.render = (_: unknown, { gender }: { gender: string }) => (
                     <Tag color={gender === "Nam" ? "blue" : "pink"}>{gender}</Tag>
-                )
+                );
             }
-        },
-        {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
-        },
-        {
-            title: 'Address',
-            key: 'address',
-            dataIndex: 'address',
-        },
-        {
-            title: 'Vai trò',
-            key: 'role',
-            dataIndex: 'role',
-        },
+
+            return columnConfig;
+        }),
+        // Cột action luôn xuất hiện
         {
             title: 'Action',
             key: 'action',
             render: (_, record) => (
-                <>
-                    <div key={record._id} className='flex items-center gap-5'>
-                        <FaPen onClick={() => { setOpen(true); setDataClick(record); }} className='hover:text-blue-500 cursor-pointer' />
-                        <Popconfirm
-                            title="Xóa dòng của bạn"
-                            description="Bạn có chắc chắn muốn xóa dòng này ?"
-                            onConfirm={() => handleDelete(record._id as string)}
-                            // onCancel={cancel}
-                            okText="Xóa"
-                            cancelText="Không"
-                        >
-                            <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                        </Popconfirm>
-                    </div>
-                </>
+                <div key={record._id} className='flex items-center gap-5'>
+                    <FaPen
+                        onClick={() => {
+                            setOpen(true);
+                            setDataClick(record);
+                        }}
+                        className='hover:text-blue-500 cursor-pointer'
+                    />
+                    <Popconfirm
+                        title="Xóa dòng của bạn"
+                        description="Bạn có chắc chắn muốn xóa dòng này ?"
+                        onConfirm={() => handleDelete(record._id as string)}
+                        okText="Xóa"
+                        cancelText="Không"
+                    >
+                        <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
+                    </Popconfirm>
+                </div>
             ),
         },
     ];
 
     let dataTable: DataType[] = [];
     if (!loading && employees.length > 0) {
-        dataTable = employees.map((item, index) => (
-            {
+        dataTable = employees.map((item, index) => {
+            const row = {
                 key: index.toString(),
-                name: item.name,
-                age: item.age,
-                address: item.address,
                 avatar: item.avatar,
-                email: item.email,
-                role: item.role,
                 _id: item._id,
-                gender: item.gender
-            }
-        ))
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ...fields.reduce((acc: any, field: any) => {
+                    if (item.hasOwnProperty(field)) {
+                        acc[field] = item[field as keyof IEmployee];
+                    }
+                    return acc;
+                }, {}),
+            };
+            return row as DataType;
+        });
     }
 
 
@@ -148,7 +144,7 @@ export default function Employee() {
                 </Modal>
                 <div className="py-2">
                     <h2 className="text-center text-2xl font-bold">Trang nhân viên</h2>
-                    <ActionEmployee Filter={<FilterEmployee />} EditSort={<EditSortEmployee />} ContentModal={<ContentModalEmployee />}></ActionEmployee>
+                    <ActionEmployee ConfigFields={{ fields, setFields }} Filter={<FilterEmployee />} EditSort={<EditSortEmployee />} ContentModal={<ContentModalEmployee />}></ActionEmployee>
                     <Spin size="large" spinning={loading}>
                         <TableContent<DataType> columns={columns} data={dataTable}></TableContent>
                     </Spin>

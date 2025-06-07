@@ -1,20 +1,24 @@
 'use client'
 import '@ant-design/v5-patch-for-react-19';
-
 import { Button, Modal, Upload } from "antd";
 import { SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import { JSX, useState } from 'react';
-
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
 import { DataType } from '@/app/(admin)/admin/employee/page';
 import { useEmployeeStore } from '@/stores/employeeStore';
 import TableImportCSV from '@/components/ContentModal/employee/CSVModalEmployee';
+import ConfigModalEmployee from '@/components/ContentModal/employee/ConfigModalEmployee';
 
+type ConfigFieldsType = {
+    fields: Array<string>;
+    setFields: React.Dispatch<React.SetStateAction<Array<string>>>;
+}
 
-export default function ActionEmployee({ ContentModal, EditSort, Filter }: { ContentModal: JSX.Element, EditSort: JSX.Element, Filter: JSX.Element }) {
+export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigFields }: { ContentModal: JSX.Element, EditSort: JSX.Element, Filter: JSX.Element, ConfigFields: ConfigFieldsType }) {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [openImportCSV, setOpenImportCSV] = useState<boolean>(false);
+    const [openConfig, setOpenConfig] = useState<boolean>(false);
     const [fileData, setFileData] = useState<Array<DataType>>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const { addEmployee, employees } = useEmployeeStore();
@@ -30,16 +34,12 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter }: { Con
 
             // Đọc file Excel từ ArrayBuffer
             const workbook = XLSX.read(data, { type: 'array' });
-
             // Lấy sheet đầu tiên
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
-
             // Chuyển sheet thành JSON
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true });
-
             // In dữ liệu ra console để kiểm tra
-
 
             // Lấy hàng đầu tiên (tiêu đề cột)
             const headers = Object.keys(jsonData[0] || {});
@@ -50,10 +50,8 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter }: { Con
 
             if (missingFields.length > 0) {
                 toast.error(`Không thể import file CSV vì thiếu các trường bắt buộc`);
-                // Xóa file khỏi bộ nhớ (gán file thành null hoặc không xử lý tiếp)
                 return false; // Ngăn upload và xóa file khỏi quá trình xử lý
             }
-
             setFileData(jsonData as Array<DataType>);
             setLoading(false);
             toast.success("Đã đọc file CSV thành công!");
@@ -70,7 +68,6 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter }: { Con
     const exportToExcel = () => {
         // Tạo một workbook và worksheet
         const wb = XLSX.utils.book_new();
-
         const dataRefactor = employees.map((em) => {
             return {
                 name: em.name,
@@ -81,12 +78,9 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter }: { Con
                 role: em.role,
             }
         });
-
         const ws = XLSX.utils.json_to_sheet(dataRefactor);
-
         // Thêm worksheet vào workbook
         XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-
         // Xuất file Excel
         XLSX.writeFile(wb, "report_employee" + "_" + new Date().getDay() + "/" + new Date().getMonth() + "/" + new Date().getFullYear() + '.xlsx');
     };
@@ -112,11 +106,15 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter }: { Con
     const handleOk = () => {
         setIsModalOpen(false);
         setOpenImportCSV(false);
+        setOpenConfig(false);
+        setFileData([]);
     };
 
     const handleCancel = () => {
         setIsModalOpen(false);
         setOpenImportCSV(false);
+        setOpenConfig(false);
+        setFileData([]);
     };
 
     return (
@@ -136,6 +134,9 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter }: { Con
             <Modal width={1000} open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
                 {ContentModal}
             </Modal>
+            <Modal title="Setting display" width={1000} open={openConfig} onOk={handleOk} onCancel={handleCancel} footer={null}>
+                <ConfigModalEmployee ConfigFields={ConfigFields} />
+            </Modal>
             {Filter}
             {EditSort}
             <div className="mt-5 border-t-[1px] border-solid border-slate-200 py-2 px-2 flex items-center justify-between">
@@ -144,7 +145,7 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter }: { Con
                     <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>
                     <Button onClick={() => setOpenImportCSV(true)} className='mx-1' variant='outlined' color='green'>Import file csv</Button>
                     <Button className='mx-1' variant='outlined' color='green' onClick={exportToExcel}>Export file csv</Button>
-                    <SettingOutlined className='mx-1' />
+                    <SettingOutlined onClick={() => setOpenConfig(true)} className='mx-1' />
                 </div>
             </div>
         </>

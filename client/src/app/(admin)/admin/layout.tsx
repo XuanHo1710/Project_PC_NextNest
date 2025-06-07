@@ -45,7 +45,7 @@ export default function AdminLayout({
         <ToastContainer position='top-right'></ToastContainer>
         <QueryParamsProvider>
           <Header collapsed={collapsed} setCollapsed={setCollapsed}></Header>
-          <div className="pt-20 flex">
+          <div className="pt-20 flex overflow-y-hidden h-screen">
             <Sidebar collapsed={collapsed} ></Sidebar>
             <div className="overflow-y-scroll grow bg-slate-50" style={{ scrollbarWidth: "none" }}>
               <div className='px-5'>
