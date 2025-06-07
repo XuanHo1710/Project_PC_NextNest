@@ -21,7 +21,7 @@ type MenuItem = Required<MenuProps>['items'][number];
 
 
 
-export const Sidebar: React.FC = () => {
+export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
     const items: MenuItem[] = [
         {
             key: 'home',
@@ -42,11 +42,11 @@ export const Sidebar: React.FC = () => {
                     key: 'customer',
                     label: 'Thông tin khách hàng',
                     icon: <FaPeopleGroup />
-                   
+
                 },
             ],
         },
-    
+
         {
             key: 'account',
             label: 'Tài khoản',
@@ -56,8 +56,8 @@ export const Sidebar: React.FC = () => {
                     key: 'employeeAccount',
                     label: 'Tài khoản nhân viên',
                     icon: <IoIosPeople />
-                    
-                  
+
+
                 },
                 {
                     key: 'customerAccount',
@@ -94,16 +94,16 @@ export const Sidebar: React.FC = () => {
             label: 'Cài đặt',
             icon: <SettingOutlined />,
             children: [
-                { 
-                    key: '13', 
+                {
+                    key: '13',
                     label: 'Cài đặt chung',
                     icon: <IoIosSettings />
                 },
-                { 
-                    key: '14', 
+                {
+                    key: '14',
                     label: 'Tài liệu hướng dẫn',
                     icon: <IoDocumentText />
-    
+
                 },
             ],
         },
@@ -111,14 +111,15 @@ export const Sidebar: React.FC = () => {
 
     return (
         <>
-        <section>
-            <Menu
-                defaultSelectedKeys={['1']}
-                defaultOpenKeys={['sub1']}
-                mode="inline"
-                items={items}
-            />
-        </section>
+            <section className={!collapsed ? 'w-64' : ''}>
+                <Menu
+                    defaultSelectedKeys={['1']}
+                    defaultOpenKeys={['sub1']}
+                    mode="inline"
+                    items={items}
+                    inlineCollapsed={collapsed}
+                />
+            </section>
 
         </>
     );

@@ -8,6 +8,7 @@ import { Sidebar } from "../../../../components/Sidebar/Sidebar";
 import { usePathname } from 'next/navigation';
 import { ToastContainer } from 'react-toastify';
 import { QueryParamsProvider } from '../../../../hooks/QueryParamsContext';
+import { useState } from 'react';
 
 
 const geistSans = Geist({
@@ -26,6 +27,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }>) {
 
+  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
   // Không render layout nếu trang là "/auth-login"
@@ -33,23 +35,20 @@ export default function AdminLayout({
     return <>{children}</>;
   }
 
+
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-
-
-
         <ToastContainer position='top-right'></ToastContainer>
         <QueryParamsProvider>
-          <Header></Header>
-          <div className="pt-20 grid grid-cols-12 grid-flow-row">
-            <div className="col-span-2">
-              <Sidebar></Sidebar>
-            </div>
-            <div className="col-span-10 pl-3">
-              <div className="overflow-y-scroll max-h-[550px]">
+          <Header collapsed={collapsed} setCollapsed={setCollapsed}></Header>
+          <div className="pt-20 flex">
+            <Sidebar collapsed={collapsed} ></Sidebar>
+            <div className="overflow-y-scroll grow bg-slate-50" style={{ scrollbarWidth: "none" }}>
+              <div className='px-5'>
                 <AntdRegistry>{children}</AntdRegistry>
               </div>
               <Footer></Footer>

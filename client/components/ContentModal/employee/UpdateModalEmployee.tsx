@@ -108,7 +108,6 @@ export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmp
                 {dataEmployee !== null &&
                     <Form
                         onFinish={handleUpdate}
-                        className='border-b-2 border-solid border-slate-200'
                         {...layout}
                         form={form}
                     >
@@ -145,8 +144,8 @@ export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmp
                             <Switch checkedChildren={"MALE"} unCheckedChildren={"FEMALE"} />
                         </Form.Item>
                         <div className='text-right mb-10'>
-                            <Button htmlType='submit' variant='solid' color='green' className='text-right'>Cập nhật</Button>
-                            <Button htmlType='reset' variant='solid' color='purple' className='text-right mx-2'>Làm mới</Button>
+                            <Button htmlType='submit' variant='solid' color='primary' className='text-right'>Cập nhật</Button>
+                            <Button htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                         </div>
                     </Form>
                 }

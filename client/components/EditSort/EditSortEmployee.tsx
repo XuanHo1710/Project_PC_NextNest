@@ -52,11 +52,11 @@ const EditSortEmployee = () => {
     }
     return (
         <>
-            <div className="mt-5 rounded-xl shadow-inner bg-slate-50 py-5 px-2">
-                <h2 className='pb-2 text-lg font-sans px-2 border-slate-200 border-b-2 border-solid'>Chỉnh sửa và sắp xếp theo tiêu chí</h2>
+            <div className="mt-5 rounded-xl bg-white py-5 px-2 border-[1px] border-solid border-slate-200">
+                <h2 className='pb-2 text-base font-semibold px-2 border-slate-100 border-b-2 border-solid'>Chỉnh sửa và sắp xếp theo tiêu chí</h2>
                 <div className='flex mt-4 items-center justify-between'>
                     <div className="flex items-center justify-center">
-                        <h3 className="mx-2">Sắp xếp theo tiêu chí: </h3>
+                        <h3 className="mx-2 text-sm">Sắp xếp theo tiêu chí: </h3>
                         <Select
                             onChange={handleSortChange}
                             defaultValue="Tất cả"

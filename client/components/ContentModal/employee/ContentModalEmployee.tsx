@@ -84,7 +84,6 @@ export default function ContentModalEmployee() {
                 <h2 className='text-lg font-bold my-4'>Thêm mới nhân viên:</h2>
                 <Form
                     onFinish={handleAdd}
-                    className='border-b-2 border-solid border-slate-200'
                     {...layout}
                     initialValues={{
                         name: "",
@@ -129,8 +128,8 @@ export default function ContentModalEmployee() {
                         <Switch checkedChildren={"MALE"} unCheckedChildren={"FEMALE"} />
                     </Form.Item>
                     <div className='text-right mb-10'>
-                        <Button htmlType='submit' variant='solid' color='green' className='text-right'>Thêm mới</Button>
-                        <Button htmlType='reset' variant='solid' color='purple' className='text-right mx-2'>Làm mới</Button>
+                        <Button htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
+                        <Button htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                     </div>
                 </Form>
             </Spin>

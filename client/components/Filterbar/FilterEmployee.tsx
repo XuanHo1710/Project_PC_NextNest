@@ -54,17 +54,17 @@ const FilterEmployee = () => {
 
     return (
         <>
-            <div className="shadow-inner my-5 bg-slate-50 py-2 px-2 rounded-xl">
-                <h2 className='py-2 text-lg font-sans px-2 border-slate-200 border-b-2 border-solid'>Bộ lọc và tìm kiếm</h2>
+            <div className="my-5 bg-white py-2 px-2 rounded-lg border-[1px] border-solid border-slate-200">
+                <h2 className='py-2 text-base font-semibold px-2 border-slate-100 border-b-2 border-solid'>Bộ lọc và tìm kiếm</h2>
                 <div className='flex mt-4 items-center justify-between'>
                     <div className="flex items-center justify-center ">
-                        <h3 className="mx-2">Trạng thái: </h3>
+                        <h3 className="mx-2 text-sm">Trạng thái: </h3>
                         {genders.map(g => (
                             <Button
                                 key={g.value}
-                                color="green"
+                                color="blue"
                                 variant={selectedGender === g.value ? "solid" : "outlined"} // ✅ đổi màu theo trạng thái
-                                className={`mx-1 !font-bold`}
+                                className={`mx-1 `}
                                 onClick={() => handleFilter(g.value)}
                             >
                                 {g.label}

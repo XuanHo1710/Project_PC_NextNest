@@ -37,7 +37,6 @@ export default function Employee() {
 
     const [isOpen, setOpen] = useState(false);
     const [dataClick, setDataClick] = useState<null | DataType>(null);
-    // const { employees, status, error } = useSelector((state: RootState) => state.employee);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
 
@@ -152,7 +151,7 @@ export default function Employee() {
     return (
         <>
             <SelectedContext.Provider value={{ selectedRows, setSelectedRows }} >
-                <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen}>
+                <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
                     <UpdateModalEmployee setOpen={setOpen} dataEmployee={dataClick} />
                 </Modal>
                 <div className="py-2">
