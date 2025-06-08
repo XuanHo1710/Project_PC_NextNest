@@ -40,7 +40,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                 },
                 {
                     key: 'category',
-                    label: 'Danh mục sản phẩm',
+                    label: <Link href={"/admin/category"}>Danh mục sản phẩm</Link>,
                     icon: <BiCategory />
                 },
                 {

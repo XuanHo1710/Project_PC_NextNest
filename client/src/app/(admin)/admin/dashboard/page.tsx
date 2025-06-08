@@ -1,20 +1,15 @@
-import { Button } from "antd";
-import { CiExport, CiImport } from "react-icons/ci";
-import { FaFileAlt, FaRegMoneyBillAlt } from "react-icons/fa";
-import { MdOutlineProductionQuantityLimits } from "react-icons/md";
-import { RiCustomerService2Line } from "react-icons/ri";
+
 import { RxDashboard } from "react-icons/rx";
-import ColumnChart from "../../../../../components/ColumnChart/ColumnChart";
 
 
 export default function Home() {
   return (
     <>
-    <div className="py-2">
+      <div className="py-2">
         <h2 className="text-center text-2xl font-bold">Trang tổng quan</h2>
         <div className="my-3">
           <h2 className="text-xl font-semibold flex items-center">
-            <RxDashboard className="mr-2 text-blue-500" /> 
+            <RxDashboard className="mr-2 text-blue-500" />
             Tổng quan
           </h2>
         </div>
@@ -67,7 +62,7 @@ export default function Home() {
           </div>
         </div>
         <ColumnChart></ColumnChart> */}
-    </div>
+      </div>
     </>
   );
 }

@@ -146,7 +146,7 @@ export default function Employee() {
                     <h2 className="text-center text-2xl font-bold">Trang nhân viên</h2>
                     <ActionEmployee ConfigFields={{ fields, setFields }} Filter={<FilterEmployee />} EditSort={<EditSortEmployee />} ContentModal={<ContentModalEmployee />}></ActionEmployee>
                     <Spin size="large" spinning={loading}>
-                        <TableContent<DataType> columns={columns} data={dataTable}></TableContent>
+                        <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
                     </Spin>
                 </div>
             </SelectedContext.Provider>
@@ -158,7 +158,7 @@ export default function Employee() {
 export const useSelectedRowsEmployee = () => {
     const context = useContext(SelectedContext);
     if (!context) {
-        throw new Error("useQueryParams phải được dùng trong QueryParamsProvider");
+        throw new Error("useQueryParams phải được dùng trong EmployeeProvider");
     }
     return context;
 };
