@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EditSortEmployee = () => {
     const { queryParams, setQueryParams } = useQueryParams();
-    const { selectedRows } = useSelectedRowsEmployee();
+    const { selectedRows, setSelectedRows } = useSelectedRowsEmployee();
     const { updateManyEmployee, fetchEmployees } = useEmployeeStore();
 
     const handleSortChange = (value: string) => {
@@ -44,6 +44,7 @@ const EditSortEmployee = () => {
                 if (status !== 500) {
                     toast.success("Cập nhật thành công !!");
                     fetchEmployees("?" + queryParams.toString() as string);
+                    setSelectedRows([]);
                 }
             } catch (err) {
                 console.log(err);

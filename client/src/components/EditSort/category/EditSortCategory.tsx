@@ -2,15 +2,15 @@
 
 import { useSelectedRowsCategory } from "@/app/(admin)/admin/category/page";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useCategoryStore } from "@/stores/categoryStore";
 import { Button, Form, Select } from "antd";
 import { toast } from "react-toastify";
 
 
 const EditSortCategory = () => {
     const { queryParams, setQueryParams } = useQueryParams();
-    const { selectedRows } = useSelectedRowsCategory();
-    const { updateManyEmployee, fetchEmployees } = useEmployeeStore();
+    const { selectedRows, setSelectedRows } = useSelectedRowsCategory();
+    const { fetchCategorys, updateManyCategory } = useCategoryStore();
 
     const handleSortChange = (value: string) => {
         if (value !== "all") {
@@ -38,11 +38,11 @@ const EditSortCategory = () => {
 
         if (selectedRows.length > 0) {
             try {
-                const status = await updateManyEmployee(selectedRows, type);
-
+                const status = await updateManyCategory(selectedRows, type);
                 if (status !== 500) {
                     toast.success("Xóa thành công !!");
-                    fetchEmployees("?" + queryParams.toString() as string);
+                    fetchCategorys("?" + queryParams.toString() as string)
+                    setSelectedRows([]);
                 }
             } catch (err) {
                 console.log(err);

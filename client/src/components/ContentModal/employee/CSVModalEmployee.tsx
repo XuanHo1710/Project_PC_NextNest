@@ -1,4 +1,5 @@
 'use client'
+import { useSelectedRowsEmployee } from '@/app/(admin)/admin/employee/page';
 import TableContent from '@/components/TableContent/TableContent';
 import { IEmployee } from '@/stores/employeeStore';
 import '@ant-design/v5-patch-for-react-19';
@@ -12,6 +13,7 @@ interface DataType extends IEmployee {
 }
 
 export default function TableImportCSV({ employees, loading }: { employees: DataType[], loading: boolean }) {
+    const { selectedRows, setSelectedRows } = useSelectedRowsEmployee();
 
     const columns: TableProps<DataType>['columns'] = [
         {
@@ -87,7 +89,7 @@ export default function TableImportCSV({ employees, loading }: { employees: Data
         <>
             <Spin size='large' spinning={loading}>
                 <h2 className='text-lg font-bold my-4'>Table employee</h2>
-                <TableContent<DataType> columns={columns} data={dataTable}></TableContent>
+                <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
             </Spin>
         </>
     );

@@ -46,7 +46,7 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
             const status = await updateCategory(category);
             if (status !== 500) {
                 toast.success("Sửa danh mục thành công !!");
-                fetchCategorys(queryParams.toString() as string);
+                fetchCategorys("?" + queryParams.toString() as string)
                 form.resetFields(); // reset form
                 setOpen(false);
             }

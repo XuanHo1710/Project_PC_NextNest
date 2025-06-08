@@ -44,10 +44,12 @@ export default function Category() {
     const handleDelete = async (id: string) => {
         try {
             const status = await deleteCategory(id);
-            if (status !== 500)
-                toast.success("Xóa nhân viên này thành công !!");
+            if (status !== 500) {
+                toast.success("Xóa danh mục này thành công !!");
+                fetchCategorys("?" + queryParams.toString() as string)
+            }
         } catch (err) {
-            toast.error("Xóa nhân viên này thất bại do lỗi: " + err);
+            toast.error("Xóa danh mục này thất bại do lỗi: " + err);
         }
     }
 

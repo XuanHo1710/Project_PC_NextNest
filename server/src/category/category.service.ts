@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -58,9 +58,9 @@ export class CategoryService {
     }
 
 
-    const employees = await this.categoryModel.find(filterCategory).sort(sortCategory);
+    const categories = await this.categoryModel.find(filterCategory).sort(sortCategory);
 
-    return employees;
+    return categories;
   }
 
   findOne(id: mongoose.Types.ObjectId) {
@@ -69,37 +69,43 @@ export class CategoryService {
 
   async update(id: mongoose.Types.ObjectId, updateCategoryDto: UpdateCategoryDto) {
     const categoryCurrent = await this.categoryModel.findById(id);
-
-
-    let parentCategory: Category | null = null;
-    if (mongoose.Types.ObjectId.isValid(updateCategoryDto.parent as string)) {
-      parentCategory = await this.categoryModel.findOne({ _id: updateCategoryDto.parent }) as Category | null;
+    if (!categoryCurrent) {
+      throw new BadRequestException("Category not found");
     }
 
+    let parentCategory: Category | null = null;
+    const parentId = updateCategoryDto.parent as string;
+
+    // Tìm cha mới nếu hợp lệ
+    if (mongoose.Types.ObjectId.isValid(parentId)) {
+      parentCategory = await this.categoryModel.findById(parentId);
+    }
+
+    // Cập nhật thông tin chính
     const categoryUpdated = {
       name: updateCategoryDto.name,
-      parent: parentCategory === null
-        ? null
-        : {
-          _id: parentCategory?._id,
-          name: parentCategory?.name
-        },
-      children: []
+      parent: parentCategory
+        ? {
+          _id: parentCategory._id,
+          name: parentCategory.name
+        }
+        : null,
+      children: categoryCurrent.children // giữ nguyên con
     };
 
-    const category = await this.categoryModel.updateOne({ _id: id }, categoryUpdated);
+    await this.categoryModel.updateOne({ _id: id }, categoryUpdated);
 
-    // Nếu parent cũ khác parent mới => xử lý cập nhật lại cha cũ và cha mới
-    const parentOldId = categoryCurrent?.parent === null ? "" : categoryCurrent?.parent?._id?.toString();
-    const parentNewId = parentCategory === null ? "" : parentCategory?._id?.toString();
+    // So sánh parent cũ và mới
+    const parentOldId = categoryCurrent.parent?._id?.toString() || null;
+    const parentNewId = parentCategory?._id?.toString() || null;
 
-    // Nếu parent thay đổi thì cập nhật cha cũ và cha mới
-    if (parentOldId !== "" && parentNewId !== "" && parentOldId !== parentNewId) {
-      // 1. Xoá danh mục khỏi cha cũ
+    // Nếu cha thay đổi thì cập nhật lại liên kết
+    if (parentOldId !== parentNewId) {
+      // 1. Gỡ khỏi cha cũ
       if (parentOldId) {
         await this.categoryModel.updateOne(
           { _id: parentOldId },
-          { $pull: { children: { _id: id, name: categoryCurrent?.name } } }
+          { $pull: { children: { _id: id } } }
         );
       }
 
@@ -111,10 +117,44 @@ export class CategoryService {
         );
       }
     }
-    return category;
+
+    return await this.categoryModel.findById(id);
   }
 
+
+  async updateMany(dataUpdate: TypeUpdateManyCategory) {
+    const type = dataUpdate.typeUpdate.split(':')[0];
+    switch (type) {
+      case "delete": {
+        return dataUpdate.ids.forEach(async id => {
+          await this.remove(new mongoose.Types.ObjectId(id));
+        })
+      }
+    }
+    return null;
+  }
+
+
   async remove(id: mongoose.Types.ObjectId) {
-    return await this.categoryModel.deleteOne({ _id: id });;
+    const category = await this.categoryModel.findOne({ _id: id });
+    if (category === null) {
+      throw new BadRequestException("Not found this category");
+    }
+    // Xóa con của thằng cha
+    if (category !== null && category.parent !== null) {
+      await this.categoryModel.updateOne(
+        { _id: category?.parent?._id },
+        { $pull: { children: { _id: id } } }
+      );
+    }
+
+
+    // Gắn tất cả các con của category là parent null
+    if (category.children.length > 0) {
+      const listIDChildren = category.children.map(child => child._id);
+      await this.categoryModel.updateMany({ _id: { $in: listIDChildren } }, { $set: { parent: null } });
+    }
+
+    return await this.categoryModel.deleteOne({ _id: id });
   }
 }

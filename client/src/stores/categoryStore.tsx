@@ -95,9 +95,6 @@ export const useCategoryStore = create<ICategoryState>((set) => ({
         set({ loading: true })
         try {
             const res = await axios.delete(`${BASE_URL}/${id}`)
-            set((state) => ({
-                categorys: state.categorys.filter((p) => p._id !== id),
-            }))
             return res.status;
         } catch (err) {
             console.log('Error deleting category:', err);

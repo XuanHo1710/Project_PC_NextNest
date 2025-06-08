@@ -3,7 +3,7 @@ import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import mongoose from 'mongoose';
-import { TypeQueryCategory } from 'types/category';
+import { TypeQueryCategory, TypeUpdateManyCategory } from 'types/category';
 
 @Controller('/admin/category')
 export class CategoryController {
@@ -17,6 +17,11 @@ export class CategoryController {
   @Get()
   findAll(@Query() filter: TypeQueryCategory) {
     return this.categoryService.findAll(filter);
+  }
+
+  @Patch('/updateMany')
+  updateMany(@Body() dataUpdate: TypeUpdateManyCategory) {
+    return this.categoryService.updateMany(dataUpdate);
   }
 
   @Get(':id')
