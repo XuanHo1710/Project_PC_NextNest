@@ -8,9 +8,26 @@ import { toast } from "react-toastify";
 
 
 const EditSortCategory = () => {
-    const { queryParams } = useQueryParams();
+    const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows } = useSelectedRowsCategory();
     const { updateManyEmployee, fetchEmployees } = useEmployeeStore();
+
+    const handleSortChange = (value: string) => {
+        if (value !== "all") {
+            // Lấy các tham số hiện tại từ queryParams
+            const currentParams = new URLSearchParams(queryParams.toString());
+
+            // Cập nhật filter, nhưng giữ các tham số khác
+            currentParams.set("sort", value);
+
+            // Cập nhật lại queryParams
+            setQueryParams(currentParams);
+        } else {
+            const currentParams = new URLSearchParams(queryParams.toString());
+            currentParams.delete("sort"); // ✅ Xoá key sort nếu là "all"
+            setQueryParams(currentParams);
+        }
+    }
 
     const handleEditMulti = async (values: { typeChange: string }) => {
         const type = values.typeChange;
@@ -38,7 +55,17 @@ const EditSortCategory = () => {
                 <h2 className='pb-2 text-base font-semibold px-2 border-slate-100 border-b-2 border-solid'>Chỉnh sửa theo tiêu chí</h2>
                 <div className='flex mt-4 items-center justify-between'>
                     <div className="flex items-center justify-center">
-
+                        <h3 className="mx-2 text-sm">Sắp xếp theo tiêu chí: </h3>
+                        <Select
+                            onChange={handleSortChange}
+                            defaultValue="Tất cả"
+                            style={{ width: 200 }}
+                            options={[
+                                { value: 'all', label: 'Tất cả' },
+                                { value: 'name_asc', label: 'Tên tăng dần A-Z' },
+                                { value: 'name_desc', label: 'Tên giảm dần Z-A' },
+                            ]}
+                        />
                     </div>
                     <div className="flex items-center justify-center w-2/5">
                         <Form onFinish={handleEditMulti} className='flex items-center justify-center'>

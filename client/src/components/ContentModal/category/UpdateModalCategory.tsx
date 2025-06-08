@@ -5,14 +5,15 @@ import { Button, Form, Input, Select, Spin } from 'antd';
 import { JSX, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { ICategory, useCategoryStore } from '@/stores/categoryStore';
+import { useQueryParams } from '@/hooks/QueryParamsContext';
 
 
 
 
 export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCategory: ICategory | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [form] = Form.useForm();
-    const { updateCategory, loading, categorys } = useCategoryStore();
-
+    const { updateCategory, fetchCategorys, loading, categorys } = useCategoryStore();
+    const { queryParams } = useQueryParams();
 
     useEffect(() => {
         if (dataCategory !== null) {
@@ -45,6 +46,7 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
             const status = await updateCategory(category);
             if (status !== 500) {
                 toast.success("Sửa danh mục thành công !!");
+                fetchCategorys(queryParams.toString() as string);
                 form.resetFields(); // reset form
                 setOpen(false);
             }
@@ -88,17 +90,20 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
         const prefix = '-'.repeat(level);
 
         return categories.flatMap(category => {
-            const option = (
-                <Select.Option key={category._id} value={category._id}>
-                    {`${prefix} ${category.name}`}
-                </Select.Option>
-            );
+            if (category._id !== dataCategory?._id) {
+                const option = (
+                    <Select.Option key={category._id} value={category._id}>
+                        {`${prefix} ${category.name}`}
+                    </Select.Option>
+                );
 
-            const childrenOptions = category.children && category.children.length > 0
-                ? renderCategoryOptions(category.children, level + 1)
-                : [];
+                const childrenOptions = category.children && category.children.length > 0
+                    ? renderCategoryOptions(category.children, level + 1)
+                    : [];
 
-            return [option, ...childrenOptions];
+                return [option, ...childrenOptions];
+            }
+            return [];
         });
     };
 
@@ -124,7 +129,7 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
                             </Select>
                         </Form.Item>
                         <div className='text-right mb-10'>
-                            <Button loading={loading} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
+                            <Button loading={loading} htmlType='submit' variant='solid' color='primary' className='text-right'>Sửa</Button>
                             <Button loading={loading} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                         </div>
                     </Form>

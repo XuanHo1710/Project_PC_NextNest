@@ -83,11 +83,6 @@ export const useCategoryStore = create<ICategoryState>((set) => ({
         set({ loading: true })
         try {
             const res = await axios.patch(`${BASE_URL}/${category._id}`, category)
-            set((state) => ({
-                categorys: state.categorys.map((p: ICategory) =>
-                    p._id === category._id ? category : p
-                ),
-            }))
             return res.status;
         } catch (err) {
             console.log('Error updating category:', err);
