@@ -1,5 +1,5 @@
 'use client'
-import { useEmployeeStore } from '@/stores/employeeStore';
+import { IEmployee, useEmployeeStore } from '@/stores/employeeStore';
 import { UploadImage } from '@/utils/uploadImage';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
@@ -8,16 +8,6 @@ import TextArea from 'antd/es/input/TextArea';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
-
-interface IEmployee {
-    avatar: string;
-    name: string;
-    email: string;
-    gender: string;
-    age: number;
-    address: string;
-    role: string
-}
 
 interface UploadState {
     file: File | null;
@@ -32,12 +22,10 @@ export default function ContentModalEmployee() {
     const [form] = Form.useForm();
 
     const handlePreviewUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-
         const files = e.target?.files;
         if (files !== null && files.length > 0) {
             const newFiles = URL.createObjectURL(files[0]);
             setFilesUpload({ file: files[0], image: newFiles });
-
         }
 
     }

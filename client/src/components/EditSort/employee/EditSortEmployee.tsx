@@ -7,7 +7,6 @@ import { Button, Form, Select } from "antd";
 import { toast } from "react-toastify";
 
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EditSortEmployee = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsEmployee();

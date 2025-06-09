@@ -30,7 +30,7 @@ export default function TableContent<T extends { _id?: string }>({ data, columns
 
   return (
     <>
-      <Table pagination={{ pageSize: 4 }} rowSelection={rowSelection} columns={columns} dataSource={data} />
+      <Table scroll={{ x: 700 }} pagination={{ pageSize: 4 }} rowSelection={rowSelection} columns={columns} dataSource={data} />
     </>
   );
 }

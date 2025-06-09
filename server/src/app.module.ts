@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { CategoryModule } from './category/category.module';
+import { ProductModule } from './product/product.module';
 const mongooseAutoPopulate = require('mongoose-autopopulate');
 
 
@@ -24,7 +25,8 @@ const mongooseAutoPopulate = require('mongoose-autopopulate');
       inject: [ConfigService]
     }),
     EmployeeModule,
-    CategoryModule
+    CategoryModule,
+    ProductModule
   ],
   controllers: [AppController],
   providers: [AppService],

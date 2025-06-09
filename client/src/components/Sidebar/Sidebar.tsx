@@ -59,8 +59,8 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
             type: 'divider',
         },
         {
-            key: 'sercurity',
-            label: 'SERCURITY',
+            key: 'security',
+            label: 'SECURITY',
             type: 'group',
             children: [
                 {

@@ -5,23 +5,23 @@ import { SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import { JSX, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
-import { DataType } from '@/app/(admin)/admin/employee/page';
-import { useEmployeeStore } from '@/stores/employeeStore';
-import ConfigModalEmployee from '@/components/ContentModal/employee/ConfigModalEmployee';
-import TableImportEmployeeCSV from '@/components/ContentModal/employee/CSVModalEmployee';
+import { DataType } from '@/app/(admin)/admin/products/page';
+import { useProductStore } from '@/stores/productStore';
+import TableImportProductCSV from '@/components/ContentModal/product/CSVModalProduct';
+import ConfigModalProduct from '@/components/ContentModal/product/ConfigModalProduct';
 
 type ConfigFieldsType = {
     fields: Array<string>;
     setFields: React.Dispatch<React.SetStateAction<Array<string>>>;
 }
 
-export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigFields }: { ContentModal: JSX.Element, EditSort: JSX.Element, Filter: JSX.Element, ConfigFields: ConfigFieldsType }) {
+export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFields }: { ContentModal: JSX.Element, EditSort: JSX.Element, Filter: JSX.Element, ConfigFields: ConfigFieldsType }) {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [openImportCSV, setOpenImportCSV] = useState<boolean>(false);
     const [openConfig, setOpenConfig] = useState<boolean>(false);
     const [fileData, setFileData] = useState<Array<DataType>>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const { addEmployee, employees } = useEmployeeStore();
+    const { addProduct, products } = useProductStore();
 
 
     const beforeUpload = (file: File) => {
@@ -45,7 +45,7 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
             const headers = Object.keys(jsonData[0] || {});
 
             // Kiểm tra xem các trường name, address, email có tồn tại trong tiêu đề không
-            const requiredFields = ['name', 'address', 'email', 'avatar', 'age', 'gender', 'role'];
+            const requiredFields = ['name', 'images', 'description', 'stock', 'discount', 'oldPrice', 'other', 'status', 'feature', 'position'];
             const missingFields = requiredFields.filter(field => !headers.map(h => h.toLowerCase()).includes(field.toLowerCase()));
 
             if (missingFields.length > 0) {
@@ -68,21 +68,25 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
     const exportToExcel = () => {
         // Tạo một workbook và worksheet
         const wb = XLSX.utils.book_new();
-        const dataRefactor = employees.map((em) => {
+        const dataRefactor = products.map((product) => {
             return {
-                name: em.name,
-                address: em.address,
-                email: em.email,
-                avatar: em.avatar,
-                age: em.age,
-                role: em.role,
+                name: product.name,
+                description: product.description,
+                stock: product.stock,
+                discount: product.discount,
+                oldPrice: product.oldPrice,
+                other: product.other,
+                status: product.status,
+                feature: product.feature,
+                position: product.position,
+                images: product.images,
             }
         });
         const ws = XLSX.utils.json_to_sheet(dataRefactor);
         // Thêm worksheet vào workbook
         XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
         // Xuất file Excel
-        XLSX.writeFile(wb, "report_employee" + "_" + new Date().getDay() + "/" + new Date().getMonth() + "/" + new Date().getFullYear() + '.xlsx');
+        XLSX.writeFile(wb, "report_product" + "_" + new Date().getDay() + "/" + new Date().getMonth() + "/" + new Date().getFullYear() + '.xlsx');
     };
 
     const handleImport = () => {
@@ -93,8 +97,8 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
 
 
         fileData.forEach(async (item) => {
-            // Thêm nhân viên vào cơ sở dữ liệu
-            await addEmployee(item);
+            // Thêm sản phẩm vào cơ sở dữ liệu
+            await addProduct(item);
         })
 
 
@@ -125,7 +129,7 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
                     <Upload accept=".csv,.xlsx,.xls" multiple={false} beforeUpload={beforeUpload} >
                         <Button icon={<UploadOutlined />}>Upload</Button>
                     </Upload>
-                    <TableImportEmployeeCSV loading={loading} employees={fileData} />
+                    <TableImportProductCSV loading={loading} products={fileData} />
                     <div className='text-right my-3'>
                         <Button onClick={handleImport} type='primary'>Import</Button>
                     </div>
@@ -135,7 +139,7 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
                 {ContentModal}
             </Modal>
             <Modal title="Setting display" width={1000} open={openConfig} onOk={handleOk} onCancel={handleCancel} footer={null}>
-                <ConfigModalEmployee ConfigFields={ConfigFields} />
+                <ConfigModalProduct ConfigFields={ConfigFields} />
             </Modal>
             {Filter}
             {EditSort}

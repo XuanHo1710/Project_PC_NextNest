@@ -12,7 +12,7 @@ interface DataType extends IEmployee {
     key: string;
 }
 
-export default function TableImportCSV({ employees, loading }: { employees: DataType[], loading: boolean }) {
+export default function TableImportEmployeeCSV({ employees, loading }: { employees: DataType[], loading: boolean }) {
     const { selectedRows, setSelectedRows } = useSelectedRowsEmployee();
 
     const columns: TableProps<DataType>['columns'] = [
