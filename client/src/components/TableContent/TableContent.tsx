@@ -30,7 +30,16 @@ export default function TableContent<T extends { _id?: string }>({ data, columns
 
   return (
     <>
-      <Table scroll={{ x: 700 }} pagination={{ pageSize: 4 }} rowSelection={rowSelection} columns={columns} dataSource={data} />
+      {/* <div className="overflow-x-auto max-w-full"> */}
+      <Table
+        // scroll={{ x: 'max-content', y: 200 }}
+        scroll={{ x: 1200 }}
+        pagination={{ pageSize: 4 }}
+        rowSelection={rowSelection}
+        columns={columns}
+        dataSource={data}
+      />
+      {/* </div> */}
     </>
   );
 }

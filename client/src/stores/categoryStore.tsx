@@ -22,11 +22,12 @@ interface ICategoryState {
     category: ICategory | null,
     loading: boolean,
     message: string,
-    fetchCategorys: (queryParams: string) => Promise<void>,
+    fetchCategorys: (queryParams?: string) => Promise<void>,
     addCategory: (category: Omit<ICategory, 'id'>) => Promise<number>,
     updateCategory: (category: ICategory) => Promise<number>,
     deleteCategory: (id: string) => Promise<number>,
     updateManyCategory: (ids: Array<string>, typeUpdate: string) => Promise<number>,
+    findOne: (id: string) => Promise<ICategory | null>
 }
 
 export const useCategoryStore = create<ICategoryState>((set) => ({
@@ -34,7 +35,7 @@ export const useCategoryStore = create<ICategoryState>((set) => ({
     loading: false,
     category: null,
     message: '',
-    fetchCategorys: async (queryParams: string) => {
+    fetchCategorys: async (queryParams: string = "") => {
         set({ loading: true })
         const res = await axios.get(BASE_URL + queryParams)
         set({ categorys: res.data, loading: false })
@@ -103,4 +104,10 @@ export const useCategoryStore = create<ICategoryState>((set) => ({
             set({ loading: false })
         }
     },
+    findOne: async (id: string) => {
+        set({ loading: true })
+        const res = await axios.get(BASE_URL + "/" + id)
+        set({ category: res.data, loading: false })
+        return res.data as ICategory | null;
+    }
 }))

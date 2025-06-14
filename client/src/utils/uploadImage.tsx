@@ -1,21 +1,21 @@
-export const UploadImages = function (fileList: Array<File>): Array<string> {
+export const UploadImages = async function (fileList: Array<File>): Promise<Array<string>> {
     const preset_key = "rb6icg22";
     const cloud_name = "dakuahprw";
-    const listFileImage: Array<string> = [];
-    fileList.forEach(async fileImage => {
+    const uploadPromises = fileList.map(async (fileImage) => {
         const formData = new FormData();
-        formData.append('file', fileImage);
-        formData.append('upload_preset', preset_key);
+        formData.append("file", fileImage);
+        formData.append("upload_preset", preset_key);
 
-        await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
             method: "POST",
-            body: formData
-        })
-            .then(res => res.json())
-            .then(data => listFileImage.push(data.secure_url))
-            .catch(err => console.log(err))
-    })
-    return listFileImage;
+            body: formData,
+        });
+
+        const data = await response.json();
+        return data.secure_url;
+    });
+
+    return Promise.all(uploadPromises); // Trả về tất cả URL sau khi upload xong
 }
 
 export const UploadImage = async function (img: File): Promise<string> {

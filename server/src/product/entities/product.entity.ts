@@ -7,6 +7,10 @@ export class Product {
 
     @Prop()
     name: string;
+
+    @Prop()
+    category: mongoose.Types.ObjectId;
+
     @Prop()
     description: string;
     @Prop()

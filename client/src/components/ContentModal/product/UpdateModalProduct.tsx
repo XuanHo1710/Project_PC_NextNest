@@ -7,11 +7,17 @@ import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { IProduct, useProductStore } from '@/stores/productStore';
 
-
+interface UploadState {
+    files: Array<File>;
+    images: Array<string>
+}
 
 
 export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProduct: IProduct | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
-    const [filesUpload, setFilesUpload] = useState<Array<string>>([]);
+    const [filesUpload, setFilesUpload] = useState<UploadState>({
+        files: [],
+        images: []
+    });
     const [form] = Form.useForm();
     const { updateProduct, loading } = useProductStore();
 
@@ -34,27 +40,39 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
 
     useEffect(() => {
         if (dataProduct && dataProduct.images.length > 0) {
-            setFilesUpload(dataProduct.images);
+            setFilesUpload({
+                images: dataProduct.images,
+                files: []
+            });
         }
     }, [dataProduct]);
 
     const handlePreviewUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target?.files;
         if (files !== null && files.length > 0) {
-            let newFiles = Array.from(files).map(file => URL.createObjectURL(file));
-            if (filesUpload.length + newFiles.length >= 8) {
-                const spaceLeft = 8 - filesUpload.length;
-                newFiles = newFiles.slice(0, spaceLeft);
+            const imgNewFiles = Array.from(files).map(file => URL.createObjectURL(file));
+            const newFiles: UploadState = {
+                files: [...filesUpload.files, ...files],
+                images: [...filesUpload.images, ...imgNewFiles]
+            };
+            if (filesUpload?.files.length + newFiles.images.length > 8) {
+                const spaceLeft = 8 - filesUpload.files.length;
+                newFiles.images = newFiles.images.slice(0, spaceLeft);
+                newFiles.files = Array.from(files).slice(0, spaceLeft);
             }
-            setFilesUpload([...filesUpload, ...newFiles]);
+            setFilesUpload(newFiles);
         }
     }
 
-    const deleteFileUpload = (file: string) => {
-        let filesUploadClone = filesUpload;
-        filesUploadClone = filesUploadClone.filter(fileUpload => fileUpload !== file);
-        setFilesUpload([...filesUploadClone]);
+    const deleteFileUpload = (file: string, index: number) => {
+        let imagesUploadClone = filesUpload.images;
+        imagesUploadClone = imagesUploadClone.filter(imageUpload => imageUpload !== file);
+        const filesUploadClone = filesUpload.files;
+        // Remove one file when knowing index
+        filesUploadClone.splice(index, 1);
+        setFilesUpload({ files: filesUploadClone, images: imagesUploadClone });
     }
+
 
 
     const layout = {
@@ -131,11 +149,11 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
                         <Form.Item label="Upload ảnh(tối đa 8)" className='font-sans text-lg'>
                             <Input onChange={handlePreviewUpload} placeholder='Chọn ảnh cần upload ...' multiple type='file' accept='image/*' />
                             <div className='preview_upload grid grid-cols-12 grid-flow-row gap-2'>
-                                {filesUpload.length > 0 &&
-                                    filesUpload.map((file, index) => (
+                                {filesUpload.images.length > 0 &&
+                                    filesUpload.images.map((img, index) => (
                                         <div key={index} className='col-span-3 relative mt-2 p-2 border border-slate-300'>
-                                            <Image className='aspect-video' src={file} alt='' />
-                                            <div onClick={() => deleteFileUpload(file)} className='cursor-pointer absolute -top-2 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-white bg-red-500'>X</div>
+                                            <Image className='aspect-video' src={img} alt='' />
+                                            <div onClick={() => deleteFileUpload(img, index)} className='cursor-pointer absolute -top-2 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-white bg-red-500'>X</div>
                                         </div>
                                     ))
                                 }

@@ -9,12 +9,14 @@ const BASE_URL = 'product';
 export interface IProduct {
     name: string;
     description: string;
+    category: string,
     images: Array<string>;
     oldPrice: number;
     newPrice?: number;
     discount: number;
     stock: number;
     soldCount?: number;
+    otherString: string,
     other: [
         {
             key: string,

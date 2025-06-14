@@ -63,8 +63,8 @@ export class CategoryService {
     return categories;
   }
 
-  findOne(id: mongoose.Types.ObjectId) {
-    return `This action returns a #${id} category`;
+  async findOne(id: mongoose.Types.ObjectId) {
+    return await this.categoryModel.findById(id);
   }
 
   async update(id: mongoose.Types.ObjectId, updateCategoryDto: UpdateCategoryDto) {

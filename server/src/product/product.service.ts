@@ -11,8 +11,10 @@ import { TypeUpdateManyProduct, TypeQueryProduct } from 'types/product';
 export class ProductService {
   constructor(@InjectModel(Product.name) private productModel: Model<Product>) { }
 
-  create(createProductDto: CreateProductDto) {
-    return 'This action adds a new product';
+  async create(createProductDto: CreateProductDto) {
+    createProductDto.newPrice = createProductDto.oldPrice * (1 - createProductDto.discount);
+    const product = await this.productModel.create(createProductDto);
+    return product;
   }
 
   async findAll() {

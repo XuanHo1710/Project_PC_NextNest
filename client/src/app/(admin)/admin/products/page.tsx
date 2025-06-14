@@ -6,6 +6,7 @@ import UpdateModalProduct from "@/components/ContentModal/product/UpdateModalPro
 import EditSortProduct from "@/components/EditSort/product/EditSortProduct";
 import TableContent from "@/components/TableContent/TableContent";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
+import { useCategoryStore } from "@/stores/categoryStore";
 import { IProduct, useProductStore } from "@/stores/productStore";
 import { Image, Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
@@ -35,10 +36,10 @@ export default function Product() {
     const [fields, setFields] = useState<Array<string>>([
         "name",
         "images",
+        "category",
         "oldPrice",
         "stock",
         "soldCount",
-        "description",
         "other",
         "status",
         "position",
@@ -76,15 +77,14 @@ export default function Product() {
                 title: field.charAt(0).toUpperCase() + field.slice(1), // Tạo title từ field
                 dataIndex: field,
                 key: field,
-                width: 300,
+                width: 3600,
             };
 
             // Thêm render tùy chỉnh cho các trường cụ thể
             if (field === "images") {
                 columnConfig.render = (_: unknown, { name, images }: { name: string, images: Array<string> }) => (
                     <div className="flex items-center gap-4">
-                        <Image src={images[0]} alt={name} />
-                        <h2 className="text-md">{name}</h2>
+                        <Image src={images.length > 0 ? images[0] : ""} alt={name} />
                     </div>
                 );
             } else if (field === "discount") {
@@ -93,7 +93,7 @@ export default function Product() {
                 );
             } else if (field === "oldPrice") {
                 columnConfig.render = (_: unknown, { oldPrice }: { oldPrice: number }) => (
-                    <h2>{oldPrice.toLocaleString()} VND</h2>
+                    <Tag color="blue">{oldPrice.toLocaleString()} VND</Tag>
                 );
             } else if (field === "position") {
                 columnConfig.render = (_: unknown, { position }: { position: number }) => (
@@ -102,13 +102,39 @@ export default function Product() {
             }
             else if (field === "feature") {
                 columnConfig.render = (_: unknown, { feature }: { feature: boolean }) => (
-                    <h2>{feature ? "Có" : "Không"}</h2>
+                    <Tag color="gold">{feature ? "Có" : "Không"}</Tag>
                 );
             } else if (field === "newPrice") {
                 columnConfig.render = (_: unknown, record: DataType) => (
-                    <h2>{record.newPrice !== undefined ? record.newPrice.toLocaleString() + " VND" : "N/A"}</h2>
+                    <Tag color="blue">{record.newPrice !== undefined ? record.newPrice.toLocaleString() + " VND" : "N/A"}</Tag>
+                );
+            } else if (field === "other") {
+                columnConfig.render = (_: unknown, record: DataType) => (
+                    <h2>{record.other.length > 0 ? record.other[0].key : ""}</h2>
+                );
+            } else if (field === "category") {
+                columnConfig.render = (_: unknown, { category }: { category: string }) => (
+                    <CategoryName categoryId={category} />
+                );
+            } else if (field === "status") {
+                columnConfig.render = (_: unknown, { status }: { status: string }) => {
+                    if (status === "ACTIVE")
+                        return <Tag color="green">Hoạt động</Tag>
+                    else if (status === "INACTIVE")
+                        return <Tag color="red">Ngừng hoạt động</Tag>
+                    else if (status === "STOPSOLD")
+                        return <Tag color="cyan">Ngưng bán</Tag>
+                };
+            } else if (field === "stock") {
+                columnConfig.render = (_: unknown, { stock }: { stock: number }) => (
+                    <Tag color="geekblue">{stock}</Tag>
+                );
+            } else if (field === "soldCount") {
+                columnConfig.render = (_: unknown, record: DataType) => (
+                    <Tag color="geekblue">{record.soldCount}</Tag>
                 );
             }
+
 
             return columnConfig;
         }),
@@ -145,6 +171,13 @@ export default function Product() {
             const row = {
                 key: index.toString(),
                 _id: item._id,
+                otherString: item.other.map((o, index) => {
+                    if (item.other.length - 1 === index) {
+                        return o.key + ":" + o.value;
+                    }
+                    return o.key + ":" + o.value + ";"
+                }),
+                description: item.description,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ...fields.reduce((acc: any, field: any) => {
                     if (item.hasOwnProperty(field)) {
@@ -176,6 +209,33 @@ export default function Product() {
     );
 }
 
+
+type CategoryNameProps = { categoryId: string };
+
+const CategoryName: React.FC<CategoryNameProps> = ({ categoryId }) => {
+    const { findOne } = useCategoryStore();
+    const [name, setName] = useState<string>("");
+
+    useEffect(() => {
+        let isMounted = true;
+        const fetchCategory = async () => {
+            try {
+                const cate = await findOne(categoryId);
+                if (isMounted && cate && cate.name) {
+                    setName(cate.name);
+                } else if (isMounted) {
+                    setName("");
+                }
+            } catch {
+                if (isMounted) setName("");
+            }
+        };
+        fetchCategory();
+        return () => { isMounted = false; };
+    }, [categoryId, findOne]);
+
+    return <h2>{name}</h2>;
+};
 
 // Custom hook để dùng trong các component khác
 export const useSelectedRowsProduct = () => {
