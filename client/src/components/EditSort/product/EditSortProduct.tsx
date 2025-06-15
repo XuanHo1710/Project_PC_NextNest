@@ -42,7 +42,8 @@ const EditSortProduct = () => {
                 if (status !== 500) {
                     toast.success("Cập nhật thành công !!");
                     fetchProducts("?" + queryParams.toString() as string);
-                    setSelectedRows([]);
+                    if (type.split(":")[0] === "delete")
+                        setSelectedRows([]);
                 }
             } catch (err) {
                 console.log(err);
@@ -66,8 +67,8 @@ const EditSortProduct = () => {
                                 { value: 'position_desc', label: 'Vị trí giảm dần' },
                                 { value: 'stock_asc', label: 'Số lượng tăng dần' },
                                 { value: 'stock_desc', label: 'Số lượng giảm dần' },
-                                { value: 'price_asc', label: 'Giá tăng dần' },
-                                { value: 'price_desc', label: 'Giá giảm dần' },
+                                { value: 'newPrice_asc', label: 'Giá tăng dần' },
+                                { value: 'newPrice_desc', label: 'Giá giảm dần' },
                                 { value: 'name_asc', label: 'Tên tăng dần từ A-Z' },
                                 { value: 'name_desc', label: 'Tên giảm dần Z-A' },
                             ]}

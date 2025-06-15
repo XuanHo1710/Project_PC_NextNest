@@ -43,7 +43,8 @@ const EditSortEmployee = () => {
                 if (status !== 500) {
                     toast.success("Cập nhật thành công !!");
                     fetchEmployees("?" + queryParams.toString() as string);
-                    setSelectedRows([]);
+                    if (type.split(":")[0] === "delete")
+                        setSelectedRows([]);
                 }
             } catch (err) {
                 console.log(err);

@@ -4,7 +4,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Product } from './entities/product.entity';
 import { Model } from 'mongoose';
-import { TypeUpdateManyProduct, TypeQueryProduct } from 'types/product';
+import { TypeQueryProduct, TypeUpdateManyProduct } from 'types/product';
 
 
 @Injectable()
@@ -17,19 +17,63 @@ export class ProductService {
     return product;
   }
 
-  async findAll() {
-    return await this.productModel.find({});
+  async findAll(filter: TypeQueryProduct) {
+    const sortProduct = {};
+
+    const filterProduct = {};
+
+    if (filter.search) {
+      const keyword = filter.search;
+      filterProduct["$or"] = [
+        { name: { $regex: keyword, $options: "i" } }   // tìm trong tên
+      ];
+    }
+
+
+    if (filter.sort) {
+      const keySort = filter.sort.split("_")[0];
+      const valueSort = filter.sort.split("_")[1];
+      sortProduct[keySort] = valueSort;
+    }
+
+    if (filter.filter) {
+      const keySort = filter.filter.split("_")[0];
+      const valueSort = filter.filter.split("_")[1];
+      filterProduct[keySort] = valueSort;
+    }
+    return await this.productModel.find(filterProduct).sort(sortProduct);
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} product`;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    updateProductDto.newPrice = (updateProductDto.oldPrice ?? 0) * (1 - (updateProductDto.discount ?? 0));
+    return await this.productModel.updateOne({ _id: id }, { $set: updateProductDto });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async updateMany(dataUpdate: TypeUpdateManyProduct) {
+    const type = dataUpdate.typeUpdate.split(':')[0];
+    switch (type) {
+      case "delete": {
+        return await this.productModel.deleteMany({ _id: { $in: dataUpdate.ids } });
+      }
+      case "update": {
+        const keyUpdate = dataUpdate.typeUpdate.split(":")[1].split("_")[0];
+        const valueUpdate = dataUpdate.typeUpdate.split(":")[1].split("_")[1];
+
+        const update = {
+        };
+
+        update[keyUpdate] = valueUpdate;
+        return await this.productModel.updateMany({ _id: { $in: dataUpdate.ids } }, update);
+      }
+    }
+    return null;
+  }
+
+  async remove(id: string) {
+    return await this.productModel.deleteOne({ _id: id });
   }
 }

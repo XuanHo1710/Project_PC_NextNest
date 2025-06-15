@@ -3,9 +3,12 @@ import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
-import { useEffect, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { IProduct, useProductStore } from '@/stores/productStore';
+import { ICategory, useCategoryStore } from '@/stores/categoryStore';
+import { UploadImages } from '@/utils/uploadImage';
+import { useQueryParams } from '@/hooks/QueryParamsContext';
 
 interface UploadState {
     files: Array<File>;
@@ -18,8 +21,18 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
         files: [],
         images: []
     });
+
+    console.log(dataProduct);
+
     const [form] = Form.useForm();
-    const { updateProduct, loading } = useProductStore();
+    const { updateProduct, loading, fetchProducts } = useProductStore();
+    const { queryParams } = useQueryParams();
+
+    const { categorys, fetchCategorys } = useCategoryStore();
+
+    useEffect(() => {
+        fetchCategorys();
+    }, [fetchCategorys]);
 
 
     useEffect(() => {
@@ -27,10 +40,11 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
             form.setFieldsValue({
                 name: dataProduct.name,
                 description: dataProduct.description,
+                category: dataProduct.category,
                 stock: dataProduct.stock,
-                discount: dataProduct.discount,
+                discount: dataProduct.discount * 100,
                 oldPrice: dataProduct.oldPrice,
-                other: [],
+                otherString: dataProduct.otherString,
                 status: dataProduct.status,
                 feature: dataProduct.feature,
                 position: dataProduct.position
@@ -67,6 +81,9 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
     const deleteFileUpload = (file: string, index: number) => {
         let imagesUploadClone = filesUpload.images;
         imagesUploadClone = imagesUploadClone.filter(imageUpload => imageUpload !== file);
+        if (dataProduct) {
+            dataProduct.images = dataProduct.images.filter(img => img !== file);
+        }
         const filesUploadClone = filesUpload.files;
         // Remove one file when knowing index
         filesUploadClone.splice(index, 1);
@@ -85,28 +102,104 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
     };
 
     const handleUpdate = async (data: IProduct) => {
-        // let avatarUrl: string = dataEmployee?.avatar || ""; // giữ ảnh cũ mặc định
+        data.discount = data.discount / 100;
+        let otherHandle: [{ key: string, value: string }] | [] = [];
+
+        console.log(data);
+
+
+        if (data.otherString.trim() !== "") {
+            // Check A:B;C:D,....
+            if (!data.otherString.match(/^\w+:\w+(;\w+:\w+)*$/)) {
+                toast.error("Vui lòng nhập trường other đúng cú pháp !!")
+                return;
+            }
+            const mapped = Array.from(data.otherString.split(";")).map(x => (
+                {
+                    key: x.split(":")[0],
+                    value: x.split(":")[1]
+                }
+            ));
+            // Ensure at least one element if not empty
+            if (mapped.length > 0) {
+                otherHandle = mapped as [{ key: string, value: string }];
+            }
+        }
+        let filesOnline: string[] = dataProduct?.images || []; // giữ ảnh cũ mặc định
 
         // Nếu có file mới => upload và thay avatarUrl
-        // if (filesUpload?.file) {
-        //     avatarUrl = await UploadImage((filesUpload?.file) as File)
-        // }
-        const product = {
-            ...data,
-            _id: dataProduct?._id
+        if (filesUpload?.files.length > 0) {
+            filesOnline = [...filesOnline, ...await UploadImages((filesUpload.files))];
         }
 
+        const product = {
+            ...data,
+            images: filesOnline,
+            other: otherHandle,
+            _id: dataProduct?._id
+        };
+
         try {
-            const status = await updateProduct(product);
+            const status = await updateProduct(product as IProduct);
             if (status !== 500) {
                 toast.success("Sửa sản phẩm thành công !!");
                 form.resetFields(); // reset form
+                await fetchProducts("?" + queryParams.toString());
                 setOpen(false);
             }
         } catch (err) {
             toast.error("Sửa sản phẩm thất bại do lỗi: " + err)
         }
     }
+
+    const buildCategoryTree = (flatCategories: ICategory[]): ICategory[] => {
+        const idToNodeMap = new Map<string, ICategory>();
+
+        // Bản sao để tránh đụng dữ liệu gốc
+        const categoriesCopy = flatCategories.map(cat => ({ ...cat, children: [] }));
+
+        // Map id → node
+        categoriesCopy.forEach(cat => {
+            if (cat._id) {
+                idToNodeMap.set(cat._id, cat);
+            }
+        });
+
+        const tree: ICategory[] = [];
+
+        categoriesCopy.forEach(cat => {
+            if (cat.parent && cat.parent._id) {
+                const parent = idToNodeMap.get(cat.parent._id);
+                if (parent) {
+                    parent.children = parent.children || [];
+                    parent.children.push(cat);
+                }
+            } else {
+                tree.push(cat); // root node
+            }
+        });
+
+        return tree;
+    };
+
+
+    const renderCategoryOptions = (categories: ICategory[], level = 0): JSX.Element[] => {
+        const prefix = '-'.repeat(level);
+
+        return categories.flatMap(category => {
+            const option = (
+                <Select.Option key={category._id} value={category._id}>
+                    {`${prefix} ${category.name}`}
+                </Select.Option>
+            );
+
+            const childrenOptions = category.children && category.children.length > 0
+                ? renderCategoryOptions(category.children, level + 1)
+                : [];
+
+            return [option, ...childrenOptions];
+        });
+    };
 
 
 
@@ -122,6 +215,14 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
                     >
                         <Form.Item label="Tên sản phẩm" name="name" className='font-sans text-lg'>
                             <Input placeholder='Nhập tên sản phẩm ...' />
+                        </Form.Item>
+                        <Form.Item label="Chọn danh mục" name="category" className='font-sans text-lg'>
+                            <Select allowClear showSearch placeholder="Chọn danh mục">
+                                <Select.Option value="">Không</Select.Option>
+                                {categorys.length > 0 &&
+                                    renderCategoryOptions(buildCategoryTree(categorys))
+                                }
+                            </Select>
                         </Form.Item>
                         <Form.Item label="Mô tả" name="description" className='font-sans text-lg'>
                             {/* <Editor
@@ -150,10 +251,10 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
                             <Input onChange={handlePreviewUpload} placeholder='Chọn ảnh cần upload ...' multiple type='file' accept='image/*' />
                             <div className='preview_upload grid grid-cols-12 grid-flow-row gap-2'>
                                 {filesUpload.images.length > 0 &&
-                                    filesUpload.images.map((img, index) => (
+                                    filesUpload.images.map((file, index) => (
                                         <div key={index} className='col-span-3 relative mt-2 p-2 border border-slate-300'>
-                                            <Image className='aspect-video' src={img} alt='' />
-                                            <div onClick={() => deleteFileUpload(img, index)} className='cursor-pointer absolute -top-2 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-white bg-red-500'>X</div>
+                                            <Image className='aspect-video' src={file} alt='' />
+                                            <div onClick={() => deleteFileUpload(file, index)} className='cursor-pointer absolute -top-2 -right-1 flex items-center justify-center w-5 h-5 rounded-full text-white bg-red-500'>X</div>
                                         </div>
                                     ))
                                 }
@@ -179,8 +280,8 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
                                 placeholder='Nhập đơn giá sản phẩm ...'
                             />
                         </Form.Item>
-                        <Form.Item label="Khác" name="other" className='font-sans text-lg'>
-                            <Input className='!w-full' placeholder='Nhập các thuộc tính khác (nếu có)' />
+                        <Form.Item label="Khác" name="otherString" className='font-sans text-lg'>
+                            <Input className='!w-full' placeholder='Nhập các thuộc tính khác (nếu có cách nhau bởi A:B;C:D)' />
                         </Form.Item>
                         <Form.Item label="Vị trí" name="position" className='font-sans text-lg'>
                             <InputNumber className='!w-full' min={0} placeholder='Nhập vị trí của sản phẩm (Tự động tăng)' />

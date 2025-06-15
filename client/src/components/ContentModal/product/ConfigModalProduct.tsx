@@ -52,17 +52,10 @@ export default function ConfigModalProduct({ ConfigFields }: { ConfigFields: { f
                     />
                 </div>
                 <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
-                    <h2 className='text-base font-semibold'>Description:</h2>
+                    <h2 className='text-base font-semibold'>Category:</h2>
                     <Switch
-                        defaultChecked={ConfigFields.fields.includes("description")}
-                        onClick={(isActive) => handleSwitch("description", isActive)}
-                    />
-                </div>
-                <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
-                    <h2 className='text-base font-semibold'>Other:</h2>
-                    <Switch
-                        defaultChecked={ConfigFields.fields.includes("other")}
-                        onClick={(isActive) => handleSwitch("other", isActive)}
+                        defaultChecked={ConfigFields.fields.includes("category")}
+                        onClick={(isActive) => handleSwitch("category", isActive)}
                     />
                 </div>
                 <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>

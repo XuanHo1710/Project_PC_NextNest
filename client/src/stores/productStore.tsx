@@ -95,11 +95,6 @@ export const useProductStore = create<IProductState>((set) => ({
         set({ loading: true })
         try {
             const res = await axios.patch(`${BASE_URL}/${product._id}`, product)
-            set((state) => ({
-                products: state.products.map((p: IProduct) =>
-                    p._id === product._id ? product : p
-                ),
-            }))
             return res.status;
         } catch (err) {
             console.log('Error updating product:', err);

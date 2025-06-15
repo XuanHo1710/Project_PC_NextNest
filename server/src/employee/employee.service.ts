@@ -23,9 +23,9 @@ export class EmployeeService {
 
   async findAll(filter: TypeQueryEmployee) {
 
-    let sortEmployee = {};
+    const sortEmployee = {};
 
-    let filterEmployee = {};
+    const filterEmployee = {};
 
     if (filter.search) {
       const keyword = filter.search;

@@ -40,7 +40,6 @@ export default function Product() {
         "oldPrice",
         "stock",
         "soldCount",
-        "other",
         "status",
         "position",
         "feature",
@@ -63,9 +62,9 @@ export default function Product() {
         try {
             const status = await deleteProduct(id);
             if (status !== 500)
-                toast.success("Xóa nhân viên này thành công !!");
+                toast.success("Xóa sản phẩm này thành công !!");
         } catch (err) {
-            toast.error("Xóa nhân viên này thất bại do lỗi: " + err);
+            toast.error("Xóa sản phẩm này thất bại do lỗi: " + err);
         }
     }
 
@@ -108,10 +107,6 @@ export default function Product() {
                 columnConfig.render = (_: unknown, record: DataType) => (
                     <Tag color="blue">{record.newPrice !== undefined ? record.newPrice.toLocaleString() + " VND" : "N/A"}</Tag>
                 );
-            } else if (field === "other") {
-                columnConfig.render = (_: unknown, record: DataType) => (
-                    <h2>{record.other.length > 0 ? record.other[0].key : ""}</h2>
-                );
             } else if (field === "category") {
                 columnConfig.render = (_: unknown, { category }: { category: string }) => (
                     <CategoryName categoryId={category} />
@@ -121,7 +116,7 @@ export default function Product() {
                     if (status === "ACTIVE")
                         return <Tag color="green">Hoạt động</Tag>
                     else if (status === "INACTIVE")
-                        return <Tag color="red">Ngừng hoạt động</Tag>
+                        return <Tag color="red">Dừng hoạt động</Tag>
                     else if (status === "STOPSOLD")
                         return <Tag color="cyan">Ngưng bán</Tag>
                 };
@@ -165,6 +160,7 @@ export default function Product() {
         },
     ];
 
+
     let dataTable: DataType[] = [];
     if (!loading && products.length > 0) {
         dataTable = products.map((item, index) => {
@@ -176,7 +172,7 @@ export default function Product() {
                         return o.key + ":" + o.value;
                     }
                     return o.key + ":" + o.value + ";"
-                }),
+                }).join(""),
                 description: item.description,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 ...fields.reduce((acc: any, field: any) => {
