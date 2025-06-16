@@ -17,7 +17,6 @@ export class DiscountService {
     if (createDiscountDto.startDate > createDiscountDto.endDate)
       throw new BadRequestException("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu");
 
-
     const discount = await this.discountModel.create(createDiscountDto)
     return discount;
   }

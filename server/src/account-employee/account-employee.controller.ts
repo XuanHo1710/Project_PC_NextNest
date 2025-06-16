@@ -1,11 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { AccountEmployeeService } from './account-employee.service';
 import { CreateAccountEmployeeDto } from './dto/create-account-employee.dto';
 import { UpdateAccountEmployeeDto } from './dto/update-account-employee.dto';
+import { TypeQueryAccountEmployee, TypeUpdateManyAccountEmployee } from 'types/account-employee';
+import mongoose from 'mongoose';
 
-@Controller('account-employee')
+@Controller('/admin/account-employee')
 export class AccountEmployeeController {
-  constructor(private readonly accountEmployeeService: AccountEmployeeService) {}
+  constructor(private readonly accountEmployeeService: AccountEmployeeService) { }
 
   @Post()
   create(@Body() createAccountEmployeeDto: CreateAccountEmployeeDto) {
@@ -13,22 +15,27 @@ export class AccountEmployeeController {
   }
 
   @Get()
-  findAll() {
-    return this.accountEmployeeService.findAll();
+  findAll(@Query() filter: TypeQueryAccountEmployee) {
+    return this.accountEmployeeService.findAll(filter);
+  }
+
+  @Patch('/updateMany')
+  updateMany(@Body() dataUpdate: TypeUpdateManyAccountEmployee) {
+    return this.accountEmployeeService.updateMany(dataUpdate);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.accountEmployeeService.findOne(+id);
+  findOne(@Param('id') id: mongoose.Types.ObjectId) {
+    return this.accountEmployeeService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAccountEmployeeDto: UpdateAccountEmployeeDto) {
-    return this.accountEmployeeService.update(+id, updateAccountEmployeeDto);
+  update(@Param('id') id: mongoose.Types.ObjectId, @Body() updateAccountEmployeeDto: UpdateAccountEmployeeDto) {
+    return this.accountEmployeeService.update(id, updateAccountEmployeeDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.accountEmployeeService.remove(+id);
+  remove(@Param('id') id: mongoose.Types.ObjectId) {
+    return this.accountEmployeeService.remove(id);
   }
 }

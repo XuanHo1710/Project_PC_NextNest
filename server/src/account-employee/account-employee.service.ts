@@ -1,26 +1,81 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAccountEmployeeDto } from './dto/create-account-employee.dto';
 import { UpdateAccountEmployeeDto } from './dto/update-account-employee.dto';
+import { TypeQueryAccountEmployee, TypeUpdateManyAccountEmployee } from 'types/account-employee';
+import mongoose, { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
 
 @Injectable()
 export class AccountEmployeeService {
-  create(createAccountEmployeeDto: CreateAccountEmployeeDto) {
-    return 'This action adds a new accountEmployee';
+  constructor(@InjectModel(AccountEmployee.name) private accountEmployeeModel: Model<AccountEmployee>) { }
+
+  async create(createAccountEmployeeDto: CreateAccountEmployeeDto) {
+    createAccountEmployeeDto.employee = createAccountEmployeeDto.employeeId;
+    const account = await this.accountEmployeeModel.create(createAccountEmployeeDto)
+    return account;
   }
 
-  findAll() {
-    return `This action returns all accountEmployee`;
+  async findAll(filter: TypeQueryAccountEmployee) {
+    const sortAccount = {};
+
+    const filterAccount = {};
+
+    if (filter.search) {
+      const keyword = filter.search;
+      filterAccount["$or"] = [
+        { IDEmp: { $regex: keyword, $options: "i" } }   // tìm trong email
+      ];
+    }
+
+
+    if (filter.sort) {
+      const keySort = filter.sort.split("_")[0];
+      const valueSort = filter.sort.split("_")[1];
+      sortAccount[keySort] = valueSort;
+    }
+
+    if (filter.filter) {
+      const keySort = filter.filter.split("_")[0];
+      const valueSort = filter.filter.split("_")[1];
+      filterAccount[keySort] = valueSort;
+    }
+
+
+    const accounts = await this.accountEmployeeModel.find(filterAccount).sort(sortAccount).populate('employee');
+    return accounts;
   }
 
-  findOne(id: number) {
+  findOne(id: mongoose.Types.ObjectId) {
     return `This action returns a #${id} accountEmployee`;
   }
 
-  update(id: number, updateAccountEmployeeDto: UpdateAccountEmployeeDto) {
-    return `This action updates a #${id} accountEmployee`;
+  async updateMany(dataUpdate: TypeUpdateManyAccountEmployee) {
+    const type = dataUpdate.typeUpdate.split(':')[0];
+    switch (type) {
+      case "delete": {
+        return await this.accountEmployeeModel.deleteMany({ _id: { $in: dataUpdate.ids } });
+      }
+      case "update": {
+        const keyUpdate = dataUpdate.typeUpdate.split(":")[1].split("_")[0];
+        const valueUpdate = dataUpdate.typeUpdate.split(":")[1].split("_")[1];
+
+        const update = {
+        };
+
+        update[keyUpdate] = valueUpdate;
+        return await this.accountEmployeeModel.updateMany({ _id: { $in: dataUpdate.ids } }, update);
+      }
+    }
+    return null;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} accountEmployee`;
+  async update(id: mongoose.Types.ObjectId, updateAccountEmployeeDto: UpdateAccountEmployeeDto) {
+    updateAccountEmployeeDto.employee = updateAccountEmployeeDto.employeeId;
+    return await this.accountEmployeeModel.updateOne({ _id: id }, updateAccountEmployeeDto);
+  }
+
+  async remove(id: mongoose.Types.ObjectId) {
+    return await this.accountEmployeeModel.deleteOne({ _id: id });
   }
 }

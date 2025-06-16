@@ -19,6 +19,11 @@ export class EmployeeController {
     return this.employeeService.findAll(filter);
   }
 
+  @Get("/no-account")
+  findEmployeeHaveNotAccount() {
+    return this.employeeService.findEmployeeHaveNotAccount();
+  }
+
   @Patch('/updateMany')
   updateMany(@Body() dataUpdate: TypeUpdateManyEmployee) {
     return this.employeeService.updateMany(dataUpdate);

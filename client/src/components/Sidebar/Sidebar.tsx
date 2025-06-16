@@ -85,7 +85,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     children: [
                         {
                             key: 'employeeAccount',
-                            label: 'Tài khoản nhân viên',
+                            label: <Link href={"/admin/account-employee"}>Tài khoản nhân viên</Link>,
                             icon: <IoIosPeople />
 
 

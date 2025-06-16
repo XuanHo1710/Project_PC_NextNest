@@ -9,6 +9,7 @@ import { CategoryModule } from './category/category.module';
 import { ProductModule } from './product/product.module';
 import { DiscountModule } from './discount/discount.module';
 import { AccountEmployeeModule } from './account-employee/account-employee.module';
+import { RoleModule } from './role/role.module';
 const mongooseAutoPopulate = require('mongoose-autopopulate');
 
 
@@ -30,7 +31,8 @@ const mongooseAutoPopulate = require('mongoose-autopopulate');
     CategoryModule,
     ProductModule,
     DiscountModule,
-    AccountEmployeeModule
+    AccountEmployeeModule,
+    RoleModule
   ],
   controllers: [AppController],
   providers: [AppService],

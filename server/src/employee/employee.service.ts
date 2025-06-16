@@ -5,10 +5,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Employee } from './entities/employee.entity';
 import mongoose, { Model } from 'mongoose';
 import { TypeQueryEmployee, TypeUpdateManyEmployee } from 'types/employee';
+import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
 
 @Injectable()
 export class EmployeeService {
-  constructor(@InjectModel(Employee.name) private employeeModel: Model<Employee>) { }
+  constructor(
+    @InjectModel(Employee.name) private employeeModel: Model<Employee>,
+    @InjectModel(AccountEmployee.name) private accountEmployeeModel: Model<AccountEmployee>
+  ) { }
 
 
 
@@ -19,6 +23,24 @@ export class EmployeeService {
     }
     const employee = await this.employeeModel.create(createEmployeeDto)
     return employee;
+  }
+
+  async findEmployeeHaveNotAccount() {
+    return await this.employeeModel.aggregate([
+      {
+        $lookup: {
+          from: 'accountemployees',       // tên collection của accountEmployeeModel
+          localField: '_id',
+          foreignField: 'employee',
+          as: 'accountInfo',
+        },
+      },
+      {
+        $match: {
+          accountInfo: { $eq: [] }, // Lọc những employee không có account
+        },
+      },
+    ]);
   }
 
   async findAll(filter: TypeQueryEmployee) {

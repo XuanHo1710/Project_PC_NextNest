@@ -22,7 +22,8 @@ interface IEmployeeState {
     employee: IEmployee | null,
     loading: boolean,
     message: string,
-    fetchEmployees: (queryParams: string) => Promise<void>,
+    fetchEmployees: (queryParams?: string) => Promise<void>,
+    getEmployeesNoAccount: () => Promise<void>,
     addEmployee: (employee: Omit<IEmployee, 'id'>) => Promise<number>,
     updateEmployee: (employee: IEmployee) => Promise<number>,
     deleteEmployee: (id: string) => Promise<number>,
@@ -34,9 +35,16 @@ export const useEmployeeStore = create<IEmployeeState>((set) => ({
     loading: false,
     employee: null,
     message: '',
-    fetchEmployees: async (queryParams: string) => {
+    fetchEmployees: async (queryParams: string = "") => {
         set({ loading: true })
         const res = await axios.get(BASE_URL + queryParams)
+        set({ employees: res.data, loading: false })
+    },
+    getEmployeesNoAccount: async () => {
+        set({ loading: true })
+        const res = await axios.get(BASE_URL + "/no-account")
+        console.log(res);
+
         set({ employees: res.data, loading: false })
     },
     getOneEmployee: async (id: string) => {
