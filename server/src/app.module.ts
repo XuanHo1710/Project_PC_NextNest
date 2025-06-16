@@ -7,6 +7,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { CategoryModule } from './category/category.module';
 import { ProductModule } from './product/product.module';
+import { DiscountModule } from './discount/discount.module';
+import { AccountEmployeeModule } from './account-employee/account-employee.module';
 const mongooseAutoPopulate = require('mongoose-autopopulate');
 
 
@@ -26,7 +28,9 @@ const mongooseAutoPopulate = require('mongoose-autopopulate');
     }),
     EmployeeModule,
     CategoryModule,
-    ProductModule
+    ProductModule,
+    DiscountModule,
+    AccountEmployeeModule
   ],
   controllers: [AppController],
   providers: [AppService],

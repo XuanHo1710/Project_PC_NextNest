@@ -18,9 +18,6 @@ import { MoneyCollectOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
-
-
-
 export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
     const items: MenuItem[] = [
         {
@@ -45,7 +42,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                 },
                 {
                     key: 'discount',
-                    label: 'Khuyến mãi',
+                    label: <Link href={"/admin/discount"}>Khuyến mãi</Link>,
                     icon: <MoneyCollectOutlined />
                 },
                 {
