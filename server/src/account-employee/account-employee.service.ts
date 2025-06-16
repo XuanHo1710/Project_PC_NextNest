@@ -11,6 +11,7 @@ export class AccountEmployeeService {
   constructor(@InjectModel(AccountEmployee.name) private accountEmployeeModel: Model<AccountEmployee>) { }
 
   async create(createAccountEmployeeDto: CreateAccountEmployeeDto) {
+    createAccountEmployeeDto.role = createAccountEmployeeDto.roleId;
     createAccountEmployeeDto.employee = createAccountEmployeeDto.employeeId;
     const account = await this.accountEmployeeModel.create(createAccountEmployeeDto)
     return account;
@@ -42,7 +43,7 @@ export class AccountEmployeeService {
     }
 
 
-    const accounts = await this.accountEmployeeModel.find(filterAccount).sort(sortAccount).populate('employee');
+    const accounts = await this.accountEmployeeModel.find(filterAccount).sort(sortAccount).populate(['employee', 'role']);
     return accounts;
   }
 
@@ -71,6 +72,7 @@ export class AccountEmployeeService {
   }
 
   async update(id: mongoose.Types.ObjectId, updateAccountEmployeeDto: UpdateAccountEmployeeDto) {
+    updateAccountEmployeeDto.role = updateAccountEmployeeDto.roleId;
     updateAccountEmployeeDto.employee = updateAccountEmployeeDto.employeeId;
     return await this.accountEmployeeModel.updateOne({ _id: id }, updateAccountEmployeeDto);
   }

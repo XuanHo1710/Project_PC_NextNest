@@ -99,7 +99,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                 },
                 {
                     key: 'role',
-                    label: 'Vai trò',
+                    label: <Link href={"/admin/role"}>Vai trò</Link>,
                     icon: <SiAdguard />
                 },
                 {

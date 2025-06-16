@@ -1,24 +1,14 @@
 'use client'
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
-import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
+import { Button, Form, Image, Input, InputNumber, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { DataType } from '@/app/(admin)/admin/employee/page';
-import { useEmployeeStore } from '@/stores/employeeStore';
+import { IEmployee, useEmployeeStore } from '@/stores/employeeStore';
 import { UploadImage } from '@/utils/uploadImage';
 
 
-export interface IEmployee {
-    avatar: string;
-    name: string;
-    email: string;
-    gender: string;
-    age: number;
-    address: string;
-    role: string
-}
 
 interface UploadState {
     file: File | null;
@@ -26,7 +16,7 @@ interface UploadState {
 }
 
 
-export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmployee: DataType | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
+export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmployee: IEmployee | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [filesUpload, setFilesUpload] = useState<UploadState | null>(null);;
     const [form] = Form.useForm();
     const { updateEmployee, loading } = useEmployeeStore();
@@ -39,7 +29,6 @@ export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmp
                 email: dataEmployee.email,
                 age: dataEmployee.age,
                 address: dataEmployee.address,
-                role: dataEmployee.role,
                 gender: dataEmployee.gender === "Nam" ? true : false,
             });
         }
@@ -133,12 +122,6 @@ export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmp
                         </Form.Item>
                         <Form.Item label="Địa chỉ" name="address" className='font-sans text-lg'>
                             <TextArea className='!w-full' placeholder='Nhập địa chỉ của nhân viên' />
-                        </Form.Item>
-                        <Form.Item label="Vai trò" name="role" className='font-sans text-lg'>
-                            <Select placeholder="Chọn vai trò cho nhân viên">
-                                <Select.Option value="Employee">Nhân viên</Select.Option>
-                                <Select.Option value="Employee_A">Nhân viên kỹ thuật</Select.Option>
-                            </Select>
                         </Form.Item>
                         <Form.Item label="Giới tính" name="gender" className='font-sans text-lg'>
                             <Switch checkedChildren={"MALE"} unCheckedChildren={"FEMALE"} />

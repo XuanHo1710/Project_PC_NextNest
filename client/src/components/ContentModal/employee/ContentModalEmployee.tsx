@@ -3,7 +3,7 @@ import { IEmployee, useEmployeeStore } from '@/stores/employeeStore';
 import { UploadImage } from '@/utils/uploadImage';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
-import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
+import { Button, Form, Image, Input, InputNumber, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
@@ -78,7 +78,6 @@ export default function ContentModalEmployee() {
                         email: "",
                         age: 17,
                         address: "",
-                        role: "Employee",
                         gender: true, // Switch true = MALE, false = FEMALE
                     }}
                     form={form}
@@ -105,12 +104,6 @@ export default function ContentModalEmployee() {
                     </Form.Item>
                     <Form.Item label="Địa chỉ" name="address" className='font-sans text-lg'>
                         <TextArea className='!w-full' placeholder='Nhập địa chỉ của nhân viên' />
-                    </Form.Item>
-                    <Form.Item label="Vai trò" name="role" className='font-sans text-lg'>
-                        <Select placeholder="Chọn vai trò cho nhân viên">
-                            <Select.Option value="Employee">Nhân viên</Select.Option>
-                            <Select.Option value="Employee_A">Nhân viên kỹ thuật</Select.Option>
-                        </Select>
                     </Form.Item>
                     <Form.Item label="Giới tính" name="gender" className='font-sans text-lg'>
                         <Switch checkedChildren={"MALE"} unCheckedChildren={"FEMALE"} />

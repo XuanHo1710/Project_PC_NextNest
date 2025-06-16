@@ -1,20 +1,27 @@
 'use client';
 
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { Button, Form, Input } from "antd";
-import { useState } from "react";
+import { useRoleStore } from "@/stores/roleStore";
+import { Button, Form, Input, Select } from "antd";
+import { useEffect, useState } from "react";
 
 const FilterAccountEmployee = () => {
 
     const [selectedType, setSelectedType] = useState("all");
     const { queryParams, setQueryParams } = useQueryParams();
 
-
     const types = [
         { label: "Tất cả", value: "all" },
         { label: "Hoạt động", value: "status_ACTIVE" },
         { label: "Dừng hoạt động", value: "status_INACTIVE" },
-    ];
+    ]
+
+    const { roles, fetchRoles } = useRoleStore();
+
+
+    useEffect(() => {
+        fetchRoles();
+    }, [fetchRoles]);
 
 
     const handleSearch = (values: { search: string }) => {
@@ -30,6 +37,20 @@ const FilterAccountEmployee = () => {
             setQueryParams(currentParams);
         }
 
+    }
+
+
+    const handleChangeRole = (role: string) => {
+        if (role !== "all") {
+            const currentParams = new URLSearchParams(queryParams.toString());
+            currentParams.set("filter", "role_" + role);
+            setQueryParams(currentParams);
+
+        } else {
+            const currentParams = new URLSearchParams(queryParams.toString());
+            currentParams.delete("filter");
+            setQueryParams(currentParams);
+        }
     }
 
     const handleFilter = (value: string) => {
@@ -70,6 +91,17 @@ const FilterAccountEmployee = () => {
                                 {t.label}
                             </Button>
                         ))}
+                    </div>
+                    <div className="flex items-center justify-center ">
+                        <h3 className="mx-2 text-sm">Vai trò: </h3>
+                        <Select className="w-60" placeholder="Chọn vai trò" onChange={handleChangeRole}>
+                            <Select.Option value={"all"}>Tất cả</Select.Option>
+                            {roles.length > 0 &&
+                                roles.map(r => (
+                                    <Select.Option key={r._id} value={r._id}>{r.name}</Select.Option>
+                                ))
+                            }
+                        </Select>
                     </div>
 
                     <div className="flex items-center justify-center">

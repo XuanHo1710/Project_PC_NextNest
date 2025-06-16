@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { useEmployeeStore } from '@/stores/employeeStore';
 import { IAccountEmployee, useAccountEmployeeStore } from '@/stores/accountEmployeeStore';
 import { useEffect } from 'react';
+import { useRoleStore } from '@/stores/roleStore';
 
 
 
@@ -14,10 +15,12 @@ import { useEffect } from 'react';
 export default function ContentModalAccountEmployee() {
     const { addAccountEmployee, loading, fetchAccountEmployees } = useAccountEmployeeStore();
     const { employees, getEmployeesNoAccount } = useEmployeeStore();
+    const { roles, fetchRoles } = useRoleStore();
 
     useEffect(() => {
         getEmployeesNoAccount();
-    }, [getEmployeesNoAccount])
+        fetchRoles();
+    }, [getEmployeesNoAccount, fetchRoles])
 
     const [form] = Form.useForm();
 
@@ -62,6 +65,7 @@ export default function ContentModalAccountEmployee() {
                         IDEmp: "",
                         password: "",
                         employeeId: "",
+                        roleId: "",
                         status: "ACTIVE"
                     }}
                     form={form}
@@ -93,7 +97,15 @@ export default function ContentModalAccountEmployee() {
                             }
                         </Select>
                     </Form.Item>
-
+                    <Form.Item label="Vai trò" name="roleId" className='font-sans text-lg'>
+                        <Select placeholder="Chọn vai trò">
+                            {roles.length > 0 &&
+                                roles.map(r => (
+                                    <Select.Option key={r._id} value={r._id}>{r.name}</Select.Option>
+                                ))
+                            }
+                        </Select>
+                    </Form.Item>
                     <Form.Item label="Trạng thái" name="status" className='font-sans text-lg'>
                         <Select placeholder="Chọn trạng thái">
                             <Select.Option value="ACTIVE">Hoạt động</Select.Option>

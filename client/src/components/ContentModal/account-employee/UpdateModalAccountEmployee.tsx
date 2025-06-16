@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { useQueryParams } from '@/hooks/QueryParamsContext';
 import { IAccountEmployee, useAccountEmployeeStore } from '@/stores/accountEmployeeStore';
 import { useEmployeeStore } from '@/stores/employeeStore';
+import { useRoleStore } from '@/stores/roleStore';
 
 
 
@@ -15,6 +16,8 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
     const { updateAccountEmployee, fetchAccountEmployees, loading } = useAccountEmployeeStore();
     const { employees, getEmployeesNoAccount } = useEmployeeStore();
     const { queryParams } = useQueryParams();
+    const { roles, fetchRoles } = useRoleStore();
+
 
 
     useEffect(() => {
@@ -23,11 +26,13 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
                 IDEmp: dataAccountEmployee.IDEmp,
                 password: dataAccountEmployee.password,
                 status: dataAccountEmployee.status,
-                employeeId: dataAccountEmployee.employee._id
+                employeeId: dataAccountEmployee.employee._id,
+                roleId: dataAccountEmployee?.role ? dataAccountEmployee?.role._id : ""
             });
             getEmployeesNoAccount();
+            fetchRoles();
         }
-    }, [getEmployeesNoAccount, dataAccountEmployee, form]);
+    }, [getEmployeesNoAccount, fetchRoles, dataAccountEmployee, form]);
 
 
     const layout = {
@@ -100,7 +105,15 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
                                 <Select.Option value={dataAccountEmployee.employee._id}>{dataAccountEmployee.employee.name + "  " + dataAccountEmployee.employee.age}</Select.Option>
                             </Select>
                         </Form.Item>
-
+                        <Form.Item label="Vai trò" name="roleId" className='font-sans text-lg'>
+                            <Select placeholder="Chọn vai trò">
+                                {roles.length > 0 &&
+                                    roles.map(r => (
+                                        <Select.Option key={r._id} value={r._id}>{r.name}</Select.Option>
+                                    ))
+                                }
+                            </Select>
+                        </Form.Item>
                         <Form.Item label="Trạng thái" name="status" className='font-sans text-lg'>
                             <Select placeholder="Chọn trạng thái">
                                 <Select.Option value="ACTIVE">Hoạt động</Select.Option>

@@ -13,6 +13,7 @@ import FilterAccountEmployee from "@/components/ActionFilter/account-employee/Fi
 import EditSortAccountEmployee from "@/components/EditSort/account-employee/EditSortAccountEmployee";
 import ContentModalAccountEmployee from "@/components/ContentModal/account-employee/ContentModalAccountEmployee";
 import { IEmployee } from "@/stores/employeeStore";
+import { IRole } from "@/stores/roleStore";
 
 
 export interface DataType extends IAccountEmployee {
@@ -37,6 +38,7 @@ export default function Discount() {
         "password",
         "employee",
         "status",
+        "role"
     ]);
 
     const { accountEmployees, deleteAccountEmployee, fetchAccountEmployees, loading, message } = useAccountEmployeeStore()
@@ -79,6 +81,10 @@ export default function Discount() {
             } else if (field === "employee") {
                 columnConfig.render = (_: unknown, { employee }: { employee: IEmployee }) => (
                     <h2>{employee.name}</h2>
+                );
+            } else if (field === "role") {
+                columnConfig.render = (_: unknown, { role }: { role: IRole }) => (
+                    <h2>{role?.name ? role?.name : ""}</h2>
                 );
             }
 

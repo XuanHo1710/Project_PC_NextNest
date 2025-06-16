@@ -37,7 +37,6 @@ export default function Employee() {
         "age",
         "address",
         "email",
-        "role",
         "gender",
     ]);
 

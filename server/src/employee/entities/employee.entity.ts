@@ -16,8 +16,6 @@ export class Employee {
     gender: string;
     @Prop()
     address: string;
-    @Prop({ default: 'Employee' })
-    role: string;
 
     // @Prop({ default: "a" })
     // refreshToken: string;

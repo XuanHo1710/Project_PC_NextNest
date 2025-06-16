@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose, { HydratedDocument } from 'mongoose';
 import { Employee } from "src/employee/entities/employee.entity";
+import { Role } from "src/role/entities/role.entity";
 export type AccountEmployeeDocument = HydratedDocument<AccountEmployee>;
 
 @Schema({ timestamps: true })
@@ -13,6 +14,9 @@ export class AccountEmployee {
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
     employee: mongoose.Schema.Types.ObjectId;
+
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Role.name })
+    role: mongoose.Schema.Types.ObjectId;
 
     @Prop({ default: "ACTIVE" })
     status: string;  //ACTIVE, INACTIVE

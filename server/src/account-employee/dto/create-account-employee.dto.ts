@@ -14,5 +14,10 @@ export class CreateAccountEmployeeDto {
     @IsNotEmpty({ message: "Nhân viên này không được để trống" })
     employeeId: mongoose.Schema.Types.ObjectId;
 
+    @IsNotEmpty({ message: "Quyền không được để trống" })
+    roleId: mongoose.Schema.Types.ObjectId;
+
+    role: mongoose.Schema.Types.ObjectId;
+
     status: string;  //ACTIVE, INACTIVE
 }

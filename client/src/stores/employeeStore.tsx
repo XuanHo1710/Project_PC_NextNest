@@ -13,7 +13,6 @@ export interface IEmployee {
     age: number;
     address: string;
     gender: string;
-    role: string;
     _id?: string;
 }
 

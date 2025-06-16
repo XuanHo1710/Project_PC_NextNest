@@ -44,6 +44,13 @@ export default function ConfigModalAccountEmployee({ ConfigFields }: { ConfigFie
                         onClick={(isActive) => handleSwitch("employee", isActive)}
                     />
                 </div>
+                <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
+                    <h2 className='text-base font-semibold'>Role:</h2>
+                    <Switch
+                        defaultChecked={ConfigFields.fields.includes("role")}
+                        onClick={(isActive) => handleSwitch("role", isActive)}
+                    />
+                </div>
             </div>
         </>
     );
