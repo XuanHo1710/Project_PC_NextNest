@@ -74,8 +74,7 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
                 address: em.address,
                 email: em.email,
                 avatar: em.avatar,
-                age: em.age,
-                role: em.role,
+                age: em.age
             }
         });
         const ws = XLSX.utils.json_to_sheet(dataRefactor);

@@ -72,7 +72,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                         },
                         {
                             key: 'customer',
-                            label: 'Thông tin khách hàng',
+                            label: <Link href={"/admin/guest"}>Thông tin khách hàng</Link>,
                             icon: <FaPeopleGroup />
 
                         },
@@ -92,7 +92,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                         },
                         {
                             key: 'customerAccount',
-                            label: 'Tài khoản khách hàng',
+                            label: <Link href={"/admin/account-guest"}>Tài khoản khách hàng</Link>,
                             icon: <FaPeopleGroup />
                         },
                     ],
