@@ -11,7 +11,12 @@ export class Role {
     description: string;
 
     @Prop({ type: Array, default: [] })
-    permission: Array<string>;
+    permission: [
+        {
+            method: string,
+            path: string
+        }
+    ];
 
 
     @Prop({ type: Object })

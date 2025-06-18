@@ -5,5 +5,10 @@ export class CreateRoleDto {
     name: string;
 
     description: string;
-    permission: Array<string>;
+    permission: [
+        {
+            method: string,
+            path: string
+        }
+    ];
 }

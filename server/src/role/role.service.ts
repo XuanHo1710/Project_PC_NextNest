@@ -45,8 +45,8 @@ export class RoleService {
     return roles;
   }
 
-  findOne(id: mongoose.Types.ObjectId) {
-    return `This action returns a #${id} role`;
+  async findOne(id: mongoose.Types.ObjectId) {
+    return await this.roleModel.findById(id);
   }
 
   async updateMany(dataUpdate: TypeUpdateManyRole) {

@@ -106,7 +106,8 @@ export default function Role() {
                 key: index.toString(),
                 _id: item._id,
                 name: item.name,
-                description: item.description
+                description: item.description,
+                permission: item.permission
             };
             return row;
         });

@@ -9,7 +9,12 @@ const BASE_URL = 'role';
 export interface IRole {
     name: string;
     description: string;
-    permission?: Array<string>;
+    permission:
+    {
+        method: string,
+        path: string
+    }[];
+
     _id?: string;
 }
 
@@ -19,6 +24,7 @@ interface IRoleState {
     loading: boolean,
     message: string,
     fetchRoles: (queryParams?: string) => Promise<void>,
+    getRoleById: (id: string) => Promise<IRole>,
     addRole: (role: Omit<IRole, 'id'>) => Promise<number>,
     updateRole: (role: IRole) => Promise<number>,
     deleteRole: (id: string) => Promise<number>,
@@ -35,10 +41,11 @@ export const useRoleStore = create<IRoleState>((set) => ({
         const res = await axios.get(BASE_URL + queryParams)
         set({ roles: res.data, loading: false })
     },
-    getOneRole: async (id: string) => {
+    getRoleById: async (id: string) => {
         set({ loading: true })
         const res = await axios.get(BASE_URL + "/" + id)
         set({ role: res.data, loading: false })
+        return res.data
     },
     addRole: async (role) => {
         set({ loading: true })

@@ -440,7 +440,6 @@ export default function Home() {
         {/* Sales Report */}
         <h2 className="font-semibold my-5">Sales Report</h2>
         {/* Sales chart */}
-
         <div className="rounded-sm p-4 bg-white border-[1px] border-solid border-slate-200">
           <CardHeader className="pb-6">
             <div className="flex items-center justify-between">
@@ -521,8 +520,6 @@ export default function Home() {
             </div>
           </CardContent>
         </div>
-
-
       </div>
     </>
   );
