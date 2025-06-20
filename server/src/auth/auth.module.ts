@@ -3,16 +3,19 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AccountEmployeeModule } from 'src/account-employee/account-employee.module';
 import { EmployeeModule } from 'src/employee/employee.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { LocalStrategy } from 'src/auth/passport/local.strategy';
+import { JwtStrategy } from 'src/auth/jwt.strategy';
 
 @Module({
   imports: [
     AccountEmployeeModule,
     EmployeeModule,
+    PassportModule,
     JwtModule.registerAsync({
       global: true,
-      // imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         return {
@@ -26,7 +29,7 @@ import { JwtModule } from '@nestjs/jwt';
 
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService]
 })
 export class AuthModule { }

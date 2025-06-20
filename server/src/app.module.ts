@@ -12,7 +12,9 @@ import { AccountEmployeeModule } from './account-employee/account-employee.modul
 import { RoleModule } from './role/role.module';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+// import { APP_GUARD } from '@nestjs/core';
+// import { AuthGuard } from 'src/auth/auth.guard';
 const mongooseAutoPopulate = require('mongoose-autopopulate');
 
 
@@ -41,9 +43,13 @@ const mongooseAutoPopulate = require('mongoose-autopopulate');
   controllers: [AppController],
   providers: [
     AppService,
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: AuthGuard,
+    // },
     {
       provide: APP_GUARD,
-      useClass: AuthGuard,
+      useClass: JwtAuthGuard,
     },
   ],
 })

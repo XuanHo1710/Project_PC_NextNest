@@ -4,6 +4,7 @@ import { CreateAccountEmployeeDto } from './dto/create-account-employee.dto';
 import { UpdateAccountEmployeeDto } from './dto/update-account-employee.dto';
 import { TypeQueryAccountEmployee, TypeUpdateManyAccountEmployee } from 'types/account-employee';
 import mongoose from 'mongoose';
+import { Public } from 'decorators/customize';
 
 @Controller('/admin/account-employee')
 export class AccountEmployeeController {
@@ -17,6 +18,17 @@ export class AccountEmployeeController {
   @Get()
   findAll(@Query() filter: TypeQueryAccountEmployee) {
     return this.accountEmployeeService.findAll(filter);
+  }
+
+  @Patch("/update-token")
+  updateAccountEmployeeToken(token: string, id: string) {
+    return this.accountEmployeeService.updateAccountEmployeeToken(token, id);
+  }
+
+  @Public()
+  @Post("/token-account")
+  findEmployeeByToken(token: string) {
+    return this.accountEmployeeService.findEmployeeByToken(token);
   }
 
   @Get()

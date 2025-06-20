@@ -17,6 +17,7 @@ export interface IAccountEmployee {
     roleId: string;
     status: string;
     _id?: string;
+    refresh_token?: string
 }
 
 interface IAccountEmployeeState {

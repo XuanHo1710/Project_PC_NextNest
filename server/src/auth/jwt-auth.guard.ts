@@ -1,34 +1,31 @@
-
-import {
-    CanActivate,
-    ExecutionContext,
-    Injectable,
-    UnauthorizedException,
-} from '@nestjs/common';
+import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from 'decorators/customize';
-import { Request } from 'express';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class JwtAuthGuard extends AuthGuard('jwt') {
     constructor(
-        private jwtService: JwtService,
+        private reflector: Reflector,
         private configService: ConfigService,
-        private reflector: Reflector
-    ) { }
+        private jwtService: JwtService,
+    ) {
+        super();
+    }
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
+    async canActivate(context: ExecutionContext) {
+        // Add your custom authentication logic here
+        // for example, call super.logIn(request) to establish a session.
         const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
             context.getHandler(),
             context.getClass(),
         ]);
-
         if (isPublic) {
-            // 💡 See this condition
             return true;
         }
+
         const request = context.switchToHttp().getRequest();
         const token = this.extractTokenFromHeader(request);
         if (!token) {
@@ -39,19 +36,21 @@ export class AuthGuard implements CanActivate {
             const payload = await this.jwtService.verifyAsync(
                 token,
                 {
-                    secret: this.configService.get<string>("JWT_ACCESS_TOKEN_SECRET")
+                    secret: this.configService.get<string>("JWT_REFRESH_TOKEN_SECRET")
                 }
             );
             // 💡 We're assigning the payload to the request object here
             // so that we can access it in our route handlers
             request['employee'] = payload;
         } catch {
-            throw new UnauthorizedException("Error from server");
+            throw new UnauthorizedException("Token is not valid");
         }
-        return true;
+        const result = await super.canActivate(context);
+        return result as boolean;
     }
 
-    private extractTokenFromHeader(request: Request): string | undefined {
+
+    private extractTokenFromHeader(request: any): string | undefined {
         const [type, token] = request.headers.authorization?.split(' ') ?? [];
         return type === 'Bearer' ? token : undefined;
     }

@@ -7,7 +7,10 @@ export type AccountEmployeeDocument = HydratedDocument<AccountEmployee>;
 @Schema({ timestamps: true })
 export class AccountEmployee {
     @Prop()
-    IDEmp: string
+    _id: string;
+
+    @Prop()
+    IDEmp: string;
 
     @Prop()
     password: string;
@@ -17,6 +20,9 @@ export class AccountEmployee {
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Role.name })
     role: mongoose.Schema.Types.ObjectId;
+
+    @Prop()
+    refresh_token: string
 
     @Prop({ default: "ACTIVE" })
     status: string;  //ACTIVE, INACTIVE

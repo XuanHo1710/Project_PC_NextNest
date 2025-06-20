@@ -20,4 +20,7 @@ export class CreateAccountEmployeeDto {
     role: mongoose.Schema.Types.ObjectId;
 
     status: string;  //ACTIVE, INACTIVE
+
+
+    refresh_token: string
 }

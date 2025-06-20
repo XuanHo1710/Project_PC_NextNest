@@ -1,23 +1,42 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Res, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { Public } from 'decorators/customize';
+import { LocalAuthGuard } from 'src/auth/passport/local-auth.guard';
+import { Employee, Public, ResponseMessage } from 'decorators/customize';
+import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
+import { Request, Response } from 'express';
 
 @Controller('/admin/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   @Public()
-  @HttpCode(HttpStatus.OK)
-  @Post('login')
-  signIn(@Body() signInDto: Record<string, any>) {
-    return this.authService.signIn(signInDto.IDEmp, signInDto.password);
+  @UseGuards(LocalAuthGuard)
+  @Post('/login')
+  async login(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
+    return this.authService.login(req.user as AccountEmployee, response); // Default la user. Do thang lon Passport lam nhu vay djt con me :)))
   }
 
-  @UseGuards(AuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.employee;
+  @Public()
+  @Post('/logout')
+  handleLogout(@Employee() employee: any, @Res({ passthrough: true }) response: Response) {
+    return this.authService.logout(employee._id, response);
   }
+
+  @Post("/refresh-token")
+  refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    const refreshToken: string = request.cookies["refresh_token"] as string;
+    return this.authService.processNewToken(refreshToken, response);
+  }
+
+  @Get('profile')
+  getProfile(@Employee() employee: any) {
+    return employee;
+  }
+
+  // @UseGuards(AuthGuard)
+  // @Get('profile')
+  // getProfile(@Request() req) {
+  //   return req.employee;
+  // }
 
 }
