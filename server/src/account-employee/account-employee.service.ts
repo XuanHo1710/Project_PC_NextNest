@@ -62,14 +62,16 @@ export class AccountEmployeeService {
   }
 
   async findEmployeeByToken(token: string) {
-    return await this.accountEmployeeModel.findOne({ refresh_token: token }).populate("employee");
+    return await this.accountEmployeeModel.findOne({ refreshToken: token }).populate("employee");
   }
 
   async updateAccountEmployeeToken(token: string, id: string) {
-    return await this.accountEmployeeModel.updateOne({ _id: id }, { $set: { refresh_token: token } });
+    const update = await this.accountEmployeeModel.updateOne({ _id: new mongoose.Types.ObjectId(id) }, { refreshToken: token })
+    const record = await this.accountEmployeeModel.findOne({ _id: id });
+    return update;
   }
 
-  async findOne(id: mongoose.Types.ObjectId) {
+  async findOne(id: string) {
     return await this.accountEmployeeModel.findById(id);
   }
 

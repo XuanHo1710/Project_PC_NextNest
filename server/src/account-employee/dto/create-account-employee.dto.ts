@@ -22,5 +22,5 @@ export class CreateAccountEmployeeDto {
     status: string;  //ACTIVE, INACTIVE
 
 
-    refresh_token: string
+    refreshToken: string
 }

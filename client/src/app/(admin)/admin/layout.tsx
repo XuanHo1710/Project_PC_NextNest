@@ -8,7 +8,7 @@ import { QueryParamsProvider } from '@/hooks/QueryParamsContext';
 import Header from '@/components/Header/Header';
 import { Sidebar } from '@/components/Sidebar/Sidebar';
 import Footer from '@/components/Footer/Footer';
-import { AuthEmployeeProvider } from '@/hooks/AuthEmployeeContext';
+import SlideRefreshToken from '@/hooks/SideRefreshToken';
 
 
 const geistSans = Geist({
@@ -43,20 +43,21 @@ export default function AdminLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ToastContainer position='top-right'></ToastContainer>
-        <AuthEmployeeProvider>
-          <QueryParamsProvider>
-            <Header collapsed={collapsed} setCollapsed={setCollapsed}></Header>
-            <div className="pt-20 flex overflow-y-hidden h-screen">
-              <Sidebar collapsed={collapsed} ></Sidebar>
-              <div className="overflow-y-scroll grow bg-slate-50" style={{ scrollbarWidth: "none" }}>
-                <div className='px-5'>
-                  <AntdRegistry>{children}</AntdRegistry>
-                </div>
-                <Footer></Footer>
+        <QueryParamsProvider>
+          <Header collapsed={collapsed} setCollapsed={setCollapsed}></Header>
+          <div className="pt-20 flex overflow-y-hidden h-screen">
+            <Sidebar collapsed={collapsed} ></Sidebar>
+            <div className="overflow-y-scroll grow bg-slate-50" style={{ scrollbarWidth: "none" }}>
+              <div className='px-5'>
+                <AntdRegistry>
+                  {children}
+                  <SlideRefreshToken />
+                </AntdRegistry>
               </div>
+              <Footer></Footer>
             </div>
-          </QueryParamsProvider>
-        </AuthEmployeeProvider>
+          </div>
+        </QueryParamsProvider>
       </body>
     </html>
   );

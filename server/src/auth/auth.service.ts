@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
+import mongoose from 'mongoose';
 // import ms from 'ms';
 import { AccountEmployeeService } from 'src/account-employee/account-employee.service';
 import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
@@ -27,13 +28,15 @@ export class AuthService {
     return null;
   }
 
-  async login(account: AccountEmployee, response: Response) {
+  async login(account: AccountEmployee & { _id: mongoose.Schema.Types.ObjectId }, response: Response) {
+
     // Get Inforaccount 
     const employee = await this.employeeService.findOne(account.employee);
     const payload = { username: employee?.name, address: employee?.address, role: account.role };
     const refresh_token = this.createRefreshToken(payload);
 
-    await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, account._id);
+    await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, account._id.toString());
+
 
     // Set refresh_token as cookies
     // HttpOnly only server can use this cookies. Javascript can't use this cookies
@@ -68,7 +71,8 @@ export class AuthService {
         const refresh_token = this.createRefreshToken(payload);
 
         // Update user with refresh token
-        await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, account._id);
+        await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, account._id.toString());
+
 
         response.clearCookie("refresh_token");
         // Set refresh_token as cookies

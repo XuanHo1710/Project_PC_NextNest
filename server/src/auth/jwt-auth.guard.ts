@@ -36,7 +36,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             const payload = await this.jwtService.verifyAsync(
                 token,
                 {
-                    secret: this.configService.get<string>("JWT_REFRESH_TOKEN_SECRET")
+                    secret: this.configService.get<string>("JWT_ACCESS_TOKEN_SECRET")
                 }
             );
             // 💡 We're assigning the payload to the request object here

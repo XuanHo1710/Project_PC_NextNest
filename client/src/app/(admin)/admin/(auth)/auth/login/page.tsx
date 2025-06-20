@@ -1,10 +1,10 @@
 'use client'
-import { useAuthEmployee } from "@/hooks/AuthEmployeeContext";
 import { IAccountEmployee } from "@/stores/accountEmployeeStore";
 import { Button, Form, Input } from "antd";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useRouter } from 'next/navigation';
+import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 
 
 export default function AuthLogin() {
@@ -18,15 +18,10 @@ export default function AuthLogin() {
       toast.error(data.message);
     }).then(async (response) => {
       setAccessToken(response?.data.access_token || "");
-      const res = await axios.post("http://localhost:8080/api/v1/admin/account-employee/token-account", response?.data.refresh_token);
+      const res = await axios.post("http://localhost:8080/api/v1/admin/account-employee/token-account", { token: response?.data.refresh_token });
       setAccountLogin(res.data as IAccountEmployee);
-      console.log("Cac");
-
       router.push("/admin/dashboard"); // 👈 Đường dẫn muốn chuyển
     })
-
-
-
   }
 
   const layout = {

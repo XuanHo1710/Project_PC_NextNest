@@ -4,6 +4,7 @@ import { LocalAuthGuard } from 'src/auth/passport/local-auth.guard';
 import { Employee, Public, ResponseMessage } from 'decorators/customize';
 import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 
 @Controller('/admin/auth')
 export class AuthController {
@@ -13,7 +14,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('/login')
   async login(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
-    return this.authService.login(req.user as AccountEmployee, response); // Default la user. Do thang lon Passport lam nhu vay djt con me :)))
+    return this.authService.login(req.user as AccountEmployee & { _id: mongoose.Schema.Types.ObjectId }, response); // Default la user. Do thang lon Passport lam nhu vay djt con me :)))
   }
 
   @Public()
@@ -22,7 +23,7 @@ export class AuthController {
     return this.authService.logout(employee._id, response);
   }
 
-  @Post("/refresh-token")
+  @Get("/refresh-token")
   refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const refreshToken: string = request.cookies["refresh_token"] as string;
     return this.authService.processNewToken(refreshToken, response);

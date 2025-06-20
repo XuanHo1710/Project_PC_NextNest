@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
 
 
     // Danh sách route cần đăng nhập 
-    const protectedPaths = ['/admin/dashboard', '/admin/employee'];
+    const protectedPaths = ['/admin/dashboard', '/admin/employee', '/admin/product'];
 
     if (
         protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))

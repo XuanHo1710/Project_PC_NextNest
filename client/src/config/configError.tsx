@@ -1,27 +1,31 @@
 // axiosConfig.js
+import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+
+
 const instance = axios.create({
   baseURL: 'http://localhost:8080/api/v1/admin/', // Thay bằng URL backend của bạn
-  timeout: 5000, // timeout sau 5s
+  timeout: 3000, // timeout sau 5s
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    // Authorization: `Bearer ${token}`, // nếu cần token có thể set ở đây hoặc trong interceptor
+    Authorization: `Bearer ${useAuthEmployee.getState().accessToken}`, // nếu cần token có thể set ở đây hoặc trong interceptor
   },
 });
 
 // Thêm interceptor nếu muốn tự động thêm token hoặc xử lý lỗi
-// instance.interceptors.request.use(
-//   config => {
-//     // const token = localStorage.getItem('accessToken');
-//     // if (token) {
-//     //   config.headers.Authorization = `Bearer ${token}`;
-//     // }
-//     return config;
-//   },
-//   error => Promise.reject(error)
-// );
+instance.interceptors.request.use(
+  config => {
+    const token = useAuthEmployee.getState().accessToken; // 👈 Truy cập trực tiếp
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => Promise.reject(error)
+);
 
 instance.interceptors.response.use(
   response => response,

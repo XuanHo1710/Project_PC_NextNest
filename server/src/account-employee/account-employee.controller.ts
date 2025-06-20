@@ -3,7 +3,7 @@ import { AccountEmployeeService } from './account-employee.service';
 import { CreateAccountEmployeeDto } from './dto/create-account-employee.dto';
 import { UpdateAccountEmployeeDto } from './dto/update-account-employee.dto';
 import { TypeQueryAccountEmployee, TypeUpdateManyAccountEmployee } from 'types/account-employee';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { Public } from 'decorators/customize';
 
 @Controller('/admin/account-employee')
@@ -15,6 +15,7 @@ export class AccountEmployeeController {
     return this.accountEmployeeService.create(createAccountEmployeeDto);
   }
 
+  @Public()
   @Get()
   findAll(@Query() filter: TypeQueryAccountEmployee) {
     return this.accountEmployeeService.findAll(filter);
@@ -27,11 +28,11 @@ export class AccountEmployeeController {
 
   @Public()
   @Post("/token-account")
-  findEmployeeByToken(token: string) {
+  findEmployeeByToken(@Body() { token }: { token: string }) {
     return this.accountEmployeeService.findEmployeeByToken(token);
   }
 
-  @Get()
+  @Get("/get-account")
   findAccountByIDEmp(IDEmp: string) {
     return this.accountEmployeeService.findAccountByIDEmp(IDEmp);
   }
@@ -41,8 +42,12 @@ export class AccountEmployeeController {
     return this.accountEmployeeService.updateMany(dataUpdate);
   }
 
+  @Public()
   @Get(':id')
-  findOne(@Param('id') id: mongoose.Types.ObjectId) {
+  findOne(@Param('id') id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      return { error: "ID không hợp lệ" };
+    }
     return this.accountEmployeeService.findOne(id);
   }
 
