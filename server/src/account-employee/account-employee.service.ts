@@ -6,6 +6,9 @@ import mongoose, { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
 
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
 @Injectable()
 export class AccountEmployeeService {
   constructor(@InjectModel(AccountEmployee.name) private accountEmployeeModel: Model<AccountEmployee>) { }
@@ -13,6 +16,13 @@ export class AccountEmployeeService {
   async create(createAccountEmployeeDto: CreateAccountEmployeeDto) {
     createAccountEmployeeDto.role = createAccountEmployeeDto.roleId;
     createAccountEmployeeDto.employee = createAccountEmployeeDto.employeeId;
+
+
+    // Hash password
+    const hashPassword = bcrypt.hashSync(createAccountEmployeeDto.password, saltRounds);
+    createAccountEmployeeDto.password = hashPassword;
+
+
     const account = await this.accountEmployeeModel.create(createAccountEmployeeDto)
     return account;
   }
@@ -47,8 +57,12 @@ export class AccountEmployeeService {
     return accounts;
   }
 
-  findOne(id: mongoose.Types.ObjectId) {
-    return `This action returns a #${id} accountEmployee`;
+  async findAccountByIDEmp(IDEmp: string): Promise<AccountEmployee | null> {
+    return await this.accountEmployeeModel.findOne({ IDEmp: IDEmp });
+  }
+
+  async findOne(id: mongoose.Types.ObjectId) {
+    return await this.accountEmployeeModel.findById(id);
   }
 
   async updateMany(dataUpdate: TypeUpdateManyAccountEmployee) {
@@ -74,6 +88,13 @@ export class AccountEmployeeService {
   async update(id: mongoose.Types.ObjectId, updateAccountEmployeeDto: UpdateAccountEmployeeDto) {
     updateAccountEmployeeDto.role = updateAccountEmployeeDto.roleId;
     updateAccountEmployeeDto.employee = updateAccountEmployeeDto.employeeId;
+
+    // Hash password
+    if (updateAccountEmployeeDto.password) {
+      const hashPassword = bcrypt.hashSync(updateAccountEmployeeDto.password, saltRounds);
+      updateAccountEmployeeDto.password = hashPassword;
+    }
+
     return await this.accountEmployeeModel.updateOne({ _id: id }, updateAccountEmployeeDto);
   }
 

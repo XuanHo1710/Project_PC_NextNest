@@ -8,5 +8,6 @@ import { AccountEmployee, AccountEmployeeSchema } from './entities/account-emplo
   imports: [MongooseModule.forFeature([{ name: AccountEmployee.name, schema: AccountEmployeeSchema }])],
   controllers: [AccountEmployeeController],
   providers: [AccountEmployeeService],
+  exports: [AccountEmployeeService]
 })
 export class AccountEmployeeModule { }

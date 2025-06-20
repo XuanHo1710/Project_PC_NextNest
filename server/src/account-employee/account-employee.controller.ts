@@ -19,6 +19,11 @@ export class AccountEmployeeController {
     return this.accountEmployeeService.findAll(filter);
   }
 
+  @Get()
+  findAccountByIDEmp(IDEmp: string) {
+    return this.accountEmployeeService.findAccountByIDEmp(IDEmp);
+  }
+
   @Patch('/updateMany')
   updateMany(@Body() dataUpdate: TypeUpdateManyAccountEmployee) {
     return this.accountEmployeeService.updateMany(dataUpdate);

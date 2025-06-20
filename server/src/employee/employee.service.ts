@@ -75,8 +75,8 @@ export class EmployeeService {
     return employees;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} employee`;
+  async findOne(id: mongoose.Schema.Types.ObjectId) {
+    return await this.employeeModel.findById(id);
   }
 
   async update(id: mongoose.Types.ObjectId, updateEmployeeDto: UpdateEmployeeDto) {

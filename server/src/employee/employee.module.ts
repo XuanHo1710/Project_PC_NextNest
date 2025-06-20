@@ -14,5 +14,6 @@ import { AccountEmployee, AccountEmployeeSchema } from 'src/account-employee/ent
   ],
   controllers: [EmployeeController],
   providers: [EmployeeService],
+  exports: [EmployeeService]
 })
 export class EmployeeModule { }

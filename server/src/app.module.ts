@@ -10,6 +10,9 @@ import { ProductModule } from './product/product.module';
 import { DiscountModule } from './discount/discount.module';
 import { AccountEmployeeModule } from './account-employee/account-employee.module';
 import { RoleModule } from './role/role.module';
+import { AuthModule } from './auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from 'src/auth/auth.guard';
 const mongooseAutoPopulate = require('mongoose-autopopulate');
 
 
@@ -20,7 +23,7 @@ const mongooseAutoPopulate = require('mongoose-autopopulate');
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
-        connectionFactory: (connection : Connection) => {
+        connectionFactory: (connection: Connection) => {
           connection.plugin(mongooseAutoPopulate);
           return connection;
         }
@@ -32,9 +35,16 @@ const mongooseAutoPopulate = require('mongoose-autopopulate');
     ProductModule,
     DiscountModule,
     AccountEmployeeModule,
-    RoleModule
+    RoleModule,
+    AuthModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule { }

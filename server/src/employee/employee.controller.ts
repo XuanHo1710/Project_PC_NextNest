@@ -4,6 +4,7 @@ import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import mongoose from 'mongoose';
 import { TypeQueryEmployee, TypeUpdateManyEmployee } from 'types/employee';
+import { Public } from 'decorators/customize';
 
 @Controller('/admin/employee')
 export class EmployeeController {
@@ -20,6 +21,7 @@ export class EmployeeController {
   }
 
   @Get("/no-account")
+  @Public()
   findEmployeeHaveNotAccount() {
     return this.employeeService.findEmployeeHaveNotAccount();
   }
@@ -30,8 +32,8 @@ export class EmployeeController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.employeeService.findOne(+id);
+  findOne(@Param('id') id: mongoose.Schema.Types.ObjectId) {
+    return this.employeeService.findOne(id);
   }
 
 
