@@ -35,7 +35,7 @@ export class AuthService {
     const payload = { username: employee?.name, address: employee?.address, role: account.role };
     const refresh_token = this.createRefreshToken(payload);
 
-    await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, account._id.toString());
+    await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as string), account._id.toString());
 
 
     // Set refresh_token as cookies
@@ -52,13 +52,13 @@ export class AuthService {
 
     return {
       access_token: this.jwtService.sign(payload),
-      refresh_token
+      refresh_token,
+      expireAccessToken: ms(this.configService.get<string>("JWT_ACCESS_EXPIRE")),
+      expireRefreshToken: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE'))
     };
   }
 
   processNewToken = async (refreshToken: string, response: Response) => {
-    console.log(refreshToken);
-
     try {
       this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')
@@ -73,7 +73,7 @@ export class AuthService {
         const refresh_token = this.createRefreshToken(payload);
 
         // Update user with refresh token
-        await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, account._id.toString());
+        await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, ms(this.configService.get<string>('JWT_REFRESH_EXPIRE')), account._id.toString());
 
 
         response.clearCookie("refresh_token");
@@ -91,15 +91,16 @@ export class AuthService {
         return {
           // access_token: this.jwtService.sign(payload),
           // Mốt code là biết 
-          refresh_token: refresh_token
+          refresh_token: refresh_token,
+          expireRefreshToken: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as string)
         };
       } else {
         throw new BadRequestException("Not found this user with token")
       }
 
-    } catch (error) {
+    } catch {
       // Token het han thi se chay vo day => da ve login
-      throw new BadRequestException(error);
+      throw new BadRequestException("Hết hạn phiên đăng nhập rồi");
     }
   }
 
@@ -113,7 +114,7 @@ export class AuthService {
   }
 
   async logout(id: string, response: Response) {
-    await this.accountEmployeeService.updateAccountEmployeeToken("", id);
+    await this.accountEmployeeService.updateAccountEmployeeToken("", 0, id);
     response.clearCookie("refresh_token");
     return { message: "Success Logout" }
   }

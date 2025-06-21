@@ -19,7 +19,12 @@ export class AccountEmployee {
     role: mongoose.Schema.Types.ObjectId;
 
     @Prop()
-    refreshToken: string
+    refreshToken: string;
+
+    @Prop()
+    expireToken: number;
+
+
 
     @Prop({ default: "ACTIVE" })
     status: string;  //ACTIVE, INACTIVE

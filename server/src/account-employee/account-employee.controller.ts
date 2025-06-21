@@ -22,8 +22,8 @@ export class AccountEmployeeController {
   }
 
   @Patch("/update-token")
-  updateAccountEmployeeToken(token: string, id: string) {
-    return this.accountEmployeeService.updateAccountEmployeeToken(token, id);
+  updateAccountEmployeeToken(token: string, expire: number, id: string) {
+    return this.accountEmployeeService.updateAccountEmployeeToken(token, expire, id);
   }
 
   @Public()

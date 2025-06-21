@@ -8,9 +8,6 @@ export async function middleware(request: NextRequest) {
 
     const accountEmployee = getAccountEmployee();
 
-    if (!accountEmployee) {
-        return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
 
     // Danh sách route cần đăng nhập 
     const protectedPaths = ['/admin/dashboard', '/admin/employee', '/admin/product'];
@@ -20,6 +17,15 @@ export async function middleware(request: NextRequest) {
         && !token
     ) {
         return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+
+    if (!accountEmployee) {
+        return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+
+    // Nếu đã đăng nhập mà truy cập /auth/login → chuyển sang dashboard
+    if (request.nextUrl.pathname.startsWith('/auth/login')) {
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
 
     return NextResponse.next();

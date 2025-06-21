@@ -1,8 +1,6 @@
 // axiosConfig.js
-import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-
 
 
 const instance = axios.create({
@@ -11,16 +9,16 @@ const instance = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${sessionStorage.getItem("token") || ""}`, // nếu cần token có thể set ở đây hoặc trong interceptor
+    Authorization: `Bearer ${JSON.parse(sessionStorage.getItem("token") || "")?.token || ""}`, // nếu cần token có thể set ở đây hoặc trong interceptor
   },
 });
 
 // Thêm interceptor nếu muốn tự động thêm token hoặc xử lý lỗi
 instance.interceptors.request.use(
   config => {
-    const token = useAuthEmployee.getState().accessToken; // 👈 Truy cập trực tiếp
+    const token = JSON.parse(sessionStorage.getItem("token") || "")?.token || ""; // 👈 Truy cập trực tiếp
     if (token) {
-      config.headers.Authorization = `Bearer ${sessionStorage.getItem("token") || ""}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },

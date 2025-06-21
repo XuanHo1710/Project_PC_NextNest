@@ -26,8 +26,6 @@ export class AuthController {
   @Get("/refresh-token")
   refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const refreshToken: string = request.cookies["refresh_token"] as string;
-    console.log("refresh:", request.cookies);
-
     return this.authService.processNewToken(refreshToken, response);
   }
 
