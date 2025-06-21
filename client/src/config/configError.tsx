@@ -11,7 +11,7 @@ const instance = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${useAuthEmployee.getState().accessToken}`, // nếu cần token có thể set ở đây hoặc trong interceptor
+    Authorization: `Bearer ${sessionStorage.getItem("token") || ""}`, // nếu cần token có thể set ở đây hoặc trong interceptor
   },
 });
 
@@ -20,7 +20,7 @@ instance.interceptors.request.use(
   config => {
     const token = useAuthEmployee.getState().accessToken; // 👈 Truy cập trực tiếp
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${sessionStorage.getItem("token") || ""}`;
     }
     return config;
   },
@@ -64,16 +64,16 @@ instance.interceptors.response.use(
   }
 );
 
-// instance.interceptors.response.use(
-//   response => response,
-//   error => {
-//     // Xử lý lỗi chung ở đây (ví dụ: hết hạn token)
-//     if (error.response && error.response.status === 401) {
-//       // Logout hoặc chuyển hướng tới trang đăng nhập
-//       console.error('Unauthorized - hãy đăng nhập lại.');
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+instance.interceptors.response.use(
+  response => response,
+  error => {
+    // Xử lý lỗi chung ở đây (ví dụ: hết hạn token)
+    if (error.response && error.response.status === 401) {
+      // Logout hoặc chuyển hướng tới trang đăng nhập
+      toast.error('Unauthorized - hãy đăng nhập lại.');
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default instance;

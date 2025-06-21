@@ -57,6 +57,8 @@ export class AuthService {
   }
 
   processNewToken = async (refreshToken: string, response: Response) => {
+    console.log(refreshToken);
+
     try {
       this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')

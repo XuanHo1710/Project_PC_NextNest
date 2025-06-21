@@ -7,7 +7,8 @@ import { useEffect } from "react";
 import { toast } from "react-toastify";
 
 export default function SlideRefreshToken() {
-    const { accountLogin, setAccountLogin, accessToken } = useAuthEmployee();
+    const { accountLogin, setAccountLogin } = useAuthEmployee();
+    const accessToken = sessionStorage.getItem("token") || "";
     useEffect(() => {
         // if (!accountLogin?.refresh_token) return;
 
@@ -39,7 +40,7 @@ export default function SlideRefreshToken() {
 
                         // Cập nhật access_token
                         console.log("[AuthEmployee] ✅ Refresh thành công:", refresh_token);
-                        const resAccount = await axios.post("http://localhost:8080/api/v1/admin/account-employee/token-account", { token: refresh_token });
+                        const resAccount = await axios.post('/api/admin/auth/token', {});
 
                         setAccountLogin(resAccount.data as IAccountEmployee);
                         // 👇 Cập nhật lại `refreshLeft`
