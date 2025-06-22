@@ -20,3 +20,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response.data, { status: 200 });
 }
+
+
+export async function GET(request: NextRequest) {
+    const accessToken = request.cookies.get('access_token')?.value || "";
+    const refreshToken = request.cookies.get('refresh_token')?.value || "";
+
+
+    if (!accessToken && !refreshToken) {
+        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    return NextResponse.json({ accessToken, refreshToken }, { status: 200 });
+}

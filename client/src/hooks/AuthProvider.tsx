@@ -5,21 +5,24 @@ import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { setAccountLogin } = useAuthEmployee();
+    const { setAccountLogin, setAccessToken } = useAuthEmployee();
 
     useEffect(() => {
         const fetchAccount = async () => {
             try {
                 const res = await axios.post('/api/admin/auth/token', {});
+                const resGetToken = await axios.get('/api/admin/auth/token');
                 setAccountLogin(res.data);
+                setAccessToken(resGetToken.data.accessToken)
             } catch (err) {
                 console.log('Auth error, resetting auth', err);
-                window.location.href = "/auth/login"
+                setAccountLogin(null);
+                setAccessToken("");
             }
         };
 
         fetchAccount();
-    }, [setAccountLogin]);
+    }, [setAccountLogin, setAccessToken]);
 
     return <>{children}</>;
 }

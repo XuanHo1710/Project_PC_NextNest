@@ -17,6 +17,13 @@ export class AuthController {
     return this.authService.login(req.user as AccountEmployee & { _id: mongoose.Schema.Types.ObjectId }, response); // Default la user. Do thang lon Passport lam nhu vay djt con me :)))
   }
 
+
+  @Get('/decode-access')
+  decodeAccessToken(@Req() request: Request) {
+    const accessToken: string = request.cookies["access_token"] as string;
+    return this.authService.decodeAccessToken(accessToken);
+  }
+
   @Public()
   @Post('/logout')
   handleLogout(@Employee() employee: any, @Res({ passthrough: true }) response: Response) {

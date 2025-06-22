@@ -3,26 +3,34 @@ import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { IAccountEmployee } from "@/stores/accountEmployeeStore";
 import axios from "axios";
 // import { useRouter } from "next/router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 export default function SlideRefreshToken() {
-    const { accountLogin, setAccountLogin } = useAuthEmployee();
-    const accessToken = JSON.parse(sessionStorage.getItem("token") || "")?.token || "";
-    const expireAccessToken = JSON.parse(sessionStorage.getItem("token") || "")?.expire || "";
-
+    const { accountLogin, setAccountLogin, accessToken } = useAuthEmployee();
+    const [expireAccessToken, setExpireAccessToken] = useState<number>(0);
     const expireAccessRef = useRef<number>(0);
+    useEffect(() => {
+        const fetchGetExpire = async () => {
+            const res = await axios.get("/api/admin/auth/token/decode");
+            console.log(res.data);
+
+            expireAccessRef.current = res.data.exp * 1000
+            setExpireAccessToken(res.data.exp * 1000 || 0);
+        }
+        fetchGetExpire();
+    }, [])
 
     useEffect(() => {
         if (!accountLogin?.refreshToken) return;
+        if (!expireAccessToken) return; // Chưa lấy xong exp thì không chạy
 
         // Mốc hết hạn: 1 phút kể từ khi component chạy
         const expireTime = Date.now() + accountLogin.expireToken;
-        if (expireAccessRef.current === 0) {
-            expireAccessRef.current = Date.now() + expireAccessToken;
-        }
+        // Mốc hết hạn access token
+        expireAccessRef.current = expireAccessToken;
 
-        const interval = setInterval(() => {
+        const interval = setInterval(async () => {
             const now = Date.now();
             let refreshLeft = Math.floor((expireTime - now) / 1000);
             const accessLeft = Math.floor((expireAccessRef.current - now) / 1000);
@@ -57,8 +65,7 @@ export default function SlideRefreshToken() {
                         // 👇 Cập nhật lại `refreshLeft`
                         refreshLeft = Math.floor((expireTime - Date.now()) / 1000);
                     })
-                    .catch((error) => {
-                        console.error("[AuthEmployee] Refresh thất bại:", error);
+                    .catch(() => {
                         toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!");
                         setAccountLogin(null);
                     });
@@ -67,14 +74,14 @@ export default function SlideRefreshToken() {
             if (accessLeft < 0) {
                 toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!");
                 console.log("Hết hạn access token...............");
-                sessionStorage.setItem("token", "");
+                sessionStorage.removeItem("token");
                 setAccountLogin(null);
                 refreshLeft = 0;
             }
         }, 10_000); // Kiểm tra mỗi 10s
 
         return () => clearInterval(interval);
-    }, [accountLogin]);
+    }, [accountLogin, expireAccessToken]);
 
 
     return null;

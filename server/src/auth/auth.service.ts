@@ -50,11 +50,24 @@ export class AuthService {
       }
     );
 
+    const access_token = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRE')
+    });
+
+    response.cookie("access_token", access_token,
+      {
+        httpOnly: true,
+        maxAge: ms(this.configService.get<string>('JWT_ACCESS_EXPIRE') as string),
+        secure: false,
+        path: "/",
+        sameSite: "lax",
+      }
+    );
+
     return {
-      access_token: this.jwtService.sign(payload),
-      refresh_token,
-      expireAccessToken: ms(this.configService.get<string>("JWT_ACCESS_EXPIRE")),
-      expireRefreshToken: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE'))
+      access_token,
+      refresh_token
     };
   }
 
@@ -91,8 +104,7 @@ export class AuthService {
         return {
           // access_token: this.jwtService.sign(payload),
           // Mốt code là biết 
-          refresh_token: refresh_token,
-          expireRefreshToken: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as string)
+          refresh_token: refresh_token
         };
       } else {
         throw new BadRequestException("Not found this user with token")
@@ -111,6 +123,12 @@ export class AuthService {
       expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRE')
     });
     return refresh_token;
+  }
+
+  decodeAccessToken = (token: string) => {
+    return this.jwtService.verify(token, {
+      secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET')
+    });
   }
 
   async logout(id: string, response: Response) {

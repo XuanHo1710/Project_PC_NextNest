@@ -1,42 +1,24 @@
-
-import axios from 'axios';
+// import axios from 'axios';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+// Danh sách route cần đăng nhập 
+const protectedPaths = ['/admin/dashboard', '/admin/employee', '/admin/product'];
+const authPaths = ['/auth/login'];
+export function middleware(request: NextRequest) {
     const token = request.cookies.get('refresh_token')?.value;
 
-    const accountEmployee = getAccountEmployee();
 
-
-    // Danh sách route cần đăng nhập 
-    const protectedPaths = ['/admin/dashboard', '/admin/employee', '/admin/product'];
-
-    if (
-        protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
-        && !token
-    ) {
+    if (protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path)) && !token) {
         return NextResponse.redirect(new URL('/auth/login', request.url));
     }
 
-    if (!accountEmployee) {
-        return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
 
     // Nếu đã đăng nhập mà truy cập /auth/login → chuyển sang dashboard
-    if (request.nextUrl.pathname.startsWith('/auth/login')) {
+    if (authPaths.some((path) => request.nextUrl.pathname.startsWith(path)) && token) {
         return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
 
     return NextResponse.next();
 }
 
-
-async function getAccountEmployee() {
-    try {
-        const response = await axios.post("/api/admin/auth/token", {});
-        return response.data;
-    } catch {
-        return null;
-    }
-}
