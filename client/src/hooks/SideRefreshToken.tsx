@@ -42,10 +42,10 @@ export default function SlideRefreshToken() {
 
 
             // dưới 20s thì refresh token =)))
-            if (refreshLeft <= 20 && accessLeft > 0) {
+            if (refreshLeft <= 40 && accessLeft > 0) {
                 console.log(`[AuthEmployee] Refresh Token còn ${refreshLeft}s ➔ Gọi /auth/refresh...`);
 
-                axios.get(
+                await axios.get(
                     "http://localhost:8080/api/v1/admin/auth/refresh-token",
                     {
                         withCredentials: true,
