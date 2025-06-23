@@ -18,7 +18,10 @@ export default function AuthLogin() {
       toast.error(data.message);
     }).then(async (response) => {
       setAccessToken(response?.data.access_token || "");
-      const res = await axios.post('/api/admin/auth/token', {});
+      const res = await axios.post('/api/admin/auth/token', {
+        access_token: response?.data.access_token,
+        refresh_token: response?.data.refresh_token
+      });
       setAccountLogin(res.data as IAccountEmployee);
       router.push("/admin/dashboard"); // 👈 Đường dẫn muốn chuyển
     })

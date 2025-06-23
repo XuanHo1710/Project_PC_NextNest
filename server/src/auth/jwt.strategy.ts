@@ -3,11 +3,16 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RoleService } from 'src/role/role.service';
+import { Role } from 'src/role/entities/role.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
 
-    constructor(private configService: ConfigService) {
+    constructor(
+        private configService: ConfigService,
+        private roleService: RoleService
+    ) {
         const secret = configService.get<string>("JWT_ACCESS_TOKEN_SECRET");
         if (!secret) {
             throw new Error("JWT_ACCESS_TOKEN_SECRET is not defined in environment variables");
@@ -20,6 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        return { ...payload };
+        const role = await this.roleService.findOne(payload?.role);
+        return { ...payload, role };
     }
 }

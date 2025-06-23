@@ -13,13 +13,14 @@ export default function SlideRefreshToken() {
     useEffect(() => {
         const fetchGetExpire = async () => {
             const res = await axios.get("/api/admin/auth/token/decode");
-            console.log(res.data);
-
             expireAccessRef.current = res.data.exp * 1000
             setExpireAccessToken(res.data.exp * 1000 || 0);
         }
         fetchGetExpire();
     }, [])
+
+    console.log(accountLogin);
+
 
     useEffect(() => {
         if (!accountLogin?.refreshToken) return;
@@ -65,9 +66,11 @@ export default function SlideRefreshToken() {
                         // 👇 Cập nhật lại `refreshLeft`
                         refreshLeft = Math.floor((expireTime - Date.now()) / 1000);
                     })
-                    .catch(() => {
+                    .catch(async () => {
                         toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!");
+                        await axios.post("/api/admin/auth/token/delete", { id: accountLogin._id || "" });
                         setAccountLogin(null);
+                        window.location.href = "/auth/login";
                     });
             }
 

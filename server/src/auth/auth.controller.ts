@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Res, Req } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Res, Req, Param, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/auth/passport/local-auth.guard';
 import { Employee, Public, ResponseMessage } from 'decorators/customize';
@@ -17,17 +17,10 @@ export class AuthController {
     return this.authService.login(req.user as AccountEmployee & { _id: mongoose.Schema.Types.ObjectId }, response); // Default la user. Do thang lon Passport lam nhu vay djt con me :)))
   }
 
-
-  @Get('/decode-access')
-  decodeAccessToken(@Req() request: Request) {
-    const accessToken: string = request.cookies["access_token"] as string;
-    return this.authService.decodeAccessToken(accessToken);
-  }
-
   @Public()
   @Post('/logout')
-  handleLogout(@Employee() employee: any, @Res({ passthrough: true }) response: Response) {
-    return this.authService.logout(employee._id, response);
+  handleLogout(@Body() { id }: { id: string }, @Res({ passthrough: true }) response: Response) {
+    return this.authService.logout(id, response);
   }
 
   @Get("/refresh-token")
@@ -39,6 +32,14 @@ export class AuthController {
   @Get('profile')
   getProfile(@Employee() employee: any) {
     return employee;
+  }
+
+
+  @Public()
+  @Get('/decode/:type')
+  decodeToken(@Req() request: Request, @Param() { type }: { type: string }) {
+    const token: string = request.cookies["token"] as string;
+    return this.authService.decodeToken(token, type);
   }
 
   // @UseGuards(AuthGuard)

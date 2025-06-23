@@ -43,10 +43,7 @@ export class AuthService {
     response.cookie("refresh_token", refresh_token,
       {
         httpOnly: true,
-        maxAge: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as string),
-        secure: false,
-        path: "/",
-        sameSite: "lax",
+        maxAge: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as string)
       }
     );
 
@@ -59,9 +56,6 @@ export class AuthService {
       {
         httpOnly: true,
         maxAge: ms(this.configService.get<string>('JWT_ACCESS_EXPIRE') as string),
-        secure: false,
-        path: "/",
-        sameSite: "lax",
       }
     );
 
@@ -96,9 +90,6 @@ export class AuthService {
           {
             httpOnly: true,
             maxAge: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as string),
-            secure: false,
-            path: "/",
-            sameSite: "lax",
           }
         );
         return {
@@ -125,15 +116,21 @@ export class AuthService {
     return refresh_token;
   }
 
-  decodeAccessToken = (token: string) => {
+  decodeToken = (token: string, type: string) => {
+    if (type === "access") {
+      return this.jwtService.verify(token, {
+        secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET')
+      });
+    }
     return this.jwtService.verify(token, {
-      secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET')
+      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')
     });
   }
 
   async logout(id: string, response: Response) {
     await this.accountEmployeeService.updateAccountEmployeeToken("", 0, id);
     response.clearCookie("refresh_token");
+    response.clearCookie("access_token");
     return { message: "Success Logout" }
   }
 }

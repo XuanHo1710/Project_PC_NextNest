@@ -1,16 +1,17 @@
-import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from 'decorators/customize';
+import { RoleService } from 'src/role/role.service';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
     constructor(
         private reflector: Reflector,
         private configService: ConfigService,
-        private jwtService: JwtService,
+        private jwtService: JwtService
     ) {
         super();
     }
@@ -47,6 +48,41 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         }
         const result = await super.canActivate(context);
         return result as boolean;
+    }
+
+    handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+        const request = context.switchToHttp().getRequest();
+        const targetPath = request?.route?.path;
+        const targetMethod = request?.method;
+
+
+        if (user?.role.permission && user?.role?.permission.length > 0) {
+
+            const isExist = user?.role?.permission?.find(p => (
+                targetMethod === p?.method
+                && targetPath === p?.path
+            ))
+
+            console.log(targetPath);
+
+
+            if (isExist === undefined &&
+                targetPath !== "/api/v1/admin/account-employee" &&
+                targetPath !== "/api/v1/admin/auth/decode-access" &&
+                targetPath !== "/api/v1/admin/auth/refresh-token"
+            ) {
+                throw new ForbiddenException("You can't access this endpoint :DDD")
+            }
+        }
+
+
+
+
+        if (err || !user) {
+            return err || new UnauthorizedException("Token is not valid")
+        }
+
+        return user;
     }
 
 

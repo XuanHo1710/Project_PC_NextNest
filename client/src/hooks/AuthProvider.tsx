@@ -16,8 +16,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 setAccessToken(resGetToken.data.accessToken)
             } catch (err) {
                 console.log('Auth error, resetting auth', err);
+                await axios.post("/api/admin/auth/token/delete", { id: "" });
                 setAccountLogin(null);
                 setAccessToken("");
+                window.location.href = "/auth/login";
             }
         };
 

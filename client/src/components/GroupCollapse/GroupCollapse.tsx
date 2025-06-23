@@ -26,13 +26,13 @@ const ContextCollapse = (prop: IProp) => {
                     <div className="flex gap-4 items-center">
                         <Switch
                             checked={prop.selected.some(
-                                (p) => p.method === "POST" && p.path === "/api/v1/" + prop.path
+                                (p) => p.method === "POST" && p.path === "/api/v1/admin/" + prop.path
                             )}
-                            onChange={(isSelected) => prop.handleChange(isSelected, "POST", "/api/v1/" + prop.path)} />
+                            onChange={(isSelected) => prop.handleChange(isSelected, "POST", "/api/v1/admin/" + prop.path)} />
                         <div>
                             <h3 className="font-semibold text-lg">Create {prop.name}</h3>
                             <p className="text-slate-500">
-                                <span className="text-green-500 font-bold">POST</span>  /api/v1/{prop.path}
+                                <span className="text-green-500 font-bold">POST</span>  /api/v1/admin/{prop.path}
                             </p>
                         </div>
                     </div>
@@ -41,13 +41,13 @@ const ContextCollapse = (prop: IProp) => {
                     <div className="flex gap-4 items-center">
                         <Switch
                             checked={prop.selected.some(
-                                (p) => p.method === "GET" && p.path === "/api/v1/" + prop.path
+                                (p) => p.method === "GET" && p.path === "/api/v1/admin/" + prop.path
                             )}
-                            onChange={(isSelected) => prop.handleChange(isSelected, "GET", "/api/v1/" + prop.path)}
+                            onChange={(isSelected) => prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path)}
                         />
                         <div>
                             <h3 className="font-semibold text-lg">Get {prop.name} With Paginate</h3>
-                            <p className="text-slate-500"><span className="text-blue-500 font-bold">GET</span>  /api/v1/{prop.path}</p>
+                            <p className="text-slate-500"><span className="text-blue-500 font-bold">GET</span>  /api/v1/admin/{prop.path}</p>
                         </div>
                     </div>
                 </div>
@@ -55,13 +55,27 @@ const ContextCollapse = (prop: IProp) => {
                     <div className="flex gap-4 items-center">
                         <Switch
                             checked={prop.selected.some(
-                                (p) => p.method === "PATCH" && p.path === "/api/v1/" + prop.path + "/:id"
+                                (p) => p.method === "GET" && p.path === "/api/v1/admin/" + prop.path + "/:id"
                             )}
-                            onChange={(isSelected) => prop.handleChange(isSelected, "PATCH", "/api/v1/" + prop.path + "/:id")}
+                            onChange={(isSelected) => prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path + "/:id")}
+                        />
+                        <div>
+                            <h3 className="font-semibold text-lg">Get {prop.name} By ID</h3>
+                            <p className="text-slate-500"><span className="text-blue-500 font-bold">GET</span>  /api/v1/admin/{prop.path}/:id</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-span-6 p-4 rounded-2xl border border-solid border-slate-200">
+                    <div className="flex gap-4 items-center">
+                        <Switch
+                            checked={prop.selected.some(
+                                (p) => p.method === "PATCH" && p.path === "/api/v1/admin/" + prop.path + "/:id"
+                            )}
+                            onChange={(isSelected) => prop.handleChange(isSelected, "PATCH", "/api/v1/admin/" + prop.path + "/:id")}
                         />
                         <div>
                             <h3 className="font-semibold text-lg">Update {prop.name}</h3>
-                            <p className="text-slate-500"><span className="text-neutral-800 font-bold">PATCH</span>  /api/v1/{prop.path}/:id</p>
+                            <p className="text-slate-500"><span className="text-neutral-800 font-bold">PATCH</span>  /api/v1/admin/{prop.path}/:id</p>
                         </div>
                     </div>
                 </div>
@@ -69,12 +83,12 @@ const ContextCollapse = (prop: IProp) => {
                     <div className="flex gap-4 items-center">
                         <Switch
                             checked={prop.selected.some(
-                                (p) => p.method === "DELETE" && p.path === "/api/v1/" + prop.path + "/:id"
-                            )} onChange={(isSelected) => prop.handleChange(isSelected, "DELETE", "/api/v1/" + prop.path + "/:id")}
+                                (p) => p.method === "DELETE" && p.path === "/api/v1/admin/" + prop.path + "/:id"
+                            )} onChange={(isSelected) => prop.handleChange(isSelected, "DELETE", "/api/v1/admin/" + prop.path + "/:id")}
                         />
                         <div>
                             <h3 className="font-semibold text-lg">Delete {prop.name}</h3>
-                            <p className="text-slate-500"><span className="text-red-500 font-bold">DELETE</span>  /api/v1/{prop.path}/:id</p>
+                            <p className="text-slate-500"><span className="text-red-500 font-bold">DELETE</span>  /api/v1/admin/{prop.path}/:id</p>
                         </div>
                     </div>
                 </div>
@@ -88,8 +102,6 @@ const ContextCollapse = (prop: IProp) => {
 
 export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) => {
     const [selected, setSelected] = useState<IPermission[]>([]);
-    console.log(roleSelected);
-
     useEffect(() => {
         if (roleSelected !== null) {
             setSelected(roleSelected.permission);

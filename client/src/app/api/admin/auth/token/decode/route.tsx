@@ -8,20 +8,20 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/auth/decode-access`, {
-        // withCredentials: true,
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Cookie: `access_token=${accessToken}`
+    try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/admin/auth/decode/access`, {
+            // withCredentials: true,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Cookie: `token=${accessToken}`
+            }
+        });
+
+        if (!response.data) {
+            return NextResponse.json({ message: 'Token is not valid' }, { status: 401 });
         }
-    });
-
-    console.log(response);
-
-
-    if (!response.data) {
+        return NextResponse.json(response.data, { status: 200 });
+    } catch {
         return NextResponse.json({ message: 'Token is not valid' }, { status: 401 });
     }
-
-    return NextResponse.json(response.data, { status: 200 });
 }

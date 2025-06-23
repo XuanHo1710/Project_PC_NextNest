@@ -1,11 +1,24 @@
 'use client'
+import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { BellOutlined, CheckOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
 import '@ant-design/v5-patch-for-react-19';
 import { Button } from "antd";
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
 
 export default function Header({ setCollapsed, collapsed }: { setCollapsed: (collapsed: boolean) => void, collapsed: boolean }) {
   const [displayNotify, setDisplayNotify] = useState(false);
+  const router = useRouter();
+  const { accountLogin } = useAuthEmployee();
+  const handleLogout = async () => {
+    await axios.post("/api/admin/auth/token/delete", { id: accountLogin?._id })
+      .then(res => {
+        console.log(res.data);
+        router.push("/auth/login")
+      })
+  }
   return (
     <>
       <header className="fixed top-0 bg-white z-50 left-0 right-0 py-5 px-5 border-b-2 border-slate-100 border-solid">
@@ -58,9 +71,8 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
               </div>
             </div>
             <UserOutlined className='rounded-full border-2 p-1' />
-            <h3 className='text-sm font-semibold'>Nguyễn Xuân Hồ</h3>
-            {/* <Button className="mx-2" type="primary">Đăng nhập</Button>
-            <Button variant='outlined' color='red' className="mx-2">Đăng xuất</Button> */}
+            <h3 className='text-sm font-semibold'>{accountLogin?.employee?.name}</h3>
+            <Button onClick={handleLogout} variant='outlined' color='red' className="mx-2">Đăng xuất</Button>
           </div>
         </div>
       </header>
