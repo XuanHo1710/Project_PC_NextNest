@@ -9,6 +9,7 @@ import { DataType } from '@/app/(admin)/admin/products/page';
 import { useProductStore } from '@/stores/productStore';
 import TableImportProductCSV from '@/components/ContentModal/product/CSVModalProduct';
 import ConfigModalProduct from '@/components/ContentModal/product/ConfigModalProduct';
+import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 
 type ConfigFieldsType = {
     fields: Array<string>;
@@ -22,6 +23,8 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
     const [fileData, setFileData] = useState<Array<DataType>>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const { addProduct, products } = useProductStore();
+    const { accountLogin } = useAuthEmployee();
+
 
 
     const beforeUpload = (file: File) => {
@@ -146,7 +149,11 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
             <div className="mt-5 border-t-[1px] border-solid border-slate-200 py-2 px-2 flex items-center justify-between">
                 <h3 className="mx-2 text-base font-semibold">Danh sách</h3>
                 <div className="flex items-center justify-center">
-                    <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "POST" && p.path === "/api/v1/admin/product"
+                    ) &&
+                        <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>
+                    }
                     <Button onClick={() => setOpenImportCSV(true)} className='mx-1' variant='outlined' color='green'>Import file csv</Button>
                     <Button className='mx-1' variant='outlined' color='green' onClick={exportToExcel}>Export file csv</Button>
                     <SettingOutlined onClick={() => setOpenConfig(true)} className='mx-1' />

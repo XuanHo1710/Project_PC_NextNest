@@ -1,6 +1,7 @@
 'use client'
-import { ICategory, useCategoryStore } from '@/stores/categoryStore';
-import { IProduct, useProductStore } from '@/stores/productStore';
+import { useCategoryStore } from '@/stores/categoryStore';
+import { useProductStore } from '@/stores/productStore';
+import { ICategory, IProduct } from '@/types/modal.d';
 import { UploadImages } from '@/utils/uploadImage';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';

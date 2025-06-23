@@ -1,5 +1,5 @@
 // stores/authEmployeeStore.ts
-import { IAccountEmployee } from '@/stores/accountEmployeeStore';
+import { IAccountEmployee } from '@/types/modal.d';
 import { create } from 'zustand';
 
 

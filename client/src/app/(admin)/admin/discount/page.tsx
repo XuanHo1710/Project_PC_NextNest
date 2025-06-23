@@ -6,29 +6,25 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
-import { IDiscount, useDiscountStore } from "@/stores/discountStore";
+import { useDiscountStore } from "@/stores/discountStore";
 import UpdateModalDiscount from "@/components/ContentModal/discount/UpdateModalDiscount";
 import ActionDiscount from "@/components/ActionFilter/discount/ActionDiscount";
 import FilterDiscount from "@/components/ActionFilter/discount/FilterDiscount";
 import EditSortDiscount from "@/components/EditSort/discount/EditSortDiscount";
 import ContentModalDiscount from "@/components/ContentModal/discount/ContentModalDiscount";
+import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import { DataType, SelectedContextType } from "@/types/table.d";
+import { IDiscount } from "@/types/modal.d";
 
 
-export interface DataType extends IDiscount {
-    key: string;
-}
 
-type SelectedContextType = {
-    selectedRows: Array<string>;
-    setSelectedRows: React.Dispatch<React.SetStateAction<Array<string>>>;
-};
 
 const SelectedDiscountContext = createContext<SelectedContextType | undefined>(undefined);
 
 
 export default function Discount() {
     const [isOpen, setOpen] = useState(false);
-    const [dataClick, setDataClick] = useState<null | DataType>(null);
+    const [dataClick, setDataClick] = useState<null | DataType<IDiscount>>(null);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
     const [fields, setFields] = useState<Array<string>>([
@@ -42,6 +38,7 @@ export default function Discount() {
     ]);
 
     const { discounts, deleteDiscount, fetchDiscounts, loading, message } = useDiscountStore()
+    const { accountLogin } = useAuthEmployee();
 
 
     useEffect(() => {
@@ -61,9 +58,9 @@ export default function Discount() {
 
 
 
-    const columns: ColumnsType<DataType> = [
+    const columns: ColumnsType<DataType<IDiscount>> = [
         ...fields.map((field) => {
-            const columnConfig: ColumnType<DataType> = {
+            const columnConfig: ColumnType<DataType<IDiscount>> = {
                 title: field.charAt(0).toUpperCase() + field.slice(1), // Tạo title từ field
                 dataIndex: field,
                 key: field,
@@ -100,29 +97,40 @@ export default function Discount() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    <FaPen
-                        onClick={() => {
-                            setOpen(true);
-                            setDataClick(record);
-                        }}
-                        className='hover:text-blue-500 cursor-pointer'
-                    />
-                    <Popconfirm
-                        title="Xóa dòng của bạn"
-                        description="Bạn có chắc chắn muốn xóa dòng này ?"
-                        onConfirm={() => handleDelete(record._id as string)}
-                        okText="Xóa"
-                        cancelText="Không"
-                    >
-                        <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                    </Popconfirm>
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/discount/:id"
+                    ) &&
+                        <FaPen
+                            onClick={() => {
+                                setOpen(true);
+                                setDataClick(record);
+                            }}
+                            className='hover:text-blue-500 cursor-pointer'
+                        />
+                    }
+
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/discount/:id"
+                    ) &&
+                        <Popconfirm
+                            title="Xóa dòng của bạn"
+                            description="Bạn có chắc chắn muốn xóa dòng này ?"
+                            onConfirm={() => handleDelete(record._id as string)}
+                            okText="Xóa"
+                            cancelText="Không"
+                        >
+                            <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
+                        </Popconfirm>
+                    }
                 </div>
             ),
         },
     ];
 
-    let dataTable: DataType[] = [];
-    if (!loading && discounts.length > 0) {
+    let dataTable: DataType<IDiscount>[] = [];
+    if (!loading && discounts.length > 0 && accountLogin && accountLogin.role.permission.some(
+        (p) => p.method === "GET" && p.path === "/api/v1/admin/discount"
+    )) {
         dataTable = discounts.map((item, index) => {
             const row = {
                 key: index.toString(),
@@ -135,7 +143,7 @@ export default function Discount() {
                     return acc;
                 }, {}),
             };
-            return row as DataType;
+            return row as DataType<IDiscount>;
         });
     }
 
@@ -144,13 +152,17 @@ export default function Discount() {
         <>
             <SelectedDiscountContext.Provider value={{ selectedRows, setSelectedRows }} >
                 <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                    <UpdateModalDiscount setOpen={setOpen} dataDiscount={dataClick} />
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/discount/:id"
+                    ) &&
+                        <UpdateModalDiscount setOpen={setOpen} dataDiscount={dataClick} />
+                    }
                 </Modal>
                 <div className="py-2">
                     <h2 className="text-center text-2xl font-bold">Trang khuyến mãi</h2>
                     <ActionDiscount ConfigFields={{ fields, setFields }} Filter={<FilterDiscount />} EditSort={<EditSortDiscount />} ContentModal={<ContentModalDiscount />} />
                     <Spin size="large" spinning={loading}>
-                        <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                        <TableContent<DataType<IDiscount>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
                     </Spin>
                 </div>
             </SelectedDiscountContext.Provider>

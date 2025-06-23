@@ -1,5 +1,5 @@
 'use client'
-import { IDiscount, useDiscountStore } from '@/stores/discountStore';
+import { useDiscountStore } from '@/stores/discountStore';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, InputNumber, Select, Spin, Switch } from 'antd';
@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { DatePicker } from 'antd';
 import { useState } from 'react';
 import dayjs from 'dayjs';
+import { IDiscount } from '@/types/modal.d';
 
 
 

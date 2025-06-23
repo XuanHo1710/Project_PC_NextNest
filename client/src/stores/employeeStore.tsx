@@ -1,20 +1,11 @@
 // stores/productStore.ts
 'use client'
-import axios from '@/config/configError';
+import axios from '@/config/axios';
+import { IEmployee } from '@/types/modal.d';
 import { create } from 'zustand'
 
 const BASE_URL = 'employee';
 
-
-export interface IEmployee {
-    avatar: string;
-    name: string;
-    email: string;
-    age: number;
-    address: string;
-    gender: string;
-    _id?: string;
-}
 
 interface IEmployeeState {
     employees: IEmployee[],

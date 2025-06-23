@@ -14,11 +14,17 @@ import { FaPeopleGroup } from 'react-icons/fa6';
 import { GoLaw } from 'react-icons/go';
 import Link from 'next/link';
 import { MoneyCollectOutlined, ShoppingCartOutlined } from '@ant-design/icons';
+import useAuthEmployee from '@/hooks/AuthEmployeeContext';
+import { pathAdminRoutes } from '@/config/route';
 
 
 type MenuItem = Required<MenuProps>['items'][number];
 
 export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
+    const { accountLogin } = useAuthEmployee();
+
+
+
     const items: MenuItem[] = [
         {
             key: 'home',
@@ -27,29 +33,37 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
             children: [
                 {
                     key: 'dashboard',
-                    label: <Link href={"/admin/dashboard"}>Dashboard</Link>,
+                    label: <Link href={pathAdminRoutes.dashboard}>Dashboard</Link>,
                     icon: <FaHome />
                 },
-                {
+                accountLogin && accountLogin.role.permission.some(
+                    (p) => p.method === "GET" && p.path === "/api/v1/admin/product"
+                ) ? {
                     key: 'products',
-                    label: <Link href={"/admin/products"}>Sản phẩm</Link>,
+                    label: <Link href={pathAdminRoutes.products}>Sản phẩm</Link>,
                     icon: <GiLaptop />
-                },
-                {
+                } : null,
+                accountLogin && accountLogin.role.permission.some(
+                    (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
+                ) ? {
                     key: 'category',
-                    label: <Link href={"/admin/category"}>Danh mục sản phẩm</Link>,
+                    label: <Link href={pathAdminRoutes.category}>Danh mục sản phẩm</Link>,
                     icon: <BiCategory />
-                },
-                {
+                } : null,
+                accountLogin && accountLogin.role.permission.some(
+                    (p) => p.method === "GET" && p.path === "/api/v1/admin/discount"
+                ) ? {
                     key: 'discount',
-                    label: <Link href={"/admin/discount"}>Khuyến mãi</Link>,
+                    label: <Link href={pathAdminRoutes.discount}>Khuyến mãi</Link>,
                     icon: <MoneyCollectOutlined />
-                },
-                {
+                } : null,
+                accountLogin && accountLogin.role.permission.some(
+                    (p) => p.method === "GET" && p.path === "/api/v1/admin/order"
+                ) ? {
                     key: 'order',
                     label: 'Đơn hàng',
                     icon: <ShoppingCartOutlined />
-                },
+                } : null,
             ],
         },
         {
@@ -65,14 +79,16 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     label: 'Người dùng',
                     icon: <FaUserFriends />,
                     children: [
-                        {
+                        accountLogin && accountLogin.role.permission.some(
+                            (p) => p.method === "GET" && p.path === "/api/v1/admin/employee"
+                        ) ? {
                             key: 'employee',
-                            label: <Link href={"/admin/employee"}>Thông tin nhân viên</Link>,
+                            label: <Link href={pathAdminRoutes.employee}>Thông tin nhân viên</Link>,
                             icon: <IoIosPeople />
-                        },
+                        } : null,
                         {
                             key: 'customer',
-                            label: <Link href={"/admin/guest"}>Thông tin khách hàng</Link>,
+                            label: <Link href={pathAdminRoutes.guest}>Thông tin khách hàng</Link>,
                             icon: <FaPeopleGroup />
 
                         },
@@ -83,30 +99,34 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     label: 'Tài khoản',
                     icon: <MdManageAccounts />,
                     children: [
-                        {
+                        accountLogin && accountLogin.role.permission.some(
+                            (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
+                        ) ? {
                             key: 'employeeAccount',
-                            label: <Link href={"/admin/account-employee"}>Tài khoản nhân viên</Link>,
+                            label: <Link href={pathAdminRoutes.accountEmployee}>Tài khoản nhân viên</Link>,
                             icon: <IoIosPeople />
-
-
-                        },
+                        } : null,
                         {
                             key: 'customerAccount',
-                            label: <Link href={"/admin/account-guest"}>Tài khoản khách hàng</Link>,
+                            label: <Link href={pathAdminRoutes.accountGuest}>Tài khoản khách hàng</Link>,
                             icon: <FaPeopleGroup />
                         },
                     ],
                 },
-                {
+                accountLogin && accountLogin.role.permission.some(
+                    (p) => p.method === "GET" && p.path === "/api/v1/admin/role"
+                ) ? {
                     key: 'role',
-                    label: <Link href={"/admin/role"}>Vai trò</Link>,
+                    label: <Link href={pathAdminRoutes.role}>Vai trò</Link>,
                     icon: <SiAdguard />
-                },
-                {
+                } : null,
+                accountLogin && accountLogin.role.permission.some(
+                    (p) => p.method === "GET" && p.path === "/api/v1/admin/role"
+                ) ? {
                     key: 'permission',
-                    label: <Link href={"/admin/permission"}>Phân quyền</Link>,
+                    label: <Link href={pathAdminRoutes.permission}>Phân quyền</Link>,
                     icon: <GoLaw />
-                },
+                } : null,
             ]
 
         },

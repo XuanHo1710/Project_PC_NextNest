@@ -41,7 +41,7 @@ export class ProductService {
       const valueSort = filter.filter.split("_")[1];
       filterProduct[keySort] = valueSort;
     }
-    return await this.productModel.find(filterProduct).sort(sortProduct);
+    return await this.productModel.find(filterProduct).sort(sortProduct).populate("category");
   }
 
   findOne(id: string) {

@@ -4,19 +4,16 @@ import { BellOutlined, CheckOutlined, MenuFoldOutlined, MenuUnfoldOutlined, User
 import '@ant-design/v5-patch-for-react-19';
 import { Button } from "antd";
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 
 export default function Header({ setCollapsed, collapsed }: { setCollapsed: (collapsed: boolean) => void, collapsed: boolean }) {
   const [displayNotify, setDisplayNotify] = useState(false);
-  const router = useRouter();
   const { accountLogin } = useAuthEmployee();
   const handleLogout = async () => {
     await axios.post("/api/admin/auth/token/delete", { id: accountLogin?._id })
-      .then(res => {
-        console.log(res.data);
-        router.push("/auth/login")
+      .then(() => {
+        window.location.href = "/auth/login"
       })
   }
   return (

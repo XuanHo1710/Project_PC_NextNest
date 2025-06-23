@@ -4,9 +4,10 @@ import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { toast } from 'react-toastify';
 import { useEmployeeStore } from '@/stores/employeeStore';
-import { IAccountEmployee, useAccountEmployeeStore } from '@/stores/accountEmployeeStore';
+import { useAccountEmployeeStore } from '@/stores/accountEmployeeStore';
 import { useEffect } from 'react';
 import { useRoleStore } from '@/stores/roleStore';
+import { IAccountEmployee } from '@/types/modal.d';
 
 
 

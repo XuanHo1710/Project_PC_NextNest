@@ -1,4 +1,5 @@
 'use client'
+import { pathAdminRoutes } from "@/config/route";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { IAccountEmployee } from "@/stores/accountEmployeeStore";
 import axios from "axios";
@@ -43,7 +44,7 @@ export default function SlideRefreshToken() {
 
 
             // dưới 20s thì refresh token =)))
-            if (refreshLeft <= 40 && accessLeft > 0) {
+            if (refreshLeft <= 20 * 60 && accessLeft > 0) {
                 console.log(`[AuthEmployee] Refresh Token còn ${refreshLeft}s ➔ Gọi /auth/refresh...`);
 
                 await axios.get(
@@ -70,7 +71,7 @@ export default function SlideRefreshToken() {
                         toast.error("Phiên đăng nhập hết hạn, vui lòng đăng nhập lại!");
                         await axios.post("/api/admin/auth/token/delete", { id: accountLogin._id || "" });
                         setAccountLogin(null);
-                        window.location.href = "/auth/login";
+                        window.location.href = pathAdminRoutes.login;;
                     });
             }
 
@@ -81,7 +82,7 @@ export default function SlideRefreshToken() {
                 setAccountLogin(null);
                 refreshLeft = 0;
             }
-        }, 10_000); // Kiểm tra mỗi 10s
+        }, 1000 * 10 * 60); // Kiểm tra mỗi 10 phut
 
         return () => clearInterval(interval);
     }, [accountLogin, expireAccessToken]);

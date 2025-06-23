@@ -1,23 +1,11 @@
 // stores/discountStore.ts
 'use client'
-import axios from '@/config/configError';
+import axios from '@/config/axios';
 import { create } from 'zustand'
-import dayjs from 'dayjs';
+import { IDiscount } from '@/types/modal.d';
 
 const BASE_URL = 'discount';
 
-
-export interface IDiscount {
-    name: string;
-    description: string;
-    type: string | boolean,
-    startDate: string,
-    endDate: string,
-    valueDiscount: number,
-    status: string;
-    _id?: string;
-    date: dayjs.Dayjs[]
-}
 
 interface IDiscountState {
     discounts: IDiscount[],

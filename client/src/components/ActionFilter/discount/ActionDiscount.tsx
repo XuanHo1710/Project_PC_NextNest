@@ -1,5 +1,6 @@
 'use client'
 import ConfigModalDiscount from '@/components/ContentModal/discount/ConfigModalDiscount';
+import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { SettingOutlined } from '@ant-design/icons';
 import '@ant-design/v5-patch-for-react-19';
 import { Button, Modal } from "antd";
@@ -14,6 +15,7 @@ type ConfigFieldsType = {
 export default function ActionDiscount({ ContentModal, EditSort, Filter, ConfigFields }: { ContentModal: JSX.Element, EditSort: JSX.Element, Filter: JSX.Element, ConfigFields: ConfigFieldsType }) {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [openConfig, setOpenConfig] = useState<boolean>(false);
+    const { accountLogin } = useAuthEmployee();
 
 
     const handleOk = () => {
@@ -39,7 +41,11 @@ export default function ActionDiscount({ ContentModal, EditSort, Filter, ConfigF
             <div className="mt-5 border-t-[1px] border-solid border-slate-200 py-2 px-2 flex items-center justify-between">
                 <h3 className="mx-2 text-base font-semibold">Danh sách</h3>
                 <div className="flex items-center justify-center">
-                    <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "POST" && p.path === "/api/v1/admin/discount"
+                    ) &&
+                        <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>
+                    }
                     <SettingOutlined onClick={() => setOpenConfig(true)} className='mx-1' />
                 </div>
             </div>

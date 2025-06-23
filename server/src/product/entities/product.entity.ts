@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
+import { Category } from 'src/category/entities/category.entity';
 export type EmployeeDocument = HydratedDocument<Product>;
 
 @Schema({ timestamps: true })
@@ -8,7 +9,7 @@ export class Product {
     @Prop()
     name: string;
 
-    @Prop()
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Category.name })
     category: mongoose.Types.ObjectId;
 
     @Prop()

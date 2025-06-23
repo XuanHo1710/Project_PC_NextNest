@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import axios from 'axios';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
+import { pathAdminRoutes } from '@/config/route';
 
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -19,7 +20,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 await axios.post("/api/admin/auth/token/delete", { id: "" });
                 setAccountLogin(null);
                 setAccessToken("");
-                window.location.href = "/auth/login";
+                window.location.href = pathAdminRoutes.login;
             }
         };
 

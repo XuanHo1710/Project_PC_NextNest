@@ -1,4 +1,5 @@
 'use client'
+import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import '@ant-design/v5-patch-for-react-19';
 import { Button, Modal } from "antd";
 import { JSX, useState } from 'react';
@@ -6,6 +7,8 @@ import { JSX, useState } from 'react';
 
 export default function ActionCategory({ ContentModal, EditSort, Filter }: { ContentModal: JSX.Element, EditSort: JSX.Element, Filter: JSX.Element }) {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const { accountLogin } = useAuthEmployee();
+
 
     const handleOk = () => {
         setIsModalOpen(false);
@@ -25,7 +28,12 @@ export default function ActionCategory({ ContentModal, EditSort, Filter }: { Con
             <div className="mt-5 border-t-[1px] border-solid border-slate-200 py-2 px-2 flex items-center justify-between">
                 <h3 className="mx-2 text-base font-semibold">Danh sách</h3>
                 <div className="flex items-center justify-center">
-                    <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>                </div>
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "POST" && p.path === "/api/v1/admin/category"
+                    ) &&
+                        <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>
+                    }
+                </div>
             </div>
         </>
     );

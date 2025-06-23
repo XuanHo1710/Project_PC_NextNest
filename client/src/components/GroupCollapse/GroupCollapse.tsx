@@ -20,7 +20,6 @@ interface IPermission {
 const ContextCollapse = (prop: IProp) => {
     return (
         <>
-
             <div className="grid grid-flow-row grid-cols-12 gap-5">
                 <div className="col-span-6 p-4 rounded-2xl border border-solid border-slate-200">
                     <div className="flex gap-4 items-center">
@@ -40,13 +39,17 @@ const ContextCollapse = (prop: IProp) => {
                 <div className="col-span-6 p-4 rounded-2xl border border-solid border-slate-200">
                     <div className="flex gap-4 items-center">
                         <Switch
-                            checked={prop.selected.some(
-                                (p) => p.method === "GET" && p.path === "/api/v1/admin/" + prop.path
-                            )}
-                            onChange={(isSelected) => prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path)}
+                            checked={
+                                ["/api/v1/admin/" + prop.path, "/api/v1/admin/" + prop.path + "/:id"]
+                                    .every(path => prop.selected.some(p => p.method === "GET" && p.path === path))
+                            }
+                            onChange={(isSelected) => {
+                                prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path);
+                                prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path + "/:id")
+                            }}
                         />
                         <div>
-                            <h3 className="font-semibold text-lg">Get {prop.name} With Paginate</h3>
+                            <h3 className="font-semibold text-lg">Get {prop.name} All</h3>
                             <p className="text-slate-500"><span className="text-blue-500 font-bold">GET</span>  /api/v1/admin/{prop.path}</p>
                         </div>
                     </div>
@@ -54,24 +57,14 @@ const ContextCollapse = (prop: IProp) => {
                 <div className="col-span-6 p-4 rounded-2xl border border-solid border-slate-200">
                     <div className="flex gap-4 items-center">
                         <Switch
-                            checked={prop.selected.some(
-                                (p) => p.method === "GET" && p.path === "/api/v1/admin/" + prop.path + "/:id"
-                            )}
-                            onChange={(isSelected) => prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path + "/:id")}
-                        />
-                        <div>
-                            <h3 className="font-semibold text-lg">Get {prop.name} By ID</h3>
-                            <p className="text-slate-500"><span className="text-blue-500 font-bold">GET</span>  /api/v1/admin/{prop.path}/:id</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-span-6 p-4 rounded-2xl border border-solid border-slate-200">
-                    <div className="flex gap-4 items-center">
-                        <Switch
-                            checked={prop.selected.some(
-                                (p) => p.method === "PATCH" && p.path === "/api/v1/admin/" + prop.path + "/:id"
-                            )}
-                            onChange={(isSelected) => prop.handleChange(isSelected, "PATCH", "/api/v1/admin/" + prop.path + "/:id")}
+                            checked={
+                                ["/api/v1/admin/" + prop.path + "/:id", "/api/v1/admin/" + prop.path + "/updateMany"]
+                                    .every(path => prop.selected.some(p => p.method === "PATCH" && p.path === path))
+                            }
+                            onChange={(isSelected) => {
+                                prop.handleChange(isSelected, "PATCH", "/api/v1/admin/" + prop.path + "/:id");
+                                prop.handleChange(isSelected, "PATCH", "/api/v1/admin/" + prop.path + "/updateMany")
+                            }}
                         />
                         <div>
                             <h3 className="font-semibold text-lg">Update {prop.name}</h3>
@@ -113,20 +106,18 @@ export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) 
 
     const handleChange = (isSelected: boolean, method: string, path: string) => {
         if (roleSelected === null) {
-            toast.error("Vui lòng chọn vai trò !!")
+            toast.error("Vui lòng chọn vai trò !!");
             return;
         }
-        const permission = selected.find(s => s.method === method && s.path === path);
-        if (isSelected) {
-            if (permission === undefined) {
-                setSelected([...selected, { method, path }]);
-            }
-        } else {
-            if (permission) {
-                let selectedClone = selected;
-                selectedClone = selectedClone.filter(s => s.method !== method || s.path !== path);
-                setSelected([...selectedClone]);
-            }
+
+        const permissionExists = selected.some(s => s.method === method && s.path === path);
+
+        if (isSelected && !permissionExists) {
+            setSelected(prev => [...prev, { method, path }]);
+        }
+
+        if (!isSelected && permissionExists) {
+            setSelected(prev => prev.filter(s => !(s.method === method && s.path === path)));
         }
     }
 

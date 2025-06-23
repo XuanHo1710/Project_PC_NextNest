@@ -1,22 +1,11 @@
 // stores/roleStore.ts
 'use client'
-import axios from '@/config/configError';
+import axios from '@/config/axios';
+import { IRole } from '@/types/modal.d';
 import { create } from 'zustand'
 
 const BASE_URL = 'role';
 
-
-export interface IRole {
-    name: string;
-    description: string;
-    permission:
-    {
-        method: string,
-        path: string
-    }[];
-
-    _id?: string;
-}
 
 interface IRoleState {
     roles: IRole[],

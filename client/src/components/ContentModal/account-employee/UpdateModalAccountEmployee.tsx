@@ -5,9 +5,10 @@ import { Button, Form, Input, Select, Spin } from 'antd';
 import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useQueryParams } from '@/hooks/QueryParamsContext';
-import { IAccountEmployee, useAccountEmployeeStore } from '@/stores/accountEmployeeStore';
+import { useAccountEmployeeStore } from '@/stores/accountEmployeeStore';
 import { useEmployeeStore } from '@/stores/employeeStore';
 import { useRoleStore } from '@/stores/roleStore';
+import { IAccountEmployee } from '@/types/modal.d';
 
 
 

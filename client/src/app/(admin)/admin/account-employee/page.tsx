@@ -6,31 +6,25 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
-import { IAccountEmployee, useAccountEmployeeStore } from "@/stores/accountEmployeeStore";
+import { useAccountEmployeeStore } from "@/stores/accountEmployeeStore";
 import UpdateModalAccountEmployee from "@/components/ContentModal/account-employee/UpdateModalAccountEmployee";
 import ActionAccountEmployee from "@/components/ActionFilter/account-employee/ActionAccountEmployee";
 import FilterAccountEmployee from "@/components/ActionFilter/account-employee/FilterAccountEmployee";
 import EditSortAccountEmployee from "@/components/EditSort/account-employee/EditSortAccountEmployee";
 import ContentModalAccountEmployee from "@/components/ContentModal/account-employee/ContentModalAccountEmployee";
-import { IEmployee } from "@/stores/employeeStore";
-import { IRole } from "@/stores/roleStore";
+import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import { DataType, SelectedContextType } from "@/types/table.d";
+import { IAccountEmployee, IEmployee, IRole } from "@/types/modal.d";
 
 
-export interface DataType extends IAccountEmployee {
-    key: string;
-}
 
-type SelectedContextType = {
-    selectedRows: Array<string>;
-    setSelectedRows: React.Dispatch<React.SetStateAction<Array<string>>>;
-};
 
 const SelectedAccountEmployeeContext = createContext<SelectedContextType | undefined>(undefined);
 
 
 export default function Discount() {
     const [isOpen, setOpen] = useState(false);
-    const [dataClick, setDataClick] = useState<null | DataType>(null);
+    const [dataClick, setDataClick] = useState<null | DataType<IAccountEmployee>>(null);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
     const [fields, setFields] = useState<Array<string>>([
@@ -42,6 +36,7 @@ export default function Discount() {
     ]);
 
     const { accountEmployees, deleteAccountEmployee, fetchAccountEmployees, loading, message } = useAccountEmployeeStore()
+    const { accountLogin } = useAuthEmployee();
 
 
     useEffect(() => {
@@ -61,9 +56,9 @@ export default function Discount() {
 
 
 
-    const columns: ColumnsType<DataType> = [
+    const columns: ColumnsType<DataType<IAccountEmployee>> = [
         ...fields.map((field) => {
-            const columnConfig: ColumnType<DataType> = {
+            const columnConfig: ColumnType<DataType<IAccountEmployee>> = {
                 title: field.charAt(0).toUpperCase() + field.slice(1), // Tạo title từ field
                 dataIndex: field,
                 key: field,
@@ -96,29 +91,39 @@ export default function Discount() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    <FaPen
-                        onClick={() => {
-                            setOpen(true);
-                            setDataClick(record);
-                        }}
-                        className='hover:text-blue-500 cursor-pointer'
-                    />
-                    <Popconfirm
-                        title="Xóa dòng của bạn"
-                        description="Bạn có chắc chắn muốn xóa dòng này ?"
-                        onConfirm={() => handleDelete(record._id as string)}
-                        okText="Xóa"
-                        cancelText="Không"
-                    >
-                        <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                    </Popconfirm>
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/:id"
+                    ) &&
+                        <FaPen
+                            onClick={() => {
+                                setOpen(true);
+                                setDataClick(record);
+                            }}
+                            className='hover:text-blue-500 cursor-pointer'
+                        />
+                    }
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/account-employee/:id"
+                    ) &&
+                        <Popconfirm
+                            title="Xóa dòng của bạn"
+                            description="Bạn có chắc chắn muốn xóa dòng này ?"
+                            onConfirm={() => handleDelete(record._id as string)}
+                            okText="Xóa"
+                            cancelText="Không"
+                        >
+                            <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
+                        </Popconfirm>
+                    }
                 </div>
             ),
         },
     ];
 
-    let dataTable: DataType[] = [];
-    if (!loading && accountEmployees.length > 0) {
+    let dataTable: DataType<IAccountEmployee>[] = [];
+    if (!loading && accountEmployees.length > 0 && accountLogin && accountLogin.role.permission.some(
+        (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
+    )) {
         dataTable = accountEmployees.map((item, index) => {
             const row = {
                 key: index.toString(),
@@ -131,7 +136,7 @@ export default function Discount() {
                     return acc;
                 }, {}),
             };
-            return row as DataType;
+            return row as DataType<IAccountEmployee>;
         });
     }
 
@@ -140,13 +145,17 @@ export default function Discount() {
         <>
             <SelectedAccountEmployeeContext.Provider value={{ selectedRows, setSelectedRows }} >
                 <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                    <UpdateModalAccountEmployee setOpen={setOpen} dataAccountEmployee={dataClick} />
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/:id"
+                    ) &&
+                        <UpdateModalAccountEmployee setOpen={setOpen} dataAccountEmployee={dataClick} />
+                    }
                 </Modal>
                 <div className="py-2">
                     <h2 className="text-center text-2xl font-bold">Trang tài khoản nhân viên</h2>
                     <ActionAccountEmployee ConfigFields={{ fields, setFields }} Filter={<FilterAccountEmployee />} EditSort={<EditSortAccountEmployee />} ContentModal={<ContentModalAccountEmployee />} />
                     <Spin size="large" spinning={loading}>
-                        <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                        <TableContent<DataType<IAccountEmployee>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
                     </Spin>
                 </div>
             </SelectedAccountEmployeeContext.Provider>

@@ -1,21 +1,20 @@
 'use client'
 import { useSelectedRowsEmployee } from '@/app/(admin)/admin/employee/page';
 import TableContent from '@/components/TableContent/TableContent';
-import { IEmployee } from '@/stores/employeeStore';
+import { IEmployee } from '@/types/modal.d';
+import { DataType } from '@/types/table.d';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Avatar, Spin, TableProps, Tag } from 'antd';
 
 
 
-interface DataType extends IEmployee {
-    key: string;
-}
 
-export default function TableImportEmployeeCSV({ employees, loading }: { employees: DataType[], loading: boolean }) {
+
+export default function TableImportEmployeeCSV({ employees, loading }: { employees: DataType<IEmployee>[], loading: boolean }) {
     const { selectedRows, setSelectedRows } = useSelectedRowsEmployee();
 
-    const columns: TableProps<DataType>['columns'] = [
+    const columns: TableProps<DataType<IEmployee>>['columns'] = [
         {
             title: 'Họ tên',
             dataIndex: 'name',
@@ -58,16 +57,11 @@ export default function TableImportEmployeeCSV({ employees, loading }: { employe
             title: 'Address',
             key: 'address',
             dataIndex: 'address',
-        },
-        {
-            title: 'Vai trò',
-            key: 'role',
-            dataIndex: 'role',
         }
     ];
 
 
-    let dataTable: DataType[] = [];
+    let dataTable: DataType<IEmployee>[] = [];
     if (employees.length > 0) {
         dataTable = employees.map((item, index) => (
             {
@@ -77,7 +71,6 @@ export default function TableImportEmployeeCSV({ employees, loading }: { employe
                 address: item.address,
                 avatar: item.avatar,
                 email: item.email,
-                role: item.role,
                 _id: item._id,
                 gender: item.gender
             }
@@ -89,7 +82,7 @@ export default function TableImportEmployeeCSV({ employees, loading }: { employe
         <>
             <Spin size='large' spinning={loading}>
                 <h2 className='text-lg font-bold my-4'>Table employee</h2>
-                <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                <TableContent<DataType<IEmployee>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
             </Spin>
         </>
     );

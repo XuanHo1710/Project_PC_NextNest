@@ -4,7 +4,7 @@ import type { ColumnsType, ColumnType } from "antd/es/table";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { IEmployee, useEmployeeStore } from "@/stores/employeeStore";
+import { useEmployeeStore } from "@/stores/employeeStore";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import UpdateModalEmployee from "@/components/ContentModal/employee/UpdateModalEmployee";
 import ActionEmployee from "@/components/ActionFilter/employee/ActionEmployee";
@@ -12,16 +12,10 @@ import FilterEmployee from "@/components/ActionFilter/employee/FilterEmployee";
 import EditSortEmployee from "@/components/EditSort/employee/EditSortEmployee";
 import ContentModalEmployee from "@/components/ContentModal/employee/ContentModalEmployee";
 import TableContent from "@/components/TableContent/TableContent";
+import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import { DataType, SelectedContextType } from "@/types/table.d";
+import { IEmployee } from "@/types/modal.d";
 
-
-export interface DataType extends IEmployee {
-    key: string;
-}
-
-type SelectedContextType = {
-    selectedRows: Array<string>;
-    setSelectedRows: React.Dispatch<React.SetStateAction<Array<string>>>;
-};
 
 const SelectedContext = createContext<SelectedContextType | undefined>(undefined);
 
@@ -29,7 +23,7 @@ const SelectedContext = createContext<SelectedContextType | undefined>(undefined
 export default function Employee() {
 
     const [isOpen, setOpen] = useState(false);
-    const [dataClick, setDataClick] = useState<null | DataType>(null);
+    const [dataClick, setDataClick] = useState<null | DataType<IEmployee>>(null);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
     const [fields, setFields] = useState<Array<string>>([
@@ -40,7 +34,9 @@ export default function Employee() {
         "gender",
     ]);
 
-    const { employees, deleteEmployee, fetchEmployees, loading, message } = useEmployeeStore()
+    const { employees, deleteEmployee, fetchEmployees, loading, message } = useEmployeeStore();
+    const { accountLogin } = useAuthEmployee();
+
 
 
     useEffect(() => {
@@ -60,9 +56,9 @@ export default function Employee() {
 
 
 
-    const columns: ColumnsType<DataType> = [
+    const columns: ColumnsType<DataType<IEmployee>> = [
         ...fields.map((field) => {
-            const columnConfig: ColumnType<DataType> = {
+            const columnConfig: ColumnType<DataType<IEmployee>> = {
                 title: field.charAt(0).toUpperCase() + field.slice(1), // Tạo title từ field
                 dataIndex: field,
                 key: field,
@@ -94,29 +90,40 @@ export default function Employee() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    <FaPen
-                        onClick={() => {
-                            setOpen(true);
-                            setDataClick(record);
-                        }}
-                        className='hover:text-blue-500 cursor-pointer'
-                    />
-                    <Popconfirm
-                        title="Xóa dòng của bạn"
-                        description="Bạn có chắc chắn muốn xóa dòng này ?"
-                        onConfirm={() => handleDelete(record._id as string)}
-                        okText="Xóa"
-                        cancelText="Không"
-                    >
-                        <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                    </Popconfirm>
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/employee/:id"
+                    ) &&
+                        <FaPen
+                            onClick={() => {
+                                setOpen(true);
+                                setDataClick(record);
+                            }}
+                            className='hover:text-blue-500 cursor-pointer'
+                        />
+                    }
+
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/employee/:id"
+                    ) &&
+                        <Popconfirm
+                            title="Xóa dòng của bạn"
+                            description="Bạn có chắc chắn muốn xóa dòng này ?"
+                            onConfirm={() => handleDelete(record._id as string)}
+                            okText="Xóa"
+                            cancelText="Không"
+                        >
+                            <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
+                        </Popconfirm>
+                    }
                 </div>
             ),
         },
     ];
 
-    let dataTable: DataType[] = [];
-    if (!loading && employees.length > 0) {
+    let dataTable: DataType<IEmployee>[] = [];
+    if (!loading && employees.length > 0 && accountLogin && accountLogin.role.permission.some(
+        (p) => p.method === "GET" && p.path === "/api/v1/admin/employee"
+    )) {
         dataTable = employees.map((item, index) => {
             const row = {
                 key: index.toString(),
@@ -130,7 +137,7 @@ export default function Employee() {
                     return acc;
                 }, {}),
             };
-            return row as DataType;
+            return row as DataType<IEmployee>;
         });
     }
 
@@ -139,13 +146,17 @@ export default function Employee() {
         <>
             <SelectedContext.Provider value={{ selectedRows, setSelectedRows }} >
                 <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                    <UpdateModalEmployee setOpen={setOpen} dataEmployee={dataClick} />
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/employee/:id"
+                    ) &&
+                        <UpdateModalEmployee setOpen={setOpen} dataEmployee={dataClick} />
+                    }
                 </Modal>
                 <div className="py-2">
                     <h2 className="text-center text-2xl font-bold">Trang nhân viên</h2>
                     <ActionEmployee ConfigFields={{ fields, setFields }} Filter={<FilterEmployee />} EditSort={<EditSortEmployee />} ContentModal={<ContentModalEmployee />}></ActionEmployee>
                     <Spin size="large" spinning={loading}>
-                        <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                        <TableContent<DataType<IEmployee>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
                     </Spin>
                 </div>
             </SelectedContext.Provider>

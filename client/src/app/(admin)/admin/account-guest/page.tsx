@@ -2,12 +2,12 @@
 import { Avatar, Spin, Tag } from "antd";
 import type { ColumnsType, ColumnType } from "antd/es/table";
 import { createContext, useContext, useState } from "react";
-import { IEmployee } from "@/stores/employeeStore";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import ActionAccountGuest from "@/components/ActionFilter/account-guest/ActionAccountGuest";
 import FilterAccountGuest from "@/components/ActionFilter/account-guest/FilterAccountGuest";
 import EditSortAccountGuest from "@/components/EditSort/account-guest/EditSortAccountGuest";
+import { IEmployee } from "@/types/modal.d";
 
 
 export interface DataType extends IEmployee {

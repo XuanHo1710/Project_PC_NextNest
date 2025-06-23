@@ -8,9 +8,11 @@ export async function POST(request: NextRequest) {
     // res.cookies.delete("access_token")
     // res.cookies.delete("refresh_token")
 
-    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/auth/logout`, { id: id });
-    console.log(res.data);
-
+    try {
+        await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/auth/logout`, { id: id });
+    } catch (error) {
+        console.log(error);
+    }
 
     return NextResponse.json({ status: 200 });
 }

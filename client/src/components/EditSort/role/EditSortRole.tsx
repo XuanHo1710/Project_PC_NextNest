@@ -1,6 +1,7 @@
 'use client'
 
 import { useSelectedRowsRole } from "@/app/(admin)/admin/role/page";
+import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { useRoleStore } from "@/stores/roleStore";
 import { Button, Form, Select } from "antd";
@@ -11,6 +12,8 @@ const EditSortRole = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsRole();
     const { updateManyRole, fetchRoles } = useRoleStore();
+    const { accountLogin } = useAuthEmployee();
+
 
     const handleSortChange = (value: string) => {
         if (value !== "all") {
@@ -70,14 +73,18 @@ const EditSortRole = () => {
                         />
                     </div>
                     <div className="flex items-center justify-center w-2/5">
-                        <Form onFinish={handleEditMulti} className='flex items-center justify-center'>
-                            <Form.Item name="typeChange" className='!m-0' label="Thay đổi: ">
-                                <Select style={{ width: 300 }} placeholder={"Chọn tiêu chí thay đổi"}>
-                                    <Select.Option value="delete">Xóa</Select.Option>
-                                </Select>
-                            </Form.Item>
-                            <Button htmlType="submit" type='primary' className='mx-2'>Thay đổi</Button>
-                        </Form>
+                        {accountLogin && accountLogin.role.permission.some(
+                            (p) => p.method === "PATCH" && p.path === "/api/v1/admin/role/updateMany"
+                        ) &&
+                            <Form onFinish={handleEditMulti} className='flex items-center justify-center'>
+                                <Form.Item name="typeChange" className='!m-0' label="Thay đổi: ">
+                                    <Select style={{ width: 300 }} placeholder={"Chọn tiêu chí thay đổi"}>
+                                        <Select.Option value="delete">Xóa</Select.Option>
+                                    </Select>
+                                </Form.Item>
+                                <Button htmlType="submit" type='primary' className='mx-2'>Thay đổi</Button>
+                            </Form>
+                        }
                     </div>
                 </div>
             </div>

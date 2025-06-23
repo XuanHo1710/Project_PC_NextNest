@@ -9,6 +9,7 @@ import { DataType } from '@/app/(admin)/admin/employee/page';
 import { useEmployeeStore } from '@/stores/employeeStore';
 import ConfigModalEmployee from '@/components/ContentModal/employee/ConfigModalEmployee';
 import TableImportEmployeeCSV from '@/components/ContentModal/employee/CSVModalEmployee';
+import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 
 type ConfigFieldsType = {
     fields: Array<string>;
@@ -22,6 +23,8 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
     const [fileData, setFileData] = useState<Array<DataType>>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const { addEmployee, employees } = useEmployeeStore();
+    const { accountLogin } = useAuthEmployee();
+
 
 
     const beforeUpload = (file: File) => {
@@ -141,7 +144,11 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
             <div className="mt-5 border-t-[1px] border-solid border-slate-200 py-2 px-2 flex items-center justify-between">
                 <h3 className="mx-2 text-base font-semibold">Danh sách</h3>
                 <div className="flex items-center justify-center">
-                    <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "POST" && p.path === "/api/v1/admin/employee"
+                    ) &&
+                        <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>
+                    }
                     <Button onClick={() => setOpenImportCSV(true)} className='mx-1' variant='outlined' color='green'>Import file csv</Button>
                     <Button className='mx-1' variant='outlined' color='green' onClick={exportToExcel}>Export file csv</Button>
                     <SettingOutlined onClick={() => setOpenConfig(true)} className='mx-1' />

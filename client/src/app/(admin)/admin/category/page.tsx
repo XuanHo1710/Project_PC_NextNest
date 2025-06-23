@@ -7,21 +7,17 @@ import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import EditSortCategory from "@/components/EditSort/category/EditSortCategory";
 import ActionCategory from "@/components/ActionFilter/category/ActionCategory";
-import { ICategory, useCategoryStore } from "@/stores/categoryStore";
+import { useCategoryStore } from "@/stores/categoryStore";
 import { ColumnsType } from "antd/es/table";
 import FilterCategory from "@/components/ActionFilter/category/FilterCategory";
 import ContentModalCategory from "@/components/ContentModal/category/ContentModalCategory";
 import UpdateModalCategory from "@/components/ContentModal/category/UpdateModalCategory";
+import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import { DataType, SelectedContextType } from "@/types/table.d";
+import { ICategory } from "@/types/modal.d";
 
 
-export interface DataType extends ICategory {
-    key: string;
-}
 
-type SelectedContextType = {
-    selectedRows: Array<string>;
-    setSelectedRows: React.Dispatch<React.SetStateAction<Array<string>>>;
-};
 
 const SelectedContextCategory = createContext<SelectedContextType | undefined>(undefined);
 
@@ -29,11 +25,13 @@ const SelectedContextCategory = createContext<SelectedContextType | undefined>(u
 export default function Category() {
 
     const [isOpen, setOpen] = useState(false);
-    const [dataClick, setDataClick] = useState<null | DataType>(null);
+    const [dataClick, setDataClick] = useState<null | DataType<ICategory>>(null);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
 
     const { deleteCategory, fetchCategorys, loading, message, categorys } = useCategoryStore()
+    const { accountLogin } = useAuthEmployee();
+
 
 
     useEffect(() => {
@@ -55,7 +53,7 @@ export default function Category() {
 
 
 
-    const columns: ColumnsType<DataType> = [
+    const columns: ColumnsType<DataType<ICategory>> = [
         {
             title: '_id',
             dataIndex: '_id',
@@ -79,31 +77,42 @@ export default function Category() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    <FaPen
-                        onClick={() => {
-                            setOpen(true);
-                            setDataClick(record);
-                        }}
-                        className='hover:text-blue-500 cursor-pointer'
-                    />
-                    <Popconfirm
-                        title="Xóa dòng của bạn"
-                        description="Bạn có chắc chắn muốn xóa dòng này ?"
-                        onConfirm={() => handleDelete(record._id as string)}
-                        okText="Xóa"
-                        cancelText="Không"
-                    >
-                        <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                    </Popconfirm>
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/category/:id"
+                    ) &&
+                        <FaPen
+                            onClick={() => {
+                                setOpen(true);
+                                setDataClick(record);
+                            }}
+                            className='hover:text-blue-500 cursor-pointer'
+                        />
+                    }
+
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/category/:id"
+                    ) &&
+                        <Popconfirm
+                            title="Xóa dòng của bạn"
+                            description="Bạn có chắc chắn muốn xóa dòng này ?"
+                            onConfirm={() => handleDelete(record._id as string)}
+                            okText="Xóa"
+                            cancelText="Không"
+                        >
+                            <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
+                        </Popconfirm>
+                    }
                 </div>
             ),
         },
     ];
 
-    let dataTable: DataType[] = [];
-    if (!loading && categorys.length > 0) {
+    let dataTable: DataType<ICategory>[] = [];
+    if (!loading && categorys.length > 0 && accountLogin && accountLogin.role.permission.some(
+        (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
+    )) {
         dataTable = categorys.map((item: ICategory, index) => {
-            const row: DataType = {
+            const row: DataType<ICategory> = {
                 key: index.toString(),
                 _id: item._id,
                 name: item.name,
@@ -118,13 +127,17 @@ export default function Category() {
         <>
             <SelectedContextCategory.Provider value={{ selectedRows, setSelectedRows }} >
                 <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                    <UpdateModalCategory setOpen={setOpen} dataCategory={dataClick} />
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/category/:id"
+                    ) &&
+                        <UpdateModalCategory setOpen={setOpen} dataCategory={dataClick} />
+                    }
                 </Modal>
                 <div className="py-2">
                     <h2 className="text-center text-2xl font-bold">Trang danh mục sản phẩm</h2>
                     <ActionCategory Filter={<FilterCategory />} EditSort={<EditSortCategory />} ContentModal={<ContentModalCategory />} />
                     <Spin size="large" spinning={loading}>
-                        <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                        <TableContent<DataType<ICategory>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
                     </Spin>
                 </div>
             </SelectedContextCategory.Provider>

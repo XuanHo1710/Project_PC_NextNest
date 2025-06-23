@@ -1,21 +1,13 @@
 
 // stores/productStore.ts
 'use client'
-import axios from '@/config/configError';
+import axios from '@/config/axios';
+import { ICategory } from '@/types/modal.d';
 import { create } from 'zustand'
 
 const BASE_URL = 'category';
 
 
-export interface ICategory {
-    _id?: string;
-    name: string;
-    parent: {
-        _id: string,
-        name: string
-    },
-    children?: ICategory[]
-}
 
 interface ICategoryState {
     categorys: ICategory[],

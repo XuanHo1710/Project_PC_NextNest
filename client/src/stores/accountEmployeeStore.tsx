@@ -1,25 +1,11 @@
 // stores/accountEmployeeStore.ts
 'use client'
-import axios from '@/config/configError';
-import { IEmployee } from '@/stores/employeeStore';
-import { IRole } from '@/stores/roleStore';
+import axios from '@/config/axios';
+import { IAccountEmployee } from '@/types/modal.d';
 import { create } from 'zustand'
 
 const BASE_URL = 'account-employee';
 
-
-export interface IAccountEmployee {
-    IDEmp: string;
-    password: string;
-    employee: IEmployee;
-    employeeId: string;
-    role: IRole;
-    roleId: string;
-    status: string;
-    _id?: string;
-    refreshToken: string;
-    expireToken: number;
-}
 
 interface IAccountEmployeeState {
     accountEmployees: IAccountEmployee[],

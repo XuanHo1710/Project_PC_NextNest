@@ -1,6 +1,7 @@
 'use client'
 
 import { useSelectedRowsAccountEmployee } from "@/app/(admin)/admin/account-employee/page";
+import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { useAccountEmployeeStore } from "@/stores/accountEmployeeStore";
 import { Button, Form, Select } from "antd";
@@ -11,6 +12,7 @@ const EditSortAccountEmployee = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsAccountEmployee();
     const { updateManyAccountEmployee, fetchAccountEmployees } = useAccountEmployeeStore();
+    const { accountLogin } = useAuthEmployee();
 
     const handleSortChange = (value: string) => {
         if (value !== "all") {
@@ -70,16 +72,20 @@ const EditSortAccountEmployee = () => {
                         />
                     </div>
                     <div className="flex items-center justify-center w-2/5">
-                        <Form onFinish={handleEditMulti} className='flex items-center justify-center'>
-                            <Form.Item name="typeChange" className='!m-0' label="Thay đổi: ">
-                                <Select style={{ width: 300 }} placeholder={"Chọn tiêu chí thay đổi"}>
-                                    <Select.Option value="update:status_ACTIVE">Hoạt động</Select.Option>
-                                    <Select.Option value="update:status_INACTIVE">Dừng hoạt động</Select.Option>
-                                    <Select.Option value="delete">Xóa</Select.Option>
-                                </Select>
-                            </Form.Item>
-                            <Button htmlType="submit" type='primary' className='mx-2'>Thay đổi</Button>
-                        </Form>
+                        {accountLogin && accountLogin.role.permission.some(
+                            (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/updateMany"
+                        ) &&
+                            <Form onFinish={handleEditMulti} className='flex items-center justify-center'>
+                                <Form.Item name="typeChange" className='!m-0' label="Thay đổi: ">
+                                    <Select style={{ width: 300 }} placeholder={"Chọn tiêu chí thay đổi"}>
+                                        <Select.Option value="update:status_ACTIVE">Hoạt động</Select.Option>
+                                        <Select.Option value="update:status_INACTIVE">Dừng hoạt động</Select.Option>
+                                        <Select.Option value="delete">Xóa</Select.Option>
+                                    </Select>
+                                </Form.Item>
+                                <Button htmlType="submit" type='primary' className='mx-2'>Thay đổi</Button>
+                            </Form>
+                        }
                     </div>
                 </div>
             </div>

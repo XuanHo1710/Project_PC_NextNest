@@ -1,23 +1,16 @@
 'use client'
 import { Avatar, Spin, Tag } from "antd";
 import type { ColumnsType, ColumnType } from "antd/es/table";
-import { createContext, useContext, useEffect, useState } from "react";
-import { IEmployee, useEmployeeStore } from "@/stores/employeeStore";
+import { createContext, useContext, useState } from "react";
+import { IEmployee } from "@/stores/employeeStore";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import ActionGuest from "@/components/ActionFilter/guest/ActionGuest";
 import FilterGuest from "@/components/ActionFilter/guest/FilterGuest";
 import EditSortGuest from "@/components/EditSort/guest/EditSortGuest";
+import { DataType, SelectedContextType } from "@/types/table.d";
 
 
-export interface DataType extends IEmployee {
-    key: string;
-}
-
-type SelectedContextType = {
-    selectedRows: Array<string>;
-    setSelectedRows: React.Dispatch<React.SetStateAction<Array<string>>>;
-};
 
 const SelectedContextGuest = createContext<SelectedContextType | undefined>(undefined);
 
@@ -44,9 +37,9 @@ export default function Guest() {
 
 
 
-    const columns: ColumnsType<DataType> = [
+    const columns: ColumnsType<DataType<IEmployee>> = [
         ...fields.map((field) => {
-            const columnConfig: ColumnType<DataType> = {
+            const columnConfig: ColumnType<DataType<IEmployee>> = {
                 title: field.charAt(0).toUpperCase() + field.slice(1), // Tạo title từ field
                 dataIndex: field,
                 key: field,
@@ -74,7 +67,7 @@ export default function Guest() {
         })
     ];
 
-    let dataTable: DataType[] = [];
+    let dataTable: DataType<IEmployee>[] = [];
     // if (!loading && employees.length > 0) {
     //     dataTable = employees.map((item, index) => {
     //         const row = {
@@ -101,7 +94,7 @@ export default function Guest() {
                     <h2 className="text-center text-2xl font-bold">Trang khách hàng</h2>
                     <ActionGuest ConfigFields={{ fields, setFields }} Filter={<FilterGuest />} EditSort={<EditSortGuest />} />
                     <Spin size="large" spinning={false} >
-                        <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                        <TableContent<DataType<IEmployee>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
                     </Spin>
                 </div>
             </SelectedContextGuest.Provider>

@@ -62,7 +62,7 @@ export class AccountEmployeeService {
   }
 
   async findEmployeeByToken(token: string) {
-    return await this.accountEmployeeModel.findOne({ refreshToken: token }).populate("employee");
+    return await this.accountEmployeeModel.findOne({ refreshToken: token }).populate(['employee', 'role']);
   }
 
   async updateAccountEmployeeToken(token: string, expire: number, id: string) {

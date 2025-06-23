@@ -5,10 +5,11 @@ import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'a
 import TextArea from 'antd/es/input/TextArea';
 import { JSX, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { IProduct, useProductStore } from '@/stores/productStore';
-import { ICategory, useCategoryStore } from '@/stores/categoryStore';
+import { useProductStore } from '@/stores/productStore';
+import { useCategoryStore } from '@/stores/categoryStore';
 import { UploadImages } from '@/utils/uploadImage';
 import { useQueryParams } from '@/hooks/QueryParamsContext';
+import { ICategory, IProduct } from '@/types/modal.d';
 
 interface UploadState {
     files: Array<File>;
@@ -40,7 +41,7 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
             form.setFieldsValue({
                 name: dataProduct.name,
                 description: dataProduct.description,
-                category: dataProduct.category,
+                category: dataProduct.category.name,
                 stock: dataProduct.stock,
                 discount: dataProduct.discount * 100,
                 oldPrice: dataProduct.oldPrice,

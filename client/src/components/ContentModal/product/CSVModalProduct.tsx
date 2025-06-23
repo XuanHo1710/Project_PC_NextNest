@@ -1,21 +1,19 @@
 'use client'
 import { useSelectedRowsProduct } from '@/app/(admin)/admin/products/page';
 import TableContent from '@/components/TableContent/TableContent';
-import { IProduct } from '@/stores/productStore';
+import { IProduct } from '@/types/modal.d';
+import { DataType } from '@/types/table.d';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Image, Spin, TableProps, Tag } from 'antd';
 
 
 
-interface DataType extends IProduct {
-    key: string;
-}
 
-export default function TableImportProductCSV({ products, loading }: { products: DataType[], loading: boolean }) {
+export default function TableImportProductCSV({ products, loading }: { products: DataType<IProduct>[], loading: boolean }) {
     const { selectedRows, setSelectedRows } = useSelectedRowsProduct();
 
-    const columns: TableProps<DataType>['columns'] = [
+    const columns: TableProps<DataType<IProduct>>['columns'] = [
         {
             title: 'Tên sản phẩm',
             dataIndex: 'name',
@@ -94,7 +92,7 @@ export default function TableImportProductCSV({ products, loading }: { products:
     ];
 
 
-    let dataTable: DataType[] = [];
+    let dataTable: DataType<IProduct>[] = [];
     if (products.length > 0) {
         dataTable = products.map((item, index) => (
             {
@@ -110,6 +108,8 @@ export default function TableImportProductCSV({ products, loading }: { products:
                 position: item.position,
                 _id: item._id,
                 images: item.images,
+                category: item.category,
+                otherString: item.otherString,
             }
         ))
     }
@@ -119,7 +119,7 @@ export default function TableImportProductCSV({ products, loading }: { products:
         <>
             <Spin size='large' spinning={loading}>
                 <h2 className='text-lg font-bold my-4'>Table product</h2>
-                <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                <TableContent<DataType<IProduct>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
             </Spin>
         </>
     );

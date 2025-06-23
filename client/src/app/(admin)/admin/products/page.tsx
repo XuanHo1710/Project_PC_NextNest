@@ -5,9 +5,11 @@ import ContentModalProduct from "@/components/ContentModal/product/ContentModalP
 import UpdateModalProduct from "@/components/ContentModal/product/UpdateModalProduct";
 import EditSortProduct from "@/components/EditSort/product/EditSortProduct";
 import TableContent from "@/components/TableContent/TableContent";
+import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useCategoryStore } from "@/stores/categoryStore";
-import { IProduct, useProductStore } from "@/stores/productStore";
+import { useProductStore } from "@/stores/productStore";
+import { ICategory, IProduct } from "@/types/modal.d";
+import { DataType, SelectedContextType } from "@/types/table.d";
 import { Image, Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -16,21 +18,15 @@ import { toast } from "react-toastify";
 
 
 
-export interface DataType extends IProduct {
-    key: string;
-}
 
-type SelectedContextType = {
-    selectedRows: Array<string>;
-    setSelectedRows: React.Dispatch<React.SetStateAction<Array<string>>>;
-};
 
 const SelectedProductContext = createContext<SelectedContextType | undefined>(undefined);
 
 
 export default function Product() {
     const [isOpen, setOpen] = useState(false);
-    const [dataClick, setDataClick] = useState<null | DataType>(null);
+    const { accountLogin } = useAuthEmployee();
+    const [dataClick, setDataClick] = useState<null | DataType<IProduct>>(null);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
     const [fields, setFields] = useState<Array<string>>([
@@ -70,9 +66,9 @@ export default function Product() {
 
 
 
-    const columns: ColumnsType<DataType> = [
+    const columns: ColumnsType<DataType<IProduct>> = [
         ...fields.map((field) => {
-            const columnConfig: ColumnType<DataType> = {
+            const columnConfig: ColumnType<DataType<IProduct>> = {
                 title: field.charAt(0).toUpperCase() + field.slice(1), // Tạo title từ field
                 dataIndex: field,
                 key: field,
@@ -104,12 +100,12 @@ export default function Product() {
                     <Tag color="gold">{feature ? "Có" : "Không"}</Tag>
                 );
             } else if (field === "newPrice") {
-                columnConfig.render = (_: unknown, record: DataType) => (
+                columnConfig.render = (_: unknown, record: DataType<IProduct>) => (
                     <Tag color="blue">{record.newPrice !== undefined ? record.newPrice.toLocaleString() + " VND" : "N/A"}</Tag>
                 );
             } else if (field === "category") {
-                columnConfig.render = (_: unknown, { category }: { category: string }) => (
-                    <CategoryName categoryId={category} />
+                columnConfig.render = (_: unknown, { category }: { category: ICategory }) => (
+                    <div>{category.name}</div>
                 );
             } else if (field === "status") {
                 columnConfig.render = (_: unknown, { status }: { status: string }) => {
@@ -125,7 +121,7 @@ export default function Product() {
                     <Tag color="geekblue">{stock}</Tag>
                 );
             } else if (field === "soldCount") {
-                columnConfig.render = (_: unknown, record: DataType) => (
+                columnConfig.render = (_: unknown, record: DataType<IProduct>) => (
                     <Tag color="geekblue">{record.soldCount}</Tag>
                 );
             }
@@ -139,30 +135,40 @@ export default function Product() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    <FaPen
-                        onClick={() => {
-                            setOpen(true);
-                            setDataClick(record);
-                        }}
-                        className='hover:text-blue-500 cursor-pointer'
-                    />
-                    <Popconfirm
-                        title="Xóa dòng của bạn"
-                        description="Bạn có chắc chắn muốn xóa dòng này ?"
-                        onConfirm={() => handleDelete(record._id as string)}
-                        okText="Xóa"
-                        cancelText="Không"
-                    >
-                        <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                    </Popconfirm>
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/product/:id"
+                    ) &&
+                        <FaPen
+                            onClick={() => {
+                                setOpen(true);
+                                setDataClick(record);
+                            }}
+                            className='hover:text-blue-500 cursor-pointer'
+                        />
+                    }
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/product/:id"
+                    ) &&
+                        <Popconfirm
+                            title="Xóa dòng của bạn"
+                            description="Bạn có chắc chắn muốn xóa dòng này ?"
+                            onConfirm={() => handleDelete(record._id as string)}
+                            okText="Xóa"
+                            cancelText="Không"
+                        >
+                            <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
+                        </Popconfirm>
+                    }
                 </div>
             ),
         },
     ];
 
 
-    let dataTable: DataType[] = [];
-    if (!loading && products.length > 0) {
+    let dataTable: DataType<IProduct>[] = [];
+    if (!loading && products.length > 0 && accountLogin && accountLogin.role.permission.some(
+        (p) => p.method === "GET" && p.path === "/api/v1/admin/product"
+    )) {
         dataTable = products.map((item, index) => {
             const row = {
                 key: index.toString(),
@@ -182,7 +188,7 @@ export default function Product() {
                     return acc;
                 }, {}),
             };
-            return row as DataType;
+            return row as DataType<IProduct>;
         });
     }
 
@@ -191,47 +197,23 @@ export default function Product() {
         <>
             <SelectedProductContext.Provider value={{ selectedRows, setSelectedRows }} >
                 <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                    <UpdateModalProduct setOpen={setOpen} dataProduct={dataClick} />
+                    {accountLogin && accountLogin.role.permission.some(
+                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/product/:id"
+                    ) &&
+                        <UpdateModalProduct setOpen={setOpen} dataProduct={dataClick} />
+                    }
                 </Modal>
                 <div className="py-2">
                     <h2 className="text-center text-2xl font-bold">Trang sản phẩm</h2>
-                    <ActionProduct ConfigFields={{ fields, setFields }} Filter={<FilterProduct />} EditSort={<EditSortProduct />} ContentModal={<ContentModalProduct />}></ActionProduct>
+                    <ActionProduct ConfigFields={{ fields, setFields }} Filter={<FilterProduct />} EditSort={<EditSortProduct />} ContentModal={<ContentModalProduct />} />
                     <Spin size="large" spinning={loading}>
-                        <TableContent<DataType> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                        <TableContent<DataType<IProduct>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
                     </Spin>
                 </div>
             </SelectedProductContext.Provider>
         </>
     );
 }
-
-
-type CategoryNameProps = { categoryId: string };
-
-const CategoryName: React.FC<CategoryNameProps> = ({ categoryId }) => {
-    const { findOne } = useCategoryStore();
-    const [name, setName] = useState<string>("");
-
-    useEffect(() => {
-        let isMounted = true;
-        const fetchCategory = async () => {
-            try {
-                const cate = await findOne(categoryId);
-                if (isMounted && cate && cate.name) {
-                    setName(cate.name);
-                } else if (isMounted) {
-                    setName("");
-                }
-            } catch {
-                if (isMounted) setName("");
-            }
-        };
-        fetchCategory();
-        return () => { isMounted = false; };
-    }, [categoryId, findOne]);
-
-    return <h2>{name}</h2>;
-};
 
 // Custom hook để dùng trong các component khác
 export const useSelectedRowsProduct = () => {

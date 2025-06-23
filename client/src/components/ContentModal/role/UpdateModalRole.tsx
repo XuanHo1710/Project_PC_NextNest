@@ -5,7 +5,8 @@ import { Button, Form, Input, Spin } from 'antd';
 import { useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useQueryParams } from '@/hooks/QueryParamsContext';
-import { IRole, useRoleStore } from '@/stores/roleStore';
+import { useRoleStore } from '@/stores/roleStore';
+import { IRole } from '@/types/modal.d';
 
 
 

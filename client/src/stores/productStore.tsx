@@ -1,33 +1,11 @@
 // stores/productStore.ts
 'use client'
-import axios from '@/config/configError';
+import axios from '@/config/axios';
+import { IProduct } from '@/types/modal.d';
 import { create } from 'zustand'
 
 const BASE_URL = 'product';
 
-
-export interface IProduct {
-    name: string;
-    description: string;
-    category: string,
-    images: Array<string>;
-    oldPrice: number;
-    newPrice?: number;
-    discount: number;
-    stock: number;
-    soldCount?: number;
-    otherString: string,
-    other: [
-        {
-            key: string,
-            value: string
-        }
-    ];
-    position: number;
-    feature: boolean
-    status: string;
-    _id?: string;
-}
 
 interface IProductState {
     products: IProduct[],
