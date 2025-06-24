@@ -1,6 +1,6 @@
 'use client'
 
-import { useSelectedRowsDiscount } from "@/app/(admin)/admin/discount/page";
+import { useSelectedRowsDiscount } from "@/components/Content/ContentDiscount";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { useDiscountStore } from "@/stores/discountStore";

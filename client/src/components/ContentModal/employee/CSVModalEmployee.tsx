@@ -1,5 +1,5 @@
 'use client'
-import { useSelectedRowsEmployee } from '@/app/(admin)/admin/employee/page';
+import { useSelectedRowsEmployee } from '@/components/Content/ContentEmployee';
 import TableContent from '@/components/TableContent/TableContent';
 import { IEmployee } from '@/types/modal.d';
 import { DataType } from '@/types/table.d';

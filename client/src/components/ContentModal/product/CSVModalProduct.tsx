@@ -1,5 +1,5 @@
 'use client'
-import { useSelectedRowsProduct } from '@/app/(admin)/admin/products/page';
+import { useSelectedRowsProduct } from '@/components/Content/ContentProduct';
 import TableContent from '@/components/TableContent/TableContent';
 import { IProduct } from '@/types/modal.d';
 import { DataType } from '@/types/table.d';

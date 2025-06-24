@@ -1,6 +1,7 @@
 'use client'
 
-import { useSelectedRowsEmployee } from "@/app/(admin)/admin/employee/page";
+
+import { useSelectedRowsEmployee } from "@/components/Content/ContentEmployee";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { useEmployeeStore } from "@/stores/employeeStore";

@@ -1,5 +1,5 @@
 'use client'
-import { useSelectedRowsAccountGuest } from "@/app/(admin)/admin/account-guest/page";
+import { useSelectedRowsAccountGuest } from "@/components/Content/ContentAccountGuest";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { Button, Form, Select } from "antd";
 import { toast } from "react-toastify";

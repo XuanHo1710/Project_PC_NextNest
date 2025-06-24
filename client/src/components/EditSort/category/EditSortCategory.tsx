@@ -1,6 +1,6 @@
 'use client'
 
-import { useSelectedRowsCategory } from "@/app/(admin)/admin/category/page";
+import { useSelectedRowsCategory } from "@/components/Content/ContentCategory";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { useCategoryStore } from "@/stores/categoryStore";
