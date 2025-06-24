@@ -1,5 +1,10 @@
 import ContentDiscount from "@/components/Content/ContentDiscount";
+import { Metadata } from "next";
 
+
+export const metadata: Metadata = {
+    title: 'Khuyến mãi'
+};
 export default function Discount() {
     return (
         <>

@@ -1,5 +1,10 @@
 import ContentRole from "@/components/Content/ContentRole";
+import { Metadata } from "next";
 
+
+export const metadata: Metadata = {
+    title: 'Trang vai trò của nhân viên'
+};
 
 
 export default function Role() {

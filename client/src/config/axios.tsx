@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 
 const instance = axios.create({
   baseURL: 'http://localhost:8080/api/v1/admin/', // Thay bằng URL backend của bạn
-  timeout: 3000, // timeout sau 5s
+  timeout: 5000, // timeout sau 5s
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

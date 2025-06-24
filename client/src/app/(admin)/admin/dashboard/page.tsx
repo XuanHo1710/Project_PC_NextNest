@@ -4,7 +4,12 @@ import { BarChartStatisticWeek } from "@/components/Chart/BarChartStatisticWeek"
 import { SaleChartStatistic } from "@/components/Chart/SaleChartStatistic";
 import { TableReport } from "@/components/TableContent/TableReport";
 import { HeaderDashboard } from "@/components/CardDashboard/CardDashboard";
+import { Metadata } from "next";
 
+
+export const metadata: Metadata = {
+  title: 'Trang tổng quan'
+};
 
 export default function Home() {
   return (

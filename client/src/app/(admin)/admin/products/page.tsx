@@ -1,5 +1,10 @@
 import ContentProduct from "@/components/Content/ContentProduct";
+import { Metadata } from "next";
 
+
+export const metadata: Metadata = {
+    title: 'Trang sản phẩm'
+};
 export default function Product() {
     return (
         <>

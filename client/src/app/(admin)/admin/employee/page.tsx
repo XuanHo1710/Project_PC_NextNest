@@ -1,5 +1,10 @@
 import ContentEmployee from "@/components/Content/ContentEmployee";
+import { Metadata } from "next";
 
+
+export const metadata: Metadata = {
+    title: 'Trang nhân viên'
+};
 
 
 export default function Employee() {

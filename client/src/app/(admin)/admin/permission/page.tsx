@@ -1,5 +1,10 @@
 import SelectRole from "@/components/SelectItem/SelectRole";
+import { Metadata } from "next";
 
+
+export const metadata: Metadata = {
+  title: 'Trang phân quyền'
+};
 
 export default function Permission() {
   return (

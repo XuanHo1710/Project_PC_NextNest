@@ -1,5 +1,13 @@
 import ContentAccountGuest from "@/components/Content/ContentAccountGuest";
 
+
+import { Metadata } from "next";
+
+
+export const metadata: Metadata = {
+    title: 'Tài khoản khách hàng'
+};
+
 export default function AccountGuest() {
 
     return (

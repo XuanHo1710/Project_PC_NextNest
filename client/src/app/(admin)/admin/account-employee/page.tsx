@@ -1,5 +1,10 @@
 import ContentAccountEmployee from "@/components/Content/ContentAccountEmployee";
+import { Metadata } from "next";
 
+
+export const metadata: Metadata = {
+    title: 'Tài khoản nhân viên'
+};
 
 export default function AccountEmployee() {
 

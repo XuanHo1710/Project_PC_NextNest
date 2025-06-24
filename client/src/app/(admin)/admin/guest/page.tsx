@@ -1,5 +1,10 @@
 import ContentGuest from "@/components/Content/ContentGuest";
+import { Metadata } from "next";
 
+
+export const metadata: Metadata = {
+    title: 'Trang khách hàng'
+};
 
 export default function Guest() {
 

@@ -1,13 +1,18 @@
-'use client'
 import { ToastContainer } from 'react-toastify';
-import { useState } from 'react';
 import { QueryParamsProvider } from '@/hooks/QueryParamsContext';
-import Header from '@/components/Header/Header';
-import { Sidebar } from '@/components/Sidebar/Sidebar';
-import Footer from '@/components/Footer/Footer';
-import SlideRefreshToken from '@/hooks/SideRefreshToken';
 import AuthProvider from '@/hooks/AuthProvider';
+import { AdminBodyLayout } from '@/components/Layout/AdminBodyLayout';
+import { Metadata } from 'next';
 
+export const metadata: Metadata = {
+  title: 'Not found 404',
+  description: 'Trang này không tồn tại',
+  icons: [
+    { rel: 'icon', type: 'image/png', sizes: '32x32', url: '/laptop.png?v=2' },
+    { rel: 'apple-touch-icon', url: '/laptop.png?v=2' },
+  ],
+
+};
 
 
 export default function AdminLayout({
@@ -15,27 +20,13 @@ export default function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
-  const [collapsed, setCollapsed] = useState(false);
-
-
   return (
     <>
       <ToastContainer position='top-right'>
       </ToastContainer>
       <AuthProvider>
         <QueryParamsProvider>
-          <Header collapsed={collapsed} setCollapsed={setCollapsed}></Header>
-          <div className="pt-20 flex overflow-y-hidden h-screen">
-            <Sidebar collapsed={collapsed} ></Sidebar>
-            <div className="overflow-y-scroll grow bg-slate-50" style={{ scrollbarWidth: "none" }}>
-              <div className='px-5'>
-                {children}
-                <SlideRefreshToken />
-              </div>
-              <Footer></Footer>
-            </div>
-          </div>
+          <AdminBodyLayout>{children}</AdminBodyLayout>
         </QueryParamsProvider>
       </AuthProvider>
     </>

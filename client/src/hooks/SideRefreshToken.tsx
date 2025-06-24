@@ -1,7 +1,7 @@
 'use client'
 import { pathAdminRoutes } from "@/config/route";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
-import { IAccountEmployee } from "@/stores/accountEmployeeStore";
+import { IAccountEmployee } from "@/types/modal.d";
 import axios from "axios";
 // import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";

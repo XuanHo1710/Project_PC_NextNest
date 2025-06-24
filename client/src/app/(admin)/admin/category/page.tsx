@@ -1,4 +1,10 @@
 import ContentCategory from "@/components/Content/ContentCategory";
+import { Metadata } from "next";
+
+
+export const metadata: Metadata = {
+    title: 'Danh mục sản phẩm'
+};
 
 export default function Category() {
 
