@@ -1,10 +1,10 @@
 'use client'
-import { IAccountEmployee } from "@/stores/accountEmployeeStore";
 import { Button, Form, Input } from "antd";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useRouter } from 'next/navigation';
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import { IAccountEmployee } from "@/types/modal.d";
 
 
 export default function AuthLogin() {

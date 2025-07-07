@@ -75,9 +75,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             }
         }
 
-
-
-
         if (err || !user) {
             return err || new UnauthorizedException("Token is not valid")
         }
