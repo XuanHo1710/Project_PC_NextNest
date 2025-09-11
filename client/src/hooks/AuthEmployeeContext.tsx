@@ -1,13 +1,13 @@
 // stores/authEmployeeStore.ts
-import { IAccountEmployee } from '@/types/modal.d';
+import { IAccountLogin } from '@/types/modal.d';
 import { create } from 'zustand';
 
 
 interface AuthEmployeeState {
     accessToken: string;
-    accountLogin: IAccountEmployee | null;
+    accountLogin: IAccountLogin | null;
     setAccessToken: (token: string) => void;
-    setAccountLogin: (account: IAccountEmployee | null) => void;
+    setAccountLogin: (account: IAccountLogin | null) => void;
     resetAuth: () => void;
 }
 

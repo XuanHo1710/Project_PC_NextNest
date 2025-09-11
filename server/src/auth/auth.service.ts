@@ -32,11 +32,17 @@ export class AuthService {
 
     // Get Inforaccount 
     const employee = await this.employeeService.findOne(account.employee);
-    const payload = { username: employee?.name, address: employee?.address, role: account.role };
-    const refresh_token = this.createRefreshToken(payload);
 
-    await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as string), account._id.toString());
+    const payload = { IDEmp: account.IDEmp, username: employee?.name, roleId: account.roleId, employeeId: employee?._id };
 
+    const access_token = this.createAccessToken(payload);
+
+    const refresh_token = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRE')
+    });
+
+    await this.accountEmployeeService.updateAccountEmployeeToken(access_token, ms(this.configService.get<string>('JWT_ACCESS_EXPIRE') as string), account._id.toString());
 
     // Set refresh_token as cookies
     // HttpOnly only server can use this cookies. Javascript can't use this cookies
@@ -47,11 +53,6 @@ export class AuthService {
       }
     );
 
-    const access_token = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRE')
-    });
-
     response.cookie("access_token", access_token,
       {
         httpOnly: true,
@@ -61,59 +62,59 @@ export class AuthService {
 
     return {
       access_token,
-      refresh_token
+      refresh_token,
+      payload
     };
   }
 
   processNewToken = async (refreshToken: string, response: Response) => {
+    console.log("Refresh token nè kakakak");
+
     try {
-      this.jwtService.verify(refreshToken, {
+      const detailPayload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')
       });
 
-      const account = await this.accountEmployeeService.findEmployeeByToken(refreshToken);
-
-      if (account) {
-        // Get Inforaccount 
-        const employee = await this.employeeService.findOne(account.employee);
-        const payload = { username: employee?.name, address: employee?.address, role: account.role };
-        const refresh_token = this.createRefreshToken(payload);
-
-        // Update user with refresh token
-        await this.accountEmployeeService.updateAccountEmployeeToken(refresh_token, ms(this.configService.get<string>('JWT_REFRESH_EXPIRE')), account._id.toString());
-
-
-        response.clearCookie("refresh_token");
-        // Set refresh_token as cookies
-        // HttpOnly only server can use this cookies. Javascript can't use this cookies
-        response.cookie("refresh_token", refresh_token,
-          {
-            httpOnly: true,
-            maxAge: ms(this.configService.get<string>('JWT_REFRESH_EXPIRE') as string),
-          }
-        );
-        return {
-          // access_token: this.jwtService.sign(payload),
-          // Mốt code là biết 
-          refresh_token: refresh_token
-        };
-      } else {
-        throw new BadRequestException("Not found this user with token")
+      const account = await this.accountEmployeeService.findAccountByIDEmp(detailPayload.IDEmp) as AccountEmployee & { _id: mongoose.Schema.Types.ObjectId };
+      if (!account) {
+        throw new BadRequestException("Tài khoản không tồn tại");
       }
 
-    } catch {
-      // Token het han thi se chay vo day => da ve login
-      throw new BadRequestException("Hết hạn phiên đăng nhập rồi");
+      const payload = {
+        IDEmp: detailPayload.IDEmp,
+        username: detailPayload.username,
+        roleId: detailPayload.roleId,
+        employeeId: detailPayload.employeeId
+      };
+
+      const access_token = this.createAccessToken(payload);
+
+      await this.accountEmployeeService.updateAccountEmployeeToken(
+        access_token,
+        ms(this.configService.get<string>('JWT_ACCESS_EXPIRE') as string),
+        account._id.toString()
+      );
+
+      response.cookie("access_token", access_token, {
+        httpOnly: true,
+        maxAge: ms(this.configService.get<string>('JWT_ACCESS_EXPIRE') as string),
+      });
+
+      return { access_token, ...payload };
+
+    } catch (err) {
+      throw new BadRequestException("Refresh token không hợp lệ hoặc đã hết hạn");
     }
   }
 
 
-  createRefreshToken = (payload: any) => {
-    const refresh_token = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRE')
+
+  createAccessToken = (payload: any) => {
+    const access_token = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRE')
     });
-    return refresh_token;
+    return access_token;
   }
 
   decodeToken = (token: string, type: string) => {
@@ -127,8 +128,7 @@ export class AuthService {
     });
   }
 
-  async logout(id: string, response: Response) {
-    await this.accountEmployeeService.updateAccountEmployeeToken("", 0, id);
+  async logout(response: Response) {
     response.clearCookie("refresh_token");
     response.clearCookie("access_token");
     return { message: "Success Logout" }

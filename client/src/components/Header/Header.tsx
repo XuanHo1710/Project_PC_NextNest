@@ -3,17 +3,31 @@ import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { BellOutlined, CheckOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
 import '@ant-design/v5-patch-for-react-19';
 import { Button } from "antd";
-import axios from 'axios';
+import axios from '@/config/axios';
+// import axios from 'axios';
 import { useState } from 'react';
+import { toast } from 'react-toastify';
+import { pathAdminRoutes } from '@/config/route';
+import { useRouter } from 'next/navigation';
 
 
 export default function Header({ setCollapsed, collapsed }: { setCollapsed: (collapsed: boolean) => void, collapsed: boolean }) {
   const [displayNotify, setDisplayNotify] = useState(false);
-  const { accountLogin } = useAuthEmployee();
+  const { accountLogin, resetAuth } = useAuthEmployee();
+  const router = useRouter();
   const handleLogout = async () => {
-    await axios.post("/api/admin/auth/token/delete", { id: accountLogin?._id })
+    // await axios.post("/api/admin/auth/token/delete", { id: accountLogin?._id })
+    //   .then(() => {
+    //     window.location.href = "/auth/login"
+    //   })
+    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/auth/logout`, {})
       .then(() => {
-        window.location.href = "/auth/login"
+        resetAuth();
+      }).catch(error => {
+        toast.error(error);
+      }).finally(() => {
+        // window.location.href = pathAdminRoutes.login;
+        router.push(pathAdminRoutes.login);
       })
   }
   return (
@@ -68,7 +82,7 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
               </div>
             </div>
             <UserOutlined className='rounded-full border-2 p-1' />
-            <h3 className='text-sm font-semibold'>{accountLogin?.employee?.name}</h3>
+            <h3 className='text-sm font-semibold'>{accountLogin?.username}</h3>
             <Button onClick={handleLogout} variant='outlined' color='red' className="mx-2">Đăng xuất</Button>
           </div>
         </div>

@@ -15,16 +15,14 @@ export class AccountEmployee {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Employee.name })
     employee: mongoose.Schema.Types.ObjectId;
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Role.name })
-    role: mongoose.Schema.Types.ObjectId;
+    @Prop()
+    roleId: mongoose.Schema.Types.ObjectId;
 
     @Prop()
-    refreshToken: string;
+    accessToken: string;
 
     @Prop()
     expireToken: number;
-
-
 
     @Prop({ default: "ACTIVE" })
     status: string;  //ACTIVE, INACTIVE

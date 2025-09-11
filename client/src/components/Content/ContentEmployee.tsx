@@ -82,7 +82,7 @@ export default function ContentEmployee() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "PATCH" && p.path === "/api/v1/admin/employee/:id"
                     ) &&
                         <FaPen
@@ -94,7 +94,7 @@ export default function ContentEmployee() {
                         />
                     }
 
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "DELETE" && p.path === "/api/v1/admin/employee/:id"
                     ) &&
                         <Popconfirm
@@ -113,7 +113,7 @@ export default function ContentEmployee() {
     ];
 
     let dataTable: DataType<IEmployee>[] = [];
-    if (!loading && employees.length > 0 && accountLogin && accountLogin.role.permission.some(
+    if (!loading && employees.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/employee"
     )) {
         dataTable = employees.map((item, index) => {
@@ -135,7 +135,7 @@ export default function ContentEmployee() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role.permission.some(
+                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "PATCH" && p.path === "/api/v1/admin/employee/:id"
                 ) &&
                     <UpdateModalEmployee setOpen={setOpen} dataEmployee={dataClick} />

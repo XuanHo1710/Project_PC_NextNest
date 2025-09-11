@@ -35,28 +35,28 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     label: <Link href={pathAdminRoutes.dashboard}>Dashboard</Link>,
                     icon: <FaHome />
                 },
-                accountLogin && accountLogin.role.permission.some(
+                accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/product"
                 ) ? {
                     key: 'products',
                     label: <Link href={pathAdminRoutes.products}>Sản phẩm</Link>,
                     icon: <GiLaptop />
                 } : null,
-                accountLogin && accountLogin.role.permission.some(
+                accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
                 ) ? {
                     key: 'category',
                     label: <Link href={pathAdminRoutes.category}>Danh mục sản phẩm</Link>,
                     icon: <BiCategory />
                 } : null,
-                accountLogin && accountLogin.role.permission.some(
+                accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/discount"
                 ) ? {
                     key: 'discount',
                     label: <Link href={pathAdminRoutes.discount}>Khuyến mãi</Link>,
                     icon: <MoneyCollectOutlined />
                 } : null,
-                accountLogin && accountLogin.role.permission.some(
+                accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/order"
                 ) ? {
                     key: 'order',
@@ -78,7 +78,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     label: 'Người dùng',
                     icon: <FaUserFriends />,
                     children: [
-                        accountLogin && accountLogin.role.permission.some(
+                        accountLogin && accountLogin.role && accountLogin.role.permission.some(
                             (p) => p.method === "GET" && p.path === "/api/v1/admin/employee"
                         ) ? {
                             key: 'employee',
@@ -98,7 +98,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     label: 'Tài khoản',
                     icon: <MdManageAccounts />,
                     children: [
-                        accountLogin && accountLogin.role.permission.some(
+                        accountLogin && accountLogin.role && accountLogin.role.permission.some(
                             (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
                         ) ? {
                             key: 'employeeAccount',
@@ -112,14 +112,14 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                         },
                     ],
                 },
-                accountLogin && accountLogin.role.permission.some(
+                accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/role"
                 ) ? {
                     key: 'role',
                     label: <Link href={pathAdminRoutes.role}>Vai trò</Link>,
                     icon: <SiAdguard />
                 } : null,
-                accountLogin && accountLogin.role.permission.some(
+                accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/role"
                 ) ? {
                     key: 'permission',

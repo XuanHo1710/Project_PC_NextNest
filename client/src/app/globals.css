@@ -114,7 +114,34 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+
+/* Xóa nền xám mặc định khi fullscreen */
+.ant-spin-fullscreen {
+  background-color: transparent !important;
+  backdrop-filter: blur(2px);
+  /* tuỳ chọn: làm mờ nền cho xịn */
+}
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-progress {
+  animation: progress 2s infinite linear;
 }

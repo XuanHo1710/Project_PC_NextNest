@@ -5,11 +5,12 @@ import { SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import { JSX, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
-import { DataType } from '@/app/(admin)/admin/products/page';
 import { useProductStore } from '@/stores/productStore';
 import TableImportProductCSV from '@/components/ContentModal/product/CSVModalProduct';
 import ConfigModalProduct from '@/components/ContentModal/product/ConfigModalProduct';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
+import { DataType } from '@/types/table.d';
+import { IProduct } from '@/types/modal.d';
 
 type ConfigFieldsType = {
     fields: Array<string>;
@@ -20,7 +21,7 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [openImportCSV, setOpenImportCSV] = useState<boolean>(false);
     const [openConfig, setOpenConfig] = useState<boolean>(false);
-    const [fileData, setFileData] = useState<Array<DataType>>([]);
+    const [fileData, setFileData] = useState<DataType<IProduct>[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const { addProduct, products } = useProductStore();
     const { accountLogin } = useAuthEmployee();
@@ -55,7 +56,7 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
                 toast.error(`Không thể import file CSV vì thiếu các trường bắt buộc`);
                 return false; // Ngăn upload và xóa file khỏi quá trình xử lý
             }
-            setFileData(jsonData as Array<DataType>);
+            setFileData(jsonData as DataType<IProduct>[]);
             setLoading(false);
             toast.success("Đã đọc file CSV thành công!");
             return jsonData;
@@ -149,7 +150,7 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
             <div className="mt-5 border-t-[1px] border-solid border-slate-200 py-2 px-2 flex items-center justify-between">
                 <h3 className="mx-2 text-base font-semibold">Danh sách</h3>
                 <div className="flex items-center justify-center">
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "POST" && p.path === "/api/v1/admin/product"
                     ) &&
                         <Button onClick={() => setIsModalOpen(true)} className='mx-1' variant='outlined' color='blue'>Thêm mới</Button>

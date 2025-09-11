@@ -8,7 +8,7 @@ import TableContent from "@/components/TableContent/TableContent";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { useAccountEmployeeStore } from "@/stores/accountEmployeeStore";
-import { IAccountEmployee, IEmployee, IRole } from "@/types/modal.d";
+import { IAccountEmployee, IEmployee } from "@/types/modal.d";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
@@ -77,8 +77,8 @@ export default function ContentAccountEmployee() {
                     <h2>{employee.name}</h2>
                 );
             } else if (field === "role") {
-                columnConfig.render = (_: unknown, { role }: { role: IRole }) => (
-                    <h2>{role?.name ? role?.name : ""}</h2>
+                columnConfig.render = (_: unknown, record: DataType<IAccountEmployee>) => (
+                    <h2>{record.role?.name ? record.role.name : ""}</h2>
                 );
             }
 
@@ -90,7 +90,7 @@ export default function ContentAccountEmployee() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/:id"
                     ) &&
                         <FaPen
@@ -101,7 +101,7 @@ export default function ContentAccountEmployee() {
                             className='hover:text-blue-500 cursor-pointer'
                         />
                     }
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "DELETE" && p.path === "/api/v1/admin/account-employee/:id"
                     ) &&
                         <Popconfirm
@@ -120,7 +120,7 @@ export default function ContentAccountEmployee() {
     ];
 
     let dataTable: DataType<IAccountEmployee>[] = [];
-    if (!loading && accountEmployees.length > 0 && accountLogin && accountLogin.role.permission.some(
+    if (!loading && accountEmployees.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
     )) {
         dataTable = accountEmployees.map((item, index) => {
@@ -143,7 +143,7 @@ export default function ContentAccountEmployee() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role.permission.some(
+                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/:id"
                 ) &&
                     <UpdateModalAccountEmployee setOpen={setOpen} dataAccountEmployee={dataClick} />

@@ -1,7 +1,8 @@
 'use client'
 import { GroupCollapse } from "@/components/GroupCollapse/GroupCollapse";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
-import { IRole, useRoleStore } from "@/stores/roleStore";
+import { useRoleStore } from "@/stores/roleStore";
+import { IRole } from "@/types/modal.d";
 import { Select } from "antd";
 import { useEffect, useState } from "react";
 
@@ -22,7 +23,7 @@ export default function SelectRole() {
     }
     return (
         <>
-            {accountLogin && accountLogin.role.permission.some(
+            {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                 (p) => p.method === "PATCH" && p.path === "/api/v1/admin/role/:id"
             ) ?
                 <>

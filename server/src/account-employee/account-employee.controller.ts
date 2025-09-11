@@ -15,7 +15,6 @@ export class AccountEmployeeController {
     return this.accountEmployeeService.create(createAccountEmployeeDto);
   }
 
-  @Public()
   @Get()
   findAll(@Query() filter: TypeQueryAccountEmployee) {
     return this.accountEmployeeService.findAll(filter);

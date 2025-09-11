@@ -71,7 +71,7 @@ const EditSortCategory = () => {
                         />
                     </div>
                     <div className="flex items-center justify-center w-2/5">
-                        {accountLogin && accountLogin.role.permission.some(
+                        {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                             (p) => p.method === "PATCH" && p.path === "/api/v1/admin/category/updateMany"
                         ) &&
                             <Form onFinish={handleEditMulti} className='flex items-center justify-center'>

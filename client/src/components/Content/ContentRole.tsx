@@ -75,7 +75,7 @@ export default function ContentRole() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "PATCH" && p.path === "/api/v1/admin/role/:id"
                     ) &&
                         <FaPen
@@ -86,7 +86,7 @@ export default function ContentRole() {
                             className='hover:text-blue-500 cursor-pointer'
                         />
                     }
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "DELETE" && p.path === "/api/v1/admin/role/:id"
                     ) &&
                         <Popconfirm
@@ -105,7 +105,7 @@ export default function ContentRole() {
     ];
 
     let dataTable: DataType<IRole>[] = [];
-    if (!loading && roles.length > 0 && accountLogin && accountLogin.role.permission.some(
+    if (!loading && roles.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/role"
     )) {
         dataTable = roles.map((item: IRole, index) => {
@@ -122,7 +122,7 @@ export default function ContentRole() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role.permission.some(
+                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "PATCH" && p.path === "/api/v1/admin/role/:id"
                 ) &&
                     <UpdateModalRole setOpen={setOpen} dataRole={dataClick} />

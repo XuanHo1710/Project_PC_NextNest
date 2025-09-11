@@ -1,31 +1,67 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
+import { useRoleStore } from '@/stores/roleStore';
+import { IAccountLogin } from '@/types/modal.d';
 import { pathAdminRoutes } from '@/config/route';
+import { useRouter } from 'next/navigation';
+
 
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { setAccountLogin, setAccessToken } = useAuthEmployee();
+    const { setAccountLogin, setAccessToken, resetAuth } = useAuthEmployee();
+    const { getRoleById } = useRoleStore();
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchAccount = async () => {
             try {
                 const res = await axios.post('/api/admin/auth/token', {});
-                const resGetToken = await axios.get('/api/admin/auth/token');
-                setAccountLogin(res.data);
-                setAccessToken(resGetToken.data.accessToken)
+                if (res.data !== null && res.data.data) {
+                    const role = await getRoleById(res.data.data.roleId);
+                    setAccountLogin({
+                        IDEmp: res.data.data.IDEmp,
+                        username: res.data.data.username,
+                        employeeId: res.data.data.employeeId,
+                        roleId: res.data.data.roleId,
+                        role,
+                        accessToken: res.data.data.access_token,
+                    } as IAccountLogin);
+                    setAccessToken(res.data.data.access_token);
+                } else {
+                    resetAuth();
+                    // window.location.href = pathAdminRoutes.login;
+                    router.replace(pathAdminRoutes.login);
+                }
             } catch (err) {
-                console.log('Auth error, resetting auth', err);
-                await axios.post("/api/admin/auth/token/delete", { id: "" });
-                setAccountLogin(null);
-                setAccessToken("");
-                window.location.href = pathAdminRoutes.login;
+                console.error('Auth error, resetting auth', err);
+                resetAuth();
+                router.replace(pathAdminRoutes.login);
+            } finally {
+                setLoading(false); // 👈 hết loading mới cho render children
             }
         };
-
         fetchAccount();
-    }, [setAccountLogin, setAccessToken]);
+    }, [setAccountLogin, setAccessToken, getRoleById, resetAuth]);
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-center">
+                <span className="text-3xl font-semibold text-[#1677ff]">
+                    Đang kiểm tra phiên đăng nhập...
+                </span>
+                <div className="w-[250px]">
+                    <div className="relative h-2 w-full rounded bg-gray-200 overflow-hidden">
+                        <div className="absolute top-0 left-0 h-full w-full animate-progress bg-[#1677ff]" />
+                    </div>
+                </div>
+            </div>
+
+        )
+    }
+
 
     return <>{children}</>;
 }

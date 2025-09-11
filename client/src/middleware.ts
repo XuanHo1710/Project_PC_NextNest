@@ -19,16 +19,16 @@ const protectedPaths = [
 const authPaths = [pathAdminRoutes.login];
 export function middleware(request: NextRequest) {
     const token = request.cookies.get('refresh_token')?.value;
-    const accessToken = request.cookies.get('access_token')?.value;
+    // const accessToken = request.cookies.get('access_token')?.value;
 
 
-    if (protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path)) && (!token || !accessToken)) {
+    if (protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path)) && !token) {
         return NextResponse.redirect(new URL(pathAdminRoutes.login, request.url));
     }
 
 
-    // Nếu đã đăng nhập mà truy cập /auth/login → chuyển sang dashboard
-    if (authPaths.some((path) => request.nextUrl.pathname.startsWith(path)) && token && accessToken) {
+    // // Nếu đã đăng nhập mà truy cập /auth/login → chuyển sang dashboard
+    if (authPaths.some((path) => request.nextUrl.pathname.startsWith(path)) && token) {
         return NextResponse.redirect(new URL(pathAdminRoutes.dashboard, request.url));
     }
 

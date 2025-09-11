@@ -132,7 +132,7 @@ export default function ContentProduct() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "PATCH" && p.path === "/api/v1/admin/product/:id"
                     ) &&
                         <FaPen
@@ -143,7 +143,7 @@ export default function ContentProduct() {
                             className='hover:text-blue-500 cursor-pointer'
                         />
                     }
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "DELETE" && p.path === "/api/v1/admin/product/:id"
                     ) &&
                         <Popconfirm
@@ -163,7 +163,7 @@ export default function ContentProduct() {
 
 
     let dataTable: DataType<IProduct>[] = [];
-    if (!loading && products.length > 0 && accountLogin && accountLogin.role.permission.some(
+    if (!loading && products.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/product"
     )) {
         dataTable = products.map((item, index) => {
@@ -192,7 +192,7 @@ export default function ContentProduct() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role.permission.some(
+                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "PATCH" && p.path === "/api/v1/admin/product/:id"
                 ) &&
                     <UpdateModalProduct setOpen={setOpen} dataProduct={dataClick} />

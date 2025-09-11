@@ -17,15 +17,15 @@ export class AuthController {
     return this.authService.login(req.user as AccountEmployee & { _id: mongoose.Schema.Types.ObjectId }, response); // Default la user. Do thang lon Passport lam nhu vay djt con me :)))
   }
 
-  @Public()
   @Post('/logout')
-  handleLogout(@Body() { id }: { id: string }, @Res({ passthrough: true }) response: Response) {
-    return this.authService.logout(id, response);
+  handleLogout(@Res({ passthrough: true }) response: Response) {
+    return this.authService.logout(response);
   }
 
-  @Get("/refresh-token")
-  refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
-    const refreshToken: string = request.cookies["refresh_token"] as string;
+  @Public()
+  @Post("/refresh-token")
+  refreshToken(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
+    const refreshToken: string = req.cookies['refresh_token'];
     return this.authService.processNewToken(refreshToken, response);
   }
 

@@ -16,13 +16,10 @@ export class CreateAccountEmployeeDto {
 
     @IsNotEmpty({ message: "Quyền không được để trống" })
     roleId: mongoose.Schema.Types.ObjectId;
-
-    role: mongoose.Schema.Types.ObjectId;
-
     status: string;  //ACTIVE, INACTIVE
 
 
-    refreshToken: string;
+    accessToken: string;
 
     expireToken: number;
 }

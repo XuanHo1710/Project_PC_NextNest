@@ -1,20 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { BadGatewayException, Injectable } from '@nestjs/common';
 import { CreateAccountEmployeeDto } from './dto/create-account-employee.dto';
 import { UpdateAccountEmployeeDto } from './dto/update-account-employee.dto';
 import { TypeQueryAccountEmployee, TypeUpdateManyAccountEmployee } from 'types/account-employee';
 import mongoose, { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 @Injectable()
 export class AccountEmployeeService {
-  constructor(@InjectModel(AccountEmployee.name) private accountEmployeeModel: Model<AccountEmployee>) { }
+  constructor(
+    @InjectModel(AccountEmployee.name) private accountEmployeeModel: Model<AccountEmployee>,
+    private jwtService: JwtService,
+    private configService: ConfigService
+  ) { }
 
   async create(createAccountEmployeeDto: CreateAccountEmployeeDto) {
-    createAccountEmployeeDto.role = createAccountEmployeeDto.roleId;
     createAccountEmployeeDto.employee = createAccountEmployeeDto.employeeId;
 
 
@@ -53,7 +58,7 @@ export class AccountEmployeeService {
     }
 
 
-    const accounts = await this.accountEmployeeModel.find(filterAccount).sort(sortAccount).populate(['employee', 'role']);
+    const accounts = await this.accountEmployeeModel.find(filterAccount).sort(sortAccount).populate(['employee']);
     return accounts;
   }
 
@@ -62,11 +67,20 @@ export class AccountEmployeeService {
   }
 
   async findEmployeeByToken(token: string) {
-    return await this.accountEmployeeModel.findOne({ refreshToken: token }).populate(['employee', 'role']);
+    const detailPayload = this.jwtService.verify(token, {
+      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')
+    });
+    const account = await this.accountEmployeeModel.findOne({ IDEmp: detailPayload.IDEmp }) as AccountEmployee | null;
+    if (account) {
+      return {
+        ...detailPayload,
+        access_token: account.accessToken
+      };
+    } else throw new BadGatewayException("Not found account")
   }
 
   async updateAccountEmployeeToken(token: string, expire: number, id: string) {
-    const update = await this.accountEmployeeModel.updateOne({ _id: new mongoose.Types.ObjectId(id) }, { refreshToken: token, expireToken: expire })
+    const update = await this.accountEmployeeModel.updateOne({ _id: new mongoose.Types.ObjectId(id) }, { accessToken: token, expireToken: expire })
     return update;
   }
 
@@ -95,7 +109,6 @@ export class AccountEmployeeService {
   }
 
   async update(id: mongoose.Types.ObjectId, updateAccountEmployeeDto: UpdateAccountEmployeeDto) {
-    updateAccountEmployeeDto.role = updateAccountEmployeeDto.roleId;
     updateAccountEmployeeDto.employee = updateAccountEmployeeDto.employeeId;
 
     // Hash password

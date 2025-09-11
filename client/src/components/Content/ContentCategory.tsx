@@ -72,7 +72,7 @@ export default function ContentCategory() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "PATCH" && p.path === "/api/v1/admin/category/:id"
                     ) &&
                         <FaPen
@@ -84,7 +84,7 @@ export default function ContentCategory() {
                         />
                     }
 
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "DELETE" && p.path === "/api/v1/admin/category/:id"
                     ) &&
                         <Popconfirm
@@ -103,7 +103,7 @@ export default function ContentCategory() {
     ];
 
     let dataTable: DataType<ICategory>[] = [];
-    if (!loading && categorys.length > 0 && accountLogin && accountLogin.role.permission.some(
+    if (!loading && categorys.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
     )) {
         dataTable = categorys.map((item: ICategory, index) => {
@@ -120,7 +120,7 @@ export default function ContentCategory() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role.permission.some(
+                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "PATCH" && p.path === "/api/v1/admin/category/:id"
                 ) &&
                     <UpdateModalCategory setOpen={setOpen} dataCategory={dataClick} />

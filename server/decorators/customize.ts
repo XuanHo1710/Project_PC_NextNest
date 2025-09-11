@@ -2,11 +2,11 @@ import { createParamDecorator, ExecutionContext, SetMetadata } from "@nestjs/com
 import { Request } from "express";
 
 // Extend Express Request interface to include 'employee'
-declare module "express" {
-    interface Request {
-        employee?: any;
-    }
-}
+// declare module "express" {
+//     interface Request {
+//         user?: any;
+//     }
+// }
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
@@ -14,7 +14,7 @@ export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 export const Employee = createParamDecorator(
     (data: unknown, ctx: ExecutionContext) => {
         const request = ctx.switchToHttp().getRequest<Request>();
-        return request.employee;
+        return request.user;
     }
 );
 

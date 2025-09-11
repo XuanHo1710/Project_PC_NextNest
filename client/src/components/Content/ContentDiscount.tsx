@@ -97,7 +97,7 @@ export default function ContentDiscount() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "PATCH" && p.path === "/api/v1/admin/discount/:id"
                     ) &&
                         <FaPen
@@ -109,7 +109,7 @@ export default function ContentDiscount() {
                         />
                     }
 
-                    {accountLogin && accountLogin.role.permission.some(
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "DELETE" && p.path === "/api/v1/admin/discount/:id"
                     ) &&
                         <Popconfirm
@@ -128,7 +128,7 @@ export default function ContentDiscount() {
     ];
 
     let dataTable: DataType<IDiscount>[] = [];
-    if (!loading && discounts.length > 0 && accountLogin && accountLogin.role.permission.some(
+    if (!loading && discounts.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/discount"
     )) {
         dataTable = discounts.map((item, index) => {
@@ -150,7 +150,7 @@ export default function ContentDiscount() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role.permission.some(
+                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "PATCH" && p.path === "/api/v1/admin/discount/:id"
                 ) &&
                     <UpdateModalDiscount setOpen={setOpen} dataDiscount={dataClick} />

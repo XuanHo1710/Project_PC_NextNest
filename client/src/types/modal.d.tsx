@@ -70,13 +70,22 @@ export interface IRole {
 
 export interface IAccountEmployee {
     IDEmp: string;
-    password: string;
+    password?: string;
     employee: IEmployee;
     employeeId: string;
-    role: IRole;
+    role?: IRole;
     roleId: string;
     status: string;
     _id?: string;
-    refreshToken: string;
-    expireToken: number;
+    accessToken: string;
 }
+
+export interface IAccountLogin {
+    IDEmp: string;
+    employeeId: string;
+    username: string;
+    roleId: string;
+    role?: IRole;
+    accessToken: string;
+}
+

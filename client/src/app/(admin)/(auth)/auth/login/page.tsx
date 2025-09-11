@@ -4,25 +4,36 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useRouter } from 'next/navigation';
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
-import { IAccountEmployee } from "@/types/modal.d";
+import { IAccountLogin } from "@/types/modal.d";
+import { useRoleStore } from "@/stores/roleStore";
 
 
 export default function AuthLogin() {
   const router = useRouter();
   const { setAccessToken, setAccountLogin } = useAuthEmployee();
+  const { getRoleById } = useRoleStore();
   const handleSubmit = async (payload: { IDEmp: string, password: string }) => {
     await axios.post("http://localhost:8080/api/v1/admin/auth/login", payload, {
       withCredentials: true
     }).catch(error => {
-      const { data } = error.response;
+      const { data } = error.response.data;
       toast.error(data.message);
     }).then(async (response) => {
-      setAccessToken(response?.data.access_token || "");
-      const res = await axios.post('/api/admin/auth/token', {
-        access_token: response?.data.access_token,
-        refresh_token: response?.data.refresh_token
-      });
-      setAccountLogin(res.data as IAccountEmployee);
+      const { data } = response?.data;
+      setAccessToken(data.access_token || "");
+      // const res = await axios.post('/api/admin/auth/token', {
+      //   access_token: response?.data.access_token,
+      //   refresh_token: response?.data.refresh_token
+      // });
+      setAccountLogin(
+        {
+          IDEmp: data.payload.IDEmp,
+          username: data.payload.username,
+          roleId: data.payload.roleId,
+          role: await getRoleById(data.payload.roleId),
+          accessToken: data.access_token
+        } as IAccountLogin
+      );
       router.push("/admin/dashboard"); // 👈 Đường dẫn muốn chuyển
     })
   }

@@ -4,6 +4,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { TypeQueryRole, TypeUpdateManyRole } from 'types/role';
 import mongoose from 'mongoose';
+import { Public } from 'decorators/customize';
 
 @Controller('/admin/role')
 export class RoleController {
@@ -25,6 +26,7 @@ export class RoleController {
   }
 
   @Get(':id')
+  @Public()
   findOne(@Param('id') id: mongoose.Types.ObjectId) {
     return this.roleService.findOne(id);
   }

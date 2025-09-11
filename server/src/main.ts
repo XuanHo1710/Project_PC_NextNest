@@ -5,14 +5,15 @@ import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { JwtService } from '@nestjs/jwt';
+import { AllExceptionsFilter } from 'core/exception.filter';
+import { TransformInterceptor } from 'core/transform.interceptor';
+import { RoleService } from 'src/role/role.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const configService = app.get(ConfigService);
   const reflector = app.get(Reflector)
-  const jwtService = app.get(JwtService);
-
 
   // Config CORS
   app.enableCors({
@@ -24,7 +25,10 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
 
-  app.useGlobalGuards(new JwtAuthGuard(reflector, configService, jwtService));
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
+
+  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(new TransformInterceptor(reflector));
 
 
   //Cookies
