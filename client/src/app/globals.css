@@ -123,8 +123,16 @@
 @layer components {
 
   /* index.css hoặc global.css */
-  .menu-item {
+  .header-item {
     @apply flex text-sm items-center hover:text-xs transition-all cursor-pointer justify-center gap-2 border-l-2 border-slate-300 px-2;
+  }
+
+  .button-primary {
+    @apply rounded-lg flex items-center justify-center gap-1.5 py-2 px-5 bg-blue-300 text-white font-semibold cursor-pointer hover:bg-blue-700
+  }
+
+  .grid-row {
+    @apply grid grid-cols-12 grid-flow-row;
   }
 }
 

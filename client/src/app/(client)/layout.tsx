@@ -22,7 +22,7 @@ export default function AdminLayout({
     return (
         <>
             <HeaderClient />
-            <div className="mt-20">
+            <div className="mt-28">
                 {children}
 
             </div>
