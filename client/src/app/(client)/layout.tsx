@@ -2,6 +2,7 @@
 // import { Metadata } from 'next';
 
 import FooterClient from "@/components/client/Layout/Footer";
+import HeaderClient from "@/components/client/Layout/Header";
 
 // export const metadata: Metadata = {
 //   title: 'Not found 404',
@@ -20,7 +21,11 @@ export default function AdminLayout({
 }>) {
     return (
         <>
-            {children}
+            <HeaderClient />
+            <div className="mt-20">
+                {children}
+
+            </div>
             <FooterClient />
         </>
     );

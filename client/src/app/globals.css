@@ -120,6 +120,14 @@
   }
 }
 
+@layer components {
+
+  /* index.css hoặc global.css */
+  .menu-item {
+    @apply flex text-sm items-center hover:text-xs transition-all cursor-pointer justify-center gap-2 border-l-2 border-slate-300 px-2;
+  }
+}
+
 
 /* Xóa nền xám mặc định khi fullscreen */
 .ant-spin-fullscreen {
