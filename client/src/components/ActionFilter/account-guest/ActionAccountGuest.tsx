@@ -28,7 +28,7 @@ export default function ActionAccountGuest({ EditSort, Filter, ConfigFields }: {
             </Modal>
             {Filter}
             {EditSort}
-            <div className="mt-5 border-t-[1px] border-solid border-slate-200 py-2 px-2 flex items-center justify-between">
+            <div className="mt-5 bg- border-t-[1px] border-solid border-slate-200 py-2 px-2 flex items-center justify-between">
                 <h3 className="mx-2 text-base font-semibold">Danh sách</h3>
                 <div className="flex items-center justify-center">
                     <SettingOutlined onClick={() => setOpenConfig(true)} className='mx-1' />

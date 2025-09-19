@@ -32,15 +32,6 @@ export default function HeaderClient() {
             setOpenSearch(false)
         else setOpenSearch(true)
     }
-
-    const layout = {
-        labelCol: {
-            span: 4,
-        },
-        wrapperCol: {
-            span: 20,
-        },
-    };
     return (
         <>
             {isOpenModalLogin &&
@@ -48,30 +39,35 @@ export default function HeaderClient() {
                     open={isOpenModalLogin}
                     onClose={() => setOpenModalLogin(false)}
                     onCancel={() => setOpenModalLogin(false)}
-                    title="SIGN UP"
-                    footer={[
-                        <Button variant="solid" color="green" key="modal-footer-btn">Submit</Button>,
-                    ]}
+                    title={<h2 className="text-xl font-bold">Đăng nhập</h2>}
+                    footer={[]}
                 >
-                    <button className="relative cursor-pointer border-2 text-white rounded-xl px-2 py-4 font-semibold text-base w-full text-center bg-blue-400">
-                        <Image preview={false} className="absolute -top-[26px] p-2 bg-white rounded-sm -left-[130px]" width={40} alt="gg" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png" />
-                        Sign up with google
-                    </button>
+                    <p className="mb-5">Nhập email và mật khẩu để truy cập vào tài khoản của bạn</p>
 
-                    <Divider style={{ borderColor: "#c9c9c9" }} plain>Or</Divider>
-
-                    <Form {...layout}>
-                        <Form.Item label="Email" name="email" >
-                            <Input placeholder="Nhap email" />
+                    <Form>
+                        <Form.Item className="!my-2" name="email" >
+                            <label className="font-semibold" htmlFor="email">Email</label>
+                            <Input className="!py-2 !mt-3" name="email" id="email" placeholder="Nhập email" />
                         </Form.Item>
-                        <Form.Item label="Password" name="password" >
-                            <Input placeholder="Nhap mat khau" />
+                        <Form.Item name="password" >
+                            <label className="font-semibold" htmlFor="password">Mật khẩu</label>
+                            <Input.Password className="!py-2 !mt-3" id="password" name="password" placeholder="Nhập mật khẩu" />
                         </Form.Item>
-
-                        <button className="relative cursor-pointer border-2 text-white rounded-xl px-2 py-4 font-semibold text-base w-full text-center bg-blue-300">
-                            Sign up
+                        <button className="button-primary !bg-blue-500 font-semibold py-3 w-full">
+                            Đăng nhập
                         </button>
                     </Form>
+                    <div className="text-right my-2">
+                        <Link href={"/forgot-password"}>Quên mật khẩu?</Link>
+                    </div>
+                    <Divider style={{ borderColor: "#c9c9c9" }} plain>hoặc đăng nhập bằng</Divider>
+                    <button className="border button-outline text-black hover:bg-blue-500 hover:text-white py-3 w-full font-semibold">
+                        <Image preview={false} width={25} alt="gg" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png" />
+                        Đăng nhập với Google
+                    </button>
+
+                    <p className="text-center mt-4">Bạn chưa có tài khoản? <Link href={"/register"} >Đăng ký ngay !</Link></p>
+
 
 
                 </Modal>
