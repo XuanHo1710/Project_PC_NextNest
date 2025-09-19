@@ -1,22 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { EmployeeModule } from './employee/employee.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
-import { CategoryModule } from './category/category.module';
-import { ProductModule } from './product/product.module';
-import { DiscountModule } from './discount/discount.module';
-import { AccountEmployeeModule } from './account-employee/account-employee.module';
-import { RoleModule } from './role/role.module';
-import { AuthModule } from './auth/auth.module';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from 'src/auth/jwt.strategy';
 // import { APP_GUARD } from '@nestjs/core';
 // import { AuthGuard } from 'src/auth/auth.guard';
+import { ClientModule } from './client/client.module';
+import { AdminModule } from './admin/admin.module';
+import { AppService } from 'src/app.service';
 const mongooseAutoPopulate = require('mongoose-autopopulate');
 
 
@@ -34,27 +25,11 @@ const mongooseAutoPopulate = require('mongoose-autopopulate');
       }),
       inject: [ConfigService]
     }),
-    EmployeeModule,
-    CategoryModule,
-    ProductModule,
-    DiscountModule,
-    AccountEmployeeModule,
-    RoleModule,
-    AuthModule,
-    JwtModule.register({})
+    AdminModule,
+    ClientModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: AuthGuard,
-    // },
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    JwtStrategy
-  ],
+  providers: [AppService],
+  exports: [AppService]
 })
 export class AppModule { }
