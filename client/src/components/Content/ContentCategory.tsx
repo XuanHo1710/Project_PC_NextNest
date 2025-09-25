@@ -24,8 +24,8 @@ export default function ContentCategory() {
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
 
-    const { deleteCategory, fetchCategorys, loading, message, categorys } = useCategoryStore()
     const { accountLogin } = useAuthEmployee();
+    const { deleteCategory, fetchCategorys, loading, message, categorys } = useCategoryStore();
 
 
 
