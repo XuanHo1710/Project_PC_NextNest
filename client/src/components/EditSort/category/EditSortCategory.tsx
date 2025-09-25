@@ -3,7 +3,7 @@
 import { useSelectedRowsCategory } from "@/components/Content/ContentCategory";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useCategoryStore } from "@/stores/categoryStore";
+import { useCategoryStore } from "@/stores/server/categoryStore";
 import { Button, Form, Select } from "antd";
 import { toast } from "react-toastify";
 

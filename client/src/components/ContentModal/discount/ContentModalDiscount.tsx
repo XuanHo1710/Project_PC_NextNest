@@ -1,5 +1,5 @@
 'use client'
-import { useDiscountStore } from '@/stores/discountStore';
+import { useDiscountStore } from '@/stores/server/discountStore';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, InputNumber, Select, Spin, Switch } from 'antd';

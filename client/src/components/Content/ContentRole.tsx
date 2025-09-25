@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import { ColumnsType } from "antd/es/table";
-import { useRoleStore } from "@/stores/roleStore";
+import { useRoleStore } from "@/stores/server/roleStore";
 import UpdateModalRole from "@/components/ContentModal/role/UpdateModalRole";
 import ActionRole from "@/components/ActionFilter/role/ActionRole";
 import FilterRole from "@/components/ActionFilter/role/FilterRole";

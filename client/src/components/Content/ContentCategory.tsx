@@ -7,7 +7,7 @@ import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import EditSortCategory from "@/components/EditSort/category/EditSortCategory";
 import ActionCategory from "@/components/ActionFilter/category/ActionCategory";
-import { useCategoryStore } from "@/stores/categoryStore";
+import { useCategoryStore } from "@/stores/server/categoryStore";
 import { ColumnsType } from "antd/es/table";
 import FilterCategory from "@/components/ActionFilter/category/FilterCategory";
 import ContentModalCategory from "@/components/ContentModal/category/ContentModalCategory";

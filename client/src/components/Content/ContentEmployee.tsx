@@ -7,7 +7,7 @@ import EditSortEmployee from "@/components/EditSort/employee/EditSortEmployee";
 import TableContent from "@/components/TableContent/TableContent";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useEmployeeStore } from "@/stores/server/employeeStore";
 import { IEmployee } from "@/types/modal.d";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { Avatar, Modal, Popconfirm, Spin, Tag } from "antd";

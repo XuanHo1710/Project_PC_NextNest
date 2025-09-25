@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
-import { useRoleStore } from '@/stores/roleStore';
+import { useRoleStore } from '@/stores/server/roleStore';
 import { IAccountLogin } from '@/types/modal.d';
 import { pathAdminRoutes } from '@/config/route';
 import { useRouter } from 'next/navigation';

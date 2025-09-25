@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
-import { useDiscountStore } from "@/stores/discountStore";
+import { useDiscountStore } from "@/stores/server/discountStore";
 import UpdateModalDiscount from "@/components/ContentModal/discount/UpdateModalDiscount";
 import ActionDiscount from "@/components/ActionFilter/discount/ActionDiscount";
 import FilterDiscount from "@/components/ActionFilter/discount/FilterDiscount";

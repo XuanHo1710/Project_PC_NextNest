@@ -5,7 +5,7 @@ import { SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import { JSX, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
-import { useProductStore } from '@/stores/productStore';
+import { useProductStore } from '@/stores/server/productStore';
 import TableImportProductCSV from '@/components/ContentModal/product/CSVModalProduct';
 import ConfigModalProduct from '@/components/ContentModal/product/ConfigModalProduct';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';

@@ -1,6 +1,50 @@
-import { Carousel, Image } from "antd";
+'use client';
+import CardProduct from "@/components/client/CardProduct/CardProduct";
+import { useCategoryStoreClient } from "@/stores/client/categoryStoreClient";
+import { Carousel, Image, Spin } from "antd";
+import Link from "next/link";
+import { useEffect } from "react";
 
 export default function HomeClient() {
+    const { getCategoriesPreview, loading, categoriesPreview } = useCategoryStoreClient();
+
+    useEffect(() => {
+        getCategoriesPreview();
+
+    }, [getCategoriesPreview]);
+
+    if (loading)
+        return <>Dang load data....</>
+    else
+        console.log(categoriesPreview);
+
+
+
+    const responsiveSettings = [
+        {
+            breakpoint: 1024,
+            settings: {
+                slidesToShow: 4,
+                slidesToScroll: 1,
+            },
+        },
+        {
+            breakpoint: 800,
+            settings: {
+                slidesToShow: 3,
+                slidesToScroll: 1,
+            },
+        },
+        {
+            breakpoint: 600,
+            settings: {
+                slidesToShow: 2,
+                slidesToScroll: 1,
+            },
+        },
+    ];
+
+
 
     return (
         <>
@@ -217,41 +261,44 @@ export default function HomeClient() {
                         }
 
                     </Carousel>
-                </div>
-                {productByCategory.length > 0 &&
-                    productByCategory.map(category => (
-                        <div key={category?._id} className='box-promotion mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-lg'>
-                            <div className='flex items-center justify-between'>
-                                <h1 className='text-xl md:text-3xl font-bold text-blue-500'>{category?.title}</h1>
-                                <Link to={`/collection/${category?.slug}`}>
-                                    <p className='text-sm font-bold text-slate-500 cursor-pointer'>Xem tất cả</p>
-                                </Link>
+                </div> */}
+                <Spin size="large" spinning={loading}>
+                    {!loading && categoriesPreview.length > 0 &&
+                        categoriesPreview.map(category => (
+                            <div key={category?._id} className='box-promotion mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-lg'>
+                                <div className='flex items-center justify-between'>
+                                    <h1 className='text-xl md:text-3xl font-bold text-blue-500'>{category?.name}</h1>
+                                    <Link href={`/category/${category?._id}`}>
+                                        <p className='text-sm font-bold text-slate-500 cursor-pointer'>Xem tất cả</p>
+                                    </Link>
+                                </div>
+                                <Carousel
+                                    slidesToShow={5}
+                                    slidesToScroll={1}
+                                    draggable
+                                    className='mt-12 cursor-grab'
+                                    dots={false}
+                                    autoplay
+                                    arrows
+                                    autoplaySpeed={2000}
+                                    responsive={responsiveSettings}
+                                >
+                                    {category.products.length > 0 &&
+                                        category.products.map(product => (
+                                            <div key={product?._id} className='px-1.5'>
+                                                <CardProduct product={product} css="p-3" />
+                                            </div>
+                                        ))
+                                    }
+
+
+                                </Carousel>
+
                             </div>
-                            <Carousel
-                                slidesToShow={5}
-                                slidesToScroll={1}
-                                draggable
-                                className='mt-12 cursor-grab'
-                                dots={false}
-                                autoplay
-                                arrows
-                                autoplaySpeed={2000}
-                                responsive={responsiveSettings}
-                            >
-                                {category.products.length > 0 &&
-                                    category.products.map(product => (
-                                        <div key={product?._id} className='px-1.5'>
-                                            <CardProduct data={product} css="p-3" />
-                                        </div>
-                                    ))
-                                }
+                        ))
+                    }
 
-
-                            </Carousel>
-
-                        </div>
-                    ))
-                } */}
+                </Spin>
 
                 <div className='h-60 bg-blue-400  text-white my-10 flex flex-wrap items-center justify-center font-extrabold text-base sm:text-xl lg:text-4xl cursor-default'>
                     Khơi nguồn đam mê, chạm đến đỉnh công nghệ!❣️

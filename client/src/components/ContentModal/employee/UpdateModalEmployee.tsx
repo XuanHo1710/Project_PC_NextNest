@@ -5,7 +5,7 @@ import { Button, Form, Image, Input, InputNumber, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { useEmployeeStore } from '@/stores/employeeStore';
+import { useEmployeeStore } from '@/stores/server/employeeStore';
 import { UploadImage } from '@/utils/uploadImage';
 import { IEmployee } from '@/types/modal.d';
 

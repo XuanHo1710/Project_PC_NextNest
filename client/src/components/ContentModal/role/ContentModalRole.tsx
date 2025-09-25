@@ -1,5 +1,5 @@
 'use client'
-import { useRoleStore } from '@/stores/roleStore';
+import { useRoleStore } from '@/stores/server/roleStore';
 import { IRole } from '@/types/modal.d';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';

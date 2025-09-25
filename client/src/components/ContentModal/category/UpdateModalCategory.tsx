@@ -4,7 +4,7 @@ import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { JSX, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { useCategoryStore } from '@/stores/categoryStore';
+import { useCategoryStore } from '@/stores/server/categoryStore';
 import { useQueryParams } from '@/hooks/QueryParamsContext';
 import { ICategory } from '@/types/modal.d';
 

@@ -1,5 +1,5 @@
 'use client'
-import { useEmployeeStore } from '@/stores/employeeStore';
+import { useEmployeeStore } from '@/stores/server/employeeStore';
 import { IEmployee } from '@/types/modal.d';
 import { UploadImage } from '@/utils/uploadImage';
 import '@ant-design/v5-patch-for-react-19';

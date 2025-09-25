@@ -1,5 +1,5 @@
 'use client'
-import { useCategoryStore } from '@/stores/categoryStore';
+import { useCategoryStore } from '@/stores/server/categoryStore';
 import { ICategory } from '@/types/modal.d';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';

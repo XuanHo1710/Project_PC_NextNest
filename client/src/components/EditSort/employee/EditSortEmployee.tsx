@@ -4,7 +4,7 @@
 import { useSelectedRowsEmployee } from "@/components/Content/ContentEmployee";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useEmployeeStore } from "@/stores/server/employeeStore";
 import { Button, Form, Select } from "antd";
 import { toast } from "react-toastify";
 

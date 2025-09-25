@@ -5,7 +5,7 @@ import { Button, DatePicker, Form, Input, InputNumber, Select, Spin, Switch } fr
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useQueryParams } from '@/hooks/QueryParamsContext';
-import { useDiscountStore } from '@/stores/discountStore';
+import { useDiscountStore } from '@/stores/server/discountStore';
 import TextArea from 'antd/es/input/TextArea';
 import dayjs from 'dayjs';
 import { IDiscount } from '@/types/modal.d';

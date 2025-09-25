@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useRoleStore } from "@/stores/roleStore";
+import { useRoleStore } from "@/stores/server/roleStore";
 import { Button, Form, Input, Select } from "antd";
 import { useEffect, useState } from "react";
 

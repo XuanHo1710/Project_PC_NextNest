@@ -3,7 +3,7 @@
 import { useSelectedRowsDiscount } from "@/components/Content/ContentDiscount";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useDiscountStore } from "@/stores/discountStore";
+import { useDiscountStore } from "@/stores/server/discountStore";
 import { Button, Form, Select } from "antd";
 import { toast } from "react-toastify";
 

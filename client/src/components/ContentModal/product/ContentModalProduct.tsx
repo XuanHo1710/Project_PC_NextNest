@@ -1,6 +1,6 @@
 'use client'
-import { useCategoryStore } from '@/stores/categoryStore';
-import { useProductStore } from '@/stores/productStore';
+import { useCategoryStore } from '@/stores/server/categoryStore';
+import { useProductStore } from '@/stores/server/productStore';
 import { ICategory, IProduct } from '@/types/modal.d';
 import { UploadImages } from '@/utils/uploadImage';
 import '@ant-design/v5-patch-for-react-19';

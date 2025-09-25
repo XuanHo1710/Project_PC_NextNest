@@ -3,7 +3,7 @@
 import { useSelectedRowsProduct } from "@/components/Content/ContentProduct";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useProductStore } from "@/stores/productStore";
+import { useProductStore } from "@/stores/server/productStore";
 import { Button, Form, Select } from "antd";
 import { toast } from "react-toastify";
 

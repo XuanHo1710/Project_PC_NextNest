@@ -7,7 +7,7 @@ import EditSortProduct from "@/components/EditSort/product/EditSortProduct";
 import TableContent from "@/components/TableContent/TableContent";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useProductStore } from "@/stores/productStore";
+import { useProductStore } from "@/stores/server/productStore";
 import { ICategory, IProduct } from "@/types/modal.d";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { Image, Modal, Popconfirm, Spin, Tag } from "antd";
