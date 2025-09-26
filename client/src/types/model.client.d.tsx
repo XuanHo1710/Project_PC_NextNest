@@ -1,3 +1,5 @@
+import { ICategory } from "@/types/modal.d";
+
 export interface ICategoryPreview {
     _id?: string;
     name: string;
@@ -23,5 +25,17 @@ export interface IProductCard {
     newPrice: number,
     discount: number,
     stock: number,
-    soldCount: number
+    soldCount: number,
+    category?: ICategory
+}
+
+
+export interface IProductWithPagination {
+    products: IProductCard[];
+    pagination: {
+        totalItems: number,
+        totalPages: number,
+        currentPage: number,
+        limit: number,
+    }
 }

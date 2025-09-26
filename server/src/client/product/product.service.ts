@@ -2,43 +2,54 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product } from 'src/admin/product/entities/product.entity';
-import { TypeQueryProduct, TypeUpdateManyProduct } from 'types/product';
 
 
 @Injectable()
 export class ProductService {
   constructor(@InjectModel(Product.name) private productModel: Model<Product>) { }
 
+  async findProductByIdCategory(categoryId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    // Đếm tổng số sản phẩm để tính totalPages
+    const totalItems = await this.productModel.countDocuments({ category: categoryId });
 
-  async findAll(filter: TypeQueryProduct) {
-    const sortProduct = {};
 
-    const filterProduct = {};
+    const products = await this.productModel.find(
+      { category: categoryId },
+      { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1 }
+    ).skip(skip).limit(limit).populate("category");
 
-    if (filter.search) {
-      const keyword = filter.search;
-      filterProduct["$or"] = [
-        { name: { $regex: keyword, $options: "i" } }   // tìm trong tên
-      ];
+    return {
+      products,
+      pagination: {
+        totalItems,
+        totalPages: Math.ceil(totalItems / limit),
+        currentPage: page,
+        limit,
+      }
     }
 
-
-    if (filter.sort) {
-      const keySort = filter.sort.split("_")[0];
-      const valueSort = filter.sort.split("_")[1];
-      sortProduct[keySort] = valueSort;
-    }
-
-    if (filter.filter) {
-      const keySort = filter.filter.split("_")[0];
-      const valueSort = filter.filter.split("_")[1];
-      filterProduct[keySort] = valueSort;
-    }
-    return await this.productModel.find(filterProduct).sort(sortProduct).populate("category").limit(5);
   }
 
   findOne(id: string) {
     return `This action returns a #${id} product`;
+  }
+
+
+  async searchProductByName(keyname: string = "") {
+    const filterProduct = {};
+    console.log(keyname);
+
+    if (keyname !== "") {
+      filterProduct["$or"] = [
+        { name: { $regex: keyname, $options: "i" } },   // tìm trong tên
+      ];
+    }
+    return await this.productModel.find(
+      filterProduct,
+      { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1 }
+    ).limit(10).populate("category");
+
   }
 
 }

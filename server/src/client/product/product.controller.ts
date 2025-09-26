@@ -6,9 +6,14 @@ import { TypeQueryProduct } from 'types/product';
 export class ProductController {
   constructor(private readonly productService: ProductService) { }
 
-  @Get()
-  findAll(@Query() filter: TypeQueryProduct) {
-    return this.productService.findAll(filter);
+  @Get("/get-by-category/:categoryId")
+  findProductByIdCategory(@Param("categoryId") categoryId: string, @Query("page") page: number = 1, @Query("limit") limit: number = 8) {
+    return this.productService.findProductByIdCategory(categoryId, page, limit);
+  }
+
+  @Get("/search")
+  searchProductByName(@Query("keyword") keyword: string) {
+    return this.productService.searchProductByName(keyword);
   }
 
 
@@ -16,6 +21,8 @@ export class ProductController {
   findOne(@Param('id') id: string) {
     return this.productService.findOne(id);
   }
+
+
 
 
 }

@@ -1,7 +1,7 @@
 "use client";
 import { IoIosArrowDown } from "react-icons/io";
 import { MdKeyboardArrowRight } from "react-icons/md";
-import { Button, Divider, Form, Image, Input, Modal } from "antd";
+import { Badge, Button, Divider, Form, Image, Input, Modal, Spin } from "antd";
 import { BiCategory } from "react-icons/bi";
 import { MdOutlineNotListedLocation } from "react-icons/md";
 import { MdOutlineShoppingCart } from "react-icons/md";
@@ -11,8 +11,13 @@ import { IoDocumentOutline } from "react-icons/io5";
 import { FaPhoneAlt } from "react-icons/fa";
 import Marquee from "react-fast-marquee";
 import { MdOutlineSearch } from "react-icons/md";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { ICategory } from "@/types/modal.d";
+import { categoryClientService, productClientService } from "@/services/client";
+import { buildCategoryTree } from "@/utils/buildTree";
+import { IProductCard } from "@/types/model.client.d";
 
 
 export default function HeaderClient() {
@@ -21,17 +26,82 @@ export default function HeaderClient() {
     const [isOpenCart, setOpenCart] = useState<boolean>(false);
     const [isOpenSearch, setOpenSearch] = useState<boolean>(false);
     const [isOpenModalLogin, setOpenModalLogin] = useState<boolean>(false);
+    const [categories, setCategories] = useState<ICategory[] | []>([]);
+    const [childrenCategories, setChildrenCategories] = useState<ICategory[] | []>([]);
+    const [keywords, setKeywords] = useState<string>("");
 
-    const handleHoverCategory = () => {
-        console.log("Hover category");
+    const { data, isLoading } = useQuery<ICategory[] | []>({
+        queryKey: ['categories'], // key để cache
+        queryFn: () => categoryClientService.getAllCategories(),
+        staleTime: 1000 * 60 * 5, // 5 phút cache không gọi lại
+    });
+
+    const { data: products, isLoading: loadingSearch } = useQuery<IProductCard[] | []>({
+        queryKey: ['product-search', keywords], // key để cache
+        queryFn: () => productClientService.searchProducts(keywords),
+        enabled: !!keywords
+    });
+
+    console.log(products);
+
+
+    useEffect(() => {
+        if (data && !isLoading) {
+            setCategories(buildCategoryTree(data));
+        }
+    }, [data, isLoading]); // chỉ chạy khi data thay đổi
+
+
+    const handleHoverCategory = (children: ICategory[]) => {
+        setChildrenCategories(children)
         setOpenItemCategory(true);
     }
 
     const handleOnChange = (value: string) => {
         if (value.trim() === "")
             setOpenSearch(false)
-        else setOpenSearch(true)
+        else {
+            setKeywords(value);
+            setOpenSearch(true);
+        }
     }
+
+
+    const renderCategoryGrid = (categories: ICategory[], colSpan = 2) => {
+        return categories.map((cat) => (
+            <div key={cat._id} className={`col-span-${colSpan} flex flex-col gap-2`}>
+                <Link
+                    onClick={() => {
+                        setOpenItemCategory(false);
+                        setOpenCategory(false)
+                    }}
+                    href={"/category/" + cat._id}
+                    className="font-semibold"
+                >
+                    {cat.name}
+                </Link>
+                {cat.children && cat.children.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                        {cat.children.map((child) => (
+                            <Link
+                                onClick={() => {
+                                    setOpenItemCategory(false);
+                                    setOpenCategory(false)
+                                }}
+                                href={"/category/" + child._id}
+                                key={child._id}
+                                className="text-sm hover:text-blue-500 cursor-pointer"
+                            >
+                                {child.name}
+                            </Link>
+                        ))}
+                    </div>
+                )}
+            </div>
+        ));
+    };
+
+
     return (
         <>
             {isOpenModalLogin &&
@@ -65,11 +135,7 @@ export default function HeaderClient() {
                         <Image preview={false} width={25} alt="gg" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png" />
                         Đăng nhập với Google
                     </button>
-
                     <p className="text-center mt-4">Bạn chưa có tài khoản? <Link href={"/register"} >Đăng ký ngay !</Link></p>
-
-
-
                 </Modal>
             }
 
@@ -91,44 +157,21 @@ export default function HeaderClient() {
                         }} className="button-primary"><BiCategory /> Danh mục <IoIosArrowDown /></button>
                         {isOpenCategory &&
                             <>
-                                <div className="w-60 z-40 absolute top-12 right-0 bg-white border border-slate-200 shadow-2xl rounded-xl">
+                                <div className="w-60 max-h-[520px] min-h-min overflow-sc z-40 absolute top-12 right-0 bg-white border border-slate-200 shadow-2xl rounded-xl">
                                     <ul className="text-sm">
-                                        <li onMouseEnter={handleHoverCategory} className="px-4 py-2 hover:bg-blue-400 hover:text-white justify-between cursor-pointer flex items-center gap-2 rounded-t-xl">
-                                            📱 Điện thoại, Tablet <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            💻 Laptop <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            🎧 Âm thanh, Mic thu âm <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            ⌚ Đồng hồ, Camera <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            🏠 Đồ gia dụng <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            🔌 Phụ kiện <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            🖥️ PC, Màn hình, Máy in <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            📺 Tivi <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            🔄 Thu cũ đổi mới <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            📦 Hàng cũ <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2">
-                                            🎁 Khuyến mãi <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
-                                        <li className="px-4 py-2 hover:bg-blue-400 hover:text-white cursor-pointer justify-between flex items-center gap-2 rounded-b-xl">
-                                            📰 Tin công nghệ <MdKeyboardArrowRight className="text-xl" />
-                                        </li>
+                                        {categories.map((category, index) => {
+                                            const isFirst = index === 0;
+                                            const isLast = index === categories.length - 1;
+                                            return (
+                                                <li
+                                                    key={category._id}
+                                                    onMouseEnter={() => handleHoverCategory(category.children as ICategory[])}
+                                                    className={`text-base font-semibold px-4 py-2 hover:bg-blue-400 hover:text-white justify-between cursor-pointer flex items-center gap-2 ${isFirst ? 'rounded-t-xl' : ''} ${isLast ? 'rounded-b-xl' : ''}`}
+                                                >
+                                                    {category.name} <MdKeyboardArrowRight className="text-xl" />
+                                                </li>
+                                            );
+                                        })}
                                     </ul>
                                 </div>
                             </>
@@ -136,9 +179,11 @@ export default function HeaderClient() {
                     </div>
                     {isOpenCategory && isOpenItemCategory
                         &&
-                        <div className="z-40 absolute w-8/12 h-80 grid grid-flow-row grid-cols-12 top-12.5 p-3 text-base right-11 bg-white border border-slate-200 shadow-2xl rounded-md">
-                            <h2 className="col-span-2">Hello serlvet</h2>
-                            <h3 className="col-span-2">I don;t know what do you talkin</h3>
+                        <div className="z-40 absolute w-8/12 h-80 grid grid-flow-row grid-cols-12 top-12.5 p-5 text-base right-11 bg-white border border-slate-200 shadow-2xl rounded-md">
+                            {childrenCategories.length > 0 && (
+                                renderCategoryGrid(childrenCategories, 3) // mỗi category con chiếm 2 cột
+                            )
+                            }
                         </div>
                     }
 
@@ -150,36 +195,55 @@ export default function HeaderClient() {
                         {/* Search */}
                         {isOpenSearch &&
                             <div style={{ scrollbarWidth: "none" }} className="z-20 absolute grid-row top-full w-[500px] rounded-lg right-0 min-h-52 max-h-64 bg-white overflow-y-scroll">
-                                <div className="col-span-12 h-28 flex gap-10 py-2 px-4 border-b-2">
-                                    <h2>IMG</h2>
-                                    <div className="flex flex-col justify-between">
-                                        <h2>Ban hang pc .com</h2>
-                                        <div>
-                                            <p>12.000.000d</p>
-                                        </div>
+                                {loadingSearch ? (
+                                    <div className="flex !flex-1 items-center justify-center !min-w-[500px] min-h-[200px]">
+                                        <Spin size="large" className="!flex !flex-1 !justify-center !items-center !w-full" />
                                     </div>
-                                </div>
-                                <div className="col-span-12 h-28 flex gap-10 py-2 px-4 border-b-2">
-                                    <h2>IMG</h2>
-                                    <div className="flex flex-col justify-between">
-                                        <h2>Ban hang pc .com</h2>
-                                        <div>
-                                            <p>12.000.000d</p>
+                                ) : (
+                                    products && products.length > 0 && products.map(p => (
+                                        <div
+                                            key={p._id}
+                                            className="col-span-12 h-28 flex gap-4 py-2 px-4 border-b hover:bg-gray-50 transition rounded-lg cursor-pointer"
+                                        >
+                                            <div className="flex max-w-max justify-center flex-1 flex-col">
+                                                <Image
+                                                    src={p.images[0]}
+                                                    alt={p.name}
+                                                    width={80}
+                                                    height={80}
+                                                    className="object-cover rounded-md border"
+                                                />
+                                            </div>
+                                            <div className="flex justify-between flex-col flex-1">
+                                                <div>
+                                                    <h2 className="font-semibold text-gray-800 truncate">{p.name}</h2>
+                                                    <p className="text-sm line-clamp-1">{p.description}</p>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <div className="flex gap-5">
+                                                        <p className="text-blue-600 font-bold">{p.newPrice.toLocaleString()}đ</p>
+                                                        <p className="text-stone-300 line-through">{p.oldPrice.toLocaleString()}đ</p>
+                                                    </div>
+                                                    <Badge
+                                                        count={`${p.discount}% OFF`}
+                                                        style={{
+                                                            backgroundColor: "#f5222d",
+                                                            color: "#fff",
+                                                            fontWeight: "bold",
+                                                            fontSize: "12px",
+                                                            padding: "0 6px",
+                                                            borderRadius: "6px",
+                                                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <div className="col-span-12 h-28 flex gap-10 py-2 px-4 border-b-2">
-                                    <h2>IMG</h2>
-                                    <div className="flex flex-col justify-between">
-                                        <h2>Ban hang pc .com</h2>
-                                        <div>
-                                            <p>12.000.000d</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                    ))
+                                )}
+
 
                             </div>
-
                         }
                     </div>
 

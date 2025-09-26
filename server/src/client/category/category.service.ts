@@ -30,20 +30,7 @@ export class CategoryService {
     }
 
 
-    const categories = await this.categoryModel.aggregate([
-      {
-        $lookup: {
-          from: "products", localField: "_id", foreignField: "category", as: "product", pipeline:
-            [
-              { $limit: 7 },
-              { $project: { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1 } }
-            ]
-        }
-      },
-      { $project: { name: 1, product: 1 } },
-      { $limit: 5 }
-    ]);
-
+    const categories = await this.categoryModel.find({});
     return categories;
   }
 

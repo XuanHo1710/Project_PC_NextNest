@@ -138,6 +138,14 @@
   .grid-row {
     @apply grid grid-cols-12 grid-flow-row;
   }
+
+  .active {
+    @apply text-blue-500
+  }
+
+  .button-filter {
+    @apply my-1 h-8 flex items-center border-1 cursor-pointer hover:bg-blue-500 hover:text-white md:py-4 md:px-5 border-blue-300 text-blue-500 rounded-2xl font-semibold text-base
+  }
 }
 
 

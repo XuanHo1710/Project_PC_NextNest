@@ -16,6 +16,7 @@
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-switch": "^1.2.5",
     "@reduxjs/toolkit": "^2.7.0",
+    "@tanstack/react-query": "^5.90.2",
     "@tinymce/tinymce-react": "^6.1.0",
     "antd": "^5.24.6",
     "axios": "^1.8.4",

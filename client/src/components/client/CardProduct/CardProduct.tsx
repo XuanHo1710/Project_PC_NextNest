@@ -64,7 +64,7 @@ const CardProduct = ({ product, css }: { product: IProductCard, css: string }) =
                             <p>Quà tặng</p>
                         </div>
                     </div>
-                    <div className='hover:bg-blue-500 text-base max-h-max py-2.5 bg-blue-400 rounded-2xl cart-icon flex items-center px-3 xl:px-5 cursor-pointer hover:text-white'>
+                    <div className='hover:bg-blue-500 text-base max-h-max py-2.5 bg-blue-400 rounded-2xl cart-icon flex items-center px-3 xl:px-5 cursor-pointer text-white'>
                         <i className="fa-solid fa-cart-shopping"></i>
                     </div>
                 </div>

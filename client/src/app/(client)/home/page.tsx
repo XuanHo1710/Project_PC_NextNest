@@ -1,23 +1,34 @@
 'use client';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
-import { useCategoryStoreClient } from "@/stores/client/categoryStoreClient";
+import { categoryClientService } from "@/services/client";
+import { ICategory } from "@/types/modal.d";
+import { ICategoryPreview } from "@/types/model.client.d";
+import { useQuery } from "@tanstack/react-query";
 import { Carousel, Image, Spin } from "antd";
 import Link from "next/link";
-import { useEffect } from "react";
+
+import { MdKeyboardArrowRight, MdLaptopChromebook, MdPhoneIphone, MdTv, MdHeadset, MdCameraAlt, MdWatch } from "react-icons/md";
+
 
 export default function HomeClient() {
-    const { getCategoriesPreview, loading, categoriesPreview } = useCategoryStoreClient();
+    const { data: categoriesPreview, isLoading } = useQuery<ICategoryPreview[] | []>({
+        queryKey: ['categories-preview'], // key để cache
+        queryFn: () => categoryClientService.getCategoriesPreview(),
+        staleTime: 1000 * 60 * 5, // 5 phút cache không gọi lại
+    });
 
-    useEffect(() => {
-        getCategoriesPreview();
+    const { data: categories } = useQuery<ICategory[] | []>({
+        queryKey: ['categories'], // key để cache
+        queryFn: () => categoryClientService.getAllCategories(),
+        staleTime: 1000 * 60 * 5, // 5 phút cache không gọi lại
+    });
 
-    }, [getCategoriesPreview]);
 
-    if (loading)
+
+
+
+    if (isLoading)
         return <>Dang load data....</>
-    else
-        console.log(categoriesPreview);
-
 
 
     const responsiveSettings = [
@@ -46,20 +57,28 @@ export default function HomeClient() {
 
 
 
+    const ListIcon = [
+        <MdLaptopChromebook key={1} className="text-xl" />,
+        <MdPhoneIphone key={2} className="text-xl" />,
+        <MdTv key={3} className="text-xl" />,
+        <MdHeadset key={4} className="text-xl" />,
+        <MdCameraAlt key={5} className="text-xl" />,
+        <MdWatch key={6} className="text-xl" />
+    ];
     return (
         <>
             <div className="dark:bg-slate-900 md:pt-3 pt-52 py-10 bg-slate-50">
                 <div className='content-header mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5'>
                     <div className='row-span-3 hidden xl:block col-span-3 rounded-lg shadow-lg bg-white'>
-                        <ul className='m-0 pl-0 rounded-lg max-h-max dark:bg-blue-950'>
-                            {/* {productByCategory.length > 0 && productByCategory.map((item, index) => (
-                                <Link key={item._id} to={`/collection/${item.slug}`}>
-                                    <li className='w-full rounded-t-lg cursor-pointer dark:text-white hover:bg-blue-100 hover:text-blue-500 px-6 py-3 flex items-center'>
-                                        {ListIcon[index]}
-                                        <span className='font-medium'>{item.title}</span>
+                        <ul style={{ scrollbarWidth: "none" }} className='m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-blue-950'>
+                            {categories && categories.length > 0 && categories.map((category, index) => (
+                                <Link key={category._id} href={`/category/${category._id}`}>
+                                    <li className='w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-blue-100 hover:text-blue-500 px-6 py-3 flex items-center'>
+                                        <span className='font-medium flex items-center gap-3'>{ListIcon[index % ListIcon.length]} {category.name}</span>
+                                        <MdKeyboardArrowRight className="text-xl" />
                                     </li>
                                 </Link>
-                            ))} */}
+                            ))}
                         </ul>
                     </div>
                     <div className='col-span-12 xl:col-span-6 row-span-2'>
@@ -262,8 +281,8 @@ export default function HomeClient() {
 
                     </Carousel>
                 </div> */}
-                <Spin size="large" spinning={loading}>
-                    {!loading && categoriesPreview.length > 0 &&
+                <Spin size="large" spinning={isLoading}>
+                    {!isLoading && categoriesPreview && categoriesPreview.length > 0 &&
                         categoriesPreview.map(category => (
                             <div key={category?._id} className='box-promotion mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-lg'>
                                 <div className='flex items-center justify-between'>

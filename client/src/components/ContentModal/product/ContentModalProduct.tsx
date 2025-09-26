@@ -2,6 +2,7 @@
 import { useCategoryStore } from '@/stores/server/categoryStore';
 import { useProductStore } from '@/stores/server/productStore';
 import { ICategory, IProduct } from '@/types/modal.d';
+import { buildCategoryTree } from '@/utils/buildTree';
 import { UploadImages } from '@/utils/uploadImage';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
@@ -109,35 +110,6 @@ export default function ContentModalProduct() {
         }
     }
 
-    const buildCategoryTree = (flatCategories: ICategory[]): ICategory[] => {
-        const idToNodeMap = new Map<string, ICategory>();
-
-        // Bản sao để tránh đụng dữ liệu gốc
-        const categoriesCopy = flatCategories.map(cat => ({ ...cat, children: [] }));
-
-        // Map id → node
-        categoriesCopy.forEach(cat => {
-            if (cat._id) {
-                idToNodeMap.set(cat._id, cat);
-            }
-        });
-
-        const tree: ICategory[] = [];
-
-        categoriesCopy.forEach(cat => {
-            if (cat.parent && cat.parent._id) {
-                const parent = idToNodeMap.get(cat.parent._id);
-                if (parent) {
-                    parent.children = parent.children || [];
-                    parent.children.push(cat);
-                }
-            } else {
-                tree.push(cat); // root node
-            }
-        });
-
-        return tree;
-    };
 
 
     const renderCategoryOptions = (categories: ICategory[], level = 0): JSX.Element[] => {
