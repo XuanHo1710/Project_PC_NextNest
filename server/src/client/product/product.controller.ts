@@ -7,8 +7,8 @@ export class ProductController {
   constructor(private readonly productService: ProductService) { }
 
   @Get("/get-by-category/:categoryId")
-  findProductByIdCategory(@Param("categoryId") categoryId: string, @Query("page") page: number = 1, @Query("limit") limit: number = 8) {
-    return this.productService.findProductByIdCategory(categoryId, page, limit);
+  findProductByIdCategory(@Param("categoryId") categoryId: string, @Query("page") page: number = 1, @Query("sort") sort: string = "") {
+    return this.productService.findProductByIdCategory(categoryId, page, sort);
   }
 
   @Get("/search")

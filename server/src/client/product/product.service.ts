@@ -8,16 +8,31 @@ import { Product } from 'src/admin/product/entities/product.entity';
 export class ProductService {
   constructor(@InjectModel(Product.name) private productModel: Model<Product>) { }
 
-  async findProductByIdCategory(categoryId: string, page: number, limit: number) {
+  async findProductByIdCategory(categoryId: string, page: number, sort: string) {
+    const filterProduct = {
+      category: categoryId
+    }
+
+    const sortProduct = {
+
+    };
+
+    if (sort !== "") {
+      const keySort = sort.split("=")[1].split("_")[0];
+      const valueSort = parseInt(sort.split("=")[1].split("_")[1]);
+      sortProduct[keySort] = valueSort;
+    }
+
+    const limit = 8;
     const skip = (page - 1) * limit;
     // Đếm tổng số sản phẩm để tính totalPages
     const totalItems = await this.productModel.countDocuments({ category: categoryId });
 
 
     const products = await this.productModel.find(
-      { category: categoryId },
+      filterProduct,
       { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1 }
-    ).skip(skip).limit(limit).populate("category");
+    ).sort(sortProduct).skip(skip).limit(limit).populate("category");
 
     return {
       products,
@@ -38,7 +53,6 @@ export class ProductService {
 
   async searchProductByName(keyname: string = "") {
     const filterProduct = {};
-    console.log(keyname);
 
     if (keyname !== "") {
       filterProduct["$or"] = [

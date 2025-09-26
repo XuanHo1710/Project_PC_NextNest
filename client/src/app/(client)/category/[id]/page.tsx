@@ -1,20 +1,26 @@
 'use client';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
+import useCartStore from "@/hooks/useCart";
 import { productClientService } from "@/services/client";
 import { IProductWithPagination } from "@/types/model.client.d";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Checkbox, Drawer, Image, Pagination, Spin } from "antd";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import Swal from "sweetalert2";
 
 export default function CategoryClient() {
     const { id } = useParams();
     const [page, setPage] = useState(1);
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [activeFilter, setActiveFilter] = useState<string>("");
+    const { addToCart } = useCartStore();
 
     const { data: dataProduct } = useQuery<(IProductWithPagination) | null>({
-        queryKey: ['product-by-category', id, page], // key để cache
-        queryFn: () => productClientService.getProductsByCategoryId(id as string, page),
+        queryKey: ['product-by-category', id, page, searchParams.toString()], // key để cache
+        queryFn: () => productClientService.getProductsByCategoryId(id as string, page, searchParams.toString()),
         enabled: !!id, // 5 phút cache không gọi lại
     });
 
@@ -23,12 +29,22 @@ export default function CategoryClient() {
         window.scrollTo({ top: 0 }); // scroll mượt lên top
     }
 
-    const handleFilter = (e, value: string) => {
 
-    }
+    const handleFilter = (e: React.MouseEvent<HTMLButtonElement>, value: string) => {
+        setActiveFilter(value);
 
-    const handleFilterProduct = (e) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (value) {
+            params.set("sort", value);
+        } else {
+            params.delete("sort");
+        }
+        router.push(`/category/${id}/?${params.toString()}`);
+    };
 
+
+    const handleFilterProduct = (e: React.MouseEvent<HTMLButtonElement>) => {
+        console.log(e);
     }
 
 
@@ -190,10 +206,34 @@ export default function CategoryClient() {
                         <div className='mt-5 mb-28  shadow-lg px-3 py-5 bg-white dark:bg-gray-800 rounded-md'>
                             <div className='lg:flex items-center justify-between'>
                                 <div className='flex gap-2'>
-                                    <button onClick={(e) => handleFilter(e, "")} className='button-filter  transition-all'>Hàng mới</button>
-                                    <button onClick={(e) => handleFilter(e, "price_1")} className='button-filter  transition-all'>Giá tăng dần</button>
-                                    <button onClick={(e) => handleFilter(e, "price_-1")} className='button-filter  transition-all'>Giá giảm dần</button>
-                                    <button onClick={(e) => handleFilter(e, "title_1")} className='button-filter  transition-all'>A đến Z</button>
+                                    <button
+                                        onClick={(e) => handleFilter(e, "")}
+                                        className={`button-filter transition-all ${activeFilter === "" ? "bg-blue-500 text-white" : ""}`}
+                                    >
+                                        Hàng mới
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => handleFilter(e, "newPrice_1")}
+                                        className={`button-filter transition-all ${activeFilter === "newPrice_1" ? "bg-blue-500 text-white" : ""}`}
+                                    >
+                                        Giá tăng dần
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => handleFilter(e, "newPrice_-1")}
+                                        className={`button-filter transition-all ${activeFilter === "newPrice_-1" ? "bg-blue-500 text-white" : ""}`}
+                                    >
+                                        Giá giảm dần
+                                    </button>
+
+                                    <button
+                                        onClick={(e) => handleFilter(e, "name_1")}
+                                        className={`button-filter transition-all ${activeFilter === "name_1" ? "bg-blue-500 text-white" : ""}`}
+                                    >
+                                        A đến Z
+                                    </button>
+
                                 </div>
                                 <div className='type-bar flex items-center justify-between text-right my-5 md:my-0 text-2xl'>
                                     <div onClick={showDrawer} className='py-2 cursor-pointer px-4 rounded-2xl lg:hidden text-base bg-blue-100 text-blue-500'>Bộ lọc
@@ -245,7 +285,23 @@ export default function CategoryClient() {
                                                                 </div>
                                                             </div>
                                                             <div
-                                                                // onClick={() => addToCart(product)} 
+                                                                onClick={() => {
+                                                                    Swal.fire({
+                                                                        icon: "success",
+                                                                        title: "Thêm sản phẩm vào giỏ hàng thành công!",
+                                                                        showConfirmButton: false,
+                                                                        timer: 2000,
+                                                                        background: "#fff",
+                                                                        color: "#000",        // màu chữ
+                                                                        iconColor: "#52c41a",
+                                                                        customClass: {
+                                                                            title: "!text-2xl", // chữ nhỏ hơn (Tailwind)
+                                                                        },
+                                                                    });
+
+                                                                    addToCart(product);
+
+                                                                }}
                                                                 className='text-base transition-all bg-blue-400 hover:bg-blue-500 rounded-lg py-2 flex  items-center px-6 cursor-pointer text-white'
                                                             >
                                                                 <i className="fa-solid fa-cart-shopping"></i>
