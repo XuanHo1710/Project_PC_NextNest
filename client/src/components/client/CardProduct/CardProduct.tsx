@@ -1,11 +1,13 @@
 // import { Image, Tooltip } from "antd";
+import useCartStore from "@/hooks/useCart";
 import { IProductCard } from "@/types/model.client.d";
 import { Image } from "antd";
 import Link from "next/link";
-
+import Swal from "sweetalert2";
 
 const CardProduct = ({ product, css }: { product: IProductCard, css: string }) => {
 
+    const { addToCart } = useCartStore();
 
     // const tooltipStyle = {
     //     // position: "fixed",
@@ -16,9 +18,6 @@ const CardProduct = ({ product, css }: { product: IProductCard, css: string }) =
     //     width: "410px",
     //     zIndex: 1000,
     // };
-
-
-
 
     return (
         <>
@@ -64,7 +63,23 @@ const CardProduct = ({ product, css }: { product: IProductCard, css: string }) =
                             <p>Quà tặng</p>
                         </div>
                     </div>
-                    <div className='hover:bg-blue-500 transition-all text-base max-h-max py-2.5 bg-blue-400 rounded-2xl cart-icon flex items-center px-3 xl:px-5 cursor-pointer text-white'>
+                    <div onClick={() => {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Thêm sản phẩm vào giỏ hàng thành công!",
+                            showConfirmButton: false,
+                            timer: 2000,
+                            background: "#fff",
+                            color: "#000",        // màu chữ
+                            iconColor: "#52c41a",
+                            customClass: {
+                                title: "!text-2xl", // chữ nhỏ hơn (Tailwind)
+                            },
+                        });
+
+                        addToCart(product);
+
+                    }} className='hover:bg-blue-500 transition-all text-base max-h-max py-2.5 bg-blue-400 rounded-2xl cart-icon flex items-center px-3 xl:px-5 cursor-pointer text-white'>
                         <i className="fa-solid fa-cart-shopping"></i>
                     </div>
                 </div>

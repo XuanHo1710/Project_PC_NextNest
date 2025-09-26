@@ -18,6 +18,7 @@ import { ICategory } from "@/types/modal.d";
 import { categoryClientService, productClientService } from "@/services/client";
 import { buildCategoryTree } from "@/utils/buildTree";
 import { IProductCard } from "@/types/model.client.d";
+import useCartStore from "@/hooks/useCart";
 
 
 export default function HeaderClient() {
@@ -30,6 +31,8 @@ export default function HeaderClient() {
     const [childrenCategories, setChildrenCategories] = useState<ICategory[] | []>([]);
     const [keywords, setKeywords] = useState<string>("");
 
+    const { cart, updateQuantity, removeFromCart, calculateTotal } = useCartStore();
+
     const { data, isLoading } = useQuery<ICategory[] | []>({
         queryKey: ['categories'], // key để cache
         queryFn: () => categoryClientService.getAllCategories(),
@@ -41,8 +44,6 @@ export default function HeaderClient() {
         queryFn: () => productClientService.searchProducts(keywords),
         enabled: !!keywords
     });
-
-    console.log(products);
 
 
     useEffect(() => {
@@ -266,69 +267,67 @@ export default function HeaderClient() {
                         <button onClick={() => setOpenCart(!isOpenCart)} className="button-primary">Giỏ hàng <MdOutlineShoppingCart /></button>
                         {isOpenCart &&
                             <div className='dark:bg-gray-700 bg-white shadow-2xl z-30 min-h-36 -right-2/3 md:right-0 rounded-xl absolute top-12 w-[500px]'>
-                                <div className='cart-header py-3 border-solid border-b-2 border-stone-200  dark:border-black
+                                <div className='cart-header py-3 border-solid border-b-[1px] border-stone-100  dark:border-black
                             uppercase text-center text-xl font-medium dark:text-white'>
                                     Giỏ hàng
                                 </div>
-                                {/* {carts.length <= 0 ? */}
-                                {/* //  Chưa có sản phẩm trong giỏ hàng !!  */}
-                                {/* <div className='dark:text-white cart-body flex flex-col items-center py-5'>
-                                    <i className="fa-solid fa-cart-shopping text-6xl"></i>
-                                    <p>Hiện chưa có sản phẩm</p>
-                                </div> : */}
-                                {/* //  Có sản phẩm trong giỏ hàng  */}
-                                <div className="cart-product-list cart-body max-h-80 overflow-y-scroll " style={{ scrollbarWidth: "none" }}>
-                                    {/* {carts.map(cart => ( */}
-                                    <div className='flex items-center border-solid dark:border-0 border-2 dark:border-y-black  border-y-stone-200 justify-between py-2 px-3'>
-                                        <div className='basis-1/6 h-20'>
-                                            <Image alt="logo" src="https://hoanghapccdn.com/media/product/250_4429_hhpc_white_13900k_sky_two_ha1s.jpg" />
-                                        </div>
-                                        <div className='basis-5/6 cart-product-content dark:text-blue-100'>
-                                            <div className='flex justify-between'>
-                                                <Link href={"/"}>
-                                                    <h2 className='hover:text-blue-500 font-semibold text-sm line-clamp-2 px-4'>
-                                                        {/* {cart.title} */}
-                                                    </h2>
-                                                </Link>
-                                                <i
-                                                    // onClick={() => removeCart(cart._id)} 
-                                                    className="fa-solid fa-xmark cursor-pointer hover:text-red-600 relative top-1"
-                                                ></i>
-                                            </div>
-                                            <div className='flex justify-between pl-4 mt-3 items-center'>
-                                                <div className='flex items-center dark:bg-black'>
-                                                    <Button
-                                                        //  onClick={() => decrease(cart._id)} 
-                                                        className='rounded-none px-3 dark:bg-black dark:text-white dark:border-slate-700'
-                                                    >
-                                                        <i className="fa-solid fa-minus"></i>
-                                                    </Button>
-                                                    <input type='text' value={1} className='bg-white dark:bg-black w-8 text-center h-8 border-solid' disabled
-                                                    // value={cart.quanlity}
-                                                    />
-                                                    <Button
-                                                        // onClick={() => increase(cart._id)} 
-                                                        className='rounded-none px-3 dark:bg-black dark:text-white dark:border-slate-700'
-                                                    >
-                                                        <i className="fa-solid fa-plus"></i>
-                                                    </Button>
+                                {cart && cart?.cartItems?.length <= 0 ?
+                                    <div className='dark:text-white cart-body flex flex-col items-center py-5' >
+                                        <i className="fa-solid fa-cart-shopping text-6xl"></i>
+                                        <p>Hiện chưa có sản phẩm</p>
+                                    </div> :
+                                    <div className="cart-product-list cart-body max-h-80 overflow-y-scroll " style={{ scrollbarWidth: "none" }}>
+                                        {cart && cart.cartItems.map((c, index) => (
+                                            <div key={index} className='flex items-center border-solid dark:border-0 border-[1px] dark:border-y-black  border-y-stone-100 justify-between py-2 px-3'>
+                                                <div className='basis-1/6 h-20'>
+                                                    <Image alt="logo" src={c.product.images[0]} />
                                                 </div>
-                                                <p className='font-semibold text-red-500'>
-                                                    {/* {cart.unitPrice.toLocaleString()} đ */}
-                                                    23.000.000 đ
-                                                </p>
+                                                <div className='basis-5/6 cart-product-content dark:text-blue-100'>
+                                                    <div className='flex justify-between'>
+                                                        <Link href={"/"}>
+                                                            <h2 className='hover:text-blue-500 font-semibold text-sm line-clamp-2 px-4'>
+                                                                {c.product.name}
+                                                            </h2>
+                                                        </Link>
+                                                        <i
+                                                            onClick={() => removeFromCart(c.product._id)}
+                                                            className="fa-solid fa-xmark cursor-pointer hover:text-red-600 relative top-1"
+                                                        ></i>
+                                                    </div>
+                                                    <div className='flex justify-between pl-4 mt-3 items-center'>
+                                                        <div className='flex items-center dark:bg-black'>
+                                                            <Button
+                                                                onClick={() => updateQuantity(c.product._id, -1)}
+                                                                className='rounded-none px-3 dark:bg-black dark:text-white dark:border-slate-700'
+                                                            >
+                                                                <i className="fa-solid fa-minus"></i>
+                                                            </Button>
+                                                            <input
+                                                                type='text'
+                                                                className='bg-white dark:bg-black w-8 text-center h-8 border-solid'
+                                                                disabled
+                                                                value={c.quantity}
+                                                            />
+                                                            <Button
+                                                                onClick={() => updateQuantity(c.product._id, 1)}
+                                                                className='rounded-none px-3 dark:bg-black dark:text-white dark:border-slate-700'
+                                                            >
+                                                                <i className="fa-solid fa-plus"></i>
+                                                            </Button>
+                                                        </div>
+                                                        <p className='font-semibold text-red-500'>
+                                                            {c.price.toLocaleString()} đ
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ))}
                                     </div>
-                                    {/* ))} */}
-                                </div>
-
-                                {/* } */}
-                                <div className='cart-footer py-3 border-solid border-t-2 dark:border-black border-stone-300 flex items-center justify-between px-3 font-normal text-base'>
+                                }
+                                <div className='cart-footer py-3 border-solid border-t-[1px] dark:border-black border-stone-100 flex items-center justify-between px-3 font-normal text-base'>
                                     <p className='uppercase font-semibold dark:text-blue-100'>Tổng tiền:</p>
                                     <p className='text-blue-500 font-semibold text-lg'>
-                                        {/* {getTotalUnitPrice().toLocaleString()} đ */}
-                                        12.000.000 đ
+                                        {calculateTotal().toLocaleString()} đ
                                     </p>
                                 </div>
                                 <Link
@@ -345,7 +344,7 @@ export default function HeaderClient() {
 
                     <button onClick={() => setOpenModalLogin(true)} className="button-primary">Đăng nhập <FaRegUserCircle /></button>
                 </div>
-            </header>
+            </header >
         </>
     )
 }

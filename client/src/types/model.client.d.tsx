@@ -39,3 +39,19 @@ export interface IProductWithPagination {
         limit: number,
     }
 }
+
+
+
+export interface ICartItem {
+    product: IProductCard,
+    quantity: number,
+    subtotal: number,
+    price: number
+}
+
+export interface ICart {
+    _id: string,
+    cartItems: ICartItem[],
+    total: number,
+    guestId: string
+}

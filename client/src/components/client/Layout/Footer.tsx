@@ -9,7 +9,7 @@ export default function FooterClient() {
                         <h2 className="font-bold mb-3">Email liên hệ</h2>
                         <p className="w-3/4 text-justify">Vui lòng liên hệ phía bên dưới</p>
                         <div className="flex items-center mt-3 my-4">
-                            <input className="px-3 py-2 focus:outline-none text-black w-full xl:w-3/5 rounded-lg" placeholder="Enter your Email" />
+                            <input className="px-3 py-2 bg-white focus:outline-blue-300 transition-all text-black w-full xl:w-3/5 rounded-lg" placeholder="Enter your Email" />
                             <button className="bg-sky-500 mx-2 font-semibold px-3 py-2 rounded-md">Send</button>
                         </div>
                     </div>

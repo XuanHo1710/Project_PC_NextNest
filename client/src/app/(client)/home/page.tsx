@@ -11,6 +11,7 @@ import { MdKeyboardArrowRight, MdLaptopChromebook, MdPhoneIphone, MdTv, MdHeadse
 
 
 export default function HomeClient() {
+
     const { data: categoriesPreview, isLoading } = useQuery<ICategoryPreview[] | []>({
         queryKey: ['categories-preview'], // key để cache
         queryFn: () => categoryClientService.getCategoriesPreview(),
@@ -310,8 +311,6 @@ export default function HomeClient() {
                                             </div>
                                         ))
                                     }
-
-
                                 </Carousel>
 
                             </div>
