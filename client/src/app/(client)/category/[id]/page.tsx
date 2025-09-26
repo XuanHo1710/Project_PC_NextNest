@@ -27,6 +27,10 @@ export default function CategoryClient() {
 
     }
 
+    const handleFilterProduct = (e) => {
+
+    }
+
 
     const [isDisplayRow, setDisplayRow] = useState(false);
 
@@ -148,7 +152,7 @@ export default function CategoryClient() {
                 <div className='mx-5 xl:mx-32 mt-5 content-body grid grid-flow-row grid-cols-12 lg:gap-12 '>
                     <div className='hidden lg:block lg:col-span-3 p-5 rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-h-max'>
 
-                        {/* <Button onClick={(e) => handleFilterProduct(e)} className="uppercase w-full my-3 py-6 border-blue-500 font-bold text-blue-500 button">Lọc sản phẩm</Button> */}
+                        <button onClick={(e) => handleFilterProduct(e)} className="w-full transition-all button-primary">Lọc sản phẩm</button>
                         <div className='my-5'>
                             <h3 className='uppercase font-semibold py-3 border-solid border-b-2 border-b-stone-200'>Khoảng giá</h3>
                             <Checkbox.Group className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white' options={prices} />
@@ -186,10 +190,10 @@ export default function CategoryClient() {
                         <div className='mt-5 mb-28  shadow-lg px-3 py-5 bg-white dark:bg-gray-800 rounded-md'>
                             <div className='lg:flex items-center justify-between'>
                                 <div className='flex gap-2'>
-                                    <button onClick={(e) => handleFilter(e, "")} className='button-filter'>Hàng mới</button>
-                                    <button onClick={(e) => handleFilter(e, "price_1")} className='button-filter'>Giá tăng dần</button>
-                                    <button onClick={(e) => handleFilter(e, "price_-1")} className='button-filter'>Giá giảm dần</button>
-                                    <button onClick={(e) => handleFilter(e, "title_1")} className='button-filter'>A đến Z</button>
+                                    <button onClick={(e) => handleFilter(e, "")} className='button-filter  transition-all'>Hàng mới</button>
+                                    <button onClick={(e) => handleFilter(e, "price_1")} className='button-filter  transition-all'>Giá tăng dần</button>
+                                    <button onClick={(e) => handleFilter(e, "price_-1")} className='button-filter  transition-all'>Giá giảm dần</button>
+                                    <button onClick={(e) => handleFilter(e, "title_1")} className='button-filter  transition-all'>A đến Z</button>
                                 </div>
                                 <div className='type-bar flex items-center justify-between text-right my-5 md:my-0 text-2xl'>
                                     <div onClick={showDrawer} className='py-2 cursor-pointer px-4 rounded-2xl lg:hidden text-base bg-blue-100 text-blue-500'>Bộ lọc
@@ -242,7 +246,7 @@ export default function CategoryClient() {
                                                             </div>
                                                             <div
                                                                 // onClick={() => addToCart(product)} 
-                                                                className='text-base bg-blue-400 hover:bg-blue-500 rounded-lg py-2 flex  items-center px-6 cursor-pointer text-white'
+                                                                className='text-base transition-all bg-blue-400 hover:bg-blue-500 rounded-lg py-2 flex  items-center px-6 cursor-pointer text-white'
                                                             >
                                                                 <i className="fa-solid fa-cart-shopping"></i>
                                                                 <p className='hidden md:block ml-3 relative font-semibold -top-0.5'>Thêm vào giỏ</p>

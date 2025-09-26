@@ -128,11 +128,11 @@
   }
 
   .button-primary {
-    @apply rounded-lg text-base flex items-center justify-center gap-1.5 py-2 px-5 bg-blue-300 text-white font-semibold cursor-pointer hover:bg-blue-700
+    @apply rounded-lg transition-all text-base flex items-center justify-center gap-1.5 py-2 px-5 bg-blue-300 text-white font-semibold cursor-pointer hover:bg-blue-700
   }
 
   .button-outline {
-    @apply rounded-lg text-base flex items-center justify-center gap-1.5 py-2 px-5 text-white font-semibold cursor-pointer hover:bg-blue-700
+    @apply rounded-lg transition-all text-base flex items-center justify-center gap-1.5 py-2 px-5 text-white font-semibold cursor-pointer hover:bg-blue-700
   }
 
   .grid-row {
@@ -144,7 +144,7 @@
   }
 
   .button-filter {
-    @apply my-1 h-8 flex items-center border-1 cursor-pointer hover:bg-blue-500 hover:text-white md:py-4 md:px-5 border-blue-300 text-blue-500 rounded-2xl font-semibold text-base
+    @apply my-1 h-8 transition-all flex items-center border-1 cursor-pointer hover:bg-blue-500 hover:text-white md:py-4 md:px-5 border-blue-300 text-blue-500 rounded-2xl font-semibold text-base
   }
 }
 
@@ -172,4 +172,60 @@
 
 .animate-progress {
   animation: progress 2s infinite linear;
+}
+
+
+.content-center {
+  background-image: url('https://hoanghapc.vn/static/assets/2022/images/home-collection-bg.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-clip: border-box;
+}
+
+.button:hover {
+  color: white !important;
+  background-color: #74cdff !important;
+}
+
+.button.active {
+  color: white !important;
+  background-color: #74cdff !important;
+  border: none;
+}
+
+
+/* Điều chỉnh mũi tên */
+
+.slick-prev,
+.slick-next {
+  width: 25px !important;
+  height: 50px !important;
+  font-size: 30px !important;
+  z-index: 1;
+  /* background-color: rgba(0, 0, 0, 0.5); Nền mờ */
+  border-radius: 50%;
+  /* Bo tròn */
+  color: rgb(61, 22, 255) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slick-prev::after,
+.slick-next::after {
+  width: 25px !important;
+  height: 25px !important;
+  border-inline-width: 3px 0 !important;
+  border-block-width: 3px 0 !important;
+  color: rgb(41, 40, 45) !important;
+}
+
+
+
+.slick-prev::before,
+.slick-next::before {
+  font-size: 25px !important;
+  color: rgb(61, 22, 255) !important;
+  opacity: 1;
 }

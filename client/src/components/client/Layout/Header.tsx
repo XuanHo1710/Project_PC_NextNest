@@ -200,46 +200,60 @@ export default function HeaderClient() {
                                         <Spin size="large" className="!flex !flex-1 !justify-center !items-center !w-full" />
                                     </div>
                                 ) : (
-                                    products && products.length > 0 && products.map(p => (
-                                        <div
-                                            key={p._id}
-                                            className="col-span-12 h-28 flex gap-4 py-2 px-4 border-b hover:bg-gray-50 transition rounded-lg cursor-pointer"
-                                        >
-                                            <div className="flex max-w-max justify-center flex-1 flex-col">
-                                                <Image
-                                                    src={p.images[0]}
-                                                    alt={p.name}
-                                                    width={80}
-                                                    height={80}
-                                                    className="object-cover rounded-md border"
-                                                />
-                                            </div>
-                                            <div className="flex justify-between flex-col flex-1">
-                                                <div>
-                                                    <h2 className="font-semibold text-gray-800 truncate">{p.name}</h2>
-                                                    <p className="text-sm line-clamp-1">{p.description}</p>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <div className="flex gap-5">
-                                                        <p className="text-blue-600 font-bold">{p.newPrice.toLocaleString()}đ</p>
-                                                        <p className="text-stone-300 line-through">{p.oldPrice.toLocaleString()}đ</p>
-                                                    </div>
-                                                    <Badge
-                                                        count={`${p.discount}% OFF`}
-                                                        style={{
-                                                            backgroundColor: "#f5222d",
-                                                            color: "#fff",
-                                                            fontWeight: "bold",
-                                                            fontSize: "12px",
-                                                            padding: "0 6px",
-                                                            borderRadius: "6px",
-                                                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                                                        }}
+                                    products && products.length > 0 ?
+                                        products.map(p => (
+                                            <div
+                                                key={p._id}
+                                                className="col-span-12 h-28 flex gap-4 py-2 px-4 border-b hover:bg-gray-50 transition rounded-lg cursor-pointer"
+                                            >
+                                                <div className="flex max-w-max justify-center flex-1 flex-col">
+                                                    <Image
+                                                        src={p.images[0]}
+                                                        alt={p.name}
+                                                        width={80}
+                                                        height={80}
+                                                        className="object-cover rounded-md border"
                                                     />
                                                 </div>
+                                                <div className="flex justify-between flex-col flex-1">
+                                                    <div>
+                                                        <h2 className="font-semibold text-gray-800 truncate">{p.name}</h2>
+                                                        <p className="text-sm line-clamp-1">{p.description}</p>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <div className="flex gap-5">
+                                                            <p className="text-blue-600 font-bold">{p.newPrice.toLocaleString()}đ</p>
+                                                            <p className="text-stone-300 line-through">{p.oldPrice.toLocaleString()}đ</p>
+                                                        </div>
+                                                        <Badge
+                                                            count={`${p.discount}% OFF`}
+                                                            style={{
+                                                                backgroundColor: "#f5222d",
+                                                                color: "#fff",
+                                                                fontWeight: "bold",
+                                                                fontSize: "12px",
+                                                                padding: "0 6px",
+                                                                borderRadius: "6px",
+                                                                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        )) :
+                                        (
+                                            <div className="col-span-12 flex flex-col items-center justify-center py-2 text-center text-gray-500">
+                                                <Image
+                                                    src="https://citroen.navigation.com/static/WFS/Shop-CitroenEMEA-Site/-/Shop-CitroenEMEA/en_GB/Product%20Not%20Found.png" // bạn có thể thêm hình minh họa rỗng
+                                                    alt="Not Found"
+                                                    className="mb-4"
+                                                    width={250}
+                                                    preview={false}
+                                                />
+                                                <p className="text-lg font-semibold">Không tìm thấy sản phẩm nào</p>
+                                                <p className="text-sm">Hãy thử tìm kiếm với từ khóa khác.</p>
+                                            </div>
+                                        )
                                 )}
 
 

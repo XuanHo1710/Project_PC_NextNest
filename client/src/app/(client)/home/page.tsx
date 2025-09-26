@@ -4,7 +4,7 @@ import { categoryClientService } from "@/services/client";
 import { ICategory } from "@/types/modal.d";
 import { ICategoryPreview } from "@/types/model.client.d";
 import { useQuery } from "@tanstack/react-query";
-import { Carousel, Image, Spin } from "antd";
+import { Button, Carousel, Image, Spin } from "antd";
 import Link from "next/link";
 
 import { MdKeyboardArrowRight, MdLaptopChromebook, MdPhoneIphone, MdTv, MdHeadset, MdCameraAlt, MdWatch } from "react-icons/md";
@@ -27,8 +27,8 @@ export default function HomeClient() {
 
 
 
-    if (isLoading)
-        return <>Dang load data....</>
+    if (!isLoading)
+        window.scrollTo({ top: 0 }); // scroll mượt lên top
 
 
     const responsiveSettings = [
@@ -71,6 +71,7 @@ export default function HomeClient() {
                 <div className='content-header mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5'>
                     <div className='row-span-3 hidden xl:block col-span-3 rounded-lg shadow-lg bg-white'>
                         <ul style={{ scrollbarWidth: "none" }} className='m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-blue-950'>
+                            <Spin spinning={isLoading} size="large" />
                             {categories && categories.length > 0 && categories.map((category, index) => (
                                 <Link key={category._id} href={`/category/${category._id}`}>
                                     <li className='w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-blue-100 hover:text-blue-500 px-6 py-3 flex items-center'>
@@ -217,10 +218,10 @@ export default function HomeClient() {
                         />
                     </div>
                 </div>
-                {/* <div className='content-center my-10'>
+                <div className='content-center my-10'>
                     <div className='mx-5 xl:mx-32 grid grid-flow-row grid-cols-6 lg:flex gap-2 lg:gap-4 my-16'>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={handleChangeFilter} className="w-full active button py-7 rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button className="w-full active button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Top PC Bán Chạy</h2>
                                     <p className='hidden md:block font-medium'>Nhất năm 2025</p>
@@ -228,7 +229,7 @@ export default function HomeClient() {
                             </Button>
                         </div>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={handleChangeFilter} className="w-full button py-7 rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button className="w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Giải nhiệt pc</h2>
                                     <p className='hidden md:block font-medium'>Nâng cao hiệu suất</p>
@@ -236,7 +237,7 @@ export default function HomeClient() {
                             </Button>
                         </div>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={handleChangeFilter} className="w-full button py-7 rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button className="w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Top PC Cực Khủng</h2>
                                     <p className='hidden md:block font-medium'>Dành cho dân đồ họa</p>
@@ -244,7 +245,7 @@ export default function HomeClient() {
                             </Button>
                         </div>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={handleChangeFilter} className="w-full button py-7 rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button className="w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>màn hình đồ họa</h2>
                                     <p className='hidden md:block font-medium'>Nhiều ưu đãi hấp dẫn</p>
@@ -252,7 +253,7 @@ export default function HomeClient() {
                             </Button>
                         </div>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={handleChangeFilter} className="w-full button py-7 rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button className="w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Góc thanh lý</h2>
                                     <p className='hidden md:block font-medium'>Xả hàng không lợi nhuận</p>
@@ -271,16 +272,16 @@ export default function HomeClient() {
                         autoplaySpeed={2000}
                         responsive={responsiveSettings}
                     >
-                        {productByCategory.length > 0 &&
-                            productByCategory[1].products.map(product => (
+                        {categoriesPreview && categoriesPreview.length > 0 &&
+                            categoriesPreview[1].products.map(product => (
                                 <div key={product?._id} className='px-1.5'>
-                                    <CardProduct css="p-3" data={product} />
+                                    <CardProduct css="p-3" product={product} />
                                 </div>
                             ))
                         }
 
                     </Carousel>
-                </div> */}
+                </div>
                 <Spin size="large" spinning={isLoading}>
                     {!isLoading && categoriesPreview && categoriesPreview.length > 0 &&
                         categoriesPreview.map(category => (
@@ -319,7 +320,7 @@ export default function HomeClient() {
 
                 </Spin>
 
-                <div className='h-60 bg-blue-400  text-white my-10 flex flex-wrap items-center justify-center font-extrabold text-base sm:text-xl lg:text-4xl cursor-default'>
+                <div className='h-60 content-center  text-white my-10 flex flex-wrap items-center justify-center font-extrabold text-base sm:text-xl lg:text-4xl cursor-default'>
                     Khơi nguồn đam mê, chạm đến đỉnh công nghệ!❣️
                 </div>
                 <div className='mx-5 xl:mx-32 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-md'>
