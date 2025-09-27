@@ -26,7 +26,13 @@ export interface IProductCard {
     discount: number,
     stock: number,
     soldCount: number,
-    category?: ICategory
+    category?: ICategory,
+    other?: [
+        {
+            key: string,
+            value: string
+        }
+    ];
 }
 
 

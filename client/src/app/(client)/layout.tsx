@@ -3,6 +3,7 @@
 
 import FooterClient from "@/components/client/Layout/Footer";
 import HeaderClient from "@/components/client/Layout/Header";
+import GlobalLoading from "@/components/GlobalLoading/GlobalLoading";
 
 // export const metadata: Metadata = {
 //   title: 'Not found 404',
@@ -26,12 +27,14 @@ export default function AdminLayout({
     return (
         <>
             <QueryClientProvider client={queryClient}>
-                <HeaderClient />
-                <div className="mt-28">
-                    {children}
+                <GlobalLoading>
+                    <HeaderClient />
+                    <div className="mt-28">
+                        {children}
 
-                </div>
-                <FooterClient />
+                    </div>
+                    <FooterClient />
+                </GlobalLoading>
             </QueryClientProvider>
         </>
     );

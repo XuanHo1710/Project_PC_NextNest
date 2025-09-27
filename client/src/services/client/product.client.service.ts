@@ -5,12 +5,14 @@ import { IProductCard, IProductWithPagination } from '@/types/model.client.d'
 
 class ProductClientService {
     async getProductsByCategoryId(categoryId: string, page: number = 1, sort: string = ""): Promise<(IProductWithPagination | null)> {
-        console.log(sort);
-
-
         const response = await axios.get(`product/get-by-category/${categoryId}`, {
             params: { page, sort },
         })
+        return response.data
+    }
+
+    async getProductsById(productId: string): Promise<(IProductCard)> {
+        const response = await axios.get(`product/${productId}`)
         return response.data
     }
 

@@ -29,7 +29,8 @@ export default function HeaderClient() {
     const [isOpenModalLogin, setOpenModalLogin] = useState<boolean>(false);
     const [categories, setCategories] = useState<ICategory[] | []>([]);
     const [childrenCategories, setChildrenCategories] = useState<ICategory[] | []>([]);
-    const [keywords, setKeywords] = useState<string>("");
+
+    const [search, setSearch] = useState("");
 
     const { cart, updateQuantity, removeFromCart, calculateTotal } = useCartStore();
 
@@ -40,9 +41,9 @@ export default function HeaderClient() {
     });
 
     const { data: products, isLoading: loadingSearch } = useQuery<IProductCard[] | []>({
-        queryKey: ['product-search', keywords], // key để cache
-        queryFn: () => productClientService.searchProducts(keywords),
-        enabled: !!keywords
+        queryKey: ['product-search', search], // key để cache
+        queryFn: () => productClientService.searchProducts(search),
+        enabled: !!search
     });
 
 
@@ -62,8 +63,8 @@ export default function HeaderClient() {
         if (value.trim() === "")
             setOpenSearch(false)
         else {
-            setKeywords(value);
             setOpenSearch(true);
+            setSearch(value);
         }
     }
 
@@ -190,7 +191,7 @@ export default function HeaderClient() {
 
                     <button className="button-primary"><MdOutlineNotListedLocation /> Hồ Chí Minh <IoIosArrowDown /></button>
                     <div className="w-80 relative">
-                        <Input onChange={(e) => handleOnChange(e.target.value)} placeholder="Bạn muốn mua gì ngày hôm nay" className="!py-2 !px-4 font-semibold text-xl" />
+                        <Input value={search} onChange={(e) => handleOnChange(e.target.value)} placeholder="Bạn muốn mua gì ngày hôm nay" className="!py-2 !px-4 font-semibold text-xl" />
                         <MdOutlineSearch className="absolute right-3 text-xl top-1/4" />
 
                         {/* Search */}
@@ -218,7 +219,10 @@ export default function HeaderClient() {
                                                 </div>
                                                 <div className="flex justify-between flex-col flex-1">
                                                     <div>
-                                                        <h2 className="font-semibold text-gray-800 truncate">{p.name}</h2>
+                                                        <Link onClick={() => {
+                                                            setSearch("");
+                                                            setOpenSearch(false);
+                                                        }} href={"/product/" + p._id} className="font-semibold text-gray-800 truncate">{p.name}</Link>
                                                         <p className="text-sm line-clamp-1">{p.description}</p>
                                                     </div>
                                                     <div className="flex justify-between">
@@ -284,7 +288,7 @@ export default function HeaderClient() {
                                                 </div>
                                                 <div className='basis-5/6 cart-product-content dark:text-blue-100'>
                                                     <div className='flex justify-between'>
-                                                        <Link href={"/"}>
+                                                        <Link href={"/product/" + c.product._id}>
                                                             <h2 className='hover:text-blue-500 font-semibold text-sm line-clamp-2 px-4'>
                                                                 {c.product.name}
                                                             </h2>

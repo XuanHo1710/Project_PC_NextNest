@@ -46,8 +46,11 @@ export class ProductService {
 
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} product`;
+  async findOne(id: string) {
+    return await this.productModel.findOne(
+      { _id: id },
+      { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, other: 1 }
+    ).populate("category");
   }
 
 

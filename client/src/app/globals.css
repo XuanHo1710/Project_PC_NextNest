@@ -229,3 +229,7 @@
   color: rgb(61, 22, 255) !important;
   opacity: 1;
 }
+
+.card-header-gift {
+  background: linear-gradient(91.56deg, rgba(245, 33, 148, .1) 2.74%, rgba(250, 159, 44, .1) 96.84%);
+}
