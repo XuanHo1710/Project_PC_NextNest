@@ -6,6 +6,7 @@ import { ICategoryPreview } from "@/types/model.client.d";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Image, Spin } from "antd";
 import Link from "next/link";
+import { HomePageSkeleton } from "@/components/Skeletons";
 
 import { MdKeyboardArrowRight, MdLaptopChromebook, MdPhoneIphone, MdTv, MdHeadset, MdCameraAlt, MdWatch } from "react-icons/md";
 
@@ -28,8 +29,11 @@ export default function HomeClient() {
 
 
 
-    if (!isLoading)
-        window.scrollTo({ top: 0 }); // scroll mượt lên top
+    if (isLoading) {
+        return <HomePageSkeleton />
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll mượt lên top
+    }
 
 
     const responsiveSettings = [

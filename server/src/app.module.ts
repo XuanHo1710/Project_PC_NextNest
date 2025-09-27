@@ -8,6 +8,7 @@ import { Connection } from 'mongoose';
 import { ClientModule } from './client/client.module';
 import { AdminModule } from './admin/admin.module';
 import { AppService } from 'src/app.service';
+import { ChatbotModule } from './chatbot/chatbot.module';
 const mongooseAutoPopulate = require('mongoose-autopopulate');
 
 
@@ -27,6 +28,7 @@ const mongooseAutoPopulate = require('mongoose-autopopulate');
     }),
     AdminModule,
     ClientModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [AppService],

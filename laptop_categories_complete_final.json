@@ -1,0 +1,941 @@
+[
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b00"
+        },
+        "name": "Laptop",
+        "slug": "laptop",
+        "parent": null,
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b01"
+                },
+                "name": "Laptop ASUS",
+                "slug": "laptop-asus"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b02"
+                },
+                "name": "Laptop ACER",
+                "slug": "laptop-acer"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b03"
+                },
+                "name": "Laptop MSI",
+                "slug": "laptop-msi"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b04"
+                },
+                "name": "Laptop Lenovo",
+                "slug": "laptop-lenovo"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b05"
+                },
+                "name": "Laptop Dell",
+                "slug": "laptop-dell"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b06"
+                },
+                "name": "Laptop AI",
+                "slug": "laptop-ai"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b01"
+        },
+        "name": "Laptop ASUS",
+        "slug": "laptop-asus",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b00"
+            },
+            "name": "Laptop",
+            "slug": "laptop"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b07"
+                },
+                "name": "ASUS OLED Series",
+                "slug": "asus-oled-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b08"
+                },
+                "name": "Vivobook Series",
+                "slug": "vivobook-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b09"
+                },
+                "name": "Zenbook Series",
+                "slug": "zenbook-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b07"
+        },
+        "name": "ASUS OLED Series",
+        "slug": "asus-oled-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b01"
+            },
+            "name": "Laptop ASUS",
+            "slug": "laptop-asus"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b08"
+        },
+        "name": "Vivobook Series",
+        "slug": "vivobook-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b01"
+            },
+            "name": "Laptop ASUS",
+            "slug": "laptop-asus"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b09"
+        },
+        "name": "Zenbook Series",
+        "slug": "zenbook-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b01"
+            },
+            "name": "Laptop ASUS",
+            "slug": "laptop-asus"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b02"
+        },
+        "name": "Laptop ACER",
+        "slug": "laptop-acer",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b00"
+            },
+            "name": "Laptop",
+            "slug": "laptop"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b0a"
+                },
+                "name": "Aspire Series",
+                "slug": "aspire-series-laptop"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b0b"
+                },
+                "name": "Swift Series",
+                "slug": "swift-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b0a"
+        },
+        "name": "Aspire Series",
+        "slug": "aspire-series-laptop",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b02"
+            },
+            "name": "Laptop ACER",
+            "slug": "laptop-acer"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b0b"
+        },
+        "name": "Swift Series",
+        "slug": "swift-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b02"
+            },
+            "name": "Laptop ACER",
+            "slug": "laptop-acer"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b03"
+        },
+        "name": "Laptop MSI",
+        "slug": "laptop-msi",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b00"
+            },
+            "name": "Laptop",
+            "slug": "laptop"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b0c"
+                },
+                "name": "Modern Series",
+                "slug": "modern-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b0d"
+                },
+                "name": "Prestige Series",
+                "slug": "prestige-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b0c"
+        },
+        "name": "Modern Series",
+        "slug": "modern-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b03"
+            },
+            "name": "Laptop MSI",
+            "slug": "laptop-msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b0d"
+        },
+        "name": "Prestige Series",
+        "slug": "prestige-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b03"
+            },
+            "name": "Laptop MSI",
+            "slug": "laptop-msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b04"
+        },
+        "name": "Laptop Lenovo",
+        "slug": "laptop-lenovo",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b00"
+            },
+            "name": "Laptop",
+            "slug": "laptop"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b0e"
+                },
+                "name": "Thinkbook Series",
+                "slug": "thinkbook-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b0f"
+                },
+                "name": "Ideapad Series",
+                "slug": "ideapad-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b10"
+                },
+                "name": "Thinkpad Series",
+                "slug": "thinkpad-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b11"
+                },
+                "name": "Yoga Series",
+                "slug": "yoga-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b0e"
+        },
+        "name": "Thinkbook Series",
+        "slug": "thinkbook-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b04"
+            },
+            "name": "Laptop Lenovo",
+            "slug": "laptop-lenovo"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b0f"
+        },
+        "name": "Ideapad Series",
+        "slug": "ideapad-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b04"
+            },
+            "name": "Laptop Lenovo",
+            "slug": "laptop-lenovo"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b10"
+        },
+        "name": "Thinkpad Series",
+        "slug": "thinkpad-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b04"
+            },
+            "name": "Laptop Lenovo",
+            "slug": "laptop-lenovo"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b11"
+        },
+        "name": "Yoga Series",
+        "slug": "yoga-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b04"
+            },
+            "name": "Laptop Lenovo",
+            "slug": "laptop-lenovo"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b05"
+        },
+        "name": "Laptop Dell",
+        "slug": "laptop-dell",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b00"
+            },
+            "name": "Laptop",
+            "slug": "laptop"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b12"
+                },
+                "name": "Inspiron Series",
+                "slug": "inspiron-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b13"
+                },
+                "name": "Vostro Series",
+                "slug": "vostro-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b14"
+                },
+                "name": "Latitude Series",
+                "slug": "latitude-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85b15"
+                },
+                "name": "XPS Series",
+                "slug": "xps-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b12"
+        },
+        "name": "Inspiron Series",
+        "slug": "inspiron-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b05"
+            },
+            "name": "Laptop Dell",
+            "slug": "laptop-dell"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b13"
+        },
+        "name": "Vostro Series",
+        "slug": "vostro-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b05"
+            },
+            "name": "Laptop Dell",
+            "slug": "laptop-dell"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b14"
+        },
+        "name": "Latitude Series",
+        "slug": "latitude-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b05"
+            },
+            "name": "Laptop Dell",
+            "slug": "laptop-dell"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b15"
+        },
+        "name": "XPS Series",
+        "slug": "xps-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b05"
+            },
+            "name": "Laptop Dell",
+            "slug": "laptop-dell"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85b06"
+        },
+        "name": "Laptop AI",
+        "slug": "laptop-ai",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85b00"
+            },
+            "name": "Laptop",
+            "slug": "laptop"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    }
+]

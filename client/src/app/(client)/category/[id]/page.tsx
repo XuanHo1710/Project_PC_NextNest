@@ -7,8 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Checkbox, Drawer, Image, Pagination, Spin } from "antd";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import { CategoryPageSkeleton } from "@/components/Skeletons";
 
 export default function CategoryClient() {
     const { id } = useParams();
@@ -18,21 +19,26 @@ export default function CategoryClient() {
     const [activeFilter, setActiveFilter] = useState<string>("");
     const { addToCart } = useCartStore();
 
-    const { data: dataProduct } = useQuery<(IProductWithPagination) | null>({
+    const { data: dataProduct, isLoading } = useQuery<(IProductWithPagination) | null>({
         queryKey: ['product-by-category', id, page, searchParams.toString()], // key để cache
         queryFn: () => productClientService.getProductsByCategoryId(id as string, page, searchParams.toString()),
         enabled: !!id, // 5 phút cache không gọi lại
     });
 
+    useEffect(() => {
+        if (!isLoading) {
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll mượt lên top
+        }
+    }, [isLoading, page]);
+
     const handlePagination = (value: number) => {
         setPage(value);
-        window.scrollTo({ top: 0 }); // scroll mượt lên top
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll mượt lên top
     }
 
 
     const handleFilter = (e: React.MouseEvent<HTMLButtonElement>, value: string) => {
         setActiveFilter(value);
-
         const params = new URLSearchParams(searchParams.toString());
         if (value) {
             params.set("sort", value);
@@ -129,6 +135,11 @@ export default function CategoryClient() {
             value: 'RAM_64GB',
         },
     ];
+    // Hiển thị trang Loading khi đang tải dữ liệu
+    if (isLoading) {
+        return <CategoryPageSkeleton />;
+    }
+
     return (
         <>
             <Drawer className='dark:!bg-blue-900 dark:!text-white' title="Bộ lọc sản phẩm" placement='bottom' onClose={onClose} open={open} height={550}>
@@ -156,7 +167,7 @@ export default function CategoryClient() {
                     <Link href="/home" className="font-medium text-lg text-stone-500 mr-3 header-nav">Trang chủ</Link>
                     <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
                     {dataProduct &&
-                        <h3 className="font-medium text-lg dark:text-white text-stone-500 mr-3 active">{dataProduct.products[0].category?.name}</h3>
+                        <h3 className="font-medium text-lg dark:text-white text-blue-500 mr-3 active">{dataProduct.products[0].category?.name}</h3>
                     }
                 </div>
                 <h1 className='mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3 font-bold text-xl lg:text-3xl uppercase text-blue-500'>

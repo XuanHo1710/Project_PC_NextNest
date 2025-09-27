@@ -3,7 +3,8 @@
 
 import FooterClient from "@/components/client/Layout/Footer";
 import HeaderClient from "@/components/client/Layout/Header";
-import GlobalLoading from "@/components/GlobalLoading/GlobalLoading";
+// import GlobalLoading from "@/components/GlobalLoading/GlobalLoading";
+import { ChatBot } from "@/components/Chat";
 
 // export const metadata: Metadata = {
 //   title: 'Not found 404',
@@ -27,14 +28,15 @@ export default function AdminLayout({
     return (
         <>
             <QueryClientProvider client={queryClient}>
-                <GlobalLoading>
-                    <HeaderClient />
-                    <div className="mt-28">
-                        {children}
-
-                    </div>
-                    <FooterClient />
-                </GlobalLoading>
+                {/* <GlobalLoading> */}
+                <HeaderClient />
+                <div className="mt-28">
+                    {children}
+                </div>
+                <FooterClient />
+                {/* Chat và Social Icons */}
+                <ChatBot />
+                {/* </GlobalLoading> */}
             </QueryClientProvider>
         </>
     );

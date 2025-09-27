@@ -1,0 +1,1977 @@
+[
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86000"
+        },
+        "name": "PC GVN",
+        "slug": "pc-gvn",
+        "parent": null,
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86001"
+                },
+                "name": "PC RTX 50 SERIES",
+                "slug": "pc-rtx-50-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86002"
+                },
+                "name": "PC HOT CHIẾN HÈ",
+                "slug": "pc-hot-chien-he"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86003"
+                },
+                "name": "PC khuyến mãi KHỦNG",
+                "slug": "pc-khuyen-mai-khung"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86004"
+                },
+                "name": "PC theo cấu hình VGA",
+                "slug": "pc-theo-cau-hinh-vga"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86005"
+                },
+                "name": "A.I PC - GVN",
+                "slug": "ai-pc-gvn"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86006"
+                },
+                "name": "PC theo CPU Intel",
+                "slug": "pc-theo-cpu-intel"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86007"
+                },
+                "name": "PC theo CPU AMD",
+                "slug": "pc-theo-cpu-amd"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86008"
+                },
+                "name": "PC Văn phòng",
+                "slug": "pc-van-phong"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86009"
+                },
+                "name": "Phần mềm bản quyền",
+                "slug": "phan-mem-ban-quyen"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86001"
+        },
+        "name": "PC RTX 50 SERIES",
+        "slug": "pc-rtx-50-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86000"
+            },
+            "name": "PC GVN",
+            "slug": "pc-gvn"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86010"
+                },
+                "name": "PC RTX 5090",
+                "slug": "pc-rtx-5090"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86011"
+                },
+                "name": "PC RTX 5080",
+                "slug": "pc-rtx-5080"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86012"
+                },
+                "name": "PC RTX 5070Ti",
+                "slug": "pc-rtx-5070ti"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86013"
+                },
+                "name": "PC RTX 5070",
+                "slug": "pc-rtx-5070"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86014"
+                },
+                "name": "PC RTX 5060Ti",
+                "slug": "pc-rtx-5060ti"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86015"
+                },
+                "name": "PC RTX 5060 (HOT)",
+                "slug": "pc-rtx-5060-hot"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86010"
+        },
+        "name": "PC RTX 5090",
+        "slug": "pc-rtx-5090",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86001"
+            },
+            "name": "PC RTX 50 SERIES",
+            "slug": "pc-rtx-50-series"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86011"
+        },
+        "name": "PC RTX 5080",
+        "slug": "pc-rtx-5080",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86001"
+            },
+            "name": "PC RTX 50 SERIES",
+            "slug": "pc-rtx-50-series"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86012"
+        },
+        "name": "PC RTX 5070Ti",
+        "slug": "pc-rtx-5070ti",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86001"
+            },
+            "name": "PC RTX 50 SERIES",
+            "slug": "pc-rtx-50-series"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86013"
+        },
+        "name": "PC RTX 5070",
+        "slug": "pc-rtx-5070",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86001"
+            },
+            "name": "PC RTX 50 SERIES",
+            "slug": "pc-rtx-50-series"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86014"
+        },
+        "name": "PC RTX 5060Ti",
+        "slug": "pc-rtx-5060ti",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86001"
+            },
+            "name": "PC RTX 50 SERIES",
+            "slug": "pc-rtx-50-series"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86015"
+        },
+        "name": "PC RTX 5060 (HOT)",
+        "slug": "pc-rtx-5060-hot",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86001"
+            },
+            "name": "PC RTX 50 SERIES",
+            "slug": "pc-rtx-50-series"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86002"
+        },
+        "name": "PC HOT CHIẾN HÈ",
+        "slug": "pc-hot-chien-he",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86000"
+            },
+            "name": "PC GVN",
+            "slug": "pc-gvn"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86016"
+                },
+                "name": "I5 - 5060 - chỉ từ 18tr",
+                "slug": "i5-5060-chi-tu-18tr"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86017"
+                },
+                "name": "I5 - 4060 - 17TR",
+                "slug": "i5-4060-17tr"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86018"
+                },
+                "name": "I5 - 3060 - 15TR",
+                "slug": "i5-3060-15tr"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86019"
+                },
+                "name": "I3 - 3050 - 11TR",
+                "slug": "i3-3050-11tr"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8601a"
+                },
+                "name": "I3 - RX6500XT - 10TR",
+                "slug": "i3-rx6500xt-10tr"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86016"
+        },
+        "name": "I5 - 5060 - chỉ từ 18tr",
+        "slug": "i5-5060-chi-tu-18tr",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86002"
+            },
+            "name": "PC HOT CHIẾN HÈ",
+            "slug": "pc-hot-chien-he"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86017"
+        },
+        "name": "I5 - 4060 - 17TR",
+        "slug": "i5-4060-17tr",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86002"
+            },
+            "name": "PC HOT CHIẾN HÈ",
+            "slug": "pc-hot-chien-he"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86018"
+        },
+        "name": "I5 - 3060 - 15TR",
+        "slug": "i5-3060-15tr",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86002"
+            },
+            "name": "PC HOT CHIẾN HÈ",
+            "slug": "pc-hot-chien-he"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86019"
+        },
+        "name": "I3 - 3050 - 11TR",
+        "slug": "i3-3050-11tr",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86002"
+            },
+            "name": "PC HOT CHIẾN HÈ",
+            "slug": "pc-hot-chien-he"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8601a"
+        },
+        "name": "I3 - RX6500XT - 10TR",
+        "slug": "i3-rx6500xt-10tr",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86002"
+            },
+            "name": "PC HOT CHIẾN HÈ",
+            "slug": "pc-hot-chien-he"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86003"
+        },
+        "name": "PC khuyến mãi KHỦNG",
+        "slug": "pc-khuyen-mai-khung",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86000"
+            },
+            "name": "PC GVN",
+            "slug": "pc-gvn"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8601b"
+                },
+                "name": "BUILD PC TẶNG MÀN 240HZ",
+                "slug": "build-pc-tang-man-240hz"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8601c"
+                },
+                "name": "GVN x MSI - Tặng màn hình OLED",
+                "slug": "gvn-x-msi-tang-man-hinh-oled"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8601d"
+                },
+                "name": "GVN x CORSAIR - Tặng tản nhiệt 5TR",
+                "slug": "gvn-x-corsair-tang-tan-nhiet-5tr"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8601e"
+                },
+                "name": "GVN x ASUS - MAX SETTING",
+                "slug": "gvn-x-asus-max-setting"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8601b"
+        },
+        "name": "BUILD PC TẶNG MÀN 240HZ",
+        "slug": "build-pc-tang-man-240hz",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86003"
+            },
+            "name": "PC khuyến mãi KHỦNG",
+            "slug": "pc-khuyen-mai-khung"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8601c"
+        },
+        "name": "GVN x MSI - Tặng màn hình OLED",
+        "slug": "gvn-x-msi-tang-man-hinh-oled",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86003"
+            },
+            "name": "PC khuyến mãi KHỦNG",
+            "slug": "pc-khuyen-mai-khung"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8601d"
+        },
+        "name": "GVN x CORSAIR - Tặng tản nhiệt 5TR",
+        "slug": "gvn-x-corsair-tang-tan-nhiet-5tr",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86003"
+            },
+            "name": "PC khuyến mãi KHỦNG",
+            "slug": "pc-khuyen-mai-khung"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8601e"
+        },
+        "name": "GVN x ASUS - MAX SETTING",
+        "slug": "gvn-x-asus-max-setting",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86003"
+            },
+            "name": "PC khuyến mãi KHỦNG",
+            "slug": "pc-khuyen-mai-khung"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86004"
+        },
+        "name": "PC theo cấu hình VGA",
+        "slug": "pc-theo-cau-hinh-vga",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86000"
+            },
+            "name": "PC GVN",
+            "slug": "pc-gvn"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8601f"
+                },
+                "name": "PC RTX 3050",
+                "slug": "pc-rtx-3050"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86020"
+                },
+                "name": "PC RX6500XT",
+                "slug": "pc-rx6500xt"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86021"
+                },
+                "name": "PC RTX 3060 (12GB)",
+                "slug": "pc-rtx-3060-12gb"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86022"
+                },
+                "name": "PC RTX 4060",
+                "slug": "pc-rtx-4060"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86023"
+                },
+                "name": "PC RTX 4070 Super",
+                "slug": "pc-rtx-4070-super"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8601f"
+        },
+        "name": "PC RTX 3050",
+        "slug": "pc-rtx-3050",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86004"
+            },
+            "name": "PC theo cấu hình VGA",
+            "slug": "pc-theo-cau-hinh-vga"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86020"
+        },
+        "name": "PC RX6500XT",
+        "slug": "pc-rx6500xt",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86004"
+            },
+            "name": "PC theo cấu hình VGA",
+            "slug": "pc-theo-cau-hinh-vga"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86021"
+        },
+        "name": "PC RTX 3060 (12GB)",
+        "slug": "pc-rtx-3060-12gb",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86004"
+            },
+            "name": "PC theo cấu hình VGA",
+            "slug": "pc-theo-cau-hinh-vga"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86022"
+        },
+        "name": "PC RTX 4060",
+        "slug": "pc-rtx-4060",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86004"
+            },
+            "name": "PC theo cấu hình VGA",
+            "slug": "pc-theo-cau-hinh-vga"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86023"
+        },
+        "name": "PC RTX 4070 Super",
+        "slug": "pc-rtx-4070-super",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86004"
+            },
+            "name": "PC theo cấu hình VGA",
+            "slug": "pc-theo-cau-hinh-vga"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86005"
+        },
+        "name": "A.I PC - GVN",
+        "slug": "ai-pc-gvn",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86000"
+            },
+            "name": "PC GVN",
+            "slug": "pc-gvn"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86024"
+                },
+                "name": "PC GVN X ASUS - PBA",
+                "slug": "pc-gvn-x-asus-pba"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86025"
+                },
+                "name": "PC GVN X MSI",
+                "slug": "pc-gvn-x-msi"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86024"
+        },
+        "name": "PC GVN X ASUS - PBA",
+        "slug": "pc-gvn-x-asus-pba",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86005"
+            },
+            "name": "A.I PC - GVN",
+            "slug": "ai-pc-gvn"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86025"
+        },
+        "name": "PC GVN X MSI",
+        "slug": "pc-gvn-x-msi",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86005"
+            },
+            "name": "A.I PC - GVN",
+            "slug": "ai-pc-gvn"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86006"
+        },
+        "name": "PC theo CPU Intel",
+        "slug": "pc-theo-cpu-intel",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86000"
+            },
+            "name": "PC GVN",
+            "slug": "pc-gvn"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86026"
+                },
+                "name": "PC Core i3",
+                "slug": "pc-core-i3"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86027"
+                },
+                "name": "PC Core i5",
+                "slug": "pc-core-i5"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86028"
+                },
+                "name": "PC Core i7",
+                "slug": "pc-core-i7"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86029"
+                },
+                "name": "PC Core i9",
+                "slug": "pc-core-i9"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86026"
+        },
+        "name": "PC Core i3",
+        "slug": "pc-core-i3",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86006"
+            },
+            "name": "PC theo CPU Intel",
+            "slug": "pc-theo-cpu-intel"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86027"
+        },
+        "name": "PC Core i5",
+        "slug": "pc-core-i5",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86006"
+            },
+            "name": "PC theo CPU Intel",
+            "slug": "pc-theo-cpu-intel"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86028"
+        },
+        "name": "PC Core i7",
+        "slug": "pc-core-i7",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86006"
+            },
+            "name": "PC theo CPU Intel",
+            "slug": "pc-theo-cpu-intel"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86029"
+        },
+        "name": "PC Core i9",
+        "slug": "pc-core-i9",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86006"
+            },
+            "name": "PC theo CPU Intel",
+            "slug": "pc-theo-cpu-intel"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86007"
+        },
+        "name": "PC theo CPU AMD",
+        "slug": "pc-theo-cpu-amd",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86000"
+            },
+            "name": "PC GVN",
+            "slug": "pc-gvn"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8602a"
+                },
+                "name": "PC AMD R3",
+                "slug": "pc-amd-r3"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8602b"
+                },
+                "name": "PC AMD R5",
+                "slug": "pc-amd-r5"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8602c"
+                },
+                "name": "PC AMD R7",
+                "slug": "pc-amd-r7"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8602d"
+                },
+                "name": "PC AMD R9",
+                "slug": "pc-amd-r9"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8602a"
+        },
+        "name": "PC AMD R3",
+        "slug": "pc-amd-r3",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86007"
+            },
+            "name": "PC theo CPU AMD",
+            "slug": "pc-theo-cpu-amd"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8602b"
+        },
+        "name": "PC AMD R5",
+        "slug": "pc-amd-r5",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86007"
+            },
+            "name": "PC theo CPU AMD",
+            "slug": "pc-theo-cpu-amd"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8602c"
+        },
+        "name": "PC AMD R7",
+        "slug": "pc-amd-r7",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86007"
+            },
+            "name": "PC theo CPU AMD",
+            "slug": "pc-theo-cpu-amd"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8602d"
+        },
+        "name": "PC AMD R9",
+        "slug": "pc-amd-r9",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86007"
+            },
+            "name": "PC theo CPU AMD",
+            "slug": "pc-theo-cpu-amd"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86008"
+        },
+        "name": "PC Văn phòng",
+        "slug": "pc-van-phong",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86000"
+            },
+            "name": "PC GVN",
+            "slug": "pc-gvn"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8602e"
+                },
+                "name": "Homework Athlon - Giá chỉ 3.990k",
+                "slug": "homework-athlon-gia-chi-3990k"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f8602f"
+                },
+                "name": "Homework R3 - Giá chỉ 5,690k",
+                "slug": "homework-r3-gia-chi-5690k"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86030"
+                },
+                "name": "Homework R5 - Giá chỉ 5,690k",
+                "slug": "homework-r5-gia-chi-5690k"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86031"
+                },
+                "name": "Homework I5 - Giá chỉ 5,690k",
+                "slug": "homework-i5-gia-chi-5690k"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8602e"
+        },
+        "name": "Homework Athlon - Giá chỉ 3.990k",
+        "slug": "homework-athlon-gia-chi-3990k",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86008"
+            },
+            "name": "PC Văn phòng",
+            "slug": "pc-van-phong"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f8602f"
+        },
+        "name": "Homework R3 - Giá chỉ 5,690k",
+        "slug": "homework-r3-gia-chi-5690k",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86008"
+            },
+            "name": "PC Văn phòng",
+            "slug": "pc-van-phong"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86030"
+        },
+        "name": "Homework R5 - Giá chỉ 5,690k",
+        "slug": "homework-r5-gia-chi-5690k",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86008"
+            },
+            "name": "PC Văn phòng",
+            "slug": "pc-van-phong"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86031"
+        },
+        "name": "Homework I5 - Giá chỉ 5,690k",
+        "slug": "homework-i5-gia-chi-5690k",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86008"
+            },
+            "name": "PC Văn phòng",
+            "slug": "pc-van-phong"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86009"
+        },
+        "name": "Phần mềm bản quyền",
+        "slug": "phan-mem-ban-quyen",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86000"
+            },
+            "name": "PC GVN",
+            "slug": "pc-gvn"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86032"
+                },
+                "name": "Windows bản quyền - Chỉ từ 2.990K",
+                "slug": "windows-ban-quyen-chi-tu-2990k"
+            },
+            {
+                "_id": {
+                    "$oid": "64f8a01a58f60b20b4f86033"
+                },
+                "name": "Office 365 bản quyền - Chỉ từ 990K",
+                "slug": "office-365-ban-quyen-chi-tu-990k"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86032"
+        },
+        "name": "Windows bản quyền - Chỉ từ 2.990K",
+        "slug": "windows-ban-quyen-chi-tu-2990k",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86009"
+            },
+            "name": "Phần mềm bản quyền",
+            "slug": "phan-mem-ban-quyen"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f8a01a58f60b20b4f86033"
+        },
+        "name": "Office 365 bản quyền - Chỉ từ 990K",
+        "slug": "office-365-ban-quyen-chi-tu-990k",
+        "parent": {
+            "_id": {
+                "$oid": "64f8a01a58f60b20b4f86009"
+            },
+            "name": "Phần mềm bản quyền",
+            "slug": "phan-mem-ban-quyen"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:30:00.000Z"
+        }
+    }
+]

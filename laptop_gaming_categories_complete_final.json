@@ -1,0 +1,1703 @@
+[
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c00"
+        },
+        "name": "Laptop Gaming",
+        "slug": "laptop-gaming",
+        "parent": null,
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c01"
+                },
+                "name": "ACER / PREDATOR",
+                "slug": "acer-predator"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c02"
+                },
+                "name": "ASUS / ROG",
+                "slug": "asus-rog"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c03"
+                },
+                "name": "MSI",
+                "slug": "msi"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c04"
+                },
+                "name": "LENOVO",
+                "slug": "lenovo"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c05"
+                },
+                "name": "DELL",
+                "slug": "dell"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c06"
+                },
+                "name": "GIGABYTE / AORUS",
+                "slug": "gigabyte-aorus"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c07"
+                },
+                "name": "HP",
+                "slug": "hp"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c08"
+                },
+                "name": "LENOVO Gaming",
+                "slug": "lenovo-gaming"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c09"
+                },
+                "name": "Dell Gaming",
+                "slug": "dell-gaming"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c0a"
+                },
+                "name": "HP Gaming",
+                "slug": "hp-gaming"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c0b"
+                },
+                "name": "Cấu hình",
+                "slug": "cau-hinh"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c0c"
+                },
+                "name": "Linh - Phụ kiện Laptop",
+                "slug": "linh-phu-kien-laptop"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c01"
+        },
+        "name": "ACER / PREDATOR",
+        "slug": "acer-predator",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c00"
+            },
+            "name": "Laptop Gaming",
+            "slug": "laptop-gaming"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c10"
+                },
+                "name": "Nitro Series",
+                "slug": "nitro-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c11"
+                },
+                "name": "Aspire Series",
+                "slug": "aspire-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c12"
+                },
+                "name": "Predator Series",
+                "slug": "predator-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c13"
+                },
+                "name": "ACER RTX 50 Series",
+                "slug": "acer-rtx-50-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c10"
+        },
+        "name": "Nitro Series",
+        "slug": "nitro-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c01"
+            },
+            "name": "ACER / PREDATOR",
+            "slug": "acer-predator"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c11"
+        },
+        "name": "Aspire Series",
+        "slug": "aspire-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c01"
+            },
+            "name": "ACER / PREDATOR",
+            "slug": "acer-predator"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c12"
+        },
+        "name": "Predator Series",
+        "slug": "predator-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c01"
+            },
+            "name": "ACER / PREDATOR",
+            "slug": "acer-predator"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c13"
+        },
+        "name": "ACER RTX 50 Series",
+        "slug": "acer-rtx-50-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c01"
+            },
+            "name": "ACER / PREDATOR",
+            "slug": "acer-predator"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c02"
+        },
+        "name": "ASUS / ROG",
+        "slug": "asus-rog",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c00"
+            },
+            "name": "Laptop Gaming",
+            "slug": "laptop-gaming"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c14"
+                },
+                "name": "ROG Series",
+                "slug": "rog-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c15"
+                },
+                "name": "TUF Series",
+                "slug": "tuf-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c16"
+                },
+                "name": "Zephyrus Series",
+                "slug": "zephyrus-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c17"
+                },
+                "name": "ASUS RTX 50 Series",
+                "slug": "asus-rtx-50-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c14"
+        },
+        "name": "ROG Series",
+        "slug": "rog-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c02"
+            },
+            "name": "ASUS / ROG",
+            "slug": "asus-rog"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c15"
+        },
+        "name": "TUF Series",
+        "slug": "tuf-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c02"
+            },
+            "name": "ASUS / ROG",
+            "slug": "asus-rog"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c16"
+        },
+        "name": "Zephyrus Series",
+        "slug": "zephyrus-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c02"
+            },
+            "name": "ASUS / ROG",
+            "slug": "asus-rog"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c17"
+        },
+        "name": "ASUS RTX 50 Series",
+        "slug": "asus-rtx-50-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c02"
+            },
+            "name": "ASUS / ROG",
+            "slug": "asus-rog"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c03"
+        },
+        "name": "MSI",
+        "slug": "msi",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c00"
+            },
+            "name": "Laptop Gaming",
+            "slug": "laptop-gaming"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c18"
+                },
+                "name": "Titan GT Series",
+                "slug": "titan-gt-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c19"
+                },
+                "name": "Stealth GS Series",
+                "slug": "stealth-gs-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c1a"
+                },
+                "name": "Raider GE Series",
+                "slug": "raider-ge-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c1b"
+                },
+                "name": "Vector GP Series",
+                "slug": "vector-gp-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c1c"
+                },
+                "name": "Crosshair / Pulse GL Series",
+                "slug": "crosshair-pulse-gl-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c1d"
+                },
+                "name": "Sword / Katana GF66 Series",
+                "slug": "sword-katana-gf66-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c1e"
+                },
+                "name": "Cyborg / Thin GF Series",
+                "slug": "cyborg-thin-gf-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c1f"
+                },
+                "name": "MSI RTX 50 Series",
+                "slug": "msi-rtx-50-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c18"
+        },
+        "name": "Titan GT Series",
+        "slug": "titan-gt-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c03"
+            },
+            "name": "MSI",
+            "slug": "msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c19"
+        },
+        "name": "Stealth GS Series",
+        "slug": "stealth-gs-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c03"
+            },
+            "name": "MSI",
+            "slug": "msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c1a"
+        },
+        "name": "Raider GE Series",
+        "slug": "raider-ge-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c03"
+            },
+            "name": "MSI",
+            "slug": "msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c1b"
+        },
+        "name": "Vector GP Series",
+        "slug": "vector-gp-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c03"
+            },
+            "name": "MSI",
+            "slug": "msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c1c"
+        },
+        "name": "Crosshair / Pulse GL Series",
+        "slug": "crosshair-pulse-gl-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c03"
+            },
+            "name": "MSI",
+            "slug": "msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c1d"
+        },
+        "name": "Sword / Katana GF66 Series",
+        "slug": "sword-katana-gf66-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c03"
+            },
+            "name": "MSI",
+            "slug": "msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c1e"
+        },
+        "name": "Cyborg / Thin GF Series",
+        "slug": "cyborg-thin-gf-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c03"
+            },
+            "name": "MSI",
+            "slug": "msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c1f"
+        },
+        "name": "MSI RTX 50 Series",
+        "slug": "msi-rtx-50-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c03"
+            },
+            "name": "MSI",
+            "slug": "msi"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c08"
+        },
+        "name": "LENOVO Gaming",
+        "slug": "lenovo-gaming",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c00"
+            },
+            "name": "Laptop Gaming",
+            "slug": "laptop-gaming"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c20"
+                },
+                "name": "Legion Gaming",
+                "slug": "legion-gaming"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c21"
+                },
+                "name": "LOQ series",
+                "slug": "loq-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c22"
+                },
+                "name": "RTX 50 Series",
+                "slug": "rtx-50-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c20"
+        },
+        "name": "Legion Gaming",
+        "slug": "legion-gaming",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c08"
+            },
+            "name": "LENOVO Gaming",
+            "slug": "lenovo-gaming"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c21"
+        },
+        "name": "LOQ series",
+        "slug": "loq-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c08"
+            },
+            "name": "LENOVO Gaming",
+            "slug": "lenovo-gaming"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c22"
+        },
+        "name": "RTX 50 Series",
+        "slug": "rtx-50-series-lenovo",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c08"
+            },
+            "name": "LENOVO Gaming",
+            "slug": "lenovo-gaming"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c09"
+        },
+        "name": "Dell Gaming",
+        "slug": "dell-gaming",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c00"
+            },
+            "name": "Laptop Gaming",
+            "slug": "laptop-gaming"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c23"
+                },
+                "name": "Dell Gaming G Series",
+                "slug": "dell-gaming-g-series"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c24"
+                },
+                "name": "Alienware Series",
+                "slug": "alienware-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c23"
+        },
+        "name": "Dell Gaming G Series",
+        "slug": "dell-gaming-g-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c09"
+            },
+            "name": "Dell Gaming",
+            "slug": "dell-gaming"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c24"
+        },
+        "name": "Alienware Series",
+        "slug": "alienware-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c09"
+            },
+            "name": "Dell Gaming",
+            "slug": "dell-gaming"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c0a"
+        },
+        "name": "HP Gaming",
+        "slug": "hp-gaming",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c00"
+            },
+            "name": "Laptop Gaming",
+            "slug": "laptop-gaming"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c25"
+                },
+                "name": "HP Victus",
+                "slug": "hp-victus"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c26"
+                },
+                "name": "Hp Omen",
+                "slug": "hp-omen"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c27"
+                },
+                "name": "HP RTX 50 Series",
+                "slug": "hp-rtx-50-series"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c25"
+        },
+        "name": "HP Victus",
+        "slug": "hp-victus",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c0a"
+            },
+            "name": "HP Gaming",
+            "slug": "hp-gaming"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c26"
+        },
+        "name": "Hp Omen",
+        "slug": "hp-omen",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c0a"
+            },
+            "name": "HP Gaming",
+            "slug": "hp-gaming"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c27"
+        },
+        "name": "HP RTX 50 Series",
+        "slug": "hp-rtx-50-series",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c0a"
+            },
+            "name": "HP Gaming",
+            "slug": "hp-gaming"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c0b"
+        },
+        "name": "Cấu hình",
+        "slug": "cau-hinh",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c00"
+            },
+            "name": "Laptop Gaming",
+            "slug": "laptop-gaming"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c28"
+                },
+                "name": "RTX 50 Series",
+                "slug": "rtx-50-series-config"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c29"
+                },
+                "name": "CPU Core Ultra",
+                "slug": "cpu-core-ultra"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c2a"
+                },
+                "name": "CPU AMD",
+                "slug": "cpu-amd"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c28"
+        },
+        "name": "RTX 50 Series",
+        "slug": "rtx-50-series-config",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c0b"
+            },
+            "name": "Cấu hình",
+            "slug": "cau-hinh"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c29"
+        },
+        "name": "CPU Core Ultra",
+        "slug": "cpu-core-ultra",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c0b"
+            },
+            "name": "Cấu hình",
+            "slug": "cau-hinh"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c2a"
+        },
+        "name": "CPU AMD",
+        "slug": "cpu-amd",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c0b"
+            },
+            "name": "Cấu hình",
+            "slug": "cau-hinh"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c0c"
+        },
+        "name": "Linh - Phụ kiện Laptop",
+        "slug": "linh-phu-kien-laptop",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c00"
+            },
+            "name": "Laptop Gaming",
+            "slug": "laptop-gaming"
+        },
+        "children": [
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c2b"
+                },
+                "name": "Ram laptop",
+                "slug": "ram-laptop"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c2c"
+                },
+                "name": "SSD laptop",
+                "slug": "ssd-laptop"
+            },
+            {
+                "_id": {
+                    "$oid": "64f7d98e58f60b20b4f85c2d"
+                },
+                "name": "Ổ cứng di động",
+                "slug": "o-cung-di-dong"
+            }
+        ],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c2b"
+        },
+        "name": "Ram laptop",
+        "slug": "ram-laptop",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c0c"
+            },
+            "name": "Linh - Phụ kiện Laptop",
+            "slug": "linh-phu-kien-laptop"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c2c"
+        },
+        "name": "SSD laptop",
+        "slug": "ssd-laptop",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c0c"
+            },
+            "name": "Linh - Phụ kiện Laptop",
+            "slug": "linh-phu-kien-laptop"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "64f7d98e58f60b20b4f85c2d"
+        },
+        "name": "Ổ cứng di động",
+        "slug": "o-cung-di-dong",
+        "parent": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85c0c"
+            },
+            "name": "Linh - Phụ kiện Laptop",
+            "slug": "linh-phu-kien-laptop"
+        },
+        "children": [],
+        "createdBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "updatedBy": {
+            "_id": {
+                "$oid": "64f7d98e58f60b20b4f85a01"
+            },
+            "email": "admin@gearvn.com"
+        },
+        "deletedBy": null,
+        "isDeleted": false,
+        "deletedAt": null,
+        "createdAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        },
+        "updatedAt": {
+            "$date": "2025-09-27T10:00:00.000Z"
+        }
+    }
+]
