@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button, Divider, Form, Image, Input, Modal } from 'antd';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -19,26 +20,29 @@ interface LoginFormValues {
 export default function LoginModal({ isOpen, onClose, switchToRegister }: LoginModalProps) {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const { login, loginWithGoogle } = useAuth();
 
     const onFinish = async (values: LoginFormValues) => {
         setLoading(true);
         try {
-            // Ở đây sẽ thêm logic gửi request đăng nhập
-            console.log('Đăng nhập với:', values);
+            const success = await login(values.email, values.password);
 
-            // Giả lập delay khi gọi API
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Đóng modal sau khi đăng nhập thành công
-            onClose();
-
-            // Reset form
-            form.resetFields();
+            if (success) {
+                // Đóng modal sau khi đăng nhập thành công
+                onClose();
+                // Reset form
+                form.resetFields();
+            }
         } catch (error) {
             console.error('Lỗi đăng nhập:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleGoogleLogin = () => {
+        onClose(); // Đóng modal trước khi redirect
+        loginWithGoogle();
     };
 
     return (
@@ -94,7 +98,10 @@ export default function LoginModal({ isOpen, onClose, switchToRegister }: LoginM
 
             <Divider style={{ borderColor: "#c9c9c9" }} plain className="text-base">hoặc đăng nhập bằng</Divider>
 
-            <button className="bg-blue-500 hover:bg-blue-700 flex items-center justify-center gap-3 text-white py-3 w-full font-semibold rounded-md text-base transition-all">
+            <button
+                onClick={handleGoogleLogin}
+                className="bg-blue-500 hover:bg-blue-700 flex items-center justify-center gap-3 text-white py-3 w-full font-semibold rounded-md text-base transition-all"
+            >
                 <Image
                     preview={false}
                     width={24}

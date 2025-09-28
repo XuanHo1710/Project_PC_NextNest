@@ -20,6 +20,10 @@ import { buildCategoryTree } from "@/utils/buildTree";
 import { IProductCard } from "@/types/model.client.d";
 import useCartStore from "@/hooks/useCart";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { Dropdown, Avatar } from "antd";
+import type { MenuProps } from 'antd';
+import { UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 
 
 export default function HeaderClient() {
@@ -372,26 +376,100 @@ export default function HeaderClient() {
                             )}
                         </div>
 
-                        {/* Auth Buttons */}
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={handleOpenLogin}
-                                className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] font-medium px-4 py-2 rounded-md transition-all whitespace-nowrap"
-                            >
-                                <span>Đăng nhập</span>
-                                <FaRegUserCircle />
-                            </button>
-                            <button
-                                onClick={handleOpenRegister}
-                                className="flex items-center gap-2 cursor-pointer bg-blue-400 hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-all whitespace-nowrap"
-                            >
-                                <span>Đăng ký</span>
-                                <FaUserPlus />
-                            </button>
-                        </div>
+                        {/* Auth Section */}
+                        <AuthSection
+                            handleOpenLogin={handleOpenLogin}
+                            handleOpenRegister={handleOpenRegister}
+                        />
                     </div>
                 </div>
             </header>
         </>
     )
+}
+
+// Auth Section Component  
+function AuthSection({
+    handleOpenLogin,
+    handleOpenRegister
+}: {
+    handleOpenLogin: () => void;
+    handleOpenRegister: () => void;
+}) {
+    const { user, logout } = useAuth();
+
+    const userMenuItems: MenuProps['items'] = [
+        {
+            key: 'profile',
+            label: (
+                <Link href="/profile" className="flex items-center gap-2">
+                    <UserOutlined />
+                    <span>Thông tin cá nhân</span>
+                </Link>
+            ),
+        },
+        {
+            key: 'orders',
+            label: (
+                <Link href="/profile/order" className="flex items-center gap-2">
+                    <SettingOutlined />
+                    <span>Đơn hàng của tôi</span>
+                </Link>
+            ),
+        },
+        {
+            type: 'divider',
+        },
+        {
+            key: 'logout',
+            label: (
+                <div className="flex items-center gap-2 text-red-500">
+                    <LogoutOutlined />
+                    <span>Đăng xuất</span>
+                </div>
+            ),
+            onClick: logout,
+        },
+    ];
+
+    if (user) {
+        return (
+            <div className="flex items-center gap-2">
+                <Dropdown
+                    menu={{ items: userMenuItems }}
+                    placement="bottomRight"
+                    arrow
+                >
+                    <div className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] hover:bg-gray-50 font-medium px-4 py-2 rounded-md transition-all">
+                        <Avatar
+                            src={user.avatar}
+                            icon={<UserOutlined />}
+                            size="small"
+                        />
+                        <span className="max-w-24 truncate">{user.fullname}</span>
+                        <IoIosArrowDown />
+                    </div>
+                </Dropdown>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-2">
+            <button
+                onClick={handleOpenLogin}
+                className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] font-medium px-4 py-2 rounded-md transition-all whitespace-nowrap"
+            >
+                <span>Đăng nhập</span>
+                <FaRegUserCircle />
+            </button>
+            <button
+                onClick={handleOpenRegister}
+                className="flex items-center gap-2 cursor-pointer bg-blue-400 hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-all whitespace-nowrap"
+            >
+                <span>Đăng ký</span>
+                <FaUserPlus />
+            </button>
+        </div>
+    );
 }

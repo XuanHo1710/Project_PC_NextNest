@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from 'src/admin/auth/passport/local.strategy';
 import { JwtStrategy } from 'src/admin/auth/jwt.strategy';
+import { GoogleStrategy } from 'src/admin/auth/passport/google.strategy';
 import { RoleModule } from 'src/admin/role/role.module';
 
 @Module({
@@ -31,7 +32,7 @@ import { RoleModule } from 'src/admin/role/role.module';
 
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
   exports: [AuthService]
 })
 export class AuthModule { }

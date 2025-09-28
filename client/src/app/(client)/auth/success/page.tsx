@@ -1,0 +1,43 @@
+'use client';
+
+import { useEffect } from 'react';
+import { Spin } from 'antd';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+
+export default function AuthSuccessPage() {
+    const router = useRouter();
+    const { refreshAuth } = useAuth();
+
+    useEffect(() => {
+        const handleAuthSuccess = async () => {
+            try {
+                // Wait a bit for the cookies to be set
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Refresh user data
+                await refreshAuth();
+
+                // Redirect to home
+                router.push('/home');
+            } catch (error) {
+                console.error('Auth success error:', error);
+                router.push('/auth?error=google_auth_failed');
+            }
+        };
+
+        handleAuthSuccess();
+    }, [router, refreshAuth]);
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+                <Spin size="large" className="mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Đang xử lý đăng nhập...</h2>
+                <p className="text-gray-600 dark:text-gray-300">
+                    Vui lòng chờ trong giây lát
+                </p>
+            </div>
+        </div>
+    );
+}

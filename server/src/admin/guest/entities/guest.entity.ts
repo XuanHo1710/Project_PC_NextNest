@@ -11,14 +11,24 @@ export class Guest {
     @Prop({ required: true, unique: true })
     email: string;
 
-    @Prop({ required: true })
-    phone: string;
+    @Prop()
+    phone?: string;
 
     @Prop()
     avatar?: string;
 
-    @Prop({ required: true })
-    password: string;
+    @Prop()
+    password?: string;
+
+    // Google OAuth fields
+    @Prop()
+    googleId?: string;
+
+    @Prop({ enum: ['local', 'google'], default: 'local' })
+    authProvider: string;
+
+    @Prop({ default: false })
+    isEmailVerified: boolean;
 
     @Prop({ enum: ['MALE', 'FEMALE', 'OTHER'], default: 'OTHER' })
     gender: string;

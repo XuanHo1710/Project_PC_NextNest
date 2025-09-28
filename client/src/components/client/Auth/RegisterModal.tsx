@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Button, Divider, Form, Image, Input, Modal } from 'antd';
-
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface RegisterModalProps {
     isOpen: boolean;
@@ -11,41 +11,45 @@ interface RegisterModalProps {
     switchToLogin: () => void;
 }
 
+interface RegisterFormValues {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    password: string;
+    confirmPassword: string;
+}
+
 export default function RegisterModal({ isOpen, onClose, switchToLogin }: RegisterModalProps) {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-
-    interface RegisterFormValues {
-        firstName: string;
-        lastName: string;
-        email: string;
-        phone: string;
-        password: string;
-        confirmPassword: string;
-    }
+    const { register, loginWithGoogle } = useAuth();
 
     const onFinish = async (values: RegisterFormValues) => {
         setLoading(true);
         try {
-            // Ở đây sẽ thêm logic gửi request đăng ký
-            console.log('Đăng ký với:', values);
+            const fullname = `${values.firstName} ${values.lastName}`;
+            const success = await register(values.email, values.password, fullname);
 
-            // Giả lập delay khi gọi API
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Reset form sau khi đăng ký thành công
-            form.resetFields();
-
-            // Đóng modal và chuyển sang modal đăng nhập
-            onClose();
-            switchToLogin();
+            if (success) {
+                // Reset form sau khi đăng ký thành công
+                form.resetFields();
+                // Đóng modal và chuyển sang modal đăng nhập
+                onClose();
+                switchToLogin();
+            }
         } catch (error) {
             console.error('Lỗi đăng ký:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleGoogleRegister = () => {
+        onClose(); // Đóng modal trước khi redirect
+        loginWithGoogle();
     };
 
     return (
@@ -172,7 +176,10 @@ export default function RegisterModal({ isOpen, onClose, switchToLogin }: Regist
 
             <Divider style={{ borderColor: "#c9c9c9" }} plain className="text-base">hoặc đăng ký bằng</Divider>
 
-            <button className="bg-blue-500 hover:bg-blue-700 flex items-center justify-center gap-3 text-white py-3 w-full font-semibold rounded-md text-base transition-all">
+            <button
+                onClick={handleGoogleRegister}
+                className="bg-blue-500 hover:bg-blue-700 flex items-center justify-center gap-3 text-white py-3 w-full font-semibold rounded-md text-base transition-all"
+            >
                 <Image
                     preview={false}
                     width={24}

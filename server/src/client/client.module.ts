@@ -3,6 +3,7 @@ import { CategoryModuleClient } from 'src/client/category/category.module';
 import { EmployeeModuleClient } from 'src/client/employee/employee.module';
 import { ProductModuleClient } from 'src/client/product/product.module';
 import { PaymentModule } from 'src/client/payment/payment.module';
+import { ClientAuthModule } from 'src/client/auth/auth.module';
 
 
 @Module({
@@ -10,7 +11,8 @@ import { PaymentModule } from 'src/client/payment/payment.module';
         EmployeeModuleClient,
         ProductModuleClient,
         CategoryModuleClient,
-        PaymentModule
+        PaymentModule,
+        ClientAuthModule
     ]
 })
 export class ClientModule { }
