@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import mongoose from 'mongoose';
-import { Guest } from 'src/admin/guest/entities/guest.entity';
+import { Guest } from '../../admin/guest/entities/guest.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 const bcrypt = require('bcrypt');
@@ -48,19 +48,21 @@ export class ClientAuthService {
                 avatar: picture,
                 isActive: true,
                 isEmailVerified: true, // Google email đã được verify
-                authProvider: 'google',
-                createdAt: new Date(),
-                updatedAt: new Date()
+                authProvider: 'google'
             });
             await guest.save();
         } else {
             // Update thông tin nếu user đã tồn tại
-            guest.googleId = googleId;
-            guest.avatar = picture;
-            guest.authProvider = 'google';
-            guest.isEmailVerified = true;
-            guest.lastLoginAt = new Date();
-            await guest.save();
+            await this.guestModel.findByIdAndUpdate(guest._id, {
+                googleId: googleId,
+                avatar: picture,
+                authProvider: 'google',
+                isEmailVerified: true,
+                lastLoginAt: new Date()
+            });
+
+            // Reload guest with updated data
+            guest = await this.guestModel.findById(guest._id).exec();
         }
 
         return guest;
@@ -71,7 +73,7 @@ export class ClientAuthService {
             guestId: guest._id.toString(),
             email: guest.email,
             fullname: guest.fullname,
-            authProvider: guest.authProvider || 'local'
+            authProvider: (guest as any).authProvider || 'local'
         };
 
         const access_token = this.createAccessToken(payload);
@@ -106,7 +108,7 @@ export class ClientAuthService {
                 email: guest.email,
                 fullname: guest.fullname,
                 avatar: guest.avatar,
-                authProvider: guest.authProvider
+                authProvider: (guest as any).authProvider || 'local'
             }
         };
     }
@@ -128,9 +130,7 @@ export class ClientAuthService {
             fullname,
             isActive: true,
             isEmailVerified: false,
-            authProvider: 'local',
-            createdAt: new Date(),
-            updatedAt: new Date()
+            authProvider: 'local'
         });
 
         await newGuest.save();
@@ -152,7 +152,7 @@ export class ClientAuthService {
                 guestId: guest._id.toString(),
                 email: guest.email,
                 fullname: guest.fullname,
-                authProvider: guest.authProvider
+                authProvider: (guest as any).authProvider || 'local'
             };
 
             const access_token = this.createAccessToken(payload);

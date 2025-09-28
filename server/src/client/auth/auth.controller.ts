@@ -49,19 +49,25 @@ export class ClientAuthController {
 
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
-    async googleAuthRedirect(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
+    async googleAuthRedirect(@Req() req: Request, @Res() response: Response) {
         const user = req.user;
 
         if (!user) {
-            throw new BadRequestException('Đăng nhập Google thất bại');
+            return response.status(400).json({
+                message: 'Đăng nhập Google thất bại'
+            });
         }
 
-        const guest = await this.authService.googleLogin(user);
-        const result = await this.authService.login(guest, response);
+        try {
+            const guest = await this.authService.googleLogin(user);
+            const result = await this.authService.login(guest, response);
 
-        // Redirect to frontend with success
-        response.redirect(`${process.env.CLIENT_URL}/auth/success?token=${result.access_token}`);
-        return result;
+            // Redirect to frontend with success
+            return response.redirect(`${process.env.CLIENT_URL}/auth/success?token=${result.access_token}`);
+        } catch (error) {
+            console.error('Google auth error:', error);
+            return response.redirect(`${process.env.CLIENT_URL}?error=google_auth_failed`);
+        }
     }
 
     @Post('refresh')

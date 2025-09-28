@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { ClientAuthService } from './auth.service';
 import { ClientAuthController } from './auth.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Guest, GuestSchema } from 'src/admin/guest/entities/guest.entity';
+import { Guest, GuestSchema } from '../../admin/guest/entities/guest.entity';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { GoogleStrategy } from 'src/admin/auth/passport/google.strategy';
+import { GoogleStrategy } from '../../admin/auth/passport/google.strategy';
 import { ClientJwtStrategy } from './client-jwt.strategy';
 
 @Module({
