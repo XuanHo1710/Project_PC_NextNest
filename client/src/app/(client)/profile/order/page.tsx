@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Steps, Card, Button, Divider, Space, Tag } from 'antd';
 import { CheckCircleOutlined, ClockCircleOutlined, TruckOutlined, CloseCircleOutlined, UndoOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import Image from 'next/image';
+import {
+    OrderPageSkeleton,
+    ProfilePageSkeleton
+} from "@/components/Skeletons";
 
 export default function OrderPage() {
     const [currentStep, setCurrentStep] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     // Mock data đơn hàng
     const orderData = {
@@ -79,6 +84,15 @@ export default function OrderPage() {
         ]
     };
 
+    useEffect(() => {
+        // Simulate initial data fetch
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 1500); // Simulate a 1.5-second load time
+
+        return () => clearTimeout(timer);
+    }, []);
+
     const stepItems = [
         {
             title: 'Xác nhận',
@@ -138,6 +152,14 @@ export default function OrderPage() {
     };
 
     const currentOrders = orderData[currentStep as keyof typeof orderData] || [];
+
+    if (loading) {
+        return (
+            <ProfilePageSkeleton>
+                <OrderPageSkeleton />
+            </ProfilePageSkeleton>
+        )
+    }
 
     return (
         <>

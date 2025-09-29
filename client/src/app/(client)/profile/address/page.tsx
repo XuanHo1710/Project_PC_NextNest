@@ -4,6 +4,10 @@ import { Button, Card, Form, Input, Modal, Select, Tag, message, Popconfirm } fr
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined } from '@ant-design/icons';
+import {
+    AddressPageSkeleton,
+    ProfilePageSkeleton
+} from "@/components/Skeletons";
 
 interface Province {
     code: number;
@@ -43,6 +47,7 @@ export default function ProfileAddress() {
     const [form] = Form.useForm();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+    const [pageLoading, setPageLoading] = useState(true);
 
     // Address data
     const [addresses, setAddresses] = useState<Address[]>([
@@ -86,7 +91,13 @@ export default function ProfileAddress() {
 
     // Load provinces on component mount
     useEffect(() => {
-        fetchProvinces();
+        const loadData = async () => {
+            setPageLoading(true);
+            await fetchProvinces();
+            // In a real app, you would fetch user addresses here
+            setPageLoading(false);
+        }
+        loadData();
     }, []);
 
     const fetchProvinces = async () => {
@@ -237,6 +248,14 @@ export default function ProfileAddress() {
         })));
         message.success('Đã đặt làm địa chỉ mặc định!');
     };
+
+    if (pageLoading) {
+        return (
+            <ProfilePageSkeleton>
+                <AddressPageSkeleton />
+            </ProfilePageSkeleton>
+        )
+    }
 
     return (
         <>

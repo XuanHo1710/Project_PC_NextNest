@@ -2,8 +2,12 @@
 
 import { Button, Form, Input, message } from "antd";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EyeInvisibleOutlined, EyeTwoTone, LockOutlined } from '@ant-design/icons';
+import {
+    PasswordPageSkeleton,
+    ProfilePageSkeleton
+} from "@/components/Skeletons";
 
 interface PasswordFormValues {
     currentPassword: string;
@@ -14,6 +18,16 @@ interface PasswordFormValues {
 export default function ProfilePassword() {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [pageLoading, setPageLoading] = useState(true);
+
+    useEffect(() => {
+        // Simulate initial data fetch
+        const timer = setTimeout(() => {
+            setPageLoading(false);
+        }, 1500); // Simulate a 1.5-second load time
+
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleSubmit = async (values: PasswordFormValues) => {
         setLoading(true);
@@ -49,6 +63,14 @@ export default function ProfilePassword() {
             span: 25,
         },
     };
+
+    if (pageLoading) {
+        return (
+            <ProfilePageSkeleton>
+                <PasswordPageSkeleton />
+            </ProfilePageSkeleton>
+        )
+    }
 
     return (
         <>

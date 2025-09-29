@@ -2,9 +2,13 @@
 
 import { Button, Form, Input, DatePicker, Select, message, Avatar, Upload } from "antd";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserOutlined, CameraOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
+import {
+    DetailPageSkeleton,
+    ProfilePageSkeleton
+} from "@/components/Skeletons";
 import dayjs from 'dayjs';
 
 interface ProfileFormValues {
@@ -20,6 +24,7 @@ export default function ProfileDetail() {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string>('');
+    const [pageLoading, setPageLoading] = useState(true);
 
     // Mock user data
     const mockUser = {
@@ -30,6 +35,15 @@ export default function ProfileDetail() {
         gender: 'male',
         avatar: ''
     };
+
+    useEffect(() => {
+        // Simulate initial data fetch
+        const timer = setTimeout(() => {
+            setPageLoading(false);
+        }, 1500); // Simulate a 1.5-second load time
+
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleSubmit = async (values: ProfileFormValues) => {
         setLoading(true);
@@ -89,6 +103,14 @@ export default function ProfileDetail() {
             span: 20,
         },
     };
+
+    if (pageLoading) {
+        return (
+            <ProfilePageSkeleton>
+                <DetailPageSkeleton />
+            </ProfilePageSkeleton>
+        )
+    }
 
     return (
         <>

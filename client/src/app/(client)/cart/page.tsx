@@ -6,6 +6,7 @@ import TextArea from "antd/es/input/TextArea";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
+import { CartPageSkeleton } from "@/components/Skeletons";
 
 
 
@@ -34,6 +35,7 @@ export default function CartClient() {
     const [selectedProvince, setSelectedProvince] = useState<number | undefined>();
     const [selectedDistrict, setSelectedDistrict] = useState<number | undefined>();
     const [selectedWard, setSelectedWard] = useState<number | undefined>();
+    const [pageLoading, setPageLoading] = useState(true);
     const [loading, setLoading] = useState({
         provinces: false,
         districts: false,
@@ -66,7 +68,12 @@ export default function CartClient() {
 
     // Load provinces on component mount
     useEffect(() => {
-        fetchProvinces();
+        const initialLoad = async () => {
+            setPageLoading(true);
+            await fetchProvinces();
+            setPageLoading(false);
+        }
+        initialLoad();
     }, []);
 
     const fetchProvinces = async () => {
@@ -233,6 +240,10 @@ export default function CartClient() {
         //     // setCarts([]);
         // }
 
+    }
+
+    if (pageLoading) {
+        return <CartPageSkeleton />
     }
 
 
