@@ -17,9 +17,6 @@ export class Guest {
     @Prop()
     avatar?: string;
 
-    @Prop()
-    password?: string;
-
     // Google OAuth fields
     @Prop()
     googleId?: string;
@@ -50,7 +47,6 @@ export class Guest {
 
     // Địa chỉ mặc định
     @Prop([{
-        id: { type: String, required: true },
         label: { type: String, required: true }, // 'Nhà riêng', 'Văn phòng'
         province: {
             code: { type: Number, required: true },
@@ -68,7 +64,7 @@ export class Guest {
         isDefault: { type: Boolean, default: false }
     }])
     addresses: Array<{
-        id: string;
+        _id?: string; // MongoDB sẽ tự tạo _id
         label: string;
         province: { code: number; name: string };
         district: { code: number; name: string };

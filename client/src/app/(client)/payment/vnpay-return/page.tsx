@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, Result, Button, Spin, Typography } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { paymentClientService } from '@/services/client/payment.service';
+import { paymentClientService } from '@/services/client/payment.client.service';
 import Link from 'next/link';
 
 const { Text } = Typography;

@@ -2,12 +2,15 @@
 
 import { Button, Card, Form, Input, Modal, Select, Tag, message, Popconfirm } from "antd";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined } from '@ant-design/icons';
 import {
     AddressPageSkeleton,
     ProfilePageSkeleton
 } from "@/components/Skeletons";
+import { guestClientService } from "@/services/client/guest.client.service";
+import useAuthUser from "@/hooks/useAuthUser";
+import { IAddress } from "@/types/account";
 
 interface Province {
     code: number;
@@ -24,17 +27,6 @@ interface Ward {
     name: string;
 }
 
-interface Address {
-    id: string;
-    label: string;
-    province: { code: number; name: string };
-    district: { code: number; name: string };
-    ward: { code: number; name: string };
-    detailAddress: string;
-    fullAddress: string;
-    isDefault: boolean;
-}
-
 interface AddressFormValues {
     label: string;
     province: number;
@@ -44,34 +36,14 @@ interface AddressFormValues {
 }
 
 export default function ProfileAddress() {
+    const { user } = useAuthUser();
     const [form] = Form.useForm();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+    const [editingAddress, setEditingAddress] = useState<IAddress | null>(null);
     const [pageLoading, setPageLoading] = useState(true);
-
+    const [submitting, setSubmitting] = useState(false);
     // Address data
-    const [addresses, setAddresses] = useState<Address[]>([
-        {
-            id: '1',
-            label: 'Nhà riêng',
-            province: { code: 79, name: 'TP. Hồ Chí Minh' },
-            district: { code: 760, name: 'Quận 1' },
-            ward: { code: 26734, name: 'Phường Bến Nghé' },
-            detailAddress: '123 Nguyễn Huệ',
-            fullAddress: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
-            isDefault: true
-        },
-        {
-            id: '2',
-            label: 'Công ty',
-            province: { code: 79, name: 'TP. Hồ Chí Minh' },
-            district: { code: 769, name: 'Quận 3' },
-            ward: { code: 27166, name: 'Phường 1' },
-            detailAddress: '456 Lê Văn Sỹ',
-            fullAddress: '456 Lê Văn Sỹ, Phường 1, Quận 3, TP. Hồ Chí Minh',
-            isDefault: false
-        }
-    ]);
+    const [addresses, setAddresses] = useState<IAddress[]>([]);
 
     // API data
     const [provinces, setProvinces] = useState<Province[]>([]);
@@ -89,16 +61,35 @@ export default function ProfileAddress() {
     const [selectedProvince, setSelectedProvince] = useState<number | undefined>();
     const [selectedDistrict, setSelectedDistrict] = useState<number | undefined>();
 
-    // Load provinces on component mount
+    const fetchUserAddresses = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            const profile = await guestClientService.getProfile(user.id);
+            setAddresses(profile.addresses || []);
+        } catch (error) {
+            console.error('Error fetching addresses:', error);
+            message.error('Không thể tải danh sách địa chỉ');
+        }
+    }, [user?.id]);
+
+    // Load provinces and user addresses on component mount
     useEffect(() => {
         const loadData = async () => {
             setPageLoading(true);
-            await fetchProvinces();
-            // In a real app, you would fetch user addresses here
-            setPageLoading(false);
+            try {
+                await fetchProvinces();
+                if (user?.id) {
+                    await fetchUserAddresses();
+                }
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+            } finally {
+                setPageLoading(false);
+            }
         }
         loadData();
-    }, []);
+    }, [user?.id, fetchUserAddresses]);
 
     const fetchProvinces = async () => {
         setLoading(prev => ({ ...prev, provinces: true }));
@@ -158,7 +149,7 @@ export default function ProfileAddress() {
         fetchWards(value);
     };
 
-    const showModal = (address?: Address) => {
+    const showModal = (address?: IAddress) => {
         setEditingAddress(address || null);
         setIsModalOpen(true);
 
@@ -190,63 +181,90 @@ export default function ProfileAddress() {
         setIsModalOpen(false);
         setEditingAddress(null);
         form.resetFields();
+        setSelectedProvince(undefined);
+        setSelectedDistrict(undefined);
+        setDistricts([]);
+        setWards([]);
     };
 
     const handleSubmit = async (values: AddressFormValues) => {
+        if (!user?.id) {
+            message.error('Không tìm thấy thông tin người dùng');
+            return;
+        }
+
+        setSubmitting(true);
         try {
             const selectedProvinceName = provinces.find(p => p.code === values.province)?.name || '';
             const selectedDistrictName = districts.find(d => d.code === values.district)?.name || '';
             const selectedWardName = wards.find(w => w.code === values.ward)?.name || '';
 
-            const fullAddress = `${values.detailAddress}, ${selectedWardName}, ${selectedDistrictName}, ${selectedProvinceName}`;
-
-            const addressData: Address = {
-                id: editingAddress?.id || Date.now().toString(),
+            const addressData: Omit<IAddress, 'id'> = {
                 label: values.label,
                 province: { code: values.province, name: selectedProvinceName },
                 district: { code: values.district, name: selectedDistrictName },
                 ward: { code: values.ward, name: selectedWardName },
                 detailAddress: values.detailAddress,
-                fullAddress: fullAddress,
                 isDefault: editingAddress?.isDefault || false
             };
 
             if (editingAddress) {
                 // Update existing address
-                setAddresses(prev => prev.map(addr =>
-                    addr.id === editingAddress.id ? addressData : addr
-                ));
+                await guestClientService.updateAddress(user.id, editingAddress._id!, addressData);
                 message.success('Cập nhật địa chỉ thành công!');
             } else {
                 // Add new address
-                setAddresses(prev => [...prev, addressData]);
+                await guestClientService.addAddress(user.id, addressData);
                 message.success('Thêm địa chỉ mới thành công!');
             }
 
+            // Reload addresses
+            await fetchUserAddresses();
             handleCancel();
         } catch (error) {
             console.error('Error saving address:', error);
             message.error('Có lỗi xảy ra khi lưu địa chỉ');
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    const handleDelete = (addressId: string) => {
-        const addressToDelete = addresses.find(addr => addr.id === addressId);
+    const handleDelete = async (addressId: string) => {
+        if (!user?.id) {
+            message.error('Không tìm thấy thông tin người dùng');
+            return;
+        }
+
+        const addressToDelete = addresses.find(addr => addr._id === addressId);
         if (addressToDelete?.isDefault) {
             message.error('Không thể xóa địa chỉ mặc định');
             return;
         }
 
-        setAddresses(prev => prev.filter(addr => addr.id !== addressId));
-        message.success('Xóa địa chỉ thành công!');
+        try {
+            await guestClientService.deleteAddress(user.id, addressId);
+            message.success('Xóa địa chỉ thành công!');
+            await fetchUserAddresses();
+        } catch (error) {
+            console.error('Error deleting address:', error);
+            message.error('Có lỗi xảy ra khi xóa địa chỉ');
+        }
     };
 
-    const handleSetDefault = (addressId: string) => {
-        setAddresses(prev => prev.map(addr => ({
-            ...addr,
-            isDefault: addr.id === addressId
-        })));
-        message.success('Đã đặt làm địa chỉ mặc định!');
+    const handleSetDefault = async (addressId: string) => {
+        if (!user?.id) {
+            message.error('Không tìm thấy thông tin người dùng');
+            return;
+        }
+
+        try {
+            await guestClientService.setDefaultAddress(user.id, addressId);
+            message.success('Đã đặt làm địa chỉ mặc định!');
+            await fetchUserAddresses();
+        } catch (error) {
+            console.error('Error setting default address:', error);
+            message.error('Có lỗi xảy ra khi đặt địa chỉ mặc định');
+        }
     };
 
     if (pageLoading) {
@@ -274,7 +292,7 @@ export default function ProfileAddress() {
                             <i className='fas fa-user-circle text-5xl text-blue-600'></i>
                             <div className='mx-4'>
                                 <h6 className='text-base font-semibold'>Tài khoản của,</h6>
-                                <h1 className='font-bold text-lg'>Nguyễn Xuân Hồ</h1>
+                                <h1 className='font-bold text-lg'>{user?.fullname || 'Người dùng'}</h1>
                             </div>
                         </div>
                         <ul className='pl-0 my-5'>
@@ -329,7 +347,7 @@ export default function ProfileAddress() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {addresses.map((address) => (
                                 <Card
-                                    key={address.id}
+                                    key={address._id}
                                     className={`relative ${address.isDefault ? 'border-blue-500 border-2' : ''}`}
                                     actions={[
                                         <Button
@@ -345,7 +363,7 @@ export default function ProfileAddress() {
                                                 key="default"
                                                 type="text"
                                                 icon={<HomeOutlined />}
-                                                onClick={() => handleSetDefault(address.id)}
+                                                onClick={() => handleSetDefault(address._id!)}
                                             >
                                                 Đặt mặc định
                                             </Button>
@@ -355,7 +373,7 @@ export default function ProfileAddress() {
                                                 key="delete"
                                                 title="Xóa địa chỉ"
                                                 description="Bạn có chắc chắn muốn xóa địa chỉ này?"
-                                                onConfirm={() => handleDelete(address.id)}
+                                                onConfirm={() => handleDelete(address._id!)}
                                                 okText="Xóa"
                                                 cancelText="Hủy"
                                             >
@@ -380,7 +398,7 @@ export default function ProfileAddress() {
                                             )}
                                         </div>
                                         <p className="text-gray-600 dark:text-gray-300">
-                                            {address.fullAddress}
+                                            {`${address.detailAddress}, ${address.ward.name}, ${address.district.name}, ${address.province.name}`}
                                         </p>
                                     </div>
                                 </Card>
@@ -411,7 +429,8 @@ export default function ProfileAddress() {
                     onCancel={handleCancel}
                     footer={null}
                     width={600}
-                    destroyOnClose
+                    destroyOnClose={false}
+                    maskClosable={false}
                 >
                     <Form
                         form={form}
@@ -515,6 +534,7 @@ export default function ProfileAddress() {
                             <Button
                                 type="primary"
                                 htmlType="submit"
+                                loading={submitting}
                                 className="bg-blue-500 hover:bg-blue-600"
                             >
                                 {editingAddress ? "Cập nhật" : "Thêm mới"}

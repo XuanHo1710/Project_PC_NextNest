@@ -7,6 +7,7 @@ import { AccountGuest } from '../../admin/account-guest/entities/account-guest.e
 import { AccountGuestService } from '../../admin/account-guest/account-guest.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Guest, GuestDocument } from '../../admin/guest/entities/guest.entity';
 const bcrypt = require('bcrypt');
 const ms = require("ms");
 
@@ -14,6 +15,7 @@ const ms = require("ms");
 export class ClientAuthService {
     constructor(
         @InjectModel(AccountGuest.name) private accountGuestModel: Model<AccountGuest>,
+        @InjectModel(Guest.name) private guestModel: Model<GuestDocument>,
         private accountGuestService: AccountGuestService,
         private jwtService: JwtService,
         private configService: ConfigService
@@ -85,11 +87,22 @@ export class ClientAuthService {
                 accountStatus: 'ACTIVE'
             });
 
-            // Update guest profile
+            // Update guest profile - QUAN TRỌNG: Cập nhật authProvider trong Guest collection
             if (guest.guestId) {
                 await this.accountGuestModel.updateOne(
                     { _id: guest._id },
                     { lastLoginAt: new Date() }
+                );
+
+                // Update Guest collection authProvider
+                const guestId = (guest.guestId as any)._id || guest.guestId;
+                await this.guestModel.updateOne(
+                    { _id: guestId },
+                    {
+                        authProvider: 'google',
+                        googleId: googleId,
+                        avatar: picture || (guest.guestId as any).avatar
+                    }
                 );
             }
 
@@ -116,7 +129,7 @@ export class ClientAuthService {
             avatar: guestProfile?.avatar || '',
             accountStatus: accountGuest.accountStatus,
             fullname: guestProfile?.fullname || '',
-            authProvider: accountGuest.authProvider || 'local'
+            authProvider: guestProfile?.authProvider || accountGuest.authProvider || 'local'
         };
 
         const access_token = this.createAccessToken(payload);
@@ -153,7 +166,7 @@ export class ClientAuthService {
                 email: accountGuest.email,
                 fullname: guestProfile?.fullname || '',
                 avatar: guestProfile?.avatar || '',
-                authProvider: accountGuest.authProvider || 'local',
+                authProvider: guestProfile?.authProvider || accountGuest.authProvider || 'local',
                 accountStatus: accountGuest.accountStatus,
                 isEmailVerified: accountGuest.isEmailVerified,
                 phone: guestProfile?.phone || '',

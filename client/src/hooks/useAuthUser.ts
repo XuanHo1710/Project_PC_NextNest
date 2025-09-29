@@ -1,7 +1,8 @@
 import { ILoginResponse, IRegisterDto } from '@/types/account';
 import { create } from 'zustand';
-import { accountService } from '@/services/client/account.service';
+import { accountService } from '@/services/client/account.client.service';
 import { toast } from 'react-toastify';
+import { message } from 'antd';
 
 
 type User = ILoginResponse['user'];
@@ -34,7 +35,7 @@ const useAuthUser = create<AuthUserState>((set) => ({
         } catch (error: unknown) {
             console.error('Login error:', error);
             const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Đăng nhập thất bại';
-            toast.error(errorMessage);
+            message.error(errorMessage);
             return false;
         } finally {
             set({ loading: false });
@@ -50,7 +51,7 @@ const useAuthUser = create<AuthUserState>((set) => ({
         } catch (error: unknown) {
             console.error('Register error:', error);
             const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Đăng ký thất bại';
-            toast.error(errorMessage);
+            message.error(errorMessage);
             return false;
         } finally {
             set({ loading: false });
@@ -63,7 +64,7 @@ const useAuthUser = create<AuthUserState>((set) => ({
             set({ user: null, accessToken: '' });
             toast.success('Đăng xuất thành công!');
         } catch (error) {
-            console.error('Logout error:', error);
+            message.error('Logout error:' + error);
             set({ user: null, accessToken: '' });
         }
     },

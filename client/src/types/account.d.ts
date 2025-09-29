@@ -53,7 +53,7 @@ export interface IGuest {
 }
 
 export interface IAddress {
-    id: string;
+    _id?: string; // MongoDB ObjectId
     label: string;
     province: { code: number; name: string };
     district: { code: number; name: string };

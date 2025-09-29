@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Radio, Button, Card, Space, Typography, RadioChangeEvent } from 'antd';
 import { CreditCardOutlined, DeliveredProcedureOutlined } from '@ant-design/icons';
-import { paymentClientService } from '@/services/client/payment.service';
+import { paymentClientService } from '@/services/client/payment.client.service';
 import { toast } from 'react-toastify';
 
 const { Title, Text } = Typography;

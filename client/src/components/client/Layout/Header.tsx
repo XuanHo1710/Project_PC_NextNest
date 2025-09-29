@@ -22,7 +22,7 @@ import useCartStore from "@/hooks/useCart";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
 import { Dropdown, Avatar } from "antd";
 import type { MenuProps } from 'antd';
-import { UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, PicRightOutlined, CloudSyncOutlined, CarFilled } from '@ant-design/icons';
 import useAuthUser from "@/hooks/useAuthUser";
 
 
@@ -402,9 +402,27 @@ function AuthSection({
         {
             key: 'profile',
             label: (
-                <Link href="/profile" className="flex items-center gap-2">
+                <Link href="/profile/detail" className="flex items-center gap-2">
                     <UserOutlined />
                     <span>Thông tin cá nhân</span>
+                </Link>
+            ),
+        },
+        {
+            key: 'password',
+            label: (
+                <Link href="/profile/password" className="flex items-center gap-2">
+                    <CloudSyncOutlined />
+                    <span>Thay đổi mật khẩu</span>
+                </Link>
+            ),
+        },
+        {
+            key: 'address',
+            label: (
+                <Link href="/profile/address" className="flex items-center gap-2">
+                    <CarFilled />
+                    <span>Thông tin địa chỉ</span>
                 </Link>
             ),
         },
@@ -412,7 +430,7 @@ function AuthSection({
             key: 'orders',
             label: (
                 <Link href="/profile/order" className="flex items-center gap-2">
-                    <SettingOutlined />
+                    <PicRightOutlined />
                     <span>Đơn hàng của tôi</span>
                 </Link>
             ),

@@ -53,7 +53,6 @@ instance.interceptors.request.use(
         } catch {
           // Refresh failed, clear auth and reload page
           useAuthUser.getState().logout();
-          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
           window.location.reload();
           return Promise.reject(new Error('Token expired and refresh failed'));
         }
@@ -159,7 +158,6 @@ instance.interceptors.response.use(
         // Only refresh if user was previously logged in (has user data and had access token)
         if (!user || !accessToken) {
           // User is not logged in or no previous token, don't attempt refresh
-          toast.warning('Vui lòng đăng nhập để tiếp tục');
           useAuthUser.getState().logout();
           return Promise.reject(error);
         }
@@ -212,12 +210,11 @@ instance.interceptors.response.use(
 
           // Clear user data and redirect to login
           useAuthUser.getState().logout();
-          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
 
-          // Only redirect if not already on auth pages
-          if (!window.location.pathname.includes('/auth') && !window.location.pathname.includes('/home')) {
-            window.location.href = "/home";
-          }
+          // // Only redirect if not already on auth pages
+          // if (!window.location.pathname.includes('/auth') && !window.location.pathname.includes('/home')) {
+          //   window.location.href = "/home";
+          // }
 
           return Promise.reject(err);
         } finally {
@@ -233,9 +230,6 @@ instance.interceptors.response.use(
               ? data.message[0]
               : data.message || 'Yêu cầu không hợp lệ (400)'
           );
-          break;
-        case 401:
-          toast.warning('Chưa đăng nhập hoặc phiên đã hết hạn (401)');
           break;
         case 403:
           toast.error('Không có quyền truy cập (403)');

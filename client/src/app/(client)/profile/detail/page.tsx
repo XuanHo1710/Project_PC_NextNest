@@ -10,6 +10,11 @@ import {
     ProfilePageSkeleton
 } from "@/components/Skeletons";
 import dayjs from 'dayjs';
+import useAuthUser from "@/hooks/useAuthUser";
+import { IGuest } from "@/types/account";
+import { useQuery } from "@tanstack/react-query";
+import { guestClientService } from "@/services/client";
+import { UploadImage } from "@/utils/uploadImage";
 
 interface ProfileFormValues {
     fullname: string;
@@ -20,41 +25,57 @@ interface ProfileFormValues {
     avatar?: string;
 }
 
+
+
 export default function ProfileDetail() {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState<string>('');
-    const [pageLoading, setPageLoading] = useState(true);
+    const [avatarUrl, setAvatarUrl] = useState<string>("");
+    const [fileUrl, setFileUrl] = useState<File | null>(null);
 
-    // Mock user data
-    const mockUser = {
-        fullname: 'Nguyễn Xuân Hồ',
-        email: 'xuanho@example.com',
-        phone: '0123456789',
-        dateOfBirth: '1995-10-17',
-        gender: 'male',
-        avatar: ''
-    };
+    const { user } = useAuthUser();
 
-    useEffect(() => {
-        // Simulate initial data fetch
-        const timer = setTimeout(() => {
-            setPageLoading(false);
-        }, 1500); // Simulate a 1.5-second load time
+    const { data: guest, isLoading } = useQuery<IGuest | null>({
+        queryKey: ['profile-guest', user?.id], // key để cache
+        queryFn: () => guestClientService.getProfile(user?.id || ''),
+        enabled: !!user?.id, // chỉ chạy query khi userId tồn tại
+    });
 
-        return () => clearTimeout(timer);
-    }, []);
+
 
     const handleSubmit = async (values: ProfileFormValues) => {
         setLoading(true);
         try {
-            // TODO: Implement API call to update profile
-            console.log('Profile update values:', {
-                ...values,
-                dateOfBirth: values.dateOfBirth?.format('YYYY-MM-DD'),
-                avatar: avatarUrl
-            });
 
+            if (fileUrl) {
+                const avatarUploadedUrl: string = await UploadImage(fileUrl);
+                console.log('Uploaded Avatar URL:', avatarUploadedUrl);
+                // TODO: Implement API call to update profile
+                console.log('Profile update values:', {
+                    ...values,
+                    dateOfBirth: values.dateOfBirth?.format('YYYY-MM-DD'),
+                    avatar: avatarUrl
+                });
+
+                const inforGuestUpdate = {
+                    fullname: values.fullname,
+                    phone: values.phone,
+                    birthday: values.dateOfBirth?.format('YYYY-MM-DD'),
+                    avatar: avatarUploadedUrl,
+                    gender: values.gender
+                }
+
+                await guestClientService.updateProfile(user?.id || '', inforGuestUpdate as Partial<IGuest>);
+            } else {
+                const inforGuestUpdate = {
+                    fullname: values.fullname,
+                    phone: values.phone,
+                    birthday: values.dateOfBirth?.format('YYYY-MM-DD'),
+                    gender: values.gender
+                }
+                await guestClientService.updateProfile(user?.id || '', inforGuestUpdate as Partial<IGuest>);
+
+            }
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -72,7 +93,8 @@ export default function ProfileDetail() {
         listType: 'picture-card',
         className: 'avatar-uploader',
         showUploadList: false,
-        beforeUpload: (file) => {
+        accept: 'image/*',
+        beforeUpload: async (file) => {
             const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
             if (!isJpgOrPng) {
                 message.error('Chỉ có thể upload file JPG/PNG!');
@@ -83,6 +105,7 @@ export default function ProfileDetail() {
                 message.error('Ảnh phải nhỏ hơn 2MB!');
                 return false;
             }
+            setFileUrl(file as File)
 
             // Convert to base64 for preview
             const reader = new FileReader();
@@ -90,7 +113,6 @@ export default function ProfileDetail() {
                 setAvatarUrl(reader.result as string);
             };
             reader.readAsDataURL(file);
-
             return false; // Prevent auto upload
         },
     };
@@ -104,7 +126,20 @@ export default function ProfileDetail() {
         },
     };
 
-    if (pageLoading) {
+    // Set form values when guest data is loaded
+    useEffect(() => {
+        if (guest && !isLoading) {
+            form.setFieldsValue({
+                fullname: guest?.fullname,
+                email: guest?.email,
+                phone: guest?.phone,
+                dateOfBirth: guest?.birthday ? dayjs(guest.birthday) : undefined,
+                gender: guest?.gender,
+            });
+        }
+    }, [guest, isLoading, form]);
+
+    if (isLoading) {
         return (
             <ProfilePageSkeleton>
                 <DetailPageSkeleton />
@@ -175,7 +210,7 @@ export default function ProfileDetail() {
                         <div className="flex items-center mb-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                             <Avatar
                                 size={80}
-                                src={avatarUrl || mockUser.avatar}
+                                src={avatarUrl || guest?.avatar}
                                 icon={<UserOutlined />}
                                 className="mr-4"
                             />
@@ -197,13 +232,6 @@ export default function ProfileDetail() {
                             {...layout}
                             onFinish={handleSubmit}
                             labelAlign="left"
-                            initialValues={{
-                                fullname: mockUser.fullname,
-                                email: mockUser.email,
-                                phone: mockUser.phone,
-                                dateOfBirth: mockUser.dateOfBirth ? dayjs(mockUser.dateOfBirth) : undefined,
-                                gender: mockUser.gender
-                            }}
                             className="space-y-4"
                         >
                             <Form.Item

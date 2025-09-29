@@ -3,6 +3,7 @@ import { ClientAuthService } from './auth.service';
 import { ClientAuthController } from './auth.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AccountGuest, AccountGuestSchema } from '../../admin/account-guest/entities/account-guest.entity';
+import { Guest, GuestSchema } from '../../admin/guest/entities/guest.entity';
 import { AccountGuestModule } from '../../admin/account-guest/account-guest.module';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -12,7 +13,10 @@ import { ClientJwtStrategy } from './client-jwt.strategy';
 
 @Module({
     imports: [
-        MongooseModule.forFeature([{ name: AccountGuest.name, schema: AccountGuestSchema }]),
+        MongooseModule.forFeature([
+            { name: AccountGuest.name, schema: AccountGuestSchema },
+            { name: Guest.name, schema: GuestSchema }
+        ]),
         AccountGuestModule,
         PassportModule,
         JwtModule.registerAsync({
