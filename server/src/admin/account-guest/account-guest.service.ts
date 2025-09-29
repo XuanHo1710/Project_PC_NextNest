@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, BadGatewayException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AccountGuest, AccountGuestDocument } from './entities/account-guest.entity';
@@ -8,13 +8,34 @@ import { UpdateAccountGuestDto } from './dto/update-account-guest.dto';
 import { QueryAccountGuestDto } from './dto/query-account-guest.dto';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AccountGuestService {
     constructor(
         @InjectModel(AccountGuest.name) private accountGuestModel: Model<AccountGuestDocument>,
         @InjectModel(Guest.name) private guestModel: Model<GuestDocument>,
+        private jwtService: JwtService,
+        private configService: ConfigService
     ) { }
+
+    async updateAccountUserToken(token: string, id: string) {
+        return await this.accountGuestModel.findByIdAndUpdate(id, { verifyToken: token }, { new: true });
+    }
+
+    async findUserByToken(token: string) {
+        const detailPayload = this.jwtService.verify(token, {
+            secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')
+        });
+        const account = await this.accountGuestModel.findOne({ guestId: detailPayload.guestId }) as AccountGuest | null;
+        if (account) {
+            return {
+                ...detailPayload,
+                access_token: account.verifyToken
+            };
+        } else throw new BadGatewayException("Not found account")
+    }
 
     async create(createAccountGuestDto: CreateAccountGuestDto): Promise<AccountGuest> {
         // Check if email already exists
@@ -259,12 +280,13 @@ export class AccountGuestService {
         return account.save();
     }
 
-    async updateLoginInfo(id: string, loginInfo: { ip?: string; userAgent?: string }): Promise<void> {
+    async updateLoginInfo(id: string, loginInfo: { ip?: string; userAgent?: string, token?: string }): Promise<void> {
         await this.accountGuestModel.findByIdAndUpdate(id, {
             lastLoginAt: new Date(),
             $inc: { loginCount: 1 },
             lastLoginIP: loginInfo.ip,
             userAgent: loginInfo.userAgent,
+            verifyToken: loginInfo.token,
             failedLoginAttempts: 0 // Reset failed attempts on successful login
         });
     }

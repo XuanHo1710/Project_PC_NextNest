@@ -3,20 +3,15 @@
 import { useEffect } from 'react';
 import { Spin } from 'antd';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthSuccessPage() {
     const router = useRouter();
-    const { refreshAuth } = useAuth();
 
     useEffect(() => {
         const handleAuthSuccess = async () => {
             try {
                 // Wait a bit for the cookies to be set
                 await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // Refresh user data
-                await refreshAuth();
 
                 // Redirect to home
                 router.push('/home');
@@ -27,7 +22,7 @@ export default function AuthSuccessPage() {
         };
 
         handleAuthSuccess();
-    }, [router, refreshAuth]);
+    }, [router]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">

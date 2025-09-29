@@ -16,8 +16,6 @@ export async function POST(request: NextRequest) {
         }
     });
 
-
-
     return NextResponse.json(res.data, { status: 200 });
 }
 

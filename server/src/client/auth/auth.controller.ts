@@ -2,12 +2,15 @@ import { Controller, Get, Post, Body, Res, Req, UseGuards, BadRequestException }
 import { Response, Request } from 'express';
 import { ClientAuthService } from './auth.service';
 import { GoogleAuthGuard } from '../../admin/auth/passport/google-auth.guard';
+import { ClientJwtAuthGuard } from './client-jwt-auth.guard';
+import { Guest, Public } from 'decorators/customize';
 
 @Controller('/client/auth')
 export class ClientAuthController {
     constructor(private readonly authService: ClientAuthService) { }
 
     @Post('login')
+    @Public()
     async login(@Body() loginDto: { email: string; password: string }, @Res({ passthrough: true }) response: Response) {
         const { email, password } = loginDto;
 
@@ -24,6 +27,7 @@ export class ClientAuthController {
     }
 
     @Post('register')
+    @Public()
     async register(@Body() registerDto: { email: string; password: string; fullname: string, phone: string }) {
         const { email, password, fullname, phone } = registerDto;
 
@@ -43,12 +47,14 @@ export class ClientAuthController {
     }
 
     @Get('google')
+    @Public()
     @UseGuards(GoogleAuthGuard)
     async googleAuth(@Req() req: Request) {
         // Initiates the Google OAuth2 login flow
     }
 
     @Get('google/callback')
+    @Public()
     @UseGuards(GoogleAuthGuard)
     async googleAuthRedirect(@Req() req: Request, @Res() response: Response) {
         const user = req.user;
@@ -72,30 +78,60 @@ export class ClientAuthController {
     }
 
     @Post('refresh')
+    @Public()
     async refresh(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
         const refreshToken = request.cookies['client_refresh_token'];
-
         if (!refreshToken) {
             throw new BadRequestException('Refresh token không tồn tại');
         }
-
         return this.authService.processNewToken(refreshToken, response);
     }
 
     @Post('logout')
+    @Public()
     async logout(@Res({ passthrough: true }) response: Response) {
         return this.authService.logout(response);
     }
 
     @Get('profile')
-    async getProfile(@Req() request: Request) {
-        // This will be implemented with JWT guard later
-        const token = request.cookies['client_access_token'];
-        if (!token) {
-            throw new BadRequestException('Chưa đăng nhập');
+    @UseGuards(ClientJwtAuthGuard)
+    async getProfile(@Guest() guest: any) {
+        // Now we can access the authenticated guest directly
+        return {
+            message: 'Profile retrieved successfully',
+            user: {
+                guestId: guest.guestId,
+                email: guest.email,
+                fullname: guest.fullname,
+                avatar: guest.avatar,
+                authProvider: guest.authProvider
+            }
+        };
+    }
+
+    @Post('refresh-token')
+    @Public()
+    async refreshToken(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        const refreshToken = request.cookies['client_refresh_token'];
+        if (!refreshToken) {
+            throw new BadRequestException('Refresh token không tồn tại');
         }
 
-        // For now, return a simple response
-        return { message: 'Profile endpoint' };
+        try {
+            const result = await this.authService.processNewToken(refreshToken, response);
+            return result;
+        } catch (error) {
+            throw new BadRequestException('Refresh token không hợp lệ hoặc đã hết hạn');
+        }
+    }
+
+    @Get('decode-access')
+    @UseGuards(ClientJwtAuthGuard)
+    async decodeAccessToken(@Guest() guest: any) {
+        // Return decoded token info for frontend
+        return {
+            message: 'Token decoded successfully',
+            user: guest
+        };
     }
 }

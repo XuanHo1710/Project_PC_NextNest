@@ -20,10 +20,10 @@ import { buildCategoryTree } from "@/utils/buildTree";
 import { IProductCard } from "@/types/model.client";
 import useCartStore from "@/hooks/useCart";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
-import { useAuth } from "@/contexts/AuthContext";
 import { Dropdown, Avatar } from "antd";
 import type { MenuProps } from 'antd';
 import { UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import useAuthUser from "@/hooks/useAuthUser";
 
 
 export default function HeaderClient() {
@@ -233,7 +233,7 @@ export default function HeaderClient() {
                                                 >
                                                     <div className="flex max-w-max justify-center flex-1 flex-col">
                                                         <Image
-                                                            src={p.images[0]}
+                                                            src={p.images?.[0] || undefined}
                                                             alt={p.name}
                                                             width={80}
                                                             height={80}
@@ -396,7 +396,7 @@ function AuthSection({
     handleOpenLogin: () => void;
     handleOpenRegister: () => void;
 }) {
-    const { user, logout } = useAuth();
+    const { user, logout } = useAuthUser();
 
     const userMenuItems: MenuProps['items'] = [
         {
@@ -442,7 +442,7 @@ function AuthSection({
                 >
                     <div className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] hover:bg-gray-50 font-medium px-4 py-2 rounded-md transition-all">
                         <Avatar
-                            src={user.avatar}
+                            src={user?.avatar || null}
                             icon={<UserOutlined />}
                             size="small"
                         />

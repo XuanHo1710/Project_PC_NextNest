@@ -28,10 +28,10 @@ export class ClientAuthService {
 
         if (!guest) return null;
 
-        // Check if account is locked
-        if (guest.lockedUntil && guest.lockedUntil > new Date()) {
-            throw new BadRequestException('Tài khoản đã bị khóa tạm thời');
-        }
+        // // Check if account is locked
+        // if (guest.lockedUntil && guest.lockedUntil > new Date()) {
+        //     throw new BadRequestException('Tài khoản đã bị khóa tạm thời');
+        // }
 
         const isCorrect = bcrypt.compareSync(password, guest.password || "");
         if (guest && isCorrect) {
@@ -100,20 +100,23 @@ export class ClientAuthService {
         return guest;
     }
 
-    async login(guest: AccountGuest & { _id: mongoose.Schema.Types.ObjectId }, response: Response, req?: any) {
+    async login(accountGuest: AccountGuest & { _id: mongoose.Schema.Types.ObjectId }, response: Response, req?: any) {
         // Get populated guest data
         const guestWithProfile = await this.accountGuestModel
-            .findById(guest._id)
+            .findById(accountGuest._id)
             .populate('guestId')
             .exec();
 
         const guestProfile = guestWithProfile?.guestId as any;
 
         const payload = {
-            guestId: guest._id.toString(),
-            email: guest.email,
+            _id: accountGuest._id.toString(),
+            guestId: guestProfile._id.toString(),
+            email: accountGuest.email,
+            avatar: guestProfile?.avatar || '',
+            accountStatus: accountGuest.accountStatus,
             fullname: guestProfile?.fullname || '',
-            authProvider: guest.authProvider || 'local'
+            authProvider: accountGuest.authProvider || 'local'
         };
 
         const access_token = this.createAccessToken(payload);
@@ -124,9 +127,10 @@ export class ClientAuthService {
         });
 
         // Update login info
-        await this.accountGuestService.updateLoginInfo(guest._id.toString(), {
+        await this.accountGuestService.updateLoginInfo(accountGuest._id.toString(), {
             ip: req?.ip || req?.connection?.remoteAddress,
-            userAgent: req?.headers?.['user-agent']
+            userAgent: req?.headers?.['user-agent'],
+            token: access_token
         });
 
         // Set cookies
@@ -144,13 +148,14 @@ export class ClientAuthService {
             access_token,
             refresh_token,
             user: {
-                id: guest._id,
-                email: guest.email,
+                id: accountGuest._id,
+                guestId: guestProfile?._id,
+                email: accountGuest.email,
                 fullname: guestProfile?.fullname || '',
                 avatar: guestProfile?.avatar || '',
-                authProvider: guest.authProvider || 'local',
-                accountStatus: guest.accountStatus,
-                isEmailVerified: guest.isEmailVerified,
+                authProvider: accountGuest.authProvider || 'local',
+                accountStatus: accountGuest.accountStatus,
+                isEmailVerified: accountGuest.isEmailVerified,
                 phone: guestProfile?.phone || '',
                 gender: guestProfile?.gender || 'OTHER'
             }
@@ -193,25 +198,31 @@ export class ClientAuthService {
                 secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')
             });
 
-            const guestData = await this.accountGuestService.findOne(detailPayload.guestId);
-            if (!guestData) {
+            const accountGuestData = await this.accountGuestService.findOne(detailPayload._id);
+            if (!accountGuestData) {
                 throw new BadRequestException("Tài khoản không tồn tại");
             }
 
-            const guest = await this.accountGuestModel.findById((guestData as any)._id).exec();
-            if (!guest) {
+            const accountGuest = await this.accountGuestModel.findById((accountGuestData as any)._id).populate('guestId').exec();
+            if (!accountGuest) {
                 throw new BadRequestException("Tài khoản không tồn tại");
             }
 
-            const guestProfile = guest.guestId as any; // This will be populated
+            const guestProfile = accountGuest.guestId as any; // This will be populated
             const payload = {
-                guestId: guest._id.toString(),
-                email: guest.email,
+                _id: accountGuest._id.toString(),
+                guestId: guestProfile._id,
+                email: accountGuest.email,
+                avatar: guestProfile?.avatar || '',
+                accountStatus: accountGuest.accountStatus,
                 fullname: guestProfile?.fullname || '',
-                authProvider: guest.authProvider || 'local'
+                authProvider: accountGuest.authProvider || 'local'
             };
 
             const access_token = this.createAccessToken(payload);
+
+            // Set new access_token cookie
+            await this.accountGuestModel.updateOne({ _id: accountGuest._id }, { verifyToken: access_token }).exec();
 
             response.cookie("client_access_token", access_token, {
                 httpOnly: true,

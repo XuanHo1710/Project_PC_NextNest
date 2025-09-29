@@ -16,7 +16,7 @@ import { ChatBot } from "@/components/Chat";
 // };
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/contexts/AuthProviderClient';
 
 export default function AdminLayout({
     children,

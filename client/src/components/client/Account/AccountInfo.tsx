@@ -5,7 +5,7 @@ import { Card, Descriptions, Tag, Button, Modal, Form, Switch, message, Avatar, 
 import { UserOutlined, SafetyCertificateOutlined, SettingOutlined, EditOutlined } from '@ant-design/icons';
 import { accountService } from '@/services/client/account.service';
 import { IUpdateAccountSettingsDto } from '@/types/account';
-import { useAuth } from '@/contexts/AuthContext';
+import useAuthUser from '@/hooks/useAuthUser';
 
 interface AccountInfoProps {
     showAccountSettings?: boolean;
@@ -16,7 +16,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({
     showAccountSettings = true,
     showProfileInfo = true
 }) => {
-    const { user } = useAuth();
+    const { user } = useAuthUser();
     const [loading, setLoading] = useState(false);
     const [settingsModalVisible, setSettingsModalVisible] = useState(false);
     const [form] = Form.useForm();

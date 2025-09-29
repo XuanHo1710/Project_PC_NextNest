@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { Button, Divider, Form, Image, Input, Modal } from 'antd';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { useAuth } from '@/contexts/AuthContext';
 import { IRegisterDto } from '@/types/account';
+import useAuthUser from '@/hooks/useAuthUser';
 
 interface RegisterModalProps {
     isOpen: boolean;
@@ -26,7 +26,7 @@ export default function RegisterModal({ isOpen, onClose, switchToLogin }: Regist
     const [loading, setLoading] = useState(false);
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-    const { register, loginWithGoogle } = useAuth();
+    const { register, loginWithGoogle } = useAuthUser();
 
     const onFinish = async (values: RegisterFormValues) => {
         setLoading(true);
@@ -124,8 +124,8 @@ export default function RegisterModal({ isOpen, onClose, switchToLogin }: Regist
                         { required: true, message: 'Vui lòng nhập mật khẩu' },
                         { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' },
                         {
-                            pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                            message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt'
+                            pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/,
+                            message: 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số'
                         }
                     ]}
                 >

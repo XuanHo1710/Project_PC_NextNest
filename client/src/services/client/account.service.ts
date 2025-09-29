@@ -39,7 +39,7 @@ class AccountService {
         return response.data;
     }
 
-    async getCurrentUser(): Promise<ILoginResponse['user']> {
+    async getCurrentUser(): Promise<ILoginResponse> {
         const response = await axiosClient.get(`${this.baseURL}/profile`);
         return response.data;
     }

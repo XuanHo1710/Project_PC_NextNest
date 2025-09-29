@@ -12,7 +12,7 @@ import { ClientAuthModule } from 'src/client/auth/auth.module';
         ProductModuleClient,
         CategoryModuleClient,
         PaymentModule,
-        ClientAuthModule
+        ClientAuthModule,
     ]
 })
 export class ClientModule { }

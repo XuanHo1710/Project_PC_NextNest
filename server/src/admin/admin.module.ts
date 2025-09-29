@@ -5,14 +5,12 @@ import { AccountEmployeeModule } from 'src/admin/account-employee/account-employ
 import { AccountGuestModule } from 'src/admin/account-guest/account-guest.module';
 import { AppService } from 'src/app.service';
 import { AuthModule } from 'src/admin/auth/auth.module';
-import { JwtAuthGuard } from 'src/admin/auth/jwt-auth.guard';
 import { JwtStrategy } from 'src/admin/auth/jwt.strategy';
 import { CategoryModule } from 'src/admin/category/category.module';
 import { DiscountModule } from 'src/admin/discount/discount.module';
 import { EmployeeModule } from 'src/admin/employee/employee.module';
 import { ProductModule } from 'src/admin/product/product.module';
 import { RoleModule } from 'src/admin/role/role.module';
-import { AdminBaseController } from 'src/admin/admin.controller';
 
 @Module({
   imports: [

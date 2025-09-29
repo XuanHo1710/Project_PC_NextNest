@@ -43,9 +43,6 @@ export class Guest {
     isVerified: boolean;
 
     @Prop()
-    verifyToken?: string;
-
-    @Prop()
     resetPasswordToken?: string;
 
     @Prop()

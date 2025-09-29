@@ -1,12 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
+import { Guest } from 'src/admin/guest/entities/guest.entity';
 
 export type AccountGuestDocument = HydratedDocument<AccountGuest>;
 
 @Schema({ timestamps: true })
 export class AccountGuest {
     // Reference to Guest profile
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Guest', required: true, unique: true })
+    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Guest.name, required: true, unique: true })
     guestId: mongoose.Schema.Types.ObjectId;
 
     // Authentication fields only
@@ -27,7 +28,7 @@ export class AccountGuest {
     isEmailVerified: boolean;
 
     @Prop()
-    verifyToken?: string;
+    verifyToken?: string;  // Access token for this account
 
     @Prop()
     resetPasswordToken?: string;

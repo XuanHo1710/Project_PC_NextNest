@@ -22,6 +22,7 @@ export class ClientJwtStrategy extends PassportStrategy(Strategy, 'client-jwt') 
         return {
             guestId: payload.guestId,
             email: payload.email,
+            avatar: payload.avatar,
             fullname: payload.fullname,
             authProvider: payload.authProvider
         };

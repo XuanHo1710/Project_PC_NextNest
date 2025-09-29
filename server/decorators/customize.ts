@@ -18,6 +18,13 @@ export const Employee = createParamDecorator(
     }
 );
 
+export const Guest = createParamDecorator(
+    (data: unknown, ctx: ExecutionContext) => {
+        const request = ctx.switchToHttp().getRequest<Request>();
+        return request.user;
+    }
+);
+
 
 export const RESPONSE_MESSAGE = 'response_message';
 export const ResponseMessage = (message: string) =>

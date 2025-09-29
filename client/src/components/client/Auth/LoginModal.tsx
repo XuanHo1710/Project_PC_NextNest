@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button, Divider, Form, Image, Input, Modal } from 'antd';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import useAuthUser from '@/hooks/useAuthUser';
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -20,7 +20,7 @@ interface LoginFormValues {
 export default function LoginModal({ isOpen, onClose, switchToRegister }: LoginModalProps) {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
-    const { login, loginWithGoogle } = useAuth();
+    const { login, loginWithGoogle } = useAuthUser();
 
     const onFinish = async (values: LoginFormValues) => {
         setLoading(true);
