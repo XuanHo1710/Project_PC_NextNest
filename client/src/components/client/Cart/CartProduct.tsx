@@ -1,4 +1,4 @@
-import { ICartItem } from "@/types/model.client.d";
+import { ICartItem } from "@/types/model.client";
 import { Button, Image } from "antd"
 import Link from "next/link";
 

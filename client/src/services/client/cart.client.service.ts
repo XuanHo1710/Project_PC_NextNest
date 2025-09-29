@@ -1,6 +1,6 @@
 // services/category.service.ts
 import axios from '@/config/axiosClient'
-import { ICart } from '@/types/model.client.d'
+import { ICart } from '@/types/model.client'
 
 class CartClientService {
     async getCart(): Promise<ICart> {

@@ -1,6 +1,6 @@
 'use client'
 import axios from '@/config/axiosClient';
-import { ICategoryPreview } from '@/types/model.client.d';
+import { ICategoryPreview } from '@/types/model.client';
 import { create } from 'zustand'
 
 const BASE_URL = 'category';

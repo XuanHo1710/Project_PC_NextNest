@@ -2,7 +2,7 @@
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { categoryClientService } from "@/services/client";
 import { ICategory } from "@/types/modal.d";
-import { ICategoryPreview } from "@/types/model.client.d";
+import { ICategoryPreview } from "@/types/model.client";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Image, Spin } from "antd";
 import Link from "next/link";

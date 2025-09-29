@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
-import { IProductCard, IProductWithPagination } from "@/types/model.client.d";
+import { IProductCard, IProductWithPagination } from "@/types/model.client";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Image, Progress, Rate, Tag, Tabs, Input } from "antd";
 import Link from "next/link";

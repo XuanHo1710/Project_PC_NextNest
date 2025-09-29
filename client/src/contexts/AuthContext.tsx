@@ -1,14 +1,17 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { clientAuthService, User } from '../services/client/auth.service';
+import { accountService } from '../services/client/account.service';
+import { ILoginResponse, IRegisterDto } from '../types/account';
 import { message } from 'antd';
+
+type User = ILoginResponse['user'];
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<boolean>;
-    register: (email: string, password: string, fullname: string) => Promise<boolean>;
+    register: (registerData: IRegisterDto) => Promise<boolean>;
     logout: () => Promise<void>;
     loginWithGoogle: () => void;
     refreshAuth: () => Promise<void>;
@@ -24,9 +27,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Helper functions for localStorage
+    const setStoredUser = (userData: User) => {
+        localStorage.setItem('user', JSON.stringify(userData));
+    };
+
+    const getStoredUser = (): User | null => {
+        try {
+            const stored = localStorage.getItem('user');
+            return stored ? JSON.parse(stored) : null;
+        } catch {
+            return null;
+        }
+    };
+
+    const removeStoredUser = () => {
+        localStorage.removeItem('user');
+    };
+
+    const handleGoogleAuthSuccess = React.useCallback(async () => {
+        try {
+            const profile = await accountService.getCurrentUser();
+            setUser(profile);
+            setStoredUser(profile);
+            message.success('Đăng nhập Google thành công!');
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (error) {
+            console.error('Error getting profile after Google auth:', error);
+            message.error('Có lỗi xảy ra khi đăng nhập Google');
+        }
+    }, []);
+
     useEffect(() => {
         // Check if user is stored in localStorage
-        const storedUser = clientAuthService.getUser();
+        const storedUser = getStoredUser();
         if (storedUser) {
             setUser(storedUser);
         }
@@ -40,28 +75,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 handleGoogleAuthSuccess();
             }
         }
-    }, []);
-
-    const handleGoogleAuthSuccess = async () => {
-        try {
-            const profile = await clientAuthService.getProfile();
-            setUser(profile);
-            clientAuthService.setUser(profile);
-            message.success('Đăng nhập Google thành công!');
-            // Clean URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (error) {
-            console.error('Error getting profile after Google auth:', error);
-            message.error('Có lỗi xảy ra khi đăng nhập Google');
-        }
-    };
+    }, [handleGoogleAuthSuccess]);
 
     const login = async (email: string, password: string): Promise<boolean> => {
         try {
             setLoading(true);
-            const response = await clientAuthService.login({ email, password });
+            const response = await accountService.login({ email, password });
             setUser(response.user);
-            clientAuthService.setUser(response.user);
+            setStoredUser(response.user);
             message.success('Đăng nhập thành công!');
             return true;
         } catch (error: unknown) {
@@ -74,10 +95,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     };
 
-    const register = async (email: string, password: string, fullname: string): Promise<boolean> => {
+    const register = async (registerData: IRegisterDto): Promise<boolean> => {
         try {
             setLoading(true);
-            await clientAuthService.register({ email, password, fullname });
+            await accountService.register(registerData);
             message.success('Đăng ký thành công! Vui lòng đăng nhập.');
             return true;
         } catch (error: unknown) {
@@ -92,32 +113,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const logout = async (): Promise<void> => {
         try {
-            await clientAuthService.logout();
+            await accountService.logout();
             setUser(null);
-            clientAuthService.removeUser();
+            removeStoredUser();
             message.success('Đăng xuất thành công!');
         } catch (error) {
             console.error('Logout error:', error);
             // Still clear local state even if API call fails
             setUser(null);
-            clientAuthService.removeUser();
+            removeStoredUser();
         }
     };
 
     const loginWithGoogle = (): void => {
-        clientAuthService.googleLogin();
+        accountService.googleLogin();
     };
 
     const refreshAuth = async (): Promise<void> => {
         try {
-            const profile = await clientAuthService.getProfile();
+            const profile = await accountService.getCurrentUser();
             setUser(profile);
-            clientAuthService.setUser(profile);
+            setStoredUser(profile);
         } catch (error) {
             console.error('Refresh auth error:', error);
             // If refresh fails, clear user data
             setUser(null);
-            clientAuthService.removeUser();
+            removeStoredUser();
         }
     };
 

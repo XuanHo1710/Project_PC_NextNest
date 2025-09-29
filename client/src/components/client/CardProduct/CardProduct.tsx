@@ -1,6 +1,6 @@
 // import { Image, Tooltip } from "antd";
 import useCartStore from "@/hooks/useCart";
-import { IProductCard } from "@/types/model.client.d";
+import { IProductCard } from "@/types/model.client";
 import { Image } from "antd";
 import Link from "next/link";
 import Swal from "sweetalert2";

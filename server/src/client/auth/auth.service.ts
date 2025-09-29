@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import mongoose from 'mongoose';
-import { Guest } from '../../admin/guest/entities/guest.entity';
+import { AccountGuest } from '../../admin/account-guest/entities/account-guest.entity';
+import { AccountGuestService } from '../../admin/account-guest/account-guest.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 const bcrypt = require('bcrypt');
@@ -12,68 +13,107 @@ const ms = require("ms");
 @Injectable()
 export class ClientAuthService {
     constructor(
-        @InjectModel(Guest.name) private guestModel: Model<Guest>,
+        @InjectModel(AccountGuest.name) private accountGuestModel: Model<AccountGuest>,
+        private accountGuestService: AccountGuestService,
         private jwtService: JwtService,
         private configService: ConfigService
     ) { }
 
     async signIn(email: string, password: string): Promise<any | null> {
-        const guest = await this.guestModel.findOne({ email }).exec();
+        const guest = await this.accountGuestModel.findOne({
+            email,
+            deletedAt: { $exists: false },
+            accountStatus: { $in: ['ACTIVE', 'PENDING'] }
+        }).exec();
+
         if (!guest) return null;
+
+        // Check if account is locked
+        if (guest.lockedUntil && guest.lockedUntil > new Date()) {
+            throw new BadRequestException('Tài khoản đã bị khóa tạm thời');
+        }
 
         const isCorrect = bcrypt.compareSync(password, guest.password || "");
         if (guest && isCorrect) {
+            // Reset failed login attempts on successful login
+            if (guest.failedLoginAttempts > 0) {
+                await this.accountGuestService.updateLoginInfo(guest._id.toString(), {});
+            }
             return guest;
+        } else {
+            // Increment failed login attempts
+            await this.accountGuestService.incrementFailedLoginAttempts(email);
+            return null;
         }
-        return null;
     }
 
     async googleLogin(googleUser: any): Promise<any> {
         const { email, firstName, lastName, picture, googleId } = googleUser;
 
         // Tìm user trong database
-        let guest = await this.guestModel.findOne({
+        let guest = await this.accountGuestModel.findOne({
             $or: [
                 { email: email },
                 { googleId: googleId }
-            ]
+            ],
+            deletedAt: { $exists: false }
         }).exec();
 
         if (!guest) {
             // Tạo user mới nếu chưa tồn tại
-            guest = new this.guestModel({
-                email: email,
-                fullname: `${firstName} ${lastName}`,
-                googleId: googleId,
-                avatar: picture,
-                isActive: true,
-                isEmailVerified: true, // Google email đã được verify
-                authProvider: 'google'
-            });
-            await guest.save();
+            const result = await this.accountGuestService.createGuestWithAccount(
+                {
+                    fullname: `${firstName} ${lastName}`,
+                    email: email,
+                    avatar: picture
+                },
+                {
+                    googleId: googleId,
+                    authProvider: 'google',
+                    registrationSource: 'WEB',
+                    termsAccepted: true,
+                    privacyPolicyAccepted: true
+                }
+            );
+            guest = await this.accountGuestModel.findById((result.account as any)._id).populate('guestId').exec();
         } else {
             // Update thông tin nếu user đã tồn tại
-            await this.guestModel.findByIdAndUpdate(guest._id, {
+            await this.accountGuestService.update(guest._id.toString(), {
                 googleId: googleId,
-                avatar: picture,
                 authProvider: 'google',
                 isEmailVerified: true,
-                lastLoginAt: new Date()
+                accountStatus: 'ACTIVE'
             });
 
+            // Update guest profile
+            if (guest.guestId) {
+                await this.accountGuestModel.updateOne(
+                    { _id: guest._id },
+                    { lastLoginAt: new Date() }
+                );
+            }
+
             // Reload guest with updated data
-            guest = await this.guestModel.findById(guest._id).exec();
+            guest = await this.accountGuestModel.findById(guest._id).populate('guestId').exec();
         }
 
         return guest;
     }
 
-    async login(guest: Guest & { _id: mongoose.Schema.Types.ObjectId }, response: Response) {
+    async login(guest: AccountGuest & { _id: mongoose.Schema.Types.ObjectId }, response: Response, req?: any) {
+        // Get populated guest data
+        const guestWithProfile = await this.accountGuestModel
+            .findById(guest._id)
+            .populate('guestId')
+            .exec();
+
+        const guestProfile = guestWithProfile?.guestId as any;
+
         const payload = {
             guestId: guest._id.toString(),
             email: guest.email,
-            fullname: guest.fullname,
-            authProvider: (guest as any).authProvider || 'local'
+            fullname: guestProfile?.fullname || '',
+            authProvider: guest.authProvider || 'local'
         };
 
         const access_token = this.createAccessToken(payload);
@@ -83,10 +123,10 @@ export class ClientAuthService {
             expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRE')
         });
 
-        // Update last login
-        await this.guestModel.findByIdAndUpdate(guest._id, {
-            lastLoginAt: new Date(),
-            updatedAt: new Date()
+        // Update login info
+        await this.accountGuestService.updateLoginInfo(guest._id.toString(), {
+            ip: req?.ip || req?.connection?.remoteAddress,
+            userAgent: req?.headers?.['user-agent']
         });
 
         // Set cookies
@@ -106,35 +146,45 @@ export class ClientAuthService {
             user: {
                 id: guest._id,
                 email: guest.email,
-                fullname: guest.fullname,
-                avatar: guest.avatar,
-                authProvider: (guest as any).authProvider || 'local'
+                fullname: guestProfile?.fullname || '',
+                avatar: guestProfile?.avatar || '',
+                authProvider: guest.authProvider || 'local',
+                accountStatus: guest.accountStatus,
+                isEmailVerified: guest.isEmailVerified,
+                phone: guestProfile?.phone || '',
+                gender: guestProfile?.gender || 'OTHER'
             }
         };
     }
 
-    async register(email: string, password: string, fullname: string) {
-        // Check if user already exists
-        const existingGuest = await this.guestModel.findOne({ email }).exec();
-        if (existingGuest) {
-            throw new BadRequestException('Email đã được sử dụng');
-        }
+    async register(email: string, password: string, fullname: string, phone: string, additionalData?: any) {
+        // Create Guest and AccountGuest together
+        const result = await this.accountGuestService.createGuestWithAccount(
+            {
+                fullname,
+                email,
+                phone: phone,
+                avatar: additionalData?.avatar,
+                gender: additionalData?.gender || 'OTHER',
+                birthday: additionalData?.birthday
+            },
+            {
+                password,
+                authProvider: 'local',
+                registrationSource: 'WEB',
+                termsAccepted: additionalData?.termsAccepted || false,
+                privacyPolicyAccepted: additionalData?.privacyPolicyAccepted || false,
+                emailNotifications: additionalData?.emailNotifications ?? true,
+                smsNotifications: additionalData?.smsNotifications ?? true,
+                marketingEmails: additionalData?.marketingEmails ?? false
+            }
+        );
 
-        // Hash password
-        const hashedPassword = bcrypt.hashSync(password, 10);
+        return result;
+    }
 
-        // Create new guest
-        const newGuest = new this.guestModel({
-            email,
-            password: hashedPassword,
-            fullname,
-            isActive: true,
-            isEmailVerified: false,
-            authProvider: 'local'
-        });
-
-        await newGuest.save();
-        return newGuest;
+    async verifyEmail(token: string) {
+        return await this.accountGuestService.verifyEmail(token);
     }
 
     processNewToken = async (refreshToken: string, response: Response) => {
@@ -143,16 +193,22 @@ export class ClientAuthService {
                 secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')
             });
 
-            const guest = await this.guestModel.findById(detailPayload.guestId).exec();
+            const guestData = await this.accountGuestService.findOne(detailPayload.guestId);
+            if (!guestData) {
+                throw new BadRequestException("Tài khoản không tồn tại");
+            }
+
+            const guest = await this.accountGuestModel.findById((guestData as any)._id).exec();
             if (!guest) {
                 throw new BadRequestException("Tài khoản không tồn tại");
             }
 
+            const guestProfile = guest.guestId as any; // This will be populated
             const payload = {
                 guestId: guest._id.toString(),
                 email: guest.email,
-                fullname: guest.fullname,
-                authProvider: (guest as any).authProvider || 'local'
+                fullname: guestProfile?.fullname || '',
+                authProvider: guest.authProvider || 'local'
             };
 
             const access_token = this.createAccessToken(payload);

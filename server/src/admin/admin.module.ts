@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { AccountEmployeeModule } from 'src/admin/account-employee/account-employee.module';
+import { AccountGuestModule } from 'src/admin/account-guest/account-guest.module';
 import { AppService } from 'src/app.service';
 import { AuthModule } from 'src/admin/auth/auth.module';
 import { JwtAuthGuard } from 'src/admin/auth/jwt-auth.guard';
@@ -20,6 +21,7 @@ import { AdminBaseController } from 'src/admin/admin.controller';
     ProductModule,
     DiscountModule,
     AccountEmployeeModule,
+    AccountGuestModule,
     RoleModule,
     AuthModule,
     JwtModule.register({}),

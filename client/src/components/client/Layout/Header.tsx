@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ICategory } from "@/types/modal.d";
 import { categoryClientService, productClientService } from "@/services/client";
 import { buildCategoryTree } from "@/utils/buildTree";
-import { IProductCard } from "@/types/model.client.d";
+import { IProductCard } from "@/types/model.client";
 import useCartStore from "@/hooks/useCart";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
 import { useAuth } from "@/contexts/AuthContext";

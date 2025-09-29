@@ -2,7 +2,7 @@
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import useCartStore from "@/hooks/useCart";
 import { productClientService } from "@/services/client";
-import { IProductWithPagination } from "@/types/model.client.d";
+import { IProductWithPagination } from "@/types/model.client";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Checkbox, Drawer, Image, Pagination, Spin } from "antd";
 import Link from "next/link";

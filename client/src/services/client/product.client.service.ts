@@ -1,6 +1,6 @@
 // services/category.service.ts
 import axios from '@/config/axiosClient'
-import { IProductCard, IProductWithPagination } from '@/types/model.client.d'
+import { IProductCard, IProductWithPagination } from '@/types/model.client'
 
 
 class ProductClientService {

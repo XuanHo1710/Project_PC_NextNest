@@ -24,19 +24,20 @@ export class ClientAuthController {
     }
 
     @Post('register')
-    async register(@Body() registerDto: { email: string; password: string; fullname: string }) {
-        const { email, password, fullname } = registerDto;
+    async register(@Body() registerDto: { email: string; password: string; fullname: string, phone: string }) {
+        const { email, password, fullname, phone } = registerDto;
 
-        if (!email || !password || !fullname) {
+        if (!email || !password || !fullname || !phone) {
             throw new BadRequestException('Vui lòng điền đầy đủ thông tin');
         }
 
-        const guest = await this.authService.register(email, password, fullname);
+        const guest = await this.authService.register(email, password, fullname, phone);
         return {
             user: {
-                id: guest._id,
-                email: guest.email,
-                fullname: guest.fullname
+                id: guest.account.guestId,
+                email: guest.account.email,
+                fullname: guest.guest.fullname,
+                phone: guest.guest.phone
             }
         };
     }

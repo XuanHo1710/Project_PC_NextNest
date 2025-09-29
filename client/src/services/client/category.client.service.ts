@@ -1,7 +1,7 @@
 // services/category.service.ts
 import axios from '@/config/axiosClient'
 import { ICategory } from '@/types/modal.d'
-import { ICategoryPreview } from '@/types/model.client.d'
+import { ICategoryPreview } from '@/types/model.client'
 
 class CategoryClientService {
     async getCategoriesPreview(): Promise<ICategoryPreview[]> {

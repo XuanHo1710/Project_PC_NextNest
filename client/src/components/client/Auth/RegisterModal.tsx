@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button, Divider, Form, Image, Input, Modal } from 'antd';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useAuth } from '@/contexts/AuthContext';
+import { IRegisterDto } from '@/types/account';
 
 interface RegisterModalProps {
     isOpen: boolean;
@@ -31,7 +32,13 @@ export default function RegisterModal({ isOpen, onClose, switchToLogin }: Regist
         setLoading(true);
         try {
             const fullname = `${values.firstName} ${values.lastName}`;
-            const success = await register(values.email, values.password, fullname);
+            const success = await register({
+                email: values.email,
+                password: values.password,
+                fullname,
+                phone: values.phone
+            } as IRegisterDto);
+
 
             if (success) {
                 // Reset form sau khi đăng ký thành công

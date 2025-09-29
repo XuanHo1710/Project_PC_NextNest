@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ICart, ICartItem, IProductCard } from '@/types/model.client.d';
+import { ICart, ICartItem, IProductCard } from '@/types/model.client';
 
 
 interface CartState {
