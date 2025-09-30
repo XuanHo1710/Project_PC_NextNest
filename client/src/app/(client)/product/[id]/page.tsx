@@ -202,7 +202,7 @@ export default function ProductDetailClient() {
                                                 <Image
                                                     src={img}
                                                     alt={product.name}
-                                                    className="object-contain max-h-full"
+                                                    className="object-contain !w-96 !h-96"
                                                     preview={true}
                                                 />
                                             </div>
@@ -276,7 +276,7 @@ export default function ProductDetailClient() {
                                         ))}
                                     </ul>
                                     <hr className="my-4 border-gray-200 dark:border-gray-600" />
-                                    <p className="text-gray-600 dark:text-gray-300 italic text-sm">{product.description}</p>
+                                    {/* <p className="text-gray-600 dark:text-gray-300 italic text-sm">{product.description}</p> */}
                                 </div>
 
                                 {/* Giá sản phẩm */}
@@ -475,7 +475,9 @@ export default function ProductDetailClient() {
                                     children: (
                                         <div className="prose max-w-none dark:prose-invert">
                                             <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">Giới thiệu {product.name}</h3>
-                                            <p>{product.description}</p>
+                                            {/* <p>{parse(product.description)}</p> */}
+                                            {/* <div dangerouslySetInnerHTML={{ __html: product.description }} /> */}
+
 
                                             {/* Thêm mô tả demo */}
                                             <p className="my-4">

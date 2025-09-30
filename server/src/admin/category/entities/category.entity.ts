@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 export type CategoryDocument = HydratedDocument<Category>;
-
+const slugMongo = require('mongoose-slug-generator');
+mongoose.plugin(slugMongo)
 @Schema({ timestamps: true })
 export class Category {
     _id: mongoose.Schema.Types.ObjectId
@@ -13,14 +14,19 @@ export class Category {
     parent?: {
         _id?: mongoose.Schema.Types.ObjectId,
         name?: string
+        slug?: string
     }
+
+    @Prop({ slugMongo: "name", unique: true })
+    slug: string;
 
 
     @Prop({ type: Array })
     children: [
         {
             _id: mongoose.Schema.Types.ObjectId,
-            name: string
+            name: string,
+            slug?: string
         }
     ]
 

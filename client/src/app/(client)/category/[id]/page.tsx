@@ -166,14 +166,12 @@ export default function CategoryClient() {
                 <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
                     <Link href="/home" className="font-medium text-lg text-stone-500 mr-3 header-nav">Trang chủ</Link>
                     <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    {dataProduct &&
+                    {dataProduct && dataProduct.products.length > 0 &&
                         <h3 className="font-medium text-lg dark:text-white text-blue-500 mr-3 active">{dataProduct.products[0].category?.name}</h3>
                     }
                 </div>
                 <h1 className='mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3 font-bold text-xl lg:text-3xl uppercase text-blue-500'>
-                    {dataProduct &&
-                        dataProduct.products[0].category?.name
-                    }
+                    {dataProduct && dataProduct.products.length > 0 && dataProduct.products[0].category?.name}
                     <span className='ml-2 text-sm border-none text-stone-400 lowercase font-medium'>(Tổng {dataProduct && dataProduct.pagination.totalItems} sản phẩm)</span>
                 </h1>
                 <div className='mx-5 xl:mx-32 mt-5 content-body grid grid-flow-row grid-cols-12 lg:gap-12 '>

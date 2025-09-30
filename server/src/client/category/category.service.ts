@@ -13,7 +13,9 @@ export class CategoryService {
 
     let sortCategory = {};
 
-    let filterCategory = {};
+    let filterCategory = {
+      parent: null
+    };
 
     if (filter.search) {
       const keyword = filter.search;
@@ -30,7 +32,7 @@ export class CategoryService {
     }
 
 
-    const categories = await this.categoryModel.find({});
+    const categories = await this.categoryModel.find(filterCategory);
     return categories;
   }
 

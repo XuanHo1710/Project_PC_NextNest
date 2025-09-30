@@ -27,8 +27,6 @@ export default function HomeClient() {
 
 
 
-
-
     if (isLoading) {
         return <HomePageSkeleton />
     } else {

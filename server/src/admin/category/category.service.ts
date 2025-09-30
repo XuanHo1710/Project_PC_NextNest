@@ -41,7 +41,9 @@ export class CategoryService {
 
     let sortCategory = {};
 
-    let filterCategory = {};
+    let filterCategory = {
+      parent: null
+    };
 
     if (filter.search) {
       const keyword = filter.search;

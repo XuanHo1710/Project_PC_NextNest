@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ICategory } from "@/types/modal.d";
 import { categoryClientService, productClientService } from "@/services/client";
-import { buildCategoryTree } from "@/utils/buildTree";
+// import { buildCategoryTree } from "@/utils/buildTree";
 import { IProductCard } from "@/types/model.client";
 import useCartStore from "@/hooks/useCart";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
@@ -46,6 +46,9 @@ export default function HeaderClient() {
         staleTime: 1000 * 60 * 5, // 5 phút cache không gọi lại
     });
 
+    console.log(data);
+
+
     const { data: products, isLoading: loadingSearch } = useQuery<IProductCard[] | []>({
         queryKey: ['product-search', search], // key để cache
         queryFn: () => productClientService.searchProducts(search),
@@ -55,10 +58,10 @@ export default function HeaderClient() {
 
     useEffect(() => {
         if (data && !isLoading) {
-            setCategories(buildCategoryTree(data));
+            setCategories(data);
+
         }
     }, [data, isLoading]); // chỉ chạy khi data thay đổi
-
 
     const handleHoverCategory = (children: ICategory[]) => {
         setChildrenCategories(children)
@@ -91,7 +94,7 @@ export default function HeaderClient() {
 
     const renderCategoryGrid = (categories: ICategory[], colSpan = 2) => {
         return categories.map((cat) => (
-            <div key={cat._id} className={`col-span-${colSpan} flex flex-col gap-2`}>
+            <div key={cat._id} className={`col-span-${colSpan} flex flex-col gap-3`}>
                 <Link
                     onClick={() => {
                         setOpenItemCategory(false);
@@ -103,7 +106,7 @@ export default function HeaderClient() {
                     {cat.name}
                 </Link>
                 {cat.children && cat.children.length > 0 && (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-2">
                         {cat.children.map((child) => (
                             <Link
                                 onClick={() => {
@@ -122,6 +125,8 @@ export default function HeaderClient() {
             </div>
         ));
     };
+
+
 
 
     return (
@@ -174,7 +179,7 @@ export default function HeaderClient() {
                             </button>
 
                             {isOpenCategory && (
-                                <div className="w-60 max-h-[520px] min-h-min overflow-auto z-40 absolute top-12 left-0 bg-white border border-slate-200 shadow-2xl rounded-xl">
+                                <div style={{ scrollbarWidth: "none" }} className="w-60 max-h-[550px] min-h-[550px] overflow-auto z-40 absolute top-12 left-0 bg-white border border-slate-200 shadow-2xl rounded-xl">
                                     <ul className="text-sm">
                                         {categories.map((category, index) => {
                                             const isFirst = index === 0;
@@ -183,9 +188,9 @@ export default function HeaderClient() {
                                                 <li
                                                     key={category._id}
                                                     onMouseEnter={() => handleHoverCategory(category.children as ICategory[])}
-                                                    className={`text-base font-semibold px-4 py-2 hover:bg-blue-400 hover:text-white justify-between cursor-pointer flex items-center gap-2 ${isFirst ? 'rounded-t-xl' : ''} ${isLast ? 'rounded-b-xl' : ''}`}
+                                                    className={`text-sm font-medium px-4 py-2 hover:bg-blue-400 hover:text-white justify-between cursor-pointer flex items-center gap-2 ${isFirst ? 'rounded-t-xl' : ''} ${isLast ? 'rounded-b-xl' : ''}`}
                                                 >
-                                                    {category.name} <MdKeyboardArrowRight className="text-xl" />
+                                                    {category.name} <MdKeyboardArrowRight className="text-base" />
                                                 </li>
                                             );
                                         })}
@@ -194,7 +199,7 @@ export default function HeaderClient() {
                             )}
 
                             {isOpenCategory && isOpenItemCategory && (
-                                <div className="z-40 absolute w-[800px]  max-h-80 min-h-80 overflow-auto grid grid-flow-row grid-cols-12 top-12 left-64 p-5 text-base bg-white border border-slate-200 shadow-2xl rounded-md">
+                                <div style={{ scrollbarWidth: "none" }} className="z-40 gap-5 absolute w-[900px] max-h-[500px] min-h-[500px] overflow-auto grid grid-flow-row grid-cols-12 top-12 left-64 p-5 text-base bg-white border border-slate-200 shadow-2xl rounded-md">
                                     {childrenCategories.length > 0 && renderCategoryGrid(childrenCategories, 3)}
                                 </div>
                             )}

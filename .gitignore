@@ -38,3 +38,10 @@ Thumbs.db
 
 # Submodule nếu bạn đã xoá:
 .gitmodules
+
+
+# Ignore các file json và python
+*.json
+*.py
+*.ipynb
+*.requirements.txt
