@@ -1,5 +1,6 @@
 // services/category.service.ts
 import axios from '@/config/axiosClient'
+import { ICreateProductInteraction, IProductInteraction } from '@/types/modal'
 import { IProductCard, IProductWithPagination } from '@/types/model.client'
 
 
@@ -22,6 +23,23 @@ class ProductClientService {
         const response = await axios.get(`product/search`, {
             params: { keyword }
         })
+        return response.data
+    }
+
+    async postCommentOnProduct(createProductInteraction: ICreateProductInteraction): Promise<unknown> {
+        const response = await axios.post(`product/post-comment`, createProductInteraction)
+        return response.data
+    }
+
+    async getCommentOfProduct(productId: string, page: number = 1): Promise<IProductInteraction> {
+        const response = await axios.get(`product/get-comment/${productId}`, {
+            params: { page }
+        })
+        return response.data
+    }
+
+    async replyCommentProduct(guestId: string, productId: string, guestReplyId: string, content: string, images: string[], isAdminReply: boolean = false): Promise<unknown> {
+        const response = await axios.post(`product/reply-comment`, { guestId, productId, guestReplyId, content, images, isAdminReply })
         return response.data
     }
 

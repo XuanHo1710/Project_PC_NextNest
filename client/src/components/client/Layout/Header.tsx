@@ -46,8 +46,6 @@ export default function HeaderClient() {
         staleTime: 1000 * 60 * 5, // 5 phút cache không gọi lại
     });
 
-    console.log(data);
-
 
     const { data: products, isLoading: loadingSearch } = useQuery<IProductCard[] | []>({
         queryKey: ['product-search', search], // key để cache
@@ -245,12 +243,12 @@ export default function HeaderClient() {
                                                             className="object-cover rounded-md border"
                                                         />
                                                     </div>
-                                                    <div className="flex justify-between flex-col flex-1">
+                                                    <div className="flex justify-between flex-col flex-1 overflow-hidden">
                                                         <div>
                                                             <Link onClick={() => {
                                                                 setSearch("");
                                                                 setOpenSearch(false);
-                                                            }} href={"/product/" + p._id} className="font-semibold text-gray-800 truncate">{p.name}</Link>
+                                                            }} href={"/product/" + p._id} className="font-semibold line-clamp-2 text-wrap text-gray-800 truncate">{p.name}</Link>
                                                             <p className="text-sm line-clamp-1">{p.description}</p>
                                                         </div>
                                                         <div className="flex justify-between">

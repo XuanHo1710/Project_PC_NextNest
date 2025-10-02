@@ -5,7 +5,6 @@ export type EmployeeDocument = HydratedDocument<Product>;
 
 @Schema({ timestamps: true })
 export class Product {
-
     @Prop()
     name: string;
 
@@ -40,12 +39,16 @@ export class Product {
     @Prop({ default: false })
     feature: boolean
 
+    @Prop({ default: 5, min: 1, max: 5 })
+    ratingAvg: number;
+
+    @Prop({ default: 0 })
+    totalRatings: number;
+
 
     @Prop({ default: "active" })
     status: string;
     // ACTIVE INACTIVE STOPSOLD
-
-
 
     @Prop({ type: Object })
     createdBy: {

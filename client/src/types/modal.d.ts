@@ -89,3 +89,50 @@ export interface IAccountLogin {
     accessToken: string;
 }
 
+export interface ICreateProductInteraction {
+    productId: string;
+    guestId: string;
+    content: string;
+    rating: number;
+
+    images: string[]; // Ảnh đính kèm trong review
+}
+
+export interface IReplyComment {
+    productInteractionId: string;
+    guestIdInteractedBy: { _id: string, name: string, email: string, avatar: string };
+    isLiked: boolean; // Like sản phẩm
+    isDisLiked: boolean; // Dislike sản phẩm
+    content: string;
+    isAdminReply: boolean;
+    images: string[]; // Ảnh đính kèm trong review
+    ratingAt: Date;
+}
+
+export interface IProductInteraction {
+    comments: [{
+        guestId: { _id: string, name: string, email: string, avatar: string },
+        content: string,
+        rating: number,
+        images: string[],
+        createdAt: Date,
+        likes: number,
+        dislikes: number,
+        replies: IReplyComment[]
+    }],
+    pagination: {
+        totalItems: number,
+        totalPages: number,
+        currentPage: number,
+        limit: number,
+    }
+}
+
+export interface IPostReplyComment {
+    guestId: string;
+    productId: string;
+    guestReplyId: string;
+    content: string;
+    images: string[];
+    isAdminReply?: boolean;
+}

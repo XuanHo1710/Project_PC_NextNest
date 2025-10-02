@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
 import { IProductCard, IProductWithPagination } from "@/types/model.client";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Carousel, Image, Progress, Rate, Tag, Tabs, Input } from "antd";
+import { Button, Carousel, Image, Progress, Rate, Tag, Tabs, Input, message } from "antd";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ProductDetailSkeleton } from "@/components/Skeletons";
@@ -23,57 +23,12 @@ import {
     RocketFilled,
     QuestionCircleOutlined
 } from '@ant-design/icons';
+import useAuthUser from '@/hooks/useAuthUser';
+import { ICreateProductInteraction, IProductInteraction } from '@/types/modal';
+import { formatDateTime } from '@/utils/formatDateTime';
+import { PreviewImage, handleImageFiles, ImagePreview, cleanupImageUrls } from '@/utils/imagePreview';
 
 const { TextArea } = Input;
-
-// Mảng dữ liệu demo cho phần bình luận
-const demoComments = [
-    {
-        id: 1,
-        author: 'Nguyễn Văn A',
-        avatar: 'https://i.pravatar.cc/150?img=1',
-        rating: 5,
-        date: '12/09/2025',
-        content: 'Sản phẩm rất tuyệt vời, máy chạy mượt mà và không gây tiếng ồn. Đặc biệt card đồ họa hoạt động rất tốt khi chơi game.',
-        likes: 12,
-        dislikes: 2,
-        verified: true,
-        replies: [
-            {
-                id: 101,
-                author: 'Admin',
-                avatar: 'https://i.pravatar.cc/150?img=60',
-                content: 'Cảm ơn bạn đã đánh giá tích cực về sản phẩm. Chúc bạn có trải nghiệm tốt!',
-                date: '13/09/2025',
-                isAdmin: true
-            }
-        ]
-    },
-    {
-        id: 2,
-        author: 'Trần Thị B',
-        avatar: 'https://i.pravatar.cc/150?img=5',
-        rating: 4,
-        date: '10/09/2025',
-        content: 'Máy tính đẹp, hiệu năng tốt cho công việc văn phòng và chơi game nhẹ. Tuy nhiên tản nhiệt hơi ồn khi chạy nặng.',
-        likes: 8,
-        dislikes: 1,
-        verified: true,
-        replies: []
-    },
-    {
-        id: 3,
-        author: 'Lê Văn C',
-        avatar: 'https://i.pravatar.cc/150?img=8',
-        rating: 5,
-        date: '05/09/2025',
-        content: 'Máy tính chơi game cực đỉnh, chạy các game AAA mới nhất vẫn rất mượt. Rất hài lòng với sản phẩm này.',
-        likes: 15,
-        dislikes: 0,
-        verified: true,
-        replies: []
-    }
-];
 
 // Dữ liệu demo cho FAQ
 const faqs = [
@@ -99,7 +54,44 @@ const faqs = [
 export default function ProductDetailClient() {
     const { id } = useParams();
     const [userRating, setUserRating] = useState(0);
-    const [commentText, setCommentText] = useState('');
+    const { user } = useAuthUser();
+    const [page, setPage] = useState(1);
+    const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
+    const [productComments, setProductComments] = useState<IProductInteraction | null>(null);
+    const [showReplyForm, setShowReplyForm] = useState<string | null>(null);
+    const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+    const [replyImages, setReplyImages] = useState<PreviewImage[]>([]);
+
+    const fetchComments = useCallback(async () => {
+        if (!id) return;
+        try {
+            setIsLoadingSubmit(false);
+            const productComments = await productClientService.getCommentOfProduct(id as string, page);
+            setProductComments(productComments);
+        } catch (error) {
+            console.error('Error fetching addresses:', error);
+            message.error('Không thể tải danh sách comment');
+        } finally {
+            setIsLoadingSubmit(false);
+        }
+    }, [id, page]);
+
+    // Load provinces and comments on component mount
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                if (id) {
+                    setIsLoadingSubmit(true);
+                    await fetchComments();
+                }
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+            } finally {
+                setIsLoadingSubmit(false);
+            }
+        }
+        loadData();
+    }, [id, fetchComments]);
 
     const { data: product, isLoading: isLoadingProduct } = useQuery<IProductCard>({
         queryKey: ['product-by-id', id],
@@ -115,11 +107,37 @@ export default function ProductDetailClient() {
 
     const isLoading = isLoadingProduct || isLoadingRelated;
 
+    console.log(productComments);
+
+
+    const handleLoadMoreComments = async () => {
+        setIsLoadingSubmit(true);
+        setPage((prev) => prev + 1);
+        setIsLoadingSubmit(false);
+    }
+
+    const handleCloseComments = async () => {
+        setIsLoadingSubmit(true);
+        setPage(1);
+        setIsLoadingSubmit(false);
+
+    }
+
+
+
+
     useEffect(() => {
         if (!isLoading) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }, [isLoading]);
+
+    // Cleanup image URLs when component unmounts
+    useEffect(() => {
+        return () => {
+            cleanupImageUrls(replyImages);
+        };
+    }, [replyImages]);
 
     const responsiveSettings = [
         {
@@ -145,12 +163,42 @@ export default function ProductDetailClient() {
         },
     ];
 
-    const handleCommentSubmit = () => {
-        console.log('Đánh giá:', userRating);
-        console.log('Bình luận:', commentText);
-        // Reset form
-        setUserRating(0);
-        setCommentText('');
+    const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        setIsLoadingSubmit(true);
+        e.preventDefault();
+        if (!user) {
+            message.error('Vui lòng đăng nhập để bình luận.');
+            return;
+        }
+
+        const form = e.target as HTMLFormElement;
+        const formData = new FormData(form);
+        const commentText = formData.get('commentText') as string;
+
+
+        const dataComment = {
+            productId: id,
+            guestId: user.id,
+            content: commentText,
+            rating: userRating,
+            images: [] // Ảnh đính kèm trong review
+        }
+
+        try {
+            await productClientService.postCommentOnProduct(dataComment as ICreateProductInteraction);
+            message.success('Bình luận của bạn đã được gửi thành công!');
+        } catch {
+            message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+            return;
+        } finally {
+            setIsLoadingSubmit(false);
+            formData.set('commentText', "");
+            // Reload comments
+            await fetchComments();
+            // Reset form
+            setUserRating(0);
+            form.reset();
+        }
     };
 
     const handleLikeComment = (commentId: number) => {
@@ -159,6 +207,83 @@ export default function ProductDetailClient() {
 
     const handleDislikeComment = (commentId: number) => {
         console.log('Không thích bình luận:', commentId);
+    };
+
+    // Xử lý trả lời comment
+    const handleReplyClick = (commentIndex: string) => {
+        if (showReplyForm === commentIndex) {
+            // Cleanup images when closing
+            cleanupImageUrls(replyImages);
+            setShowReplyForm(null);
+            setReplyImages([]);
+        } else {
+            setShowReplyForm(commentIndex);
+            setReplyImages([]);
+        }
+    };
+
+    const handleReplySubmit = async (guestId: string, e: React.FormEvent<HTMLFormElement>) => {
+        if (!user) {
+            message.error('Vui lòng đăng nhập để trả lời bình luận.');
+            return;
+        }
+
+        const formData = new FormData(e.target as HTMLFormElement);
+        const replyContent = formData.get('replyText') as string;
+
+        if (!replyContent.trim()) {
+            message.error('Vui lòng nhập nội dung trả lời.');
+            return;
+        }
+
+        setIsSubmittingReply(true);
+        try {
+            // TODO: Implement reply API call here
+            console.log('Ảnh đính kèm:', replyImages.map(img => img.file));
+            message.success('Trả lời của bạn đã được gửi thành công!');
+
+            await productClientService.replyCommentProduct(guestId, product?._id || "", user.id, replyContent, [], false);
+
+            // Cleanup và reset form
+            await fetchComments();
+        } catch (error) {
+            console.error('Error submitting reply:', error);
+            message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        } finally {
+            setIsSubmittingReply(false);
+            cleanupImageUrls(replyImages);
+            setShowReplyForm(null);
+            setReplyImages([]);
+        }
+    };
+
+    const handleCancelReply = () => {
+        // Cleanup image URLs before closing
+        cleanupImageUrls(replyImages);
+        setShowReplyForm(null);
+        setReplyImages([]);
+    };
+
+    // Xử lý khi chọn ảnh cho reply
+    const handleReplyImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files) {
+            const newImages = handleImageFiles(files);
+            setReplyImages(prev => [...prev, ...newImages]);
+        }
+        // Reset input để có thể chọn lại cùng file
+        event.target.value = '';
+    };
+
+    // Xóa ảnh khỏi preview
+    const handleRemoveReplyImage = (imageId: string) => {
+        setReplyImages(prev => {
+            const imageToRemove = prev.find(img => img.id === imageId);
+            if (imageToRemove) {
+                URL.revokeObjectURL(imageToRemove.url);
+            }
+            return prev.filter(img => img.id !== imageId);
+        });
     };
 
 
@@ -581,7 +706,7 @@ export default function ProductDetailClient() {
                                             </div>
 
                                             {/* Form đánh giá */}
-                                            <div className="mb-10 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
+                                            <form method='post' action="#" onSubmit={handleCommentSubmit} className="mb-10 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
                                                 <h3 className="text-xl font-bold mb-4 flex items-center">
                                                     <StarFilled className="mr-2 text-yellow-500" /> Viết đánh giá của bạn
                                                 </h3>
@@ -598,8 +723,7 @@ export default function ProductDetailClient() {
                                                         rows={4}
                                                         placeholder="Nhận xét của bạn về sản phẩm..."
                                                         className="mb-4"
-                                                        value={commentText}
-                                                        onChange={(e) => setCommentText(e.target.value)}
+                                                        name='commentText'
                                                     />
                                                     <div className="flex justify-between">
                                                         <div className="flex items-center">
@@ -611,114 +735,187 @@ export default function ProductDetailClient() {
                                                         </div>
                                                         <Button
                                                             type="primary"
+                                                            htmlType='submit'
                                                             icon={<SendOutlined />}
-                                                            onClick={handleCommentSubmit}
+                                                            loading={isLoadingSubmit}
                                                         >
                                                             Gửi đánh giá
                                                         </Button>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </form>
 
                                             {/* Danh sách bình luận */}
                                             <div className="space-y-6">
-                                                {demoComments.map(comment => (
-                                                    <div key={comment.id} className="border-b border-gray-200 dark:border-gray-700 pb-6">
-                                                        <div className="flex items-start">
-                                                            <Image
-                                                                src={comment.avatar}
-                                                                alt={comment.author}
-                                                                className="rounded-full"
-                                                                width={48}
-                                                                height={48}
-                                                                preview={false}
-                                                                style={{ marginRight: '16px' }}
-                                                            />
-                                                            <div className="flex-grow">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div>
-                                                                        <h4 className="font-medium flex items-center">
-                                                                            {comment.author}
-                                                                            {comment.verified && (
-                                                                                <span className="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full flex items-center">
-                                                                                    <CheckCircleFilled className="mr-1" />
-                                                                                    Đã mua hàng
-                                                                                </span>
-                                                                            )}
-                                                                        </h4>
-                                                                        <div className="flex items-center mt-1">
-                                                                            <Rate disabled defaultValue={comment.rating} className="text-xs" />
-                                                                            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{comment.date}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <p className="mt-2 text-gray-700 dark:text-gray-300">{comment.content}</p>
-                                                                <div className="mt-3 flex items-center space-x-4">
-                                                                    <button
-                                                                        className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
-                                                                        onClick={() => handleLikeComment(comment.id)}
-                                                                    >
-                                                                        <LikeOutlined className="mr-1" />
-                                                                        Hữu ích ({comment.likes})
-                                                                    </button>
-                                                                    <button
-                                                                        className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-red-600"
-                                                                        onClick={() => handleDislikeComment(comment.id)}
-                                                                    >
-                                                                        <DislikeOutlined className="mr-1" />
-                                                                        Không hữu ích ({comment.dislikes})
-                                                                    </button>
-                                                                    <button className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600">
-                                                                        <CommentOutlined className="mr-1" />
-                                                                        Trả lời
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Phần trả lời */}
-                                                        {comment.replies.length > 0 && (
-                                                            <div className="ml-16 mt-4">
-                                                                {comment.replies.map(reply => (
-                                                                    <div key={reply.id} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-2">
-                                                                        <div className="flex items-start">
-                                                                            <Image
-                                                                                src={reply.avatar}
-                                                                                alt={reply.author}
-                                                                                className="rounded-full"
-                                                                                width={32}
-                                                                                height={32}
-                                                                                preview={false}
-                                                                                style={{ marginRight: '12px' }}
-                                                                            />
-                                                                            <div>
-                                                                                <div className="flex items-center">
-                                                                                    <h5 className="font-medium text-sm">
-                                                                                        {reply.author}
-                                                                                    </h5>
-                                                                                    {reply.isAdmin && (
-                                                                                        <span className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 px-2 py-0.5 text-xs rounded-full">
-                                                                                            Nhân viên
-                                                                                        </span>
-                                                                                    )}
-                                                                                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{reply.date}</span>
-                                                                                </div>
-                                                                                <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{reply.content}</p>
+                                                {productComments && productComments.comments.length > 0 &&
+                                                    productComments.comments.map((comment, index) => (
+                                                        <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-6">
+                                                            <div className="flex gap-5 items-start">
+                                                                <Image
+                                                                    src={comment.guestId.avatar}
+                                                                    alt={comment.guestId.name}
+                                                                    className="rounded-full"
+                                                                    width={48}
+                                                                    height={48}
+                                                                    preview={false}
+                                                                    style={{ marginRight: '16px' }}
+                                                                />
+                                                                <div className="flex-grow">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div>
+                                                                            <h4 className="font-medium flex items-center">
+                                                                                {comment.guestId.name}
+                                                                            </h4>
+                                                                            <div className="flex items-center mt-1">
+                                                                                <Rate disabled defaultValue={comment.rating} className="text-xs" />
+                                                                                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(comment.createdAt)}</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
-                                                                ))}
+                                                                    <p className="mt-2 text-gray-700 dark:text-gray-300">{comment.content}</p>
+                                                                    <div className="mt-3 flex items-center space-x-4">
+                                                                        <button
+                                                                            className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
+                                                                            onClick={() => handleLikeComment(1)}
+                                                                        >
+                                                                            <LikeOutlined className="mr-1" />
+                                                                            Hữu ích ({comment.likes})
+                                                                        </button>
+                                                                        <button
+                                                                            className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-red-600"
+                                                                            onClick={() => handleDislikeComment(1)}
+                                                                        >
+                                                                            <DislikeOutlined className="mr-1" />
+                                                                            Không hữu ích ({comment.dislikes})
+                                                                        </button>
+                                                                        <button
+                                                                            className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
+                                                                            onClick={() => handleReplyClick(index.toString())}
+                                                                        >
+                                                                            <CommentOutlined className="mr-1" />
+                                                                            Trả lời
+                                                                        </button>
+                                                                    </div>
+
+                                                                    {/* Form trả lời */}
+                                                                    {showReplyForm === index.toString() && (
+                                                                        <div className="mt-3 ml-16 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                                                                            <div className="flex items-start space-x-3">
+                                                                                <Image
+                                                                                    src={user?.avatar || "/default-avatar.png"}
+                                                                                    alt={user?.fullname || "User"}
+                                                                                    className="rounded-full"
+                                                                                    width={32}
+                                                                                    height={32}
+                                                                                    preview={false}
+                                                                                />
+                                                                                <form action="#" onSubmit={(e) => handleReplySubmit(e, comment.guestId._id)} method='post' className="flex-1">
+                                                                                    <TextArea
+                                                                                        rows={3}
+                                                                                        placeholder="Viết trả lời của bạn..."
+                                                                                        name='replyText'
+                                                                                        className="mb-3"
+                                                                                    />
+
+                                                                                    {/* Preview ảnh */}
+                                                                                    <ImagePreview
+                                                                                        images={replyImages}
+                                                                                        onRemove={handleRemoveReplyImage}
+                                                                                        className="mb-3"
+                                                                                    />
+
+                                                                                    <div className="flex items-center justify-between">
+                                                                                        <div className="flex items-center space-x-2">
+                                                                                            <input
+                                                                                                type="file"
+                                                                                                id={`reply-image-${index}`}
+                                                                                                className="hidden"
+                                                                                                accept="image/*"
+                                                                                                multiple
+                                                                                                onChange={handleReplyImageChange}
+                                                                                            />
+                                                                                            <label
+                                                                                                htmlFor={`reply-image-${index}`}
+                                                                                                className="cursor-pointer text-blue-600 dark:text-blue-400 flex items-center text-sm hover:text-blue-700"
+                                                                                            >
+                                                                                                <span className="icon-[material-symbols--add-photo-alternate] mr-1"></span>
+                                                                                                Thêm ảnh
+                                                                                            </label>
+                                                                                        </div>
+                                                                                        <div className="flex items-center space-x-2">
+                                                                                            <Button
+                                                                                                size="small"
+                                                                                                onClick={handleCancelReply}
+                                                                                                className="border-gray-300 hover:border-gray-400"
+                                                                                            >
+                                                                                                Hủy
+                                                                                            </Button>
+                                                                                            <Button
+                                                                                                type="primary"
+                                                                                                size="small"
+                                                                                                loading={isSubmittingReply}
+                                                                                                icon={<SendOutlined />}
+                                                                                            >
+                                                                                                Bình luận
+                                                                                            </Button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </form>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                ))}
+
+                                                            {/* Phần trả lời */}
+                                                            {comment.replies && comment.replies.length > 0 && (
+                                                                <div className="ml-16 mt-4">
+                                                                    {comment.replies.map((reply, index) => (
+                                                                        <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-2">
+                                                                            <div className="flex items-start">
+                                                                                <Image
+                                                                                    src={reply.guestIdInteractedBy.avatar}
+                                                                                    alt={reply.guestIdInteractedBy.name}
+                                                                                    className="rounded-full"
+                                                                                    width={32}
+                                                                                    height={32}
+                                                                                    preview={false}
+                                                                                    style={{ marginRight: '12px' }}
+                                                                                />
+                                                                                <div>
+                                                                                    <div className="flex items-center">
+                                                                                        <h5 className="font-medium text-sm">
+                                                                                            {reply.guestIdInteractedBy.name}
+                                                                                        </h5>
+                                                                                        {reply.isAdminReply && (
+                                                                                            <span className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 px-2 py-0.5 text-xs rounded-full">
+                                                                                                Nhân viên
+                                                                                            </span>
+                                                                                        )}
+                                                                                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(reply.ratingAt)}</span>
+                                                                                    </div>
+                                                                                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{reply.content}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
                                             </div>
 
                                             {/* Nút xem thêm */}
                                             <div className="mt-6 text-center">
-                                                <Button type="default" className="hover:border-blue-500 hover:text-blue-600">
-                                                    Xem thêm đánh giá
-                                                </Button>
+                                                {productComments && productComments.pagination.totalPages > page ?
+                                                    <Button loading={isLoadingSubmit} onClick={handleLoadMoreComments} type="default" className="hover:border-blue-500 hover:text-blue-600">
+                                                        Xem thêm đánh giá
+                                                    </Button>
+                                                    :
+                                                    <Button loading={isLoadingSubmit} onClick={handleCloseComments} type="default" className="hover:border-blue-500 hover:text-blue-600">
+                                                        Ẩn đánh giá
+                                                    </Button>
+                                                }
                                             </div>
                                         </>
                                     )

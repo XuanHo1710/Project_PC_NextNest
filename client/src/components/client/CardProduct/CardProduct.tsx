@@ -30,11 +30,13 @@ const CardProduct = ({ product, css }: { product: IProductCard, css: string }) =
                     overlayInnerStyle={tooltipStyle} // Custom style cho Tooltip
                 >
                 </Tooltip> */}
-                <div className='card-img hover:-translate-y-2 transition-all'>
+                <div className='card-img w-full hover:-translate-y-2 transition-all'>
                     <Image
                         src={product.images[0]}
-                        className="w-250 h-200"
+                        width={"100%"}
+                        height={200}
                         alt="#"
+                        className="img-thumbnail object-contain"
                     />
                 </div>
                 <div className='card-content mb-3 text-center'>

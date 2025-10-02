@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { TypeQueryProduct } from 'types/product';
+import { CreateProductInteractionDto } from 'src/admin/product/dto/create-product-interaction.entity';
 
 @Controller('product')
 export class ProductController {
@@ -23,6 +24,20 @@ export class ProductController {
   }
 
 
+  @Post('/post-comment')
+  postCommentOnProduct(@Body() createProductInteractionDto: CreateProductInteractionDto) {
+    return this.productService.postCommentOnProduct(createProductInteractionDto);
+  }
 
+
+  @Get('/get-comment/:productId')
+  getCommentOfProduct(@Param("productId") productId: string, @Query("page") page: number = 1) {
+    return this.productService.getAllCommentByProductId(productId, page);
+  }
+
+  @Post('/reply-comment')
+  replyCommentProduct(@Body() { guestId, productId, guestReplyId, content, images, isAdminReply = false }: { guestId: string, productId: string, guestReplyId: string, content: string, images: string[], isAdminReply?: boolean }) {
+    return this.productService.replyCommentProduct(guestId, productId, guestReplyId, content, images, isAdminReply);
+  }
 
 }

@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { Guest } from '../../guest/entities/guest.entity';
-import { Product } from '../../product/entities/product.entity';
+import { Product } from 'src/admin/product/entities/product.entity';
 
 export type ProductInteractionDocument = HydratedDocument<ProductInteraction>;
 
@@ -13,9 +13,11 @@ export class ProductInteraction {
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Product.name, required: true })
     productId: mongoose.Schema.Types.ObjectId;
 
-    // Các loại tương tác
-    @Prop({ default: false })
-    isLiked: boolean; // Like sản phẩm
+    @Prop({ default: 0 })
+    likes: number;
+
+    @Prop({ default: 0 })
+    dislikes: number;
 
     @Prop({ default: false })
     isFavorited: boolean; // Thêm vào yêu thích
@@ -23,28 +25,21 @@ export class ProductInteraction {
     @Prop({ default: false })
     isWishlisted: boolean; // Thêm vào wishlist
 
-    @Prop({ default: 0 })
-    viewCount: number; // Số lần xem
+    @Prop({ default: "" })
+    content: string;
 
-    @Prop()
-    lastViewedAt?: Date; // Lần xem cuối
-
-    // Thời gian các hành động
-    @Prop()
-    likedAt?: Date;
-
-    @Prop()
-    favoritedAt?: Date;
-
-    @Prop()
-    wishlistedAt?: Date;
-
-    // So sánh sản phẩm
     @Prop({ default: false })
-    isInComparison: boolean;
+    isRating: boolean; // Đánh giá sản phẩm
 
-    @Prop()
-    comparedAt?: Date;
+    @Prop({ default: 5, max: 5, min: 1 })
+    rating: number; // Số sao đánh giá (1-5)
+
+    @Prop({ default: [], type: [String] })
+    images: string[]; // Ảnh đính kèm trong review
+
+    @Prop({ default: Date.now })
+    ratingAt: Date;
+
 }
 
 export const ProductInteractionSchema = SchemaFactory.createForClass(ProductInteraction);
