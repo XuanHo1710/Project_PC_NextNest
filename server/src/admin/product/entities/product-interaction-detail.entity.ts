@@ -31,6 +31,9 @@ export class ProductInteractionDetail {
 
     @Prop({ default: Date.now })
     ratingAt: Date;
+
+    @Prop({ default: false })
+    isReply: boolean
 }
 
 export const ProductInteractionDetailSchema = SchemaFactory.createForClass(ProductInteractionDetail);

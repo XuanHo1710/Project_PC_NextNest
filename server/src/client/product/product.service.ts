@@ -80,7 +80,6 @@ export class ProductService {
 
 
   async postCommentOnProduct(createProductInteractionDto: CreateProductInteractionDto) {
-
     const dataComment = {
       productId: createProductInteractionDto.productId,
       guestId: createProductInteractionDto.guestId,
@@ -91,8 +90,6 @@ export class ProductService {
     }
 
     const product = await this.productModel.findOne({ _id: createProductInteractionDto.productId });
-
-
 
     if (product != null) {
       const newTotal = product.totalRatings + 1;
@@ -106,71 +103,6 @@ export class ProductService {
     }
     return await this.productModelInteraction.create(dataComment);
   }
-
-  async interactCommentProduct(guestId: string, guestIdInteractedBy: string, productId: string, isLike: boolean) {
-    // Neu isLike = true => like, false => dislike
-    const interaction = await this.productModelInteraction.findOne({ guestId: guestId, productId: productId, isRating: true });
-    if (interaction == null) {
-      throw new BadRequestException('Bình luận không tồn tại');
-    }
-
-    const interactionDetail = await this.productModelInteractionDetail.findOne(
-      {
-        guestIdInteractedBy: guestIdInteractedBy,
-        productInteractionId: interaction._id
-      });
-    if (interactionDetail != null) {
-      let updateData = {};
-      let updateDataDetail = {};
-      if (isLike && !interactionDetail.isLiked) {  //Like lần đầu
-        if (interactionDetail.isDisLiked) // Dislike roi
-          updateData = { $inc: { dislikes: -1, likes: 1 } };
-        else
-          updateData = { $inc: { likes: 1 } };
-        updateDataDetail = { $set: { isLiked: true, isDisLiked: false } };
-      } else if (isLike && interactionDetail.isLiked) { // Bỏ like
-        updateData = { $inc: { likes: -1 } };
-        updateDataDetail = { $set: { isLiked: false } };
-      } else if (!isLike && !interactionDetail.isDisLiked) { // Dislike lần đầu
-        if (interactionDetail.isLiked) // Like roi
-          updateData = { $inc: { likes: -1, dislikes: 1 } };
-        else updateData = { $inc: { dislikes: 1 } };
-        updateDataDetail = { $set: { isLiked: false, isDisLiked: true } };
-      } else if (!isLike && interactionDetail.isDisLiked) { // Bỏ Dislike
-        updateData = { $inc: { dislikes: -1 } };
-        updateDataDetail = { $set: { isDisliked: false } };
-      }
-      await this.productModelInteraction.updateOne(
-        { _id: interaction._id },
-        updateData
-      );
-      await this.productModelInteractionDetail.updateOne(
-        { _id: interactionDetail._id },
-        updateDataDetail
-      );
-      return { message: 'Cập nhật tương tác thành công' };
-    } else {
-      await this.productModelInteractionDetail.create({
-        guestIdInteractedBy: guestIdInteractedBy,
-        productInteractionId: interaction._id,
-        isLiked: isLike,
-        isDisLiked: !isLike
-      });
-      if (isLike) {
-        await this.productModelInteraction.updateOne(
-          { _id: interaction._id },
-          { $inc: { likes: 1 } }
-        );
-      } else {
-        await this.productModelInteraction.updateOne(
-          { _id: interaction._id },
-          { $inc: { dislikes: 1 } }
-        );
-      }
-      return { message: 'Tạo tương tác thành công' };
-    }
-  }
-
 
   async getAllCommentByProductId(productId: string, page: number) {
     const filterProduct = {
@@ -186,12 +118,11 @@ export class ProductService {
     ).sort({ createdAt: -1 }).limit(limit).populate("guestId", { _id: 1, name: 1, email: 1, avatar: 1 });
 
 
-
     const comments = await Promise.all(
       commentsProduct.map(async (comment) => {
         const replies = await this.productModelInteractionDetail
           .find({ productInteractionId: comment._id.toString() })
-          .populate("guestIdInteractedBy", { _id: 1, name: 1, email: 1, avatar: 1 });
+          .populate("guestIdInteractedBy", { _id: 1, name: 1, email: 1, avatar: 1, isReply: 1 });
 
         return {
           ...comment.toObject(),
@@ -199,8 +130,6 @@ export class ProductService {
         };
       })
     );
-
-
 
 
     return {
@@ -225,19 +154,86 @@ export class ProductService {
       content: content,
       images: images,
       isLiked: false,
-      isAdminReply: isAdminReply
+      isAdminReply: isAdminReply,
+      isReply: true
     }
     return await this.productModelInteractionDetail.create(dataReply);
   }
 
-  async getTotalLikesCommentByGuestId(guestId: string, productId: string) {
-    const interaction = await this.productModelInteraction.findOne({ guestId: guestId, productId: productId, isRating: true });
-    return interaction?.likes || 0;
-  }
 
-  async getTotalDislikesCommentByGuestId(guestId: string, productId: string) {
-    const interaction = await this.productModelInteraction.findOne({ guestId: guestId, productId: productId, isRating: true });
-    return interaction?.dislikes || 0;
+  async interactCommentProduct(commentId: string, guestIdInteractedBy: string, isLike: boolean) {
+    // Neu isLike = true => like, false => dislike
+    const interaction = await this.productModelInteraction.findOne({ _id: commentId, isRating: true });
+    if (interaction == null) {
+      throw new BadRequestException('Bình luận không tồn tại');
+    }
+    const interactionDetail = await this.productModelInteractionDetail.findOne(
+      {
+        guestIdInteractedBy: guestIdInteractedBy,
+        productInteractionId: interaction._id
+      });
+
+
+    if (interactionDetail != null) {
+      let updateData = {};
+      let updateDataDetail = {};
+
+      if (isLike && !interactionDetail.isLiked) {  //Like lần đầu
+        if (interactionDetail.isDisLiked) // Dislike roi
+          updateData = { $inc: { dislikes: -1, likes: 1 } };
+        else
+          updateData = { $inc: { likes: 1 } };
+        updateDataDetail = { $set: { isLiked: true, isDisLiked: false } };
+      } else if (isLike && interactionDetail.isLiked) { // Bỏ like
+        updateData = { $inc: { likes: -1 } };
+        updateDataDetail = { $set: { isLiked: false, isDisLiked: false } };
+      } else if (!isLike && !interactionDetail.isDisLiked) { // Dislike lần đầu
+        if (interactionDetail.isLiked) // Like roi
+          updateData = { $inc: { likes: -1, dislikes: 1 } };
+        else
+          updateData = { $inc: { dislikes: 1 } };
+        updateDataDetail = { $set: { isLiked: false, isDisLiked: true } };
+      } else if (!isLike && interactionDetail.isDisLiked) { // Bỏ Dislike
+        updateData = { $inc: { dislikes: -1 } };
+        updateDataDetail = { $set: { isLiked: false, isDisLiked: false } };
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await this.productModelInteraction.updateOne(
+          { _id: interaction._id },
+          updateData
+        );
+      }
+
+      if (Object.keys(updateDataDetail).length > 0) {
+        await this.productModelInteractionDetail.updateOne(
+          { _id: interactionDetail._id },
+          updateDataDetail
+        );
+      }
+
+      return { message: 'Cập nhật tương tác thành công' };
+    } else {
+      await this.productModelInteractionDetail.create({
+        guestIdInteractedBy: guestIdInteractedBy,
+        productInteractionId: interaction._id,
+        isLiked: isLike,
+        isDisLiked: !isLike,
+        isReply: false
+      });
+      if (isLike) {
+        await this.productModelInteraction.updateOne(
+          { _id: interaction._id },
+          { $inc: { likes: 1 } }
+        );
+      } else {
+        await this.productModelInteraction.updateOne(
+          { _id: interaction._id },
+          { $inc: { dislikes: 1 } }
+        );
+      }
+      return { message: 'Tạo tương tác thành công' };
+    }
   }
 
 }

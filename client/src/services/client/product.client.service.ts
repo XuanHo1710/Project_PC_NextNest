@@ -43,6 +43,11 @@ class ProductClientService {
         return response.data
     }
 
+    async interactCommentProduct(commentId: string, guestIdInteractedBy: string, isLike: boolean): Promise<unknown> {
+        const response = await axios.post(`product/interact-comment`, { commentId, guestIdInteractedBy, isLike })
+        return response.data
+    }
+
 }
 
 export const productClientService = new ProductClientService()

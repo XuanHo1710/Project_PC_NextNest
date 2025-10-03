@@ -40,4 +40,9 @@ export class ProductController {
     return this.productService.replyCommentProduct(guestId, productId, guestReplyId, content, images, isAdminReply);
   }
 
+  @Post('/interact-comment')
+  interactCommentProduct(@Body() { commentId, guestIdInteractedBy, isLike }: { commentId: string, guestIdInteractedBy: string, isLike: boolean }) {
+    return this.productService.interactCommentProduct(commentId, guestIdInteractedBy, isLike);
+  }
+
 }

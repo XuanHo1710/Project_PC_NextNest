@@ -34,12 +34,28 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
         staleTime: 30000, // 30 seconds
     });
 
+    console.log(productComments);
+
+
     // Mutation for posting comments
     const commentMutation = useMutation({
         mutationFn: (data: ICreateProductInteraction) => productClientService.postCommentOnProduct(data),
         onSuccess: () => {
             message.success('Bình luận của bạn đã được gửi thành công!');
             setUserRating(0);
+            setIsLoadingSubmit(false);
+            queryClient.invalidateQueries({ queryKey: ['product-comments', product._id] });
+        },
+        onError: () => {
+            message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        }
+    });
+
+    // Mutation for posting comments
+    const interactMutation = useMutation({
+        mutationFn: ({ commentId, guestIdInteractedBy, isLike }: { commentId: string, guestIdInteractedBy: string, isLike: boolean }) =>
+            productClientService.interactCommentProduct(commentId, guestIdInteractedBy, isLike),
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['product-comments', product._id] });
         },
         onError: () => {
@@ -78,12 +94,30 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
         };
     }, [replyImages]);
 
-    const handleLikeComment = (commentId: number) => {
-        console.log('Đã thích bình luận:', commentId);
+    const handleLikeComment = (commentId: string) => {
+        if (!user) {
+            message.error('Vui lòng đăng nhập để thực hiện hành động này.');
+            return;
+        }
+        const dataInteract = {
+            commentId: commentId,
+            guestIdInteractedBy: user?.id || "",
+            isLike: true
+        }
+        interactMutation.mutate(dataInteract);
     };
 
-    const handleDislikeComment = (commentId: number) => {
-        console.log('Không thích bình luận:', commentId);
+    const handleDislikeComment = (commentId: string) => {
+        if (!user) {
+            message.error('Vui lòng đăng nhập để thực hiện hành động này.');
+            return;
+        }
+        const dataInteract = {
+            commentId: commentId,
+            guestIdInteractedBy: user?.id || "",
+            isLike: false
+        }
+        interactMutation.mutate(dataInteract);
     };
 
     // Xử lý trả lời comment
@@ -105,6 +139,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
             message.error('Vui lòng đăng nhập để trả lời bình luận.');
             return;
         }
+        setIsSubmittingReply(true);
 
         const formData = new FormData(e.target as HTMLFormElement);
         const replyContent = formData.get('replyText') as string;
@@ -113,8 +148,6 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
             message.error('Vui lòng nhập nội dung trả lời.');
             return;
         }
-
-        setIsSubmittingReply(true);
         const dataReply = {
             guestId: guestId,
             productId: product._id,
@@ -163,6 +196,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
             message.error('Vui lòng đăng nhập để bình luận.');
             return;
         }
+        setIsLoadingSubmit(true);
 
         const form = e.target as HTMLFormElement;
         const formData = new FormData(form);
@@ -218,7 +252,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                 <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">Đánh giá từ khách hàng</h3>
                 <div className="flex flex-col md:flex-row gap-8">
                     <div className="md:w-1/3 flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                        <div className="text-5xl font-bold text-yellow-500">{product.ratingAvg}</div>
+                        <div className="text-5xl font-bold text-yellow-500">{product.ratingAvg?.toFixed(2)}</div>
                         <Rate disabled defaultValue={product.ratingAvg} className="text-lg mb-2" />
                         <p className="text-gray-500 dark:text-gray-300">Dựa trên {product.totalRatings} đánh giá</p>
                     </div>
@@ -327,28 +361,33 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                     <p className="mt-2 text-gray-700 dark:text-gray-300">{comment.content}</p>
                                     <div className="mt-3 flex items-center space-x-4">
                                         <button
-                                            className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
-                                            onClick={() => handleLikeComment(1)}
+                                            className={"dark:text-gray-400 cursor-pointer text-sm flex items-center hover:text-blue-600 "
+                                                + (comment.replies.filter(r => !r.guestIdInteractedBy.isReply && r.isLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#") ? "text-blue-600" : "text-gray-500")
+                                            }
+                                            onClick={() => handleLikeComment(comment._id)}
                                         >
+
                                             <LikeOutlined className="mr-1" />
                                             Hữu ích ({comment.likes})
                                         </button>
                                         <button
-                                            className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-red-600"
-                                            onClick={() => handleDislikeComment(1)}
+                                            className={"dark:text-gray-400 cursor-pointer text-sm flex items-center hover:text-red-600 "
+                                                + (comment.replies.filter(r => !r.guestIdInteractedBy.isReply && r.isDisLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#") ? "text-red-600" : "text-gray-500")
+                                            }
+                                            onClick={() => handleDislikeComment(comment._id)}
                                         >
                                             <DislikeOutlined className="mr-1" />
                                             Không hữu ích ({comment.dislikes})
                                         </button>
                                         <button
-                                            className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
+                                            className="text-gray-500 cursor-pointer dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
                                             onClick={() => handleReplyClick(index.toString())}
                                         >
                                             <CommentOutlined className="mr-1" />
                                             Trả lời
                                         </button>
                                         {/* Nút xem replies */}
-                                        {comment.replies && comment.replies.length > 0 && (
+                                        {comment.replies && comment.replies.filter(r => r.guestIdInteractedBy.isReply).length > 0 && (
                                             <button
                                                 className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
                                                 onClick={() => toggleRepliesExpansion(index.toString())}
@@ -440,7 +479,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                             </div>
 
                             {/* Phần trả lời */}
-                            {comment.replies && comment.replies.length > 0 && expandedComments.has(`comment-${index}`) && (
+                            {comment.replies && comment.replies.filter(r => r.guestIdInteractedBy.isReply).length > 0 && expandedComments.has(`comment-${index}`) && (
                                 <div className="ml-16 mt-4">
                                     {comment.replies.map((reply: IReplyComment, replyIndex: number) => (
                                         <div key={replyIndex} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-2">

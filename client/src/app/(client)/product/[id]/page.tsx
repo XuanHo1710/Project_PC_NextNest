@@ -166,7 +166,7 @@ export default function ProductDetailClient() {
                                 {/* Đánh giá */}
                                 <div className='mt-8 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex items-center justify-between'>
                                     <div className="flex flex-col items-center">
-                                        <span className="text-lg font-bold text-yellow-500">{product.ratingAvg}/5</span>
+                                        <span className="text-lg font-bold text-yellow-500">{product.ratingAvg?.toFixed(2)}/5</span>
                                         <Rate disabled defaultValue={product.ratingAvg} allowHalf className="text-sm" />
                                         <span className="text-xs text-gray-500 dark:text-gray-300 mt-1">{product.totalRatings} đánh giá</span>
                                     </div>

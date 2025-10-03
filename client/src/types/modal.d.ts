@@ -100,7 +100,7 @@ export interface ICreateProductInteraction {
 
 export interface IReplyComment {
     productInteractionId: string;
-    guestIdInteractedBy: { _id: string, name: string, email: string, avatar: string };
+    guestIdInteractedBy: { _id: string, name: string, email: string, avatar: string, isReply: boolean };
     isLiked: boolean; // Like sản phẩm
     isDisLiked: boolean; // Dislike sản phẩm
     content: string;
@@ -111,6 +111,7 @@ export interface IReplyComment {
 
 export interface IProductInteraction {
     comments: [{
+        _id: string,
         guestId: { _id: string, name: string, email: string, avatar: string },
         content: string,
         rating: number,

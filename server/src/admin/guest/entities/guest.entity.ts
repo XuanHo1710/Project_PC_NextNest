@@ -5,6 +5,8 @@ export type GuestDocument = HydratedDocument<Guest>;
 
 @Schema({ timestamps: true })
 export class Guest {
+    _id: mongoose.Schema.Types.ObjectId;
+
     @Prop({ required: true })
     fullname: string;
 
