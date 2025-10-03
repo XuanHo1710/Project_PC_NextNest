@@ -33,6 +33,8 @@ export interface IProductCard {
             value: string
         }
     ];
+    ratingAvg?: number;
+    totalRatings?: number;
 }
 
 

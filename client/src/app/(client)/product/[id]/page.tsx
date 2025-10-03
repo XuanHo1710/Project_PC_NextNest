@@ -1,34 +1,30 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
 import { IProductCard, IProductWithPagination } from "@/types/model.client";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Carousel, Image, Progress, Rate, Tag, Tabs, Input, message } from "antd";
+import { Button, Carousel, Image, Rate, Tag, Tabs } from "antd";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ProductDetailSkeleton } from "@/components/Skeletons";
 import {
     ShoppingCartOutlined,
     HeartOutlined,
     CheckCircleFilled,
     FireFilled,
-    LikeOutlined,
-    DislikeOutlined,
     CommentOutlined,
-    SendOutlined,
-    StarFilled,
     SafetyCertificateFilled,
     ThunderboltFilled,
     RocketFilled,
     QuestionCircleOutlined
 } from '@ant-design/icons';
-import useAuthUser from '@/hooks/useAuthUser';
-import { ICreateProductInteraction, IProductInteraction } from '@/types/modal';
-import { formatDateTime } from '@/utils/formatDateTime';
-import { PreviewImage, handleImageFiles, ImagePreview, cleanupImageUrls } from '@/utils/imagePreview';
+import CommentProduct from '@/components/client/ProductDetail/Comment';
+import DescriptionProduct from '@/components/client/ProductDetail/Description';
+import SpecificationsProduct from '@/components/client/ProductDetail/Specifications';
+import useCartStore from '@/hooks/useCart';
+import Swal from "sweetalert2";
 
-const { TextArea } = Input;
 
 // Dữ liệu demo cho FAQ
 const faqs = [
@@ -53,45 +49,8 @@ const faqs = [
 
 export default function ProductDetailClient() {
     const { id } = useParams();
-    const [userRating, setUserRating] = useState(0);
-    const { user } = useAuthUser();
-    const [page, setPage] = useState(1);
-    const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
-    const [productComments, setProductComments] = useState<IProductInteraction | null>(null);
-    const [showReplyForm, setShowReplyForm] = useState<string | null>(null);
-    const [isSubmittingReply, setIsSubmittingReply] = useState(false);
-    const [replyImages, setReplyImages] = useState<PreviewImage[]>([]);
-
-    const fetchComments = useCallback(async () => {
-        if (!id) return;
-        try {
-            setIsLoadingSubmit(false);
-            const productComments = await productClientService.getCommentOfProduct(id as string, page);
-            setProductComments(productComments);
-        } catch (error) {
-            console.error('Error fetching addresses:', error);
-            message.error('Không thể tải danh sách comment');
-        } finally {
-            setIsLoadingSubmit(false);
-        }
-    }, [id, page]);
-
-    // Load provinces and comments on component mount
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                if (id) {
-                    setIsLoadingSubmit(true);
-                    await fetchComments();
-                }
-            } catch (error) {
-                console.error('Error loading initial data:', error);
-            } finally {
-                setIsLoadingSubmit(false);
-            }
-        }
-        loadData();
-    }, [id, fetchComments]);
+    const router = useRouter();
+    const { addToCart } = useCartStore();
 
     const { data: product, isLoading: isLoadingProduct } = useQuery<IProductCard>({
         queryKey: ['product-by-id', id],
@@ -105,26 +64,10 @@ export default function ProductDetailClient() {
         enabled: !!product?.category?._id,
     });
 
+    console.log(product);
+
+
     const isLoading = isLoadingProduct || isLoadingRelated;
-
-    console.log(productComments);
-
-
-    const handleLoadMoreComments = async () => {
-        setIsLoadingSubmit(true);
-        setPage((prev) => prev + 1);
-        setIsLoadingSubmit(false);
-    }
-
-    const handleCloseComments = async () => {
-        setIsLoadingSubmit(true);
-        setPage(1);
-        setIsLoadingSubmit(false);
-
-    }
-
-
-
 
     useEffect(() => {
         if (!isLoading) {
@@ -132,12 +75,6 @@ export default function ProductDetailClient() {
         }
     }, [isLoading]);
 
-    // Cleanup image URLs when component unmounts
-    useEffect(() => {
-        return () => {
-            cleanupImageUrls(replyImages);
-        };
-    }, [replyImages]);
 
     const responsiveSettings = [
         {
@@ -162,129 +99,6 @@ export default function ProductDetailClient() {
             },
         },
     ];
-
-    const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        setIsLoadingSubmit(true);
-        e.preventDefault();
-        if (!user) {
-            message.error('Vui lòng đăng nhập để bình luận.');
-            return;
-        }
-
-        const form = e.target as HTMLFormElement;
-        const formData = new FormData(form);
-        const commentText = formData.get('commentText') as string;
-
-
-        const dataComment = {
-            productId: id,
-            guestId: user.id,
-            content: commentText,
-            rating: userRating,
-            images: [] // Ảnh đính kèm trong review
-        }
-
-        try {
-            await productClientService.postCommentOnProduct(dataComment as ICreateProductInteraction);
-            message.success('Bình luận của bạn đã được gửi thành công!');
-        } catch {
-            message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
-            return;
-        } finally {
-            setIsLoadingSubmit(false);
-            formData.set('commentText', "");
-            // Reload comments
-            await fetchComments();
-            // Reset form
-            setUserRating(0);
-            form.reset();
-        }
-    };
-
-    const handleLikeComment = (commentId: number) => {
-        console.log('Đã thích bình luận:', commentId);
-    };
-
-    const handleDislikeComment = (commentId: number) => {
-        console.log('Không thích bình luận:', commentId);
-    };
-
-    // Xử lý trả lời comment
-    const handleReplyClick = (commentIndex: string) => {
-        if (showReplyForm === commentIndex) {
-            // Cleanup images when closing
-            cleanupImageUrls(replyImages);
-            setShowReplyForm(null);
-            setReplyImages([]);
-        } else {
-            setShowReplyForm(commentIndex);
-            setReplyImages([]);
-        }
-    };
-
-    const handleReplySubmit = async (guestId: string, e: React.FormEvent<HTMLFormElement>) => {
-        if (!user) {
-            message.error('Vui lòng đăng nhập để trả lời bình luận.');
-            return;
-        }
-
-        const formData = new FormData(e.target as HTMLFormElement);
-        const replyContent = formData.get('replyText') as string;
-
-        if (!replyContent.trim()) {
-            message.error('Vui lòng nhập nội dung trả lời.');
-            return;
-        }
-
-        setIsSubmittingReply(true);
-        try {
-            // TODO: Implement reply API call here
-            console.log('Ảnh đính kèm:', replyImages.map(img => img.file));
-            message.success('Trả lời của bạn đã được gửi thành công!');
-
-            await productClientService.replyCommentProduct(guestId, product?._id || "", user.id, replyContent, [], false);
-
-            // Cleanup và reset form
-            await fetchComments();
-        } catch (error) {
-            console.error('Error submitting reply:', error);
-            message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
-        } finally {
-            setIsSubmittingReply(false);
-            cleanupImageUrls(replyImages);
-            setShowReplyForm(null);
-            setReplyImages([]);
-        }
-    };
-
-    const handleCancelReply = () => {
-        // Cleanup image URLs before closing
-        cleanupImageUrls(replyImages);
-        setShowReplyForm(null);
-        setReplyImages([]);
-    };
-
-    // Xử lý khi chọn ảnh cho reply
-    const handleReplyImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
-        if (files) {
-            const newImages = handleImageFiles(files);
-            setReplyImages(prev => [...prev, ...newImages]);
-        }
-        // Reset input để có thể chọn lại cùng file
-        event.target.value = '';
-    };
-
-    // Xóa ảnh khỏi preview
-    const handleRemoveReplyImage = (imageId: string) => {
-        setReplyImages(prev => {
-            const imageToRemove = prev.find(img => img.id === imageId);
-            if (imageToRemove) {
-                URL.revokeObjectURL(imageToRemove.url);
-            }
-            return prev.filter(img => img.id !== imageId);
-        });
-    };
 
 
 
@@ -321,7 +135,7 @@ export default function ProductDetailClient() {
                             {/* Hình ảnh sản phẩm */}
                             <div className='lg:col-span-5 xl:col-span-4'>
                                 <div className="bg-white rounded-lg shadow-sm p-2 mb-4">
-                                    <Carousel className='w-full' autoplay autoplaySpeed={3000} dots={true} effect="fade">
+                                    <Carousel className='w-full' autoplay autoplaySpeed={3000} touchMove effect="fade">
                                         {product.images.map((img, index) => (
                                             <div key={index} className="h-[300px] md:h-[400px] flex items-center justify-center bg-gray-50">
                                                 <Image
@@ -352,14 +166,14 @@ export default function ProductDetailClient() {
                                 {/* Đánh giá */}
                                 <div className='mt-8 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex items-center justify-between'>
                                     <div className="flex flex-col items-center">
-                                        <span className="text-lg font-bold text-yellow-500">4.8/5</span>
-                                        <Rate disabled defaultValue={4.8} className="text-sm" />
-                                        <span className="text-xs text-gray-500 dark:text-gray-300 mt-1">120 đánh giá</span>
+                                        <span className="text-lg font-bold text-yellow-500">{product.ratingAvg}/5</span>
+                                        <Rate disabled defaultValue={product.ratingAvg} allowHalf className="text-sm" />
+                                        <span className="text-xs text-gray-500 dark:text-gray-300 mt-1">{product.totalRatings} đánh giá</span>
                                     </div>
                                     <div className="h-12 w-px bg-gray-300 dark:bg-gray-600 mx-4"></div>
                                     <div className="flex flex-col">
                                         <span className="text-green-600 dark:text-green-400 font-bold flex items-center mb-1">
-                                            <CheckCircleFilled className="mr-1" /> Đã bán: 89+
+                                            <CheckCircleFilled className="mr-1" /> Đã bán: {product.soldCount}+
                                         </span>
                                         <span className="text-blue-600 dark:text-blue-400 text-sm flex items-center">
                                             <SafetyCertificateFilled className="mr-1" /> Hàng chính hãng
@@ -493,6 +307,21 @@ export default function ProductDetailClient() {
                                 <div className='flex flex-wrap gap-4 mt-6'>
                                     <Button
                                         size="large"
+                                        onClick={() => {
+                                            Swal.fire({
+                                                icon: "success",
+                                                title: "Thêm sản phẩm vào giỏ hàng thành công!",
+                                                showConfirmButton: false,
+                                                timer: 2000,
+                                                background: "#fff",
+                                                color: "#000",        // màu chữ
+                                                iconColor: "#52c41a",
+                                                customClass: {
+                                                    title: "!text-2xl", // chữ nhỏ hơn (Tailwind)
+                                                },
+                                            });
+                                            addToCart(product)
+                                        }}
                                         icon={<ShoppingCartOutlined />}
                                         className='shadow-lg font-medium sm:font-bold text-sm sm:text-lg bg-yellow-500 dark:bg-yellow-600 text-white border-yellow-500 hover:bg-yellow-600 hover:border-yellow-600 h-auto py-2 px-6'
                                     >
@@ -500,6 +329,10 @@ export default function ProductDetailClient() {
                                     </Button>
                                     <Button
                                         size="large"
+                                        onClick={() => {
+                                            addToCart(product);
+                                            router.push('/cart');
+                                        }}
                                         icon={<ThunderboltFilled />}
                                         className='shadow-lg font-medium sm:font-bold text-sm sm:text-lg bg-red-500 dark:bg-red-600 text-white border-red-500 hover:bg-red-600 hover:border-red-600 h-auto py-2 px-8'
                                     >
@@ -530,130 +363,14 @@ export default function ProductDetailClient() {
                                     key: '1',
                                     label: 'Thông số kỹ thuật',
                                     children: (
-                                        <div className='overflow-x-auto'>
-                                            <table className="w-full border-collapse">
-                                                <thead>
-                                                    <tr className="bg-blue-50 dark:bg-gray-700">
-                                                        <th className="p-3 text-left font-bold text-gray-700 dark:text-white border border-gray-200 dark:border-gray-700">STT</th>
-                                                        <th className="p-3 text-left font-bold text-gray-700 dark:text-white border border-gray-200 dark:border-gray-700">MÃ HÀNG</th>
-                                                        <th className="p-3 text-left font-bold text-gray-700 dark:text-white border border-gray-200 dark:border-gray-700">TÊN HÀNG</th>
-                                                        <th className="p-3 text-left font-bold text-gray-700 dark:text-white border border-gray-200 dark:border-gray-700">THỜI HẠN BẢO HÀNH</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">1</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">CPU</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium text-blue-600 dark:text-blue-400">INTEL CORE i5 12600K up 4.9GHz | 10 CORE | 16 THREAD</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">36 THÁNG</td>
-                                                    </tr>
-                                                    <tr className="bg-gray-50 dark:bg-gray-750">
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">2</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">MAIN</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium text-blue-600 dark:text-blue-400">GIGABYTE B760M GAMING X DDR4</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">36 THÁNG</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">3</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">TẢN NHIỆT</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium text-blue-600 dark:text-blue-400">JUNGLE LEOPARD KF-400 ARGB</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">12 THÁNG</td>
-                                                    </tr>
-                                                    <tr className="bg-gray-50 dark:bg-gray-750">
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">4</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">RAM</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium text-blue-600 dark:text-blue-400">DDR4 16GB 3200 MHz (1x16G)</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">60 THÁNG</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">5</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">SSD</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium text-blue-600 dark:text-blue-400">TEAMGROUP MP33 PRO 512GB M.2 PCIe Gen3x4 - RW 3500MB/s</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">60 THÁNG</td>
-                                                    </tr>
-                                                    <tr className="bg-gray-50 dark:bg-gray-750">
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">6</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">VGA</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium text-blue-600 dark:text-blue-400">GIGABYTE RTX 3060 WINDFORCE OC 12G GDDR6</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">36 THÁNG</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">7</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">PSU</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium text-blue-600 dark:text-blue-400">FSP650-70ALA 650W - 80 PLUS GOLD</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">36 THÁNG</td>
-                                                    </tr>
-                                                    <tr className="bg-gray-50 dark:bg-gray-750">
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">8</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">CASE</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium text-blue-600 dark:text-blue-400">XIGMATEK GAMING X II 3F - 3FAN RGB</td>
-                                                        <td className="p-3 border border-gray-200 dark:border-gray-700 font-medium dark:text-white">36 THÁNG</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                        <SpecificationsProduct />
                                     )
                                 },
                                 {
                                     key: '2',
                                     label: 'Mô tả sản phẩm',
                                     children: (
-                                        <div className="prose max-w-none dark:prose-invert">
-                                            <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">Giới thiệu {product.name}</h3>
-                                            {/* <p>{parse(product.description)}</p> */}
-                                            {/* <div dangerouslySetInnerHTML={{ __html: product.description }} /> */}
-
-
-                                            {/* Thêm mô tả demo */}
-                                            <p className="my-4">
-                                                {product.name} là sự lựa chọn hoàn hảo cho những người dùng tìm kiếm một chiếc máy tính có hiệu năng mạnh mẽ.
-                                                Được trang bị bộ vi xử lý Intel Core i5 12600K với 10 nhân và 16 luồng,
-                                                máy tính này có thể xử lý mọi tác vụ từ công việc văn phòng đến các game đòi hỏi cấu hình cao.
-                                            </p>
-
-                                            <div className="my-6 text-center">
-                                                <Image
-                                                    src={product.images[0]}
-                                                    alt={product.name}
-                                                    className="rounded-lg inline-block shadow-md"
-                                                />
-                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Hình ảnh {product.name}</p>
-                                            </div>
-
-                                            <h4 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mt-6 mb-3">Hiệu năng vượt trội</h4>
-                                            <p>
-                                                Với card đồ họa GIGABYTE RTX 3060 WINDFORCE OC 12G GDDR6, máy tính này có khả năng xử lý hình ảnh mượt mà,
-                                                đáp ứng nhu cầu chơi game ở độ phân giải cao hoặc làm việc với các phần mềm đồ họa chuyên nghiệp.
-                                                Bộ nhớ RAM 16GB DDR4 3200MHz cùng ổ cứng SSD TEAMGROUP MP33 PRO 512GB M.2 PCIe Gen3x4
-                                                giúp máy khởi động nhanh chóng và làm việc đa nhiệm mượt mà.
-                                            </p>
-
-                                            <h4 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mt-6 mb-3">Thiết kế hiện đại</h4>
-                                            <p>
-                                                Case XIGMATEK GAMING X II 3F với 3 quạt RGB không chỉ mang đến vẻ ngoài bắt mắt mà còn đảm bảo
-                                                khả năng tản nhiệt hiệu quả. Mainboard GIGABYTE B760M GAMING X DDR4 cung cấp đầy đủ cổng kết nối và
-                                                khả năng nâng cấp trong tương lai. Nguồn FSP650-70ALA 650W với chứng nhận 80 PLUS GOLD đảm bảo
-                                                hiệu suất cao và độ bền lâu dài.
-                                            </p>
-
-                                            <h4 className="text-lg font-semibold text-blue-600 dark:text-blue-400 mt-6 mb-3">Ưu điểm nổi bật</h4>
-                                            <ul className="list-disc pl-6">
-                                                <li>CPU Intel Core i5 12600K mạnh mẽ với 10 nhân 16 luồng, xung nhịp tối đa 4.9GHz</li>
-                                                <li>Card đồ họa RTX 3060 12GB GDDR6 cho trải nghiệm chơi game và xử lý đồ họa tuyệt vời</li>
-                                                <li>RAM 16GB DDR4 3200MHz với khả năng nâng cấp mở rộng</li>
-                                                <li>SSD NVMe 512GB với tốc độ đọc/ghi lên đến 3500MB/s</li>
-                                                <li>Hệ thống tản nhiệt hiệu quả với quạt ARGB hiện đại</li>
-                                                <li>Bảo hành chính hãng lên đến 36 tháng cho các linh kiện chính</li>
-                                            </ul>
-
-                                            <hr className="my-6 border-gray-200 dark:border-gray-600" />
-
-                                            <p className="text-base font-medium text-gray-700 dark:text-gray-300">
-                                                {product.name} là sự lựa chọn tuyệt vời cho những ai đang tìm kiếm một chiếc PC gaming hiệu năng cao
-                                                với mức giá hợp lý. Ngoài ra, chúng tôi còn đi kèm nhiều ưu đãi hấp dẫn như giảm giá khi mua kèm
-                                                màn hình và RAM, cùng bộ phần mềm bản quyền trị giá hơn 1 triệu đồng.
-                                            </p>
-                                        </div>
+                                        <DescriptionProduct product={product} />
                                     )
                                 },
                                 {
@@ -665,258 +382,7 @@ export default function ProductDetailClient() {
                                     ),
                                     children: (
                                         <>
-                                            <div className="mb-8">
-                                                <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">Đánh giá từ khách hàng</h3>
-                                                <div className="flex flex-col md:flex-row gap-8">
-                                                    <div className="md:w-1/3 flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                                        <div className="text-5xl font-bold text-yellow-500">4.8</div>
-                                                        <Rate disabled defaultValue={4.8} className="text-lg mb-2" />
-                                                        <p className="text-gray-500 dark:text-gray-300">Dựa trên 120 đánh giá</p>
-                                                    </div>
-                                                    <div className="md:w-2/3">
-                                                        <div className="space-y-2">
-                                                            <div className="flex items-center">
-                                                                <span className="w-20 text-sm">5 sao</span>
-                                                                <Progress percent={85} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">85%</span>
-                                                            </div>
-                                                            <div className="flex items-center">
-                                                                <span className="w-20 text-sm">4 sao</span>
-                                                                <Progress percent={12} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">12%</span>
-                                                            </div>
-                                                            <div className="flex items-center">
-                                                                <span className="w-20 text-sm">3 sao</span>
-                                                                <Progress percent={3} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">3%</span>
-                                                            </div>
-                                                            <div className="flex items-center">
-                                                                <span className="w-20 text-sm">2 sao</span>
-                                                                <Progress percent={0} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">0%</span>
-                                                            </div>
-                                                            <div className="flex items-center">
-                                                                <span className="w-20 text-sm">1 sao</span>
-                                                                <Progress percent={0} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">0%</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Form đánh giá */}
-                                            <form method='post' action="#" onSubmit={handleCommentSubmit} className="mb-10 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
-                                                <h3 className="text-xl font-bold mb-4 flex items-center">
-                                                    <StarFilled className="mr-2 text-yellow-500" /> Viết đánh giá của bạn
-                                                </h3>
-                                                <div>
-                                                    <div className="mb-4">
-                                                        <p className="mb-2 font-medium">Đánh giá sao:</p>
-                                                        <Rate
-                                                            value={userRating}
-                                                            onChange={setUserRating}
-                                                            className="text-xl"
-                                                        />
-                                                    </div>
-                                                    <TextArea
-                                                        rows={4}
-                                                        placeholder="Nhận xét của bạn về sản phẩm..."
-                                                        className="mb-4"
-                                                        name='commentText'
-                                                    />
-                                                    <div className="flex justify-between">
-                                                        <div className="flex items-center">
-                                                            <input type="file" id="image-upload" className="hidden" />
-                                                            <label htmlFor="image-upload" className="cursor-pointer text-blue-600 dark:text-blue-400 flex items-center">
-                                                                <span className="icon-[material-symbols--add-photo-alternate] mr-2"></span>
-                                                                Thêm ảnh
-                                                            </label>
-                                                        </div>
-                                                        <Button
-                                                            type="primary"
-                                                            htmlType='submit'
-                                                            icon={<SendOutlined />}
-                                                            loading={isLoadingSubmit}
-                                                        >
-                                                            Gửi đánh giá
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </form>
-
-                                            {/* Danh sách bình luận */}
-                                            <div className="space-y-6">
-                                                {productComments && productComments.comments.length > 0 &&
-                                                    productComments.comments.map((comment, index) => (
-                                                        <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-6">
-                                                            <div className="flex gap-5 items-start">
-                                                                <Image
-                                                                    src={comment.guestId.avatar}
-                                                                    alt={comment.guestId.name}
-                                                                    className="rounded-full"
-                                                                    width={48}
-                                                                    height={48}
-                                                                    preview={false}
-                                                                    style={{ marginRight: '16px' }}
-                                                                />
-                                                                <div className="flex-grow">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <div>
-                                                                            <h4 className="font-medium flex items-center">
-                                                                                {comment.guestId.name}
-                                                                            </h4>
-                                                                            <div className="flex items-center mt-1">
-                                                                                <Rate disabled defaultValue={comment.rating} className="text-xs" />
-                                                                                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(comment.createdAt)}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <p className="mt-2 text-gray-700 dark:text-gray-300">{comment.content}</p>
-                                                                    <div className="mt-3 flex items-center space-x-4">
-                                                                        <button
-                                                                            className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
-                                                                            onClick={() => handleLikeComment(1)}
-                                                                        >
-                                                                            <LikeOutlined className="mr-1" />
-                                                                            Hữu ích ({comment.likes})
-                                                                        </button>
-                                                                        <button
-                                                                            className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-red-600"
-                                                                            onClick={() => handleDislikeComment(1)}
-                                                                        >
-                                                                            <DislikeOutlined className="mr-1" />
-                                                                            Không hữu ích ({comment.dislikes})
-                                                                        </button>
-                                                                        <button
-                                                                            className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
-                                                                            onClick={() => handleReplyClick(index.toString())}
-                                                                        >
-                                                                            <CommentOutlined className="mr-1" />
-                                                                            Trả lời
-                                                                        </button>
-                                                                    </div>
-
-                                                                    {/* Form trả lời */}
-                                                                    {showReplyForm === index.toString() && (
-                                                                        <div className="mt-3 ml-16 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                                                                            <div className="flex items-start space-x-3">
-                                                                                <Image
-                                                                                    src={user?.avatar || "/default-avatar.png"}
-                                                                                    alt={user?.fullname || "User"}
-                                                                                    className="rounded-full"
-                                                                                    width={32}
-                                                                                    height={32}
-                                                                                    preview={false}
-                                                                                />
-                                                                                <form action="#" onSubmit={(e) => handleReplySubmit(e, comment.guestId._id)} method='post' className="flex-1">
-                                                                                    <TextArea
-                                                                                        rows={3}
-                                                                                        placeholder="Viết trả lời của bạn..."
-                                                                                        name='replyText'
-                                                                                        className="mb-3"
-                                                                                    />
-
-                                                                                    {/* Preview ảnh */}
-                                                                                    <ImagePreview
-                                                                                        images={replyImages}
-                                                                                        onRemove={handleRemoveReplyImage}
-                                                                                        className="mb-3"
-                                                                                    />
-
-                                                                                    <div className="flex items-center justify-between">
-                                                                                        <div className="flex items-center space-x-2">
-                                                                                            <input
-                                                                                                type="file"
-                                                                                                id={`reply-image-${index}`}
-                                                                                                className="hidden"
-                                                                                                accept="image/*"
-                                                                                                multiple
-                                                                                                onChange={handleReplyImageChange}
-                                                                                            />
-                                                                                            <label
-                                                                                                htmlFor={`reply-image-${index}`}
-                                                                                                className="cursor-pointer text-blue-600 dark:text-blue-400 flex items-center text-sm hover:text-blue-700"
-                                                                                            >
-                                                                                                <span className="icon-[material-symbols--add-photo-alternate] mr-1"></span>
-                                                                                                Thêm ảnh
-                                                                                            </label>
-                                                                                        </div>
-                                                                                        <div className="flex items-center space-x-2">
-                                                                                            <Button
-                                                                                                size="small"
-                                                                                                onClick={handleCancelReply}
-                                                                                                className="border-gray-300 hover:border-gray-400"
-                                                                                            >
-                                                                                                Hủy
-                                                                                            </Button>
-                                                                                            <Button
-                                                                                                type="primary"
-                                                                                                size="small"
-                                                                                                loading={isSubmittingReply}
-                                                                                                icon={<SendOutlined />}
-                                                                                            >
-                                                                                                Bình luận
-                                                                                            </Button>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </form>
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Phần trả lời */}
-                                                            {comment.replies && comment.replies.length > 0 && (
-                                                                <div className="ml-16 mt-4">
-                                                                    {comment.replies.map((reply, index) => (
-                                                                        <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-2">
-                                                                            <div className="flex items-start">
-                                                                                <Image
-                                                                                    src={reply.guestIdInteractedBy.avatar}
-                                                                                    alt={reply.guestIdInteractedBy.name}
-                                                                                    className="rounded-full"
-                                                                                    width={32}
-                                                                                    height={32}
-                                                                                    preview={false}
-                                                                                    style={{ marginRight: '12px' }}
-                                                                                />
-                                                                                <div>
-                                                                                    <div className="flex items-center">
-                                                                                        <h5 className="font-medium text-sm">
-                                                                                            {reply.guestIdInteractedBy.name}
-                                                                                        </h5>
-                                                                                        {reply.isAdminReply && (
-                                                                                            <span className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 px-2 py-0.5 text-xs rounded-full">
-                                                                                                Nhân viên
-                                                                                            </span>
-                                                                                        )}
-                                                                                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(reply.ratingAt)}</span>
-                                                                                    </div>
-                                                                                    <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{reply.content}</p>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                            </div>
-
-                                            {/* Nút xem thêm */}
-                                            <div className="mt-6 text-center">
-                                                {productComments && productComments.pagination.totalPages > page ?
-                                                    <Button loading={isLoadingSubmit} onClick={handleLoadMoreComments} type="default" className="hover:border-blue-500 hover:text-blue-600">
-                                                        Xem thêm đánh giá
-                                                    </Button>
-                                                    :
-                                                    <Button loading={isLoadingSubmit} onClick={handleCloseComments} type="default" className="hover:border-blue-500 hover:text-blue-600">
-                                                        Ẩn đánh giá
-                                                    </Button>
-                                                }
-                                            </div>
+                                            <CommentProduct product={product} />
                                         </>
                                     )
                                 },

@@ -58,7 +58,7 @@ export class ProductService {
   async findOne(id: string) {
     return await this.productModel.findOne(
       { _id: id },
-      { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, other: 1 }
+      { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, other: 1, ratingAvg: 1, totalRatings: 1 }
     ).populate("category");
   }
 
@@ -92,11 +92,15 @@ export class ProductService {
 
     const product = await this.productModel.findOne({ _id: createProductInteractionDto.productId });
 
+
+
     if (product != null) {
+      const newTotal = product.totalRatings + 1;
+      const newAvg = (product.ratingAvg * product.totalRatings + dataComment.rating) / newTotal;
       await this.productModel.updateOne(
         { _id: product._id },
         {
-          $set: { ratingAvg: product.ratingAvg + dataComment.rating / 2, totalRatings: product.totalRatings + 1 },
+          $set: { ratingAvg: newAvg, totalRatings: newTotal },
         }
       );
     }
@@ -176,15 +180,27 @@ export class ProductService {
     const limit = 4 * page;
     // Đếm tổng số sản phẩm để tính totalPages
     const totalItems = await this.productModelInteraction.countDocuments(filterProduct);
-    const comments = await this.productModelInteraction.find(
+    const commentsProduct = await this.productModelInteraction.find(
       filterProduct,
       { guestId: 1, content: 1, rating: 1, images: 1, createdAt: 1, likes: 1, dislikes: 1 }
     ).sort({ createdAt: -1 }).limit(limit).populate("guestId", { _id: 1, name: 1, email: 1, avatar: 1 });
 
-    const productModelInteractionDetail = await this.productModelInteractionDetail.find({ productId: productId }).populate("guestIdInteractedBy", { _id: 1, name: 1, email: 1, avatar: 1 });
-    comments.forEach(comment => {
-      comment['replies'] = productModelInteractionDetail.filter(detail => detail.productInteractionId.toString() === comment._id.toString());
-    });
+
+
+    const comments = await Promise.all(
+      commentsProduct.map(async (comment) => {
+        const replies = await this.productModelInteractionDetail
+          .find({ productInteractionId: comment._id.toString() })
+          .populate("guestIdInteractedBy", { _id: 1, name: 1, email: 1, avatar: 1 });
+
+        return {
+          ...comment.toObject(),
+          replies: replies || []
+        };
+      })
+    );
+
+
 
 
     return {
