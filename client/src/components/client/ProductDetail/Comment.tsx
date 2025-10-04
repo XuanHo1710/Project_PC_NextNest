@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button, Rate, Progress, Image, message } from 'antd';
-import { CommentOutlined, DislikeOutlined, LikeOutlined, SendOutlined, StarFilled } from '@ant-design/icons';
+import { CommentOutlined, SendOutlined, StarFilled } from '@ant-design/icons';
 import TextArea from 'antd/es/input/TextArea';
 import { CommentsSkeleton } from '@/components/Skeletons/CommentsSkeleton';
 import { cleanupImageUrls, handleImageFiles, ImagePreview, PreviewImage } from '@/utils/imagePreview';
@@ -12,6 +12,7 @@ import useAuthUser from '@/hooks/useAuthUser';
 import { productClientService } from '@/services/client';
 import { formatDateTime } from '@/utils/formatDateTime';
 import { IProductCard } from '@/types/model.client';
+import HandleLike from '@/components/client/ProductDetail/HandleLike';
 
 export default function CommentProduct({ product }: { product: IProductCard }) {
     const queryClient = useQueryClient();
@@ -51,17 +52,6 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
         }
     });
 
-    // Mutation for posting comments
-    const interactMutation = useMutation({
-        mutationFn: ({ commentId, guestIdInteractedBy, isLike }: { commentId: string, guestIdInteractedBy: string, isLike: boolean }) =>
-            productClientService.interactCommentProduct(commentId, guestIdInteractedBy, isLike),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['product-comments', product._id] });
-        },
-        onError: () => {
-            message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
-        }
-    });
 
     // Mutation for posting comments
     const replyMutation = useMutation({
@@ -94,31 +84,6 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
         };
     }, [replyImages]);
 
-    const handleLikeComment = (commentId: string) => {
-        if (!user) {
-            message.error('Vui lòng đăng nhập để thực hiện hành động này.');
-            return;
-        }
-        const dataInteract = {
-            commentId: commentId,
-            guestIdInteractedBy: user?.id || "",
-            isLike: true
-        }
-        interactMutation.mutate(dataInteract);
-    };
-
-    const handleDislikeComment = (commentId: string) => {
-        if (!user) {
-            message.error('Vui lòng đăng nhập để thực hiện hành động này.');
-            return;
-        }
-        const dataInteract = {
-            commentId: commentId,
-            guestIdInteractedBy: user?.id || "",
-            isLike: false
-        }
-        interactMutation.mutate(dataInteract);
-    };
 
     // Xử lý trả lời comment
     const handleReplyClick = (commentIndex: string) => {
@@ -360,25 +325,9 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                     </div>
                                     <p className="mt-2 text-gray-700 dark:text-gray-300">{comment.content}</p>
                                     <div className="mt-3 flex items-center space-x-4">
-                                        <button
-                                            className={"dark:text-gray-400 cursor-pointer text-sm flex items-center hover:text-blue-600 "
-                                                + (comment.replies.filter(r => !r.guestIdInteractedBy.isReply && r.isLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#") ? "text-blue-600" : "text-gray-500")
-                                            }
-                                            onClick={() => handleLikeComment(comment._id)}
-                                        >
-
-                                            <LikeOutlined className="mr-1" />
-                                            Hữu ích ({comment.likes})
-                                        </button>
-                                        <button
-                                            className={"dark:text-gray-400 cursor-pointer text-sm flex items-center hover:text-red-600 "
-                                                + (comment.replies.filter(r => !r.guestIdInteractedBy.isReply && r.isDisLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#") ? "text-red-600" : "text-gray-500")
-                                            }
-                                            onClick={() => handleDislikeComment(comment._id)}
-                                        >
-                                            <DislikeOutlined className="mr-1" />
-                                            Không hữu ích ({comment.dislikes})
-                                        </button>
+                                        {/* Like and dislike in this components */}
+                                        <HandleLike user={user} product={product} comment={comment} />
+                                        {/* End like and dislike in this components */}
                                         <button
                                             className="text-gray-500 cursor-pointer dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
                                             onClick={() => handleReplyClick(index.toString())}

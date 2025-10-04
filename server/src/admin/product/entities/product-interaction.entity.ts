@@ -41,5 +41,12 @@ export class ProductInteraction {
     ratingAt: Date;
 
 }
-
 export const ProductInteractionSchema = SchemaFactory.createForClass(ProductInteraction);
+
+ProductInteractionSchema.index({ guestId: 1, productId: 1 }, { unique: true });
+ProductInteractionSchema.index({ productId: 1 });
+ProductInteractionSchema.index({ guestId: 1 });
+ProductInteractionSchema.index({ isFavorited: 1 });
+ProductInteractionSchema.index({ isWishlisted: 1 });
+ProductInteractionSchema.index({ rating: 1 });
+ProductInteractionSchema.index({ ratingAt: -1 });

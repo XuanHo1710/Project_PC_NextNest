@@ -45,4 +45,16 @@ export class ProductController {
     return this.productService.interactCommentProduct(commentId, guestIdInteractedBy, isLike);
   }
 
+
+  @Post('/handle-favorite')
+  addProductToWishlist(@Body() { guestId, productId, isWishlisted }: { guestId: string, productId: string, isWishlisted: boolean }) {
+    return this.productService.handleWishlist(guestId, productId, isWishlisted);
+  }
+
+  @Get('/get-wishlist/:guestId')
+  isWishlistByGuestAndProduct(@Param("guestId") guestId: string, @Query("productId") productId: string) {
+    return this.productService.isWishlistByGuestAndProduct(guestId, productId);
+  }
+
+
 }

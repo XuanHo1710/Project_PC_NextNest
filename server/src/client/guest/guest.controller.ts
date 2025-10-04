@@ -69,4 +69,10 @@ export class GuestController {
             passwordData.newPassword
         );
     }
+
+
+    @Get('/profile/:id/wishlist')
+    getWishlist(@Param('id') guestId: string) {
+        return this.guestService.getWishlist(guestId);
+    }
 }

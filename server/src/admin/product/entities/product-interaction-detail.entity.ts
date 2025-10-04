@@ -37,3 +37,10 @@ export class ProductInteractionDetail {
 }
 
 export const ProductInteractionDetailSchema = SchemaFactory.createForClass(ProductInteractionDetail);
+
+// Indexes
+ProductInteractionDetailSchema.index({ productInteractionId: 1 });
+ProductInteractionDetailSchema.index({ guestIdInteractedBy: 1 });
+ProductInteractionDetailSchema.index({ isLiked: 1 });
+ProductInteractionDetailSchema.index({ isDisLiked: 1 });
+ProductInteractionDetailSchema.index({ isReply: 1 });

@@ -39,7 +39,7 @@ export class Product {
     @Prop({ default: false })
     feature: boolean
 
-    @Prop({ default: 5, min: 1, max: 5 })
+    @Prop({ default: 0, min: 1, max: 5 })
     ratingAvg: number;
 
     @Prop({ default: 0 })

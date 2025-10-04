@@ -236,4 +236,42 @@ export class ProductService {
     }
   }
 
+
+  async handleWishlist(guestId: string, productId: string, isWishlisted: boolean) {
+    // isWishlisted = true => thêm vào wishlist, false => bỏ khỏi wishlist
+    const product = await this.productModel.findById(productId);
+    if (!product) {
+      throw new BadRequestException('Sản phẩm không tồn tại');
+    }
+    const userWishlist = await this.productModelInteraction.findOne({ guestId: guestId, productId: productId });
+    if (userWishlist) {
+      if (isWishlisted) {
+        await this.productModelInteraction.updateOne(
+          { _id: userWishlist._id },
+          { $set: { isWishlisted: true } }
+        );
+        return { message: 'Thêm sản phẩm vào danh sách yêu thích thành công' };
+      } else {
+        await this.productModelInteraction.updateOne(
+          { _id: userWishlist._id },
+          { $set: { isWishlisted: false } }
+        );
+        return { message: 'Bỏ sản phẩm khỏi danh sách yêu thích thành công' };
+      }
+    } else {
+      // Tạo mới mục yêu thích
+      const wishlistEntry = new this.productModelInteraction({
+        guestId: guestId,
+        productId: productId,
+        isWishlisted: true
+      });
+      await wishlistEntry.save();
+      return { message: 'Thêm sản phẩm vào danh sách yêu thích thành công' };
+    }
+  }
+
+  async isWishlistByGuestAndProduct(guestId: string, productId: string) {
+    const wishlistEntries = await this.productModelInteraction.find({ productId: productId, guestId: guestId, isWishlisted: true });
+    return { isWishlisted: wishlistEntries.length > 0 }
+  }
 }

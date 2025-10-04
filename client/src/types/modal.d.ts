@@ -109,18 +109,20 @@ export interface IReplyComment {
     ratingAt: Date;
 }
 
+export interface IComment {
+    _id: string,
+    guestId: { _id: string, name: string, email: string, avatar: string },
+    content: string,
+    rating: number,
+    images: string[],
+    createdAt: Date,
+    likes: number,
+    dislikes: number,
+    replies: IReplyComment[]
+}
+
 export interface IProductInteraction {
-    comments: [{
-        _id: string,
-        guestId: { _id: string, name: string, email: string, avatar: string },
-        content: string,
-        rating: number,
-        images: string[],
-        createdAt: Date,
-        likes: number,
-        dislikes: number,
-        replies: IReplyComment[]
-    }],
+    comments: IComment[],
     pagination: {
         totalItems: number,
         totalPages: number,

@@ -3,8 +3,8 @@ import { useEffect } from 'react';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
 import { IProductCard, IProductWithPagination } from "@/types/model.client";
-import { useQuery } from "@tanstack/react-query";
-import { Button, Carousel, Image, Rate, Tag, Tabs } from "antd";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button, Carousel, Image, Rate, Tag, Tabs, message } from "antd";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ProductDetailSkeleton } from "@/components/Skeletons";
@@ -24,6 +24,7 @@ import DescriptionProduct from '@/components/client/ProductDetail/Description';
 import SpecificationsProduct from '@/components/client/ProductDetail/Specifications';
 import useCartStore from '@/hooks/useCart';
 import Swal from "sweetalert2";
+import useAuthUser from '@/hooks/useAuthUser';
 
 
 // Dữ liệu demo cho FAQ
@@ -51,6 +52,25 @@ export default function ProductDetailClient() {
     const { id } = useParams();
     const router = useRouter();
     const { addToCart } = useCartStore();
+    const { user } = useAuthUser();
+    const queryClient = useQueryClient();
+
+
+    const { data: dataWishlist, isLoading: isLoadingWishlist } = useQuery<{ isWishlisted: boolean }>({
+        queryKey: ['product-isWishlist', id, user?.id],
+        queryFn: () => productClientService.isWishlistByGuestAndProduct(user?.id || "", id as string),
+        enabled: !!id && !!user?.id,
+    });
+
+    // const { data: guestWishlist, isLoading: isLoadingGuestWishlist } = useQuery<IProductCard[]>({
+    //     queryKey: ['product-guestWishlist', id, user?.id],
+    //     queryFn: () => guestClientService.getWishlist(user?.id || ""),
+    //     enabled: !!id && !!user?.id,
+    // });
+
+    // console.log(guestWishlist);
+
+
 
     const { data: product, isLoading: isLoadingProduct } = useQuery<IProductCard>({
         queryKey: ['product-by-id', id],
@@ -64,10 +84,23 @@ export default function ProductDetailClient() {
         enabled: !!product?.category?._id,
     });
 
-    console.log(product);
+    // Mutation for posting comments
+    const addToListMutation = useMutation({
+        mutationFn: ({ guestID, productID, isWishlist }: { guestID: string, productID: string, isWishlist: boolean }) =>
+            productClientService.handleWishlist(guestID, productID, isWishlist),
+        onSuccess: () => {
+            Swal.fire({
+                icon: "success",
+                title: "Cập nhật danh sách yêu thích thành công!",
+            });
+            queryClient.invalidateQueries({ queryKey: ['product-isWishlist', id, user?.id] });
+        },
+        onError: () => {
+            message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        }
+    });
 
-
-    const isLoading = isLoadingProduct || isLoadingRelated;
+    const isLoading = isLoadingProduct || isLoadingRelated || isLoadingWishlist;
 
     useEffect(() => {
         if (!isLoading) {
@@ -99,6 +132,17 @@ export default function ProductDetailClient() {
             },
         },
     ];
+
+    const handleAddToWishlist = (product: IProductCard) => {
+        const guestID = user?.id || "";
+        if (!guestID) {
+            Swal.fire({
+                icon: "warning",
+                title: "Vui lòng đăng nhập để sử dụng tính năng này!",
+            });
+        }
+        addToListMutation.mutate({ guestID, productID: product._id, isWishlist: !dataWishlist?.isWishlisted });
+    }
 
 
 
@@ -323,7 +367,7 @@ export default function ProductDetailClient() {
                                             addToCart(product)
                                         }}
                                         icon={<ShoppingCartOutlined />}
-                                        className='shadow-lg font-medium sm:font-bold text-sm sm:text-lg bg-yellow-500 dark:bg-yellow-600 text-white border-yellow-500 hover:bg-yellow-600 hover:border-yellow-600 h-auto py-2 px-6'
+                                        className='!shadow-lg !font-medium !sm:font-bold !text-sm !sm:text-lg !bg-yellow-500 !dark:bg-yellow-600 !text-white !border-yellow-500 hover:!bg-yellow-600 hover:!border-yellow-600 !h-auto !py-2 !px-6'
                                     >
                                         Thêm vào giỏ hàng
                                     </Button>
@@ -334,14 +378,17 @@ export default function ProductDetailClient() {
                                             router.push('/cart');
                                         }}
                                         icon={<ThunderboltFilled />}
-                                        className='shadow-lg font-medium sm:font-bold text-sm sm:text-lg bg-red-500 dark:bg-red-600 text-white border-red-500 hover:bg-red-600 hover:border-red-600 h-auto py-2 px-8'
+                                        className='!shadow-lg !font-medium !sm:font-bold !text-sm !sm:text-lg !bg-red-500 !dark:bg-red-600 !text-white !border-red-500 hover:!bg-red-600 hover:!border-red-600 !h-auto !py-2 !px-8'
                                     >
                                         Mua ngay
                                     </Button>
                                     <Button
                                         size="large"
                                         icon={<HeartOutlined />}
-                                        className='shadow-sm font-medium text-sm sm:text-base border-gray-300 hover:text-red-500 h-auto'
+                                        onClick={() => handleAddToWishlist(product)}
+                                        className={'!shadow-sm !font-medium !text-sm !sm:text-base !border-gray-300 hover:!text-red-500 !h-auto '
+                                            + (dataWishlist && dataWishlist.isWishlisted ? ' !text-red-500 !border-red-300' : ' !text-black')
+                                        }
                                     >
                                         Yêu thích
                                     </Button>

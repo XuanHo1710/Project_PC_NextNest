@@ -4,12 +4,16 @@ import { Model } from 'mongoose';
 import { Guest, GuestDocument } from 'src/admin/guest/entities/guest.entity';
 import * as bcrypt from 'bcrypt';
 import { AccountGuest, AccountGuestDocument } from 'src/admin/account-guest/entities/account-guest.entity';
+import { Product } from 'src/admin/product/entities/product.entity';
+import { ProductInteraction } from 'src/admin/product/entities/product-interaction.entity';
 
 @Injectable()
 export class GuestService implements OnModuleInit {
     constructor(
         @InjectModel(Guest.name) private guestModel: Model<GuestDocument>,
         @InjectModel(AccountGuest.name) private accountModel: Model<AccountGuestDocument>,
+        @InjectModel(ProductInteraction.name) private productInteractionModel: Model<ProductInteraction>,
+        @InjectModel(Product.name) private productModel: Model<Product>,
     ) { }
 
     async onModuleInit() {
@@ -231,5 +235,13 @@ export class GuestService implements OnModuleInit {
         await accountGuest.save();
 
         return { message: 'Password changed successfully' };
+    }
+
+    async getWishlist(guestId: string): Promise<Product[]> {
+        const listIdWishlist = await this.productInteractionModel.find({ guestId: guestId, isWishlisted: true }).select('productId').exec();
+        const products = await this.productModel.find({ _id: { $in: listIdWishlist.map(item => item.productId) }, deletedAt: { $exists: false } },
+            { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1 }
+        ).exec();
+        return products;
     }
 }

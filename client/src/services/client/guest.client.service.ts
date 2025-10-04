@@ -1,6 +1,7 @@
 // services/category.service.ts
 import axios from '@/config/axiosClient'
 import { IGuest, IAddress } from '@/types/account'
+import { IProductCard } from '@/types/model.client'
 
 class GuestClientService {
     async getProfile(userId: string): Promise<IGuest> {
@@ -40,6 +41,11 @@ class GuestClientService {
             currentPassword,
             newPassword
         })
+        return response.data
+    }
+
+    async getWishlist(guestId: string): Promise<IProductCard[]> {
+        const response = await axios.get(`/guest/profile/${guestId}/wishlist`)
         return response.data
     }
 }

@@ -48,6 +48,18 @@ class ProductClientService {
         return response.data
     }
 
+    async handleWishlist(guestId: string, productId: string, isWishlisted: boolean): Promise<unknown> {
+        const response = await axios.post(`product/handle-favorite`, { guestId, productId, isWishlisted })
+        return response.data
+    }
+
+    async isWishlistByGuestAndProduct(guestId: string, productId: string): Promise<{ isWishlisted: boolean }> {
+        const response = await axios.get(`product/get-wishlist/${guestId}`, {
+            params: { productId }
+        })
+        return response.data
+    }
+
 }
 
 export const productClientService = new ProductClientService()
