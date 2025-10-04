@@ -55,15 +55,14 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
 
     // Mutation for posting comments
     const replyMutation = useMutation({
-        mutationFn: ({ guestId, productId, guestReplyId, content, images, isAdminReply }: {
-            guestId: string,
-            productId: string,
+        mutationFn: ({ commentId, guestReplyId, content, images, isAdminReply }: {
+            commentId: string,
             guestReplyId: string,
             content: string,
             images: string[],
             isAdminReply?: boolean
         }) =>
-            productClientService.replyCommentProduct(guestId, productId, guestReplyId, content, images, isAdminReply),
+            productClientService.replyCommentProduct(commentId, guestReplyId, content, images, isAdminReply),
         onSuccess: () => {
             message.success('Bình luận của bạn đã được gửi thành công!');
             setIsSubmittingReply(false);
@@ -84,6 +83,9 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
         };
     }, [replyImages]);
 
+    console.log(productComments);
+
+
 
     // Xử lý trả lời comment
     const handleReplyClick = (commentIndex: string) => {
@@ -98,7 +100,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
         }
     };
 
-    const handleReplySubmit = async (guestId: string, e: React.FormEvent<HTMLFormElement>) => {
+    const handleReplySubmit = async (commentId: string, e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!user) {
             message.error('Vui lòng đăng nhập để trả lời bình luận.');
@@ -114,8 +116,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
             return;
         }
         const dataReply = {
-            guestId: guestId,
-            productId: product._id,
+            commentId: commentId,
             guestReplyId: user.id,
             content: replyContent,
             images: [],
@@ -336,7 +337,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                             Trả lời
                                         </button>
                                         {/* Nút xem replies */}
-                                        {comment.replies && comment.replies.filter(r => r.guestIdInteractedBy.isReply).length > 0 && (
+                                        {comment.replies && comment.replies.filter(r => r.isReply).length > 0 && (
                                             <button
                                                 className="text-gray-500 dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
                                                 onClick={() => toggleRepliesExpansion(index.toString())}
@@ -344,12 +345,12 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                                 {expandedComments.has(`comment-${index}`) ? (
                                                     <>
                                                         <span className="icon-[material-symbols--expand-less] mr-1"></span>
-                                                        Ẩn {comment.replies.length} phản hồi
+                                                        Ẩn {comment.replies.filter(r => r.isReply).length} phản hồi
                                                     </>
                                                 ) : (
                                                     <>
                                                         <span className="icon-[material-symbols--expand-more] mr-1"></span>
-                                                        Xem {comment.replies.length} phản hồi
+                                                        Xem {comment.replies.filter(r => r.isReply).length} phản hồi
                                                     </>
                                                 )}
                                             </button>
@@ -368,7 +369,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                                     height={32}
                                                     preview={false}
                                                 />
-                                                <form action="#" onSubmit={(e) => handleReplySubmit(comment.guestId._id, e)} method='post' className="flex-1">
+                                                <form action="#" onSubmit={(e) => handleReplySubmit(comment._id, e)} method='post' className="flex-1">
                                                     <TextArea
                                                         rows={3}
                                                         placeholder="Viết trả lời của bạn..."
@@ -428,9 +429,9 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                             </div>
 
                             {/* Phần trả lời */}
-                            {comment.replies && comment.replies.filter(r => r.guestIdInteractedBy.isReply).length > 0 && expandedComments.has(`comment-${index}`) && (
+                            {comment.replies && comment.replies.filter(r => r.isReply).length > 0 && expandedComments.has(`comment-${index}`) && (
                                 <div className="ml-16 mt-4">
-                                    {comment.replies.map((reply: IReplyComment, replyIndex: number) => (
+                                    {comment.replies.filter(r => r.isReply).map((reply: IReplyComment, replyIndex: number) => (
                                         <div key={replyIndex} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-2">
                                             <div className="flex gap-3 items-start">
                                                 <Image

@@ -15,8 +15,9 @@ export class CreateProductInteractionDetailDto {
 
     content: string;
 
-
     isAdminReply: boolean;
 
     images: string[];
+
+    isReply: boolean
 }

@@ -143,8 +143,8 @@ export class ProductService {
     }
   }
 
-  async replyCommentProduct(guestId: string, productId: string, guestReplyId: string, content: string, images: string[], isAdminReply: boolean = false) {
-    const interaction = await this.productModelInteraction.findOne({ productId: productId, guestId: guestId, isRating: true });
+  async replyCommentProduct(commentId: string, guestReplyId: string, content: string, images: string[], isAdminReply: boolean = false) {
+    const interaction = await this.productModelInteraction.findOne({ _id: commentId, isRating: true });
     if (interaction == null) {
       throw new BadRequestException('Bình luận không tồn tại');
     }

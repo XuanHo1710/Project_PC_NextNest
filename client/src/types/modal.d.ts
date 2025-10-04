@@ -100,11 +100,12 @@ export interface ICreateProductInteraction {
 
 export interface IReplyComment {
     productInteractionId: string;
-    guestIdInteractedBy: { _id: string, name: string, email: string, avatar: string, isReply: boolean };
+    guestIdInteractedBy: { _id: string, name: string, email: string, avatar: string };
     isLiked: boolean; // Like sản phẩm
     isDisLiked: boolean; // Dislike sản phẩm
     content: string;
     isAdminReply: boolean;
+    isReply: boolean; // Moved from guestIdInteractedBy to reply level
     images: string[]; // Ảnh đính kèm trong review
     ratingAt: Date;
 }

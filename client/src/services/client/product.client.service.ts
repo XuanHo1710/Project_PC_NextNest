@@ -38,8 +38,8 @@ class ProductClientService {
         return response.data
     }
 
-    async replyCommentProduct(guestId: string, productId: string, guestReplyId: string, content: string, images: string[], isAdminReply: boolean = false): Promise<unknown> {
-        const response = await axios.post(`product/reply-comment`, { guestId, productId, guestReplyId, content, images, isAdminReply })
+    async replyCommentProduct(commentId: string, guestReplyId: string, content: string, images: string[], isAdminReply: boolean = false): Promise<unknown> {
+        const response = await axios.post(`product/reply-comment`, { commentId, guestReplyId, content, images, isAdminReply })
         return response.data
     }
 

@@ -36,8 +36,8 @@ export class ProductController {
   }
 
   @Post('/reply-comment')
-  replyCommentProduct(@Body() { guestId, productId, guestReplyId, content, images, isAdminReply = false }: { guestId: string, productId: string, guestReplyId: string, content: string, images: string[], isAdminReply?: boolean }) {
-    return this.productService.replyCommentProduct(guestId, productId, guestReplyId, content, images, isAdminReply);
+  replyCommentProduct(@Body() { commentId, guestReplyId, content, images, isAdminReply = false }: { commentId: string, guestReplyId: string, content: string, images: string[], isAdminReply?: boolean }) {
+    return this.productService.replyCommentProduct(commentId, guestReplyId, content, images, isAdminReply);
   }
 
   @Post('/interact-comment')
