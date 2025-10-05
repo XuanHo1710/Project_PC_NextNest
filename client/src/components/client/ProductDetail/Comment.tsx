@@ -46,6 +46,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
             setUserRating(0);
             setIsLoadingSubmit(false);
             queryClient.invalidateQueries({ queryKey: ['product-comments', product._id] });
+            queryClient.invalidateQueries({ queryKey: ['product-by-id', product._id] });
         },
         onError: () => {
             message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
@@ -226,28 +227,53 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                         <div className="space-y-2">
                             <div className="flex items-center">
                                 <span className="w-20 text-sm">5 sao</span>
-                                <Progress percent={85} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">85%</span>
+                                <Progress
+                                    percent={productComments ? ((productComments?.statistics.totalRating5 / productComments?.statistics.totalRatingAll) * 100) : 0}
+                                    showInfo={false}
+                                    className="flex-grow mx-4"
+                                    strokeColor="#fadb14"
+                                />
+                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">{productComments ? ((productComments?.statistics.totalRating5 / productComments?.statistics.totalRatingAll) * 100).toFixed(0) : 0}%</span>
                             </div>
                             <div className="flex items-center">
                                 <span className="w-20 text-sm">4 sao</span>
-                                <Progress percent={12} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">12%</span>
+                                <Progress
+                                    percent={productComments ? ((productComments?.statistics.totalRating4 / productComments?.statistics.totalRatingAll) * 100) : 0}
+                                    showInfo={false}
+                                    className="flex-grow mx-4"
+                                    strokeColor="#fadb14"
+                                />
+                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">{productComments ? ((productComments?.statistics.totalRating4 / productComments?.statistics.totalRatingAll) * 100).toFixed(0) : 0}%</span>
                             </div>
                             <div className="flex items-center">
                                 <span className="w-20 text-sm">3 sao</span>
-                                <Progress percent={3} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">3%</span>
+                                <Progress
+                                    percent={productComments ? ((productComments?.statistics.totalRating3 / productComments?.statistics.totalRatingAll) * 100) : 0}
+                                    showInfo={false}
+                                    className="flex-grow mx-4"
+                                    strokeColor="#fadb14"
+                                />
+                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">{productComments ? ((productComments?.statistics.totalRating3 / productComments?.statistics.totalRatingAll) * 100).toFixed(0) : 0}%</span>
                             </div>
                             <div className="flex items-center">
                                 <span className="w-20 text-sm">2 sao</span>
-                                <Progress percent={0} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">0%</span>
+                                <Progress
+                                    percent={productComments ? ((productComments?.statistics.totalRating2 / productComments?.statistics.totalRatingAll) * 100) : 0}
+                                    showInfo={false}
+                                    className="flex-grow mx-4"
+                                    strokeColor="#fadb14"
+                                />
+                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">{productComments ? ((productComments?.statistics.totalRating2 / productComments?.statistics.totalRatingAll) * 100).toFixed(0) : 0}%</span>
                             </div>
                             <div className="flex items-center">
                                 <span className="w-20 text-sm">1 sao</span>
-                                <Progress percent={0} showInfo={false} className="flex-grow mx-4" strokeColor="#fadb14" />
-                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">0%</span>
+                                <Progress
+                                    percent={productComments ? ((productComments?.statistics.totalRating1 / productComments?.statistics.totalRatingAll) * 100) : 0}
+                                    showInfo={false}
+                                    className="flex-grow mx-4"
+                                    strokeColor="#fadb14"
+                                />
+                                <span className="w-10 text-right text-sm text-gray-500 dark:text-gray-300">{productComments ? ((productComments?.statistics.totalRating1 / productComments?.statistics.totalRatingAll) * 100).toFixed(0) : 0}%</span>
                             </div>
                         </div>
                     </div>
@@ -319,7 +345,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                                 {comment.guestId.name}
                                             </h4>
                                             <div className="flex items-center mt-1">
-                                                <Rate disabled defaultValue={comment.rating} className="text-xs" />
+                                                <Rate disabled value={comment.rating} className="text-xs" />
                                                 <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(comment.createdAt)}</span>
                                             </div>
                                         </div>

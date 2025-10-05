@@ -123,6 +123,14 @@ export interface IComment {
 }
 
 export interface IProductInteraction {
+    statistics: {
+        totalRatingAll: number,
+        totalRating1: number,
+        totalRating2: number,
+        totalRating3: number,
+        totalRating4: number,
+        totalRating5: number,
+    }
     comments: IComment[],
     pagination: {
         totalItems: number,

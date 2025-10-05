@@ -117,6 +117,24 @@ export class ProductService {
       { guestId: 1, content: 1, rating: 1, images: 1, createdAt: 1, likes: 1, dislikes: 1 }
     ).sort({ createdAt: -1 }).limit(limit).populate("guestId", { _id: 1, name: 1, email: 1, avatar: 1 });
 
+    // Đếm tổng số đánh giá theo từng sao
+    const totalRating1 = await this.productModelInteraction.countDocuments({ ...filterProduct, rating: 1 });
+    const totalRating2 = await this.productModelInteraction.countDocuments({ ...filterProduct, rating: 2 });
+    const totalRating3 = await this.productModelInteraction.countDocuments({ ...filterProduct, rating: 3 });
+    const totalRating4 = await this.productModelInteraction.countDocuments({ ...filterProduct, rating: 4 });
+    const totalRating5 = await this.productModelInteraction.countDocuments({ ...filterProduct, rating: 5 });
+
+
+
+    const statistics = {
+      totalRatingAll: totalItems,
+      totalRating1: totalRating1,
+      totalRating2: totalRating2,
+      totalRating3: totalRating3,
+      totalRating4: totalRating4,
+      totalRating5: totalRating5,
+    }
+
 
     const comments = await Promise.all(
       commentsProduct.map(async (comment) => {
@@ -133,6 +151,7 @@ export class ProductService {
 
 
     return {
+      statistics,
       comments,
       pagination: {
         totalItems,

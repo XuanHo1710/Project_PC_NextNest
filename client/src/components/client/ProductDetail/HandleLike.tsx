@@ -13,10 +13,10 @@ type User = ILoginResponse['user'];
 
 export default function HandleLike({ user, product, comment }: { user: User | null, product: IProductCard, comment: IComment }) {
     const [isLiked, setIsLiked] = useState<boolean>(
-        comment.replies.filter(r => !r.guestIdInteractedBy.isReply && r.isLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#")
+        comment.replies.filter(r => !r.isReply && r.isLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#")
     );
     const [isDisliked, setIsDisliked] = useState<boolean>(
-        comment.replies.filter(r => !r.guestIdInteractedBy.isReply && r.isDisLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#")
+        comment.replies.filter(r => !r.isReply && r.isDisLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#")
     );
 
     const [totalLikes, setTotalLikes] = useState<number>(comment.likes);
@@ -29,7 +29,7 @@ export default function HandleLike({ user, product, comment }: { user: User | nu
         mutationFn: ({ commentId, guestIdInteractedBy, isLike }: { commentId: string, guestIdInteractedBy: string, isLike: boolean }) =>
             productClientService.interactCommentProduct(commentId, guestIdInteractedBy, isLike),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['product-comments', product._id] });
+            queryClient.invalidateQueries({ queryKey: ['product-comments', product._id] })
         },
         onError: () => {
             message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
