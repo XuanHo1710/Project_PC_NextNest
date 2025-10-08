@@ -22,7 +22,7 @@ const CartProduct = ({ cartItem, handle }: CartProductProps) => {
                     </div>
                     <div className='basis-5/6 relative'>
                         <div className='flex absolute top-0 left-0 right-0 items-center justify-between'>
-                            <Link href={`/product/${cartItem.product._id}`}>
+                            <Link href={`/product/${cartItem.product.slug}`}>
                                 <h2 className='hover:text-blue-500 dark:text-white cursor-pointer text-sm md:text-base line-clamp-1'>
                                     <span className='font-bold text-red-500'>[DEAL] </span>
                                     {cartItem.product.name}

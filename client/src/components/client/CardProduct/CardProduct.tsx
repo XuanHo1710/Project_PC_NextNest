@@ -40,7 +40,7 @@ const CardProduct = ({ product, css }: { product: IProductCard, css: string }) =
                     />
                 </div>
                 <div className='card-content mb-3 text-center'>
-                    <Link href={`/product/${product._id}`}>
+                    <Link href={`/product/${product.slug}`}>
                         <h2 className='font-medium cursor-pointer min-h-12 hover:text-blue-500 text-sm lg:text-base line-clamp-2'>
                             {product.name}
                         </h2>

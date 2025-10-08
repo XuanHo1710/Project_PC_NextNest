@@ -14,7 +14,7 @@ const baseURL = 'http://localhost:8080/api/v1/admin/'; // URL backend
 // Tạo instance axios
 const instance = axios.create({
   baseURL,
-  timeout: 6000,
+  timeout: 10000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

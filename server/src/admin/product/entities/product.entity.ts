@@ -68,6 +68,9 @@ export class Product {
         email: string
     }
 
+    @Prop({ unique: true })
+    slug: string;
+
     @Prop()
     createdAt: Date;
 

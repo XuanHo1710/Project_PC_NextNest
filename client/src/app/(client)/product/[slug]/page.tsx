@@ -49,19 +49,11 @@ const faqs = [
 
 
 export default function ProductDetailClient() {
-    const { id } = useParams();
+    const { slug } = useParams();
     const router = useRouter();
     const { addToCart } = useCartStore();
     const { user } = useAuthUser();
     const queryClient = useQueryClient();
-
-
-    const { data: dataWishlist, isLoading: isLoadingWishlist } = useQuery<{ isWishlisted: boolean }>({
-        queryKey: ['product-isWishlist', id, user?.id],
-        queryFn: () => productClientService.isWishlistByGuestAndProduct(user?.id || "", id as string),
-        enabled: !!id && !!user?.id,
-    });
-
     // const { data: guestWishlist, isLoading: isLoadingGuestWishlist } = useQuery<IProductCard[]>({
     //     queryKey: ['product-guestWishlist', id, user?.id],
     //     queryFn: () => guestClientService.getWishlist(user?.id || ""),
@@ -70,12 +62,16 @@ export default function ProductDetailClient() {
 
     // console.log(guestWishlist);
 
-
-
     const { data: product, isLoading: isLoadingProduct } = useQuery<IProductCard>({
-        queryKey: ['product-by-id', id],
-        queryFn: () => productClientService.getProductsById(id as string),
-        enabled: !!id,
+        queryKey: ['product-by-id', slug],
+        queryFn: () => productClientService.getProductsBySlug(slug as string),
+        enabled: !!slug,
+    });
+
+    const { data: dataWishlist, isLoading: isLoadingWishlist } = useQuery<{ isWishlisted: boolean }>({
+        queryKey: ['product-isWishlist', product?._id, user?.id],
+        queryFn: () => productClientService.isWishlistByGuestAndProduct(user?.id || "", product?._id as string),
+        enabled: !!product?._id && !!user?.id,
     });
 
     const { data: dataProduct, isLoading: isLoadingRelated } = useQuery<(IProductWithPagination) | null>({
@@ -93,7 +89,7 @@ export default function ProductDetailClient() {
                 icon: "success",
                 title: "Cập nhật danh sách yêu thích thành công!",
             });
-            queryClient.invalidateQueries({ queryKey: ['product-isWishlist', id, user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['product-isWishlist', product?._id, user?.id] });
         },
         onError: () => {
             message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
@@ -159,7 +155,7 @@ export default function ProductDetailClient() {
                     <div className='rounded-lg mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
                         <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white  mr-3 header-nav active">Trang chủ</Link>
                         <i className="fa-solid fa-chevron-right text-stone-500  mr-3"></i>
-                        <Link href={`/category/${product.category?._id}`} className="font-medium text-lg text-stone-500 dark:text-white  mr-3 header-nav active">{product.category?.name}</Link>
+                        <Link href={`/category/${product.category?.slug}`} className="font-medium text-lg text-stone-500 dark:text-white  mr-3 header-nav active">{product.category?.name}</Link>
                         <i className="fa-solid fa-chevron-right text-stone-500 dark:text-gray-400 mr-3"></i>
                         <h3 className="font-medium text-lg  text-blue-500 dark:text-white  mr-3">{product.name}</h3>
                     </div>

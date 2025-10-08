@@ -18,9 +18,9 @@ export class ProductController {
   }
 
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productService.findOne(id);
+  @Get(':slug')
+  findOne(@Param('slug') slug: string) {
+    return this.productService.findOne(slug);
   }
 
 

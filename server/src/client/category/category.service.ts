@@ -43,7 +43,7 @@ export class CategoryService {
           from: "products", localField: "_id", foreignField: "category", as: "products", pipeline:
             [
               { $limit: 7 },
-              { $project: { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1 } }
+              { $project: { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, slug: 1 } }
             ]
         }
       },
@@ -55,7 +55,7 @@ export class CategoryService {
     return categories;
   }
 
-  async findOne(id: mongoose.Types.ObjectId) {
-    return await this.categoryModel.findById(id);
+  async findOne(slug: string) {
+    return await this.categoryModel.findOne({ slug: slug }).exec();
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import useCartStore from "@/hooks/useCart";
-import { productClientService } from "@/services/client";
+import { categoryClientService, productClientService } from "@/services/client";
 import { IProductWithPagination } from "@/types/model.client";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Checkbox, Drawer, Image, Pagination, Spin } from "antd";
@@ -10,19 +10,27 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { CategoryPageSkeleton } from "@/components/Skeletons";
+import { ICategory } from "@/types/modal";
 
 export default function CategoryClient() {
-    const { id } = useParams();
+    const { slug } = useParams();
     const [page, setPage] = useState(1);
     const router = useRouter();
     const searchParams = useSearchParams();
     const [activeFilter, setActiveFilter] = useState<string>("");
     const { addToCart } = useCartStore();
 
+
+    const { data: dataCategory, isLoading: isLoadingCategory } = useQuery<(ICategory) | null>({
+        queryKey: ['get-by-idcategory', slug], // key để cache
+        queryFn: () => categoryClientService.getCategoryBySlug(slug as string),
+        enabled: !!slug, // 5 phút cache không gọi lại
+    });
+
     const { data: dataProduct, isLoading } = useQuery<(IProductWithPagination) | null>({
-        queryKey: ['product-by-category', id, page, searchParams.toString()], // key để cache
-        queryFn: () => productClientService.getProductsByCategoryId(id as string, page, searchParams.toString()),
-        enabled: !!id, // 5 phút cache không gọi lại
+        queryKey: ['product-by-category', dataCategory?._id, page, searchParams.toString()], // key để cache
+        queryFn: () => productClientService.getProductsByCategoryId(dataCategory?._id as string, page, searchParams.toString()),
+        enabled: !!dataCategory?._id, // 5 phút cache không gọi lại
     });
 
     useEffect(() => {
@@ -45,7 +53,7 @@ export default function CategoryClient() {
         } else {
             params.delete("sort");
         }
-        router.push(`/category/${id}/?${params.toString()}`);
+        router.push(`/category/${slug}/?${params.toString()}`);
     };
 
 
@@ -136,7 +144,7 @@ export default function CategoryClient() {
         },
     ];
     // Hiển thị trang Loading khi đang tải dữ liệu
-    if (isLoading) {
+    if (isLoading || isLoadingCategory) {
         return <CategoryPageSkeleton />;
     }
 
@@ -166,12 +174,12 @@ export default function CategoryClient() {
                 <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
                     <Link href="/home" className="font-medium text-lg text-stone-500 mr-3 header-nav">Trang chủ</Link>
                     <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    {dataProduct && dataProduct.products.length > 0 &&
-                        <h3 className="font-medium text-lg dark:text-white text-blue-500 mr-3 active">{dataProduct.products[0].category?.name}</h3>
+                    {dataCategory &&
+                        <h3 className="font-medium text-lg dark:text-white text-blue-500 mr-3 active">{dataCategory.name}</h3>
                     }
                 </div>
                 <h1 className='mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3 font-bold text-xl lg:text-3xl uppercase text-blue-500'>
-                    {dataProduct && dataProduct.products.length > 0 && dataProduct.products[0].category?.name}
+                    {dataCategory && dataCategory.name}
                     <span className='ml-2 text-sm border-none text-stone-400 lowercase font-medium'>(Tổng {dataProduct && dataProduct.pagination.totalItems} sản phẩm)</span>
                 </h1>
                 <div className='mx-5 xl:mx-32 mt-5 content-body grid grid-flow-row grid-cols-12 lg:gap-12 '>

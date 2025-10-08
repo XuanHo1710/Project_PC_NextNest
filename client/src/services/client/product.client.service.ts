@@ -12,8 +12,8 @@ class ProductClientService {
         return response.data
     }
 
-    async getProductsById(productId: string): Promise<(IProductCard)> {
-        const response = await axios.get(`product/${productId}`)
+    async getProductsBySlug(productSlug: string): Promise<(IProductCard)> {
+        const response = await axios.get(`product/${productSlug}`)
         return response.data
     }
 

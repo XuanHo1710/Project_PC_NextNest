@@ -13,6 +13,11 @@ class CategoryClientService {
         const response = await axios.get(`/category`)
         return response.data
     }
+
+    async getCategoryBySlug(slug: string): Promise<ICategory | null> {
+        const response = await axios.get(`/category/` + slug)
+        return response.data
+    }
 }
 
 export const categoryClientService = new CategoryClientService()

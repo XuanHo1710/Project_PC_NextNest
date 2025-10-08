@@ -35,6 +35,7 @@ export interface IProductCard {
     ];
     ratingAvg?: number;
     totalRatings?: number;
+    slug?: string;
 }
 
 

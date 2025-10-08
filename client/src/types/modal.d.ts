@@ -5,9 +5,11 @@ export interface ICategory {
     name: string;
     parent: {
         _id: string,
-        name: string
+        name: string,
+        slug?: string
     },
-    children?: ICategory[]
+    children?: ICategory[];
+    slug?: string;
 }
 
 export interface IDiscount {

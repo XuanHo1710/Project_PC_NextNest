@@ -5,6 +5,8 @@ import { Radio, Button, Card, Space, Typography, RadioChangeEvent } from 'antd';
 import { CreditCardOutlined, DeliveredProcedureOutlined } from '@ant-design/icons';
 import { paymentClientService } from '@/services/client/payment.client.service';
 import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
+import { pathClientRoutes } from '@/config/route';
 
 const { Title, Text } = Typography;
 
@@ -19,6 +21,7 @@ interface PaymentMethodsProps {
 export default function PaymentMethods({ orderData }: PaymentMethodsProps) {
     const [paymentMethod, setPaymentMethod] = useState<'cod' | 'vnpay'>('cod');
     const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
     const handlePaymentMethodChange = (e: RadioChangeEvent) => {
         setPaymentMethod(e.target.value);
@@ -28,7 +31,26 @@ export default function PaymentMethods({ orderData }: PaymentMethodsProps) {
         if (paymentMethod === 'cod') {
             // Xử lý thanh toán khi nhận hàng
             toast.success('Đặt hàng thành công! Bạn sẽ thanh toán khi nhận hàng.');
-            // TODO: Call API to create order with COD payment
+
+            // Tạo thông tin đơn hàng mẫu để chuyển đến trang success
+            const orderInfo = {
+                orderId: orderData?.orderId || `ORD${Date.now()}`,
+                customerName: 'Nguyễn Văn A', // Có thể lấy từ form hoặc context
+                phone: '0123456789',
+                address: 'Số 123, Đường ABC, Quận XYZ, TP.HCM',
+                total: orderData?.amount || 0
+            };
+
+            // Chuyển hướng đến trang order-success với thông tin đơn hàng
+            const params = new URLSearchParams({
+                orderId: orderInfo.orderId,
+                customerName: orderInfo.customerName,
+                phone: orderInfo.phone,
+                address: orderInfo.address,
+                total: orderInfo.total.toString()
+            });
+
+            router.push(`${pathClientRoutes.orderSuccess}?${params.toString()}`);
             return;
         }
 

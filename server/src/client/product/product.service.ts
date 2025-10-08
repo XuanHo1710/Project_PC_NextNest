@@ -40,7 +40,7 @@ export class ProductService {
 
     const products = await this.productModel.find(
       filterProduct,
-      { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1 }
+      { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, slug: 1 }
     ).sort(sortProduct).skip(skip).limit(limit).populate("category");
 
     return {
@@ -55,9 +55,9 @@ export class ProductService {
 
   }
 
-  async findOne(id: string) {
+  async findOne(slug: string) {
     return await this.productModel.findOne(
-      { _id: id },
+      { slug: slug },
       { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, other: 1, ratingAvg: 1, totalRatings: 1 }
     ).populate("category");
   }

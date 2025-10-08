@@ -10,7 +10,22 @@ export const pathAdminRoutes = {
     permission: "/admin/permission",
     role: "/admin/role",
 
-
-
     login: "/auth/login"
+}
+
+export const pathClientRoutes = {
+    home: "/",
+    products: "/product",
+    category: "/category",
+    cart: "/cart",
+    payment: "/payment",
+    orderSuccess: "/order-success",
+    profile: "/profile",
+    auth: {
+        login: "/auth/login",
+        register: "/auth/register",
+        forgotPassword: "/forgot-password",
+        resetPassword: "/reset-password",
+        verifyOtp: "/verify-otp"
+    }
 }

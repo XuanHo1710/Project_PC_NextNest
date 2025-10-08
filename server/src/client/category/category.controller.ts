@@ -1,6 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { CategoryService } from './category.service';
-import mongoose from 'mongoose';
 import { TypeQueryCategory } from 'types/category';
 
 @Controller('category')
@@ -17,8 +16,8 @@ export class CategoryController {
     return this.categoryService.findAll(filter);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: mongoose.Types.ObjectId) {
-    return this.categoryService.findOne(id);
+  @Get(':slug')
+  findOne(@Param('slug') slug: string) {
+    return this.categoryService.findOne(slug);
   }
 }
