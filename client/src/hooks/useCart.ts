@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ICart, ICartItem, IProductCard } from '@/types/model.client';
+import { debouncedSync } from '@/providers/CartProviderClient';
 
 
 interface CartState {
@@ -48,13 +49,15 @@ const useCartStore = create<CartState>((set, get) => ({
             updatedItems = [...state.cart!.cartItems, newItem];
         }
 
-        set({
-            cart: {
-                ...state.cart!,
-                cartItems: updatedItems,
-                total: updatedItems.reduce((sum, i) => sum + i.subtotal, 0),
-            },
-        });
+        const updatedCart: ICart = {
+            ...state.cart!,
+            cartItems: updatedItems,
+            total: updatedItems.reduce((sum, i) => sum + i.subtotal, 0),
+            _id: state.cart!._id || "1" // Default id cho cart khi thêm sp vào (sẽ được server cấp sau)
+        };
+
+        set({ cart: updatedCart });
+        debouncedSync(updatedCart, state.cart!.guestId); // ⚡ gọi API sau khi user ngừng thao tác 0.5s
     },
 
     removeFromCart: (productId) => {
@@ -63,36 +66,45 @@ const useCartStore = create<CartState>((set, get) => ({
             (item) => item.product._id !== productId
         );
 
-        set({
-            cart: {
-                ...state.cart!,
-                cartItems: updatedItems,
-                total: updatedItems.reduce((sum, i) => sum + i.subtotal, 0),
-            },
-        });
+        const updatedCart: ICart = {
+            ...state.cart!,
+            cartItems: updatedItems,
+            total: updatedItems.reduce((sum, i) => sum + i.subtotal, 0),
+        };
+
+        set({ cart: updatedCart });
+        debouncedSync(updatedCart, state.cart!.guestId); // ⚡ gọi API sau khi user ngừng thao tác 0.5s
     },
 
     updateQuantity: (productId, qty) => {
         const state = get();
-        const updatedItems = state.cart!.cartItems.map((item) =>
-            item.product._id === productId
-                ? { ...item, quantity: item.quantity + qty, subtotal: (item.quantity + qty) * item.price }
-                : item
-        ).filter((item) => item.quantity > 0);
+        const updatedItems = state.cart!.cartItems
+            .map((item) =>
+                item.product._id === productId
+                    ? {
+                        ...item,
+                        quantity: item.quantity + qty,
+                        subtotal: (item.quantity + qty) * item.price,
+                    }
+                    : item
+            )
+            .filter((item) => item.quantity > 0);
 
-        set({
-            cart: {
-                ...state.cart!,
-                cartItems: updatedItems,
-                total: updatedItems.reduce((sum, i) => sum + i.subtotal, 0),
-            },
-        });
+        const updatedCart: ICart = {
+            ...state.cart!,
+            cartItems: updatedItems,
+            total: updatedItems.reduce((sum, i) => sum + i.subtotal, 0),
+        };
+
+        set({ cart: updatedCart });
+        debouncedSync(updatedCart, state.cart!.guestId); // ⚡ gọi API sau khi user ngừng thao tác 0.5s
     },
 
-    clearCart: () =>
-        set({
-            cart: { _id: '', cartItems: [], total: 0, guestId: '' },
-        }),
+    clearCart: () => {
+        const cleared: ICart = { _id: '', cartItems: [], total: 0, guestId: '' };
+        set({ cart: cleared });
+        debouncedSync(cleared, cleared.guestId); // ⚡
+    },
 
     setCart: (cart) => set({ cart }),
 

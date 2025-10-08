@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/AuthProviderClient';
+import { useAuth } from '../../providers/AuthProviderClient';
 import { Spin } from 'antd';
 
 interface AuthGuardProps {

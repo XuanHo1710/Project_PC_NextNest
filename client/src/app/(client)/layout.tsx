@@ -16,7 +16,8 @@ import { ChatBot } from "@/components/Chat";
 // };
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@/contexts/AuthProviderClient';
+import { AuthProvider } from '@/providers/AuthProviderClient';
+import { CartProvider } from "@/providers/CartProviderClient";
 
 export default function AdminLayout({
     children,
@@ -31,13 +32,15 @@ export default function AdminLayout({
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                     {/* <GlobalLoading> */}
-                    <HeaderClient />
-                    <div className="mt-28">
-                        {children}
-                    </div>
-                    <FooterClient />
-                    {/* Chat và Social Icons */}
-                    <ChatBot />
+                    <CartProvider>
+                        <HeaderClient />
+                        <div className="mt-28">
+                            {children}
+                        </div>
+                        <FooterClient />
+                        {/* Chat và Social Icons */}
+                        <ChatBot />
+                    </CartProvider>
                     {/* </GlobalLoading> */}
                 </AuthProvider>
             </QueryClientProvider>

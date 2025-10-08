@@ -1,23 +1,17 @@
-// services/category.service.ts
+// services/cart.client.service.ts
 import axios from '@/config/axiosClient'
 import { ICart } from '@/types/model.client'
 
 class CartClientService {
-    async getCart(): Promise<ICart> {
-        const response = await axios.get(`/cart`)
-        return response.data
-    }
-
-    async updateCart(cartId: string, productId: string, quantity: number): Promise<void> {
+    async updateCart(cartId: string, cartUpdate: ICart): Promise<void> {
         const response = await axios.patch(`/cart/` + cartId, {
-            productId: productId,
-            quantity: quantity
+            ...cartUpdate
         })
         return response.data
     }
 
-    async clearCart(cartId: string): Promise<void> {
-        const response = await axios.delete(`/cart/` + cartId)
+    async getOne(guestId: string): Promise<ICart | null> {
+        const response = await axios.get(`/cart/` + guestId)
         return response.data
     }
 }
