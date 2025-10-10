@@ -252,3 +252,62 @@
   width: 100%;
 
 }
+
+
+.payment-method-group .ant-radio-wrapper {
+  width: 100% !important;
+  display: flex !important;
+  align-items: stretch !important;
+}
+
+.payment-method-group .ant-radio {
+  display: none !important;
+  /* Ẩn radio gốc cho đẹp */
+}
+
+.payment-method-card {
+  width: 100% !important;
+  flex: 1 !important;
+  transition: all 0.25s ease !important;
+  border: 2px solid #d9d9d9 !important;
+  border-radius: 10px !important;
+}
+
+.payment-method-card:hover {
+  border-color: #1677ff !important;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1) !important;
+}
+
+.payment-method-card.active {
+  border-color: #1677ff !important;
+  background-color: #f0f7ff !important;
+}
+
+
+
+/* Ẩn hoàn toàn icon radio mặc định */
+.custom-radio-group .ant-radio-inner {
+  display: none !important;
+}
+
+/* Ẩn vùng bọc radio, để không chiếm chỗ */
+.custom-radio-group .ant-radio {
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Căn giữa toàn bộ phần label */
+.custom-radio-group .ant-radio-wrapper {
+  width: 100%;
+  margin: 0 !important;
+  display: flex;
+  justify-content: center;
+}
+
+/* Giới hạn độ rộng và căn giữa thẻ label */
+.custom-radio-group label.ant-radio-wrapper>span:last-child {
+  width: 100%;
+  max-width: 500px;
+  /* cho cân giữa, tuỳ bạn chỉnh */
+}

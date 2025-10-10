@@ -18,7 +18,8 @@ export class VnpayService {
         this.returnUrl = this.configService.get<string>('VNPAY_RETURN_URL') || '';
     }
 
-    async createPaymentUrl(orderId: string = "", amount: number = 0, orderDescription: string = "") {
+    async createPaymentUrl(orderId: string = "", totalAmount: number = 0, orderDescription: string = "") {
+        console.log(totalAmount)
         const date = new Date();
         const createDate = moment(date).format('YYYYMMDDHHmmss');
         const expireDate = moment(date).add(15, 'minutes').format('YYYYMMDDHHmmss');
@@ -35,7 +36,7 @@ export class VnpayService {
 
 
         const vnpayResponse = await vnpay.buildPaymentUrl({
-            vnp_Amount: amount, // số tiền (đơn vị VNĐ × 100 -> 50000 = 500.00 VNĐ)
+            vnp_Amount: totalAmount, // số tiền (đơn vị VNĐ × 100 -> 50000 = 500.00 VNĐ)
             vnp_IpAddr: '127.0.0.1',
             vnp_TxnRef: orderId, // mã giao dịch duy nhất
             vnp_OrderInfo: orderDescription,
@@ -66,7 +67,7 @@ export class VnpayService {
             // Tạo transactionData từ vnpParams
             const transactionData: Record<string, string> = {
                 orderId: vnpParams['vnp_TxnRef'] || '',
-                amount: vnpParams['vnp_Amount'] || '',
+                totalAmount: vnpParams['vnp_Amount'] || '',
                 orderInfo: vnpParams['vnp_OrderInfo'] || '',
                 responseCode: vnpParams['vnp_ResponseCode'] || '',
                 transactionNo: vnpParams['vnp_TransactionNo'] || '',

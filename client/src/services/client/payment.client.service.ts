@@ -2,7 +2,7 @@ import axiosClient from '@/config/axiosClient';
 
 export interface CreatePaymentRequest {
     orderId: string;
-    amount: number;
+    totalAmount: number;
     orderDescription: string;
 }
 

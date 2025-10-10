@@ -7,6 +7,12 @@ import Link from "next/link";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 import { CartPageSkeleton } from "@/components/Skeletons";
+import useAuthUser from "@/hooks/useAuthUser";
+import { IGuest } from "@/types/account";
+import { useQuery } from "@tanstack/react-query";
+import { guestClientService } from "@/services/client";
+import { useRouter } from "next/navigation";
+import { IOrderData } from "@/types/model.client";
 
 
 
@@ -27,6 +33,19 @@ interface Ward {
     name: string;
 }
 
+interface OrderFormData {
+    fullname: string;
+    phone: string;
+    email: string;
+    province: number;
+    district: number;
+    ward: number;
+    detailAddress: string;
+    note?: string;
+    savedAddress?: string;
+}
+
+
 export default function CartClient() {
     const { cart, calculateTotal, updateQuantity, removeFromCart } = useCartStore();
     const [provinces, setProvinces] = useState<Province[]>([]);
@@ -35,60 +54,67 @@ export default function CartClient() {
     const [selectedProvince, setSelectedProvince] = useState<number | undefined>();
     const [selectedDistrict, setSelectedDistrict] = useState<number | undefined>();
     const [selectedWard, setSelectedWard] = useState<number | undefined>();
-    const [pageLoading, setPageLoading] = useState(true);
+    const router = useRouter();
     const [loading, setLoading] = useState({
         provinces: false,
         districts: false,
         wards: false
     });
 
-    // Mock saved addresses - in real app, this would come from user profile API
-    const [savedAddresses] = useState([
-        {
-            id: 'home',
-            label: 'Nhà riêng',
-            province: { code: 79, name: 'TP Hồ Chí Minh' },
-            district: { code: 760, name: 'Quận 1' },
-            ward: { code: 26734, name: 'Phường Bến Nghé' },
-            detailAddress: '123 Nguyễn Huệ',
-            isDefault: true
+    const { user } = useAuthUser();
+
+    // Query user profile với TanStack Query
+    const {
+        data: profile,
+        isLoading: isLoadingProfile
+    } = useQuery<IGuest | null>({
+        queryKey: ['user-profile', user?.id],
+        queryFn: async () => {
+            if (!user?.id) return null;
+            return await guestClientService.getProfile(user.id);
         },
-        {
-            id: 'office',
-            label: 'Văn phòng',
-            province: { code: 79, name: 'TP Hồ Chí Minh' },
-            district: { code: 769, name: 'Quận 7' },
-            ward: { code: 27106, name: 'Phường Tân Thuận Đông' },
-            detailAddress: '456 Nguyễn Thị Thập',
-            isDefault: false
-        }
-    ]);
+        enabled: !!user?.id,
+        staleTime: 5 * 60 * 1000, // 5 phút
+        retry: 2,
+        refetchOnWindowFocus: false
+    });
+
+    // Lấy saved addresses từ profile
+    const savedAddresses = profile?.addresses || [];
 
     const [form] = Form.useForm();
 
+    // Update form values khi profile được load
+    useEffect(() => {
+        if (profile) {
+            form.setFieldsValue({
+                fullname: profile.fullname || "",
+                phone: profile.phone || "",
+                email: profile.email || "",
+                savedAddress: profile.addresses && profile.addresses.length > 0 && "new",
+                note: ""
+            });
+        }
+    }, [profile, form]);
+
     // Load provinces on component mount
     useEffect(() => {
-        const initialLoad = async () => {
-            setPageLoading(true);
-            await fetchProvinces();
-            setPageLoading(false);
-        }
-        initialLoad();
+        const fetchProvinces = async () => {
+            setLoading(prev => ({ ...prev, provinces: true }));
+            try {
+                const response = await fetch('https://provinces.open-api.vn/api/p/');
+                const data = await response.json();
+                setProvinces(data);
+            } catch (error) {
+                console.error('Error fetching provinces:', error);
+                toast.error('Không thể tải dữ liệu tỉnh/thành phố');
+            } finally {
+                setLoading(prev => ({ ...prev, provinces: false }));
+            }
+        };
+        fetchProvinces();
     }, []);
 
-    const fetchProvinces = async () => {
-        setLoading(prev => ({ ...prev, provinces: true }));
-        try {
-            const response = await fetch('https://provinces.open-api.vn/api/p/');
-            const data = await response.json();
-            setProvinces(data);
-        } catch (error) {
-            console.error('Error fetching provinces:', error);
-            toast.error('Không thể tải dữ liệu tỉnh/thành phố');
-        } finally {
-            setLoading(prev => ({ ...prev, provinces: false }));
-        }
-    };
 
     const fetchDistricts = async (provinceCode: number) => {
         setLoading(prev => ({ ...prev, districts: true }));
@@ -153,7 +179,7 @@ export default function CartClient() {
             return;
         }
 
-        const address = savedAddresses.find(addr => addr.id === addressId);
+        const address = savedAddresses.find(addr => addr._id === addressId);
         if (address) {
             // Set province and fetch districts
             setSelectedProvince(address.province.code);
@@ -178,74 +204,66 @@ export default function CartClient() {
         }
     };
 
-    const handlePlaceOrder = async () => {
-        // if (e.address === undefined && e.address_default === undefined) {
-        //     toast.error("Địa chỉ giao hàng không được để trống")
-        //     return;
-        // }
-        // else if (e.address === "" && e.address_default === "") {
-        //     toast.error("Địa chỉ giao hàng không được để trống")
-        //     return;
-        // } else if (e.address_default === "default" && e.address === "") {
-        //     toast.error("Địa chỉ giao hàng không được để trống")
-        //     return;
-        // } else if (e.fullname === undefined || e.fullname.trim() === "") {
-        //     toast.error("Họ tên không được để trống")
-        //     return;
-        // } else if (e.email === undefined || e.email.trim() === "") {
-        //     toast.error("Email không được để trống")
-        //     return;
-        // } else if (e.phone === undefined || e.phone.trim() === "") {
-        //     toast.error("Điện thoại không được để trống")
-        //     return;
-        // }
+    const handlePlaceOrder = async (data: OrderFormData) => {
+        console.log(data);
 
-        // if (cart && cart?.cartItems?.length <= 0) {
-        //     toast.error("Bạn chưa mua sản phẩm nào !!")
-        //     return;
-        // }
+        // Validate giỏ hàng không được trống
+        if (!cart || cart.cartItems.length === 0) {
+            toast.error("Giỏ hàng trống! Vui lòng thêm sản phẩm để đặt hàng.");
+            return;
+        }
 
-        // const userInfo = {
-        //     user_id: inforUser._id || "userVangLai",
-        //     fullName: e.fullname,
-        //     phone: e.phone,
-        //     address: (e.address === "" || e.address === undefined) ? e.address_default : e.address,
-        //     note: (e.note === "" || e.note === undefined) ? "" : e.note,
-        //     email: e.email,
-        // }
+        // Validate tổng tiền phải > 0 và >= đơn hàng tối thiểu
+        const totalAmount = calculateTotal();
+        const minOrderAmount = 100000; // 100k VND
 
-        // const products = carts.map(cart => (
-        //     {
-        //         product_id: cart._id,
-        //         name: cart.title,
-        //         unitPrice: cart.unitPrice,
-        //         quanlity: cart.quanlity
-        //     }
-        // ));
+        if (totalAmount <= 0) {
+            toast.error("Tổng tiền đơn hàng không hợp lệ!");
+            return;
+        }
 
-        // let totalPrice = getTotalUnitPrice();
+        if (totalAmount < minOrderAmount) {
+            toast.error(`Đơn hàng tối thiểu ${minOrderAmount.toLocaleString()}đ! Hiện tại: ${totalAmount.toLocaleString()}đ`);
+            return;
+        }
 
-        // const data = {
-        //     userInfo, products, totalPrice: totalPrice
-        // }
+        // Validate địa chỉ đầy đủ
+        if (!data.province || !data.district || !data.ward || !data.detailAddress) {
+            toast.error("Vui lòng nhập đầy đủ thông tin địa chỉ giao hàng!");
+            return;
+        }
 
+        // Tìm tên province, district, ward từ code
+        const provinceName = provinces.find(p => p.code === data.province)?.name || '';
+        const districtName = districts.find(d => d.code === data.district)?.name || '';
+        const wardName = wards.find(w => w.code === data.ward)?.name || '';
 
+        // Tạo đầy đủ địa chỉ
+        const fullAddress = `${data.detailAddress}, ${wardName}, ${districtName}, ${provinceName}`;
 
-        toast.success("Đặt hàng thành công !!")
+        // Prepare order data
+        const orderData: IOrderData = {
+            customerInfo: {
+                fullname: data.fullname,
+                phone: data.phone,
+                email: data.email,
+                address: fullAddress,
+                note: data.note || ''
+            },
+            orderDetail: cart.cartItems,
+            totalAmount: totalAmount,
+            orderDate: new Date(),
+            status: 'PENDING'
+        };
 
-        // const statusOrder = await post("order/checkout", data);
-        // if (statusOrder.code === 200) {
-        //     localStorage.setItem("cart", JSON.stringify([]));
-        //     // navigation(`/order/success/${statusOrder.order_id}`)
-        //     // setCarts([]);
-        // }
+        sessionStorage.setItem("orderData", JSON.stringify(orderData));
 
-    }
+        router.push('/payment');
+    };
 
-    if (pageLoading) {
+    if (isLoadingProfile) {
         return <CartPageSkeleton />
     }
-
 
     return (
         <>
@@ -260,7 +278,7 @@ export default function CartClient() {
                 </h1>
                 <div className='mx-5 xl:mx-32 mt-5 pb-10 content-body grid grid-flow-row grid-cols-12 gap-8 '>
                     <div className='col-span-12 lg:col-span-7 max-h-max bg-white shadow-lg rounded-lg'>
-                        <div className='cart-list-product overflow-y-scroll' style={{ maxHeight: "550px", scrollbarWidth: "none" }}>
+                        <div className='cart-list-product overflow-y-scroll' style={{ maxHeight: "700px", scrollbarWidth: "none" }}>
                             {cart && cart.cartItems.length > 0 ?
                                 cart.cartItems.map((cartItem, index) => (
                                     <CartProduct key={index} cartItem={cartItem} handle={{ removeFromCart, updateQuantity }} />
@@ -275,75 +293,144 @@ export default function CartClient() {
                         </div>
                         <div className='subtotal border-solid border-[1px] border-blue-500 p-4 flex items-center justify-between dark:bg-slate-900 dark:text-white'>
                             <h2 className='dark:text-white font-bold text-stone-500'>Tổng giá trị đơn hàng: </h2>
-                            <p className='font-bold text-blue-500 text-lg md:text-2xl'>{calculateTotal().toLocaleString()} đ</p>
+                            <div className="text-right">
+                                <p className='font-bold text-blue-500 text-lg md:text-2xl'>{calculateTotal().toLocaleString()} đ</p>
+                                {calculateTotal() < 100000 && (
+                                    <p className="text-xs text-orange-500 mt-1">
+                                        ⚠️ Đơn hàng tối thiểu 100.000đ
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className='col-span-12 lg:col-span-5 py-3 px-5 border-solid border-2 rounded-lg shadow-xl border-blue-500'>
-                        <h2 className='font-bold text-xl text-blue-500'>Thông tin thanh toán</h2>
-                        <p className='my-5 font-medium text-base text-stone-500'>
-                            Để tiếp tục đặt hàng, quý khách xin vui lòng
-                            <Link href={"#"} className='text-blue-500 font-bold'> đăng nhập </Link>
-                            để nhập thông tin bên dưới
-                        </p>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className='font-bold text-xl text-blue-500'>Thông tin thanh toán</h2>
+                            {user && profile && (
+                                <div className="flex items-center gap-2 text-sm">
+                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    <span className="text-green-600 font-medium">Đã đăng nhập</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Hiển thị thông tin user khi đã đăng nhập */}
+                        {user && profile ? (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                                        {profile.fullname.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-blue-800 dark:text-blue-300">{profile.fullname}</p>
+                                        <p className="text-sm text-blue-600 dark:text-blue-400">{profile.email}</p>
+                                        {profile.phone && (
+                                            <p className="text-sm text-blue-600 dark:text-blue-400">{profile.phone}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                {profile.addresses.length > 0 && (
+                                    <div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
+                                        📍 {profile.addresses.length} địa chỉ đã lưu
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <p className='my-5 font-medium text-base text-stone-500'>
+                                Để tiếp tục đặt hàng, quý khách xin vui lòng
+                                <Link href={"#"} className='text-blue-500 font-bold'> đăng nhập </Link>
+                                để nhập thông tin bên dưới
+                            </p>
+                        )}
+
                         <Form
                             form={form}
                             onFinish={handlePlaceOrder}
                             layout="vertical"
                             initialValues={{
-                                // fullname: inforUser?.fullname,
-                                // phone: inforUser?.phone,
-                                // email: inforUser?.email,
-                                fullname: "",
-                                phone: "",
-                                email: "",
-                                savedAddress: "new"
+                                fullname: profile?.fullname || "",
+                                phone: profile?.phone || "",
+                                email: profile?.email || "",
+                                savedAddress: profile?.addresses && profile.addresses.length > 0 ? profile.addresses[0]._id : "new",
+                                note: ""
                             }}
                         >
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                                <Form.Item name='fullname' label="Họ và tên">
+                                <Form.Item
+                                    name='fullname'
+                                    label="Họ và tên"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập họ và tên!' },
+                                        { min: 2, message: 'Họ tên phải có ít nhất 2 ký tự!' },
+                                        { max: 50, message: 'Họ tên không được vượt quá 50 ký tự!' },
+                                        { pattern: /^[a-zA-ZÀ-ỹ\s]+$/, message: 'Họ tên chỉ được chứa chữ cái và khoảng trắng!' }
+                                    ]}
+                                >
                                     <Input
-                                        // defaultValue={inforUser?.fullname}
                                         name='fullname'
                                         className='text-base dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500 py-2 font-medium'
                                         placeholder='Nhập họ và tên'
                                     />
                                 </Form.Item>
-                                <Form.Item name='phone' label="Số điện thoại">
+                                <Form.Item
+                                    name='phone'
+                                    label="Số điện thoại"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập số điện thoại!' },
+                                        { pattern: /^(0|84|\+84)[1-9][0-9]{8,9}$/, message: 'Số điện thoại không hợp lệ!' },
+                                        { min: 10, message: 'Số điện thoại phải có ít nhất 10 số!' },
+                                        { max: 12, message: 'Số điện thoại không được vượt quá 12 số!' }
+                                    ]}
+                                >
                                     <Input
-                                        // defaultValue={inforUser?.phone} 
                                         name='phone'
                                         className='text-base dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500 py-2 font-medium'
                                         placeholder='Nhập số điện thoại'
                                     />
                                 </Form.Item>
                             </div>
-                            <Form.Item name='email' label="Email">
+                            <Form.Item
+                                name='email'
+                                label="Email"
+                                rules={[
+                                    { required: true, message: 'Vui lòng nhập email!' },
+                                    { type: 'email', message: 'Email không hợp lệ!' },
+                                    { max: 100, message: 'Email không được vượt quá 100 ký tự!' }
+                                ]}
+                            >
                                 <Input
-                                    //  defaultValue={inforUser?.email} 
                                     name='email'
                                     className='text-base dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500 py-2 font-medium'
                                     placeholder='Nhập email'
                                 />
                             </Form.Item>
 
-                            {/* Saved Address Selection */}
-                            <Form.Item name="savedAddress" label="Địa chỉ giao hàng">
-                                <Select
-                                    placeholder="Chọn địa chỉ có sẵn hoặc nhập mới"
-                                    onChange={handleSavedAddressChange}
-                                    className="w-full"
-                                >
-                                    <Select.Option value="new">📍 Nhập địa chỉ mới</Select.Option>
-                                    {savedAddresses.map(address => (
-                                        <Select.Option key={address.id} value={address.id}>
-                                            {address.isDefault ? '🏠' : '🏢'} {address.label} - {address.detailAddress}, {address.ward.name}, {address.district.name}, {address.province.name}
-                                        </Select.Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                            {/* Saved Address Selection - Chỉ hiện khi user đã đăng nhập */}
+                            {user && profile && savedAddresses.length > 0 && (
+                                <Form.Item name="savedAddress" label="Địa chỉ giao hàng">
+                                    <Select
+                                        placeholder="Chọn địa chỉ có sẵn hoặc nhập mới"
+                                        onChange={handleSavedAddressChange}
+                                        className="w-full"
+                                    >
+                                        <Select.Option value="new">📍 Nhập địa chỉ mới</Select.Option>
+                                        {savedAddresses.map((address) => (
+                                            <Select.Option key={address._id} value={address._id}>
+                                                {address.isDefault ? '🏠' : '🏢'} {address.label} - {address.detailAddress}, {address.ward.name}, {address.district.name}, {address.province.name}
+                                            </Select.Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                            )}
 
-                            {/* Address Details */}
-                            <Form.Item name="province" label="Tỉnh/Thành phố">
+                            {/* Address form - Luôn hiển thị để có thể nhập địa chỉ mới */}
+                            <Form.Item
+                                name="province"
+                                label="Tỉnh/Thành phố"
+                                rules={[
+                                    { required: true, message: 'Vui lòng chọn tỉnh/thành phố!' }
+                                ]}
+                            >
                                 <Select
                                     placeholder="Chọn tỉnh/thành phố"
                                     loading={loading.provinces}
@@ -363,7 +450,13 @@ export default function CartClient() {
                                 </Select>
                             </Form.Item>
 
-                            <Form.Item name="district" label="Quận/Huyện">
+                            <Form.Item
+                                name="district"
+                                label="Quận/Huyện"
+                                rules={[
+                                    { required: true, message: 'Vui lòng chọn quận/huyện!' }
+                                ]}
+                            >
                                 <Select
                                     placeholder="Chọn quận/huyện"
                                     loading={loading.districts}
@@ -386,7 +479,13 @@ export default function CartClient() {
 
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <Form.Item name="ward" label="Phường/Xã">
+                                <Form.Item
+                                    name="ward"
+                                    label="Phường/Xã"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng chọn phường/xã!' }
+                                    ]}
+                                >
                                     <Select
                                         placeholder="Chọn phường/xã"
                                         loading={loading.wards}
@@ -407,19 +506,60 @@ export default function CartClient() {
                                     </Select>
                                 </Form.Item>
 
-                                <Form.Item name='detailAddress' label="Địa chỉ cụ thể">
+                                <Form.Item
+                                    name='detailAddress'
+                                    label="Địa chỉ cụ thể"
+                                    rules={[
+                                        { required: true, message: 'Vui lòng nhập địa chỉ cụ thể!' },
+                                        { min: 5, message: 'Địa chỉ phải có ít nhất 5 ký tự!' },
+                                        { max: 200, message: 'Địa chỉ không được vượt quá 200 ký tự!' }
+                                    ]}
+                                >
                                     <Input
                                         className='text-base py-2 font-medium dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500'
                                         placeholder='Số nhà, tên đường...'
                                     />
                                 </Form.Item>
                             </div>
-                            <Form.Item name='note' label="Ghi chú">
-                                <TextArea name='note' rows={4} className='text-base font-medium dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500' placeholder='Ghi chú đơn hàng (tùy chọn)' />
+                            <Form.Item
+                                name='note'
+                                label="Ghi chú"
+                                rules={[
+                                    { max: 500, message: 'Ghi chú không được vượt quá 500 ký tự!' }
+                                ]}
+                            >
+                                <TextArea
+                                    name='note'
+                                    rows={4}
+                                    className='text-base font-medium dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500'
+                                    placeholder='Ghi chú đơn hàng (tùy chọn)'
+                                    showCount
+                                    maxLength={500}
+                                />
                             </Form.Item>
-                            <Button type='primary' htmlType='submit' className='!h-24 !block !text-center !w-full'>
-                                <h2 className='font-bold uppercase text-2xl'>Đặt hàng</h2>
-                                <div className='text-sm '>Tư vấn viên sẽ gọi điện thoại để xác nhận</div>
+                            <Button
+                                type='primary'
+                                htmlType='submit'
+                                className='!h-24 !block !text-center !w-full'
+                                disabled={!cart || cart.cartItems.length === 0 || calculateTotal() < 100000}
+                                loading={false}
+                            >
+                                <h2 className='font-bold uppercase text-2xl'>
+                                    {(!cart || cart.cartItems.length === 0)
+                                        ? 'Giỏ hàng trống'
+                                        : calculateTotal() < 100000
+                                            ? 'Chưa đủ đơn tối thiểu'
+                                            : 'Đặt hàng'
+                                    }
+                                </h2>
+                                <div className='text-sm'>
+                                    {(!cart || cart.cartItems.length === 0)
+                                        ? 'Vui lòng thêm sản phẩm vào giỏ hàng'
+                                        : calculateTotal() < 100000
+                                            ? 'Đơn hàng tối thiểu 100.000đ'
+                                            : 'Tư vấn viên sẽ gọi điện thoại để xác nhận'
+                                    }
+                                </div>
                             </Button>
                         </Form>
                     </div>

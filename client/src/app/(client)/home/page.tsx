@@ -76,7 +76,7 @@ export default function HomeClient() {
                         <ul style={{ scrollbarWidth: "none" }} className='m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-blue-950'>
                             <Spin spinning={isLoading} size="large" />
                             {categories && categories.length > 0 && categories.map((category, index) => (
-                                <Link key={category._id} href={`/category/${category._id}`}>
+                                <Link key={category._id} href={`/category/${category.slug}`}>
                                     <li className='w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-blue-100 hover:text-blue-500 px-6 py-3 flex items-center'>
                                         <span className='font-medium flex items-center gap-3'>{ListIcon[index % ListIcon.length]} {category.name}</span>
                                         <MdKeyboardArrowRight className="text-xl" />

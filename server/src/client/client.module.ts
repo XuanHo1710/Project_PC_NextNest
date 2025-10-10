@@ -6,6 +6,7 @@ import { PaymentModule } from 'src/client/payment/payment.module';
 import { ClientAuthModule } from 'src/client/auth/auth.module';
 import { GuestModule } from 'src/client/guest/guest.module';
 import { CartModule } from 'src/client/cart/cart.module';
+import { OrderModule } from 'src/client/order/order.module';
 
 
 @Module({
@@ -16,7 +17,8 @@ import { CartModule } from 'src/client/cart/cart.module';
         PaymentModule,
         ClientAuthModule,
         GuestModule,
-        CartModule
+        CartModule,
+        OrderModule
     ]
 })
 export class ClientModule { }

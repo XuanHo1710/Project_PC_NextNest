@@ -16,12 +16,12 @@ const CartProduct = ({ cartItem, handle }: CartProductProps) => {
     return (
         <>
             {cartItem &&
-                <div className='cart-product-item flex gap-3 p-4 border-solid border-2 dark:bg-gray-800 dark:border-stone-800 border-stone-100'>
+                <div className='cart-product-item flex gap-3 p-3 border-solid border-2 dark:bg-gray-800 dark:border-stone-800 border-stone-100'>
                     <div className='basis-1/6'>
                         <Image alt="Product" width={100} src={cartItem.product.images[0]} />
                     </div>
-                    <div className='basis-5/6 relative'>
-                        <div className='flex absolute top-0 left-0 right-0 items-center justify-between'>
+                    <div className='basis-5/6'>
+                        <div className='flex items-center pb-3 justify-between'>
                             <Link href={`/product/${cartItem.product.slug}`}>
                                 <h2 className='hover:text-blue-500 dark:text-white cursor-pointer text-sm md:text-base line-clamp-1'>
                                     <span className='font-bold text-red-500'>[DEAL] </span>
@@ -30,7 +30,7 @@ const CartProduct = ({ cartItem, handle }: CartProductProps) => {
                             </Link>
                             <i onClick={() => handle.removeFromCart(cartItem.product._id)} className="hover:text-red-600 dark:text-purple-500 text-lg cursor-pointer fa-regular fa-trash-can"></i>
                         </div>
-                        <div className='flex absolute bottom-0 left-0 right-0 items-end justify-between'>
+                        <div className='flex items-center justify-between mt-2'>
                             <div className='text-stone-500'>
                                 <p className='font-bold text-xs md:text-lg line-through'>{cartItem.product.oldPrice.toLocaleString()} đ</p>
                                 <p className='font-bold text-xs md:text-xl text-blue-500'>{cartItem?.product?.newPrice.toLocaleString()} đ</p>

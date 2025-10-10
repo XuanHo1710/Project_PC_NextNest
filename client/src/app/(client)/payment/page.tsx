@@ -4,21 +4,25 @@ import React from 'react';
 import { Card, Divider } from 'antd';
 import PaymentMethods from '@/components/client/PaymentMethods';
 import Link from 'next/link';
+import { IOrderData } from '@/types/model.client';
 
 const PaymentPage = () => {
     // Dữ liệu đơn hàng mẫu
-    const orderInfo = {
-        products: [
-            { name: 'Laptop Gaming ASUS ROG', quantity: 1, price: 25000000 },
-            { name: 'Chuột Gaming Logitech G502', quantity: 2, price: 1500000 }
-        ],
-        shipping: 200000,
-        discount: 50
-    };
-
-    const subtotal = orderInfo.products.reduce((sum, product) => sum + (product.price * product.quantity), 0);
-    const total = subtotal + orderInfo.shipping - orderInfo.discount;
-
+    const orderData: IOrderData = sessionStorage.getItem("orderData") ? JSON.parse(sessionStorage.getItem("orderData") || "") : {}
+    let orderInfo = { products: [{ name: '', quantity: 0, price: 0 }], shipping: 0, discount: 0 };
+    if (Object.keys(orderData).length > 0) {
+        orderInfo = {
+            products: orderData.orderDetail.map(item => {
+                return {
+                    name: item.product.name,
+                    quantity: item.quantity,
+                    price: item.subtotal
+                }
+            }),
+            shipping: 200000,
+            discount: 50
+        };
+    }
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -26,15 +30,8 @@ const PaymentPage = () => {
         }).format(amount);
     };
 
-    // Dữ liệu đơn hàng để truyền cho PaymentMethods
-    const orderData = {
-        orderId: `DH${Date.now().toString().slice(-6)}`,
-        amount: total,
-        orderDescription: `Thanh toan don hang ${orderInfo.products.map(p => p.name).join(', ')}`
-    };
-
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-gray-900 dark:text-white pt-3">
+        <div className="min-h-screen my-5 bg-slate-50 dark:bg-gray-900 dark:text-white pt-3">
             {/* Breadcrumb */}
             <div className='rounded-lg mx-5 xl:mx-32 content-header flex items-center flex-wrap mb-6'>
                 <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">Trang chủ</Link>
@@ -62,24 +59,26 @@ const PaymentPage = () => {
                             <h3 className="text-xl font-bold text-gray-800 mb-6">Thông Tin Đơn Hàng</h3>
 
                             <div className="space-y-4">
-                                {orderInfo.products.map((product, index) => (
-                                    <div key={index} className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <p className="font-medium text-gray-800">{product.name}</p>
-                                            <p className="text-sm text-gray-600">Số lượng: {product.quantity}</p>
+                                <div style={{ scrollbarWidth: 'none' }} className='max-h-72 min-h-72 overflow-y-scroll'>
+                                    {orderInfo.products.map((product, index) => (
+                                        <div className='flex border-[1px] border-blue-300 p-3 rounded-md my-3 justify-between' key={index}>
+                                            <div className="flex-1">
+                                                <p className="font-medium text-gray-800 line-clamp-2">{product.name}</p>
+                                                <p className="text-sm mt-2 text-gray-600">Số lượng: {product.quantity}</p>
+                                            </div>
+                                            <p className="font-semibold text-blue-500 ml-4">
+                                                {formatCurrency(product.price * product.quantity)}
+                                            </p>
                                         </div>
-                                        <p className="font-semibold text-gray-800 ml-4">
-                                            {formatCurrency(product.price * product.quantity)}
-                                        </p>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
 
                                 <Divider className="my-4" />
 
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Tạm tính:</span>
-                                        <span className="font-medium">{formatCurrency(subtotal)}</span>
+                                        <span className="font-medium">{formatCurrency(orderData.totalAmount || 0)}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Phí vận chuyển:</span>
@@ -94,7 +93,7 @@ const PaymentPage = () => {
 
                                     <div className="flex justify-between text-xl font-bold text-gray-900">
                                         <span>Tổng cộng:</span>
-                                        <span>{formatCurrency(total)}</span>
+                                        <span>{formatCurrency(orderData.totalAmount || 0)}</span>
                                     </div>
                                 </div>
                             </div>

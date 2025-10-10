@@ -39,6 +39,9 @@ export class CategoryService {
   async findCategoryPreview() {
     const categories = await this.categoryModel.aggregate([
       {
+        $match: { parent: null }
+      },
+      {
         $lookup: {
           from: "products", localField: "_id", foreignField: "category", as: "products", pipeline:
             [
@@ -48,7 +51,7 @@ export class CategoryService {
         }
       },
       { $project: { name: 1, products: 1, slug: 1 } },
-      { $sort: { name: -1 } },
+      { $sort: { position: -1 } },
       { $limit: 5 }
     ]);
 

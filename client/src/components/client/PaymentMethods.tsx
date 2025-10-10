@@ -7,18 +7,12 @@ import { paymentClientService } from '@/services/client/payment.client.service';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { pathClientRoutes } from '@/config/route';
+import { IOrderData } from '@/types/model.client';
 
 const { Title, Text } = Typography;
 
-interface PaymentMethodsProps {
-    orderData?: {
-        orderId: string;
-        amount: number;
-        orderDescription: string;
-    };
-}
 
-export default function PaymentMethods({ orderData }: PaymentMethodsProps) {
+export default function PaymentMethods({ orderData }: { orderData: IOrderData }) {
     const [paymentMethod, setPaymentMethod] = useState<'cod' | 'vnpay'>('cod');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -34,11 +28,11 @@ export default function PaymentMethods({ orderData }: PaymentMethodsProps) {
 
             // Tạo thông tin đơn hàng mẫu để chuyển đến trang success
             const orderInfo = {
-                orderId: orderData?.orderId || `ORD${Date.now()}`,
-                customerName: 'Nguyễn Văn A', // Có thể lấy từ form hoặc context
-                phone: '0123456789',
-                address: 'Số 123, Đường ABC, Quận XYZ, TP.HCM',
-                total: orderData?.amount || 0
+                orderId: `ORD${Date.now()}`,
+                customerName: orderData.customerInfo.fullname, // Có thể lấy từ form hoặc context
+                phone: orderData.customerInfo.phone,
+                address: orderData.customerInfo.address,
+                total: orderData.totalAmount || 0
             };
 
             // Chuyển hướng đến trang order-success với thông tin đơn hàng
@@ -58,9 +52,9 @@ export default function PaymentMethods({ orderData }: PaymentMethodsProps) {
             try {
                 setLoading(true);
                 const paymentUrl = await paymentClientService.createVnpayPayment({
-                    orderId: orderData.orderId,
-                    amount: orderData.amount,
-                    orderDescription: orderData.orderDescription
+                    orderId: `DH${Date.now().toString().slice(-6)}`,
+                    totalAmount: orderData.totalAmount,
+                    orderDescription: `Thanh toan don hang`
                 });
 
 
@@ -79,73 +73,54 @@ export default function PaymentMethods({ orderData }: PaymentMethodsProps) {
     };
 
     return (
-        <Card title="Phương thức thanh toán" className="w-full shadow-xl border-0">
-            <Space direction="vertical" className="w-full" size="large">
+        <Card title="Phương thức thanh toán" className="!w-full shadow-xl border-0">
+            <Space direction="vertical" className="!w-full" size="large">
                 <Radio.Group
                     value={paymentMethod}
                     onChange={handlePaymentMethodChange}
-                    className="!w-full"
-                    style={{ width: '100%' }}
+                    className="!w-full space-y-4 custom-radio-group"
                 >
-                    <div className="space-y-4">
-                        <div className="w-full">
-                            <Radio value="cod" className="!w-full" style={{ flex: 1, display: 'flex' }}>
-                                <div className="w-full flex-1">
-                                    <Card
-                                        hoverable
-                                        className={`cursor-pointer !w-full !flex-1 transition-all duration-200 ${paymentMethod === 'cod'
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-200'
-                                            }`}
-                                        styles={{ body: { padding: '16px' } }}
-                                    >
-                                        <Space align="center" className='!w-full !flex-1'>
-                                            <DeliveredProcedureOutlined
-                                                className="text-2xl text-orange-500 !w-full !flex-1"
-                                            />
-                                            <div className='!w-full !flex-1'>
-                                                <Title level={5} className="mb-1">
-                                                    Thanh toán khi nhận hàng (COD)
-                                                </Title>
-                                                <Text type="secondary">
-                                                    Thanh toán bằng tiền mặt khi nhận hàng
-                                                </Text>
-                                            </div>
-                                        </Space>
-                                    </Card>
+                    {[
+                        {
+                            key: 'cod',
+                            title: 'Thanh toán khi nhận hàng (COD)',
+                            desc: 'Thanh toán bằng tiền mặt khi nhận hàng',
+                            icon: <DeliveredProcedureOutlined className="!text-2xl !text-orange-500" />,
+                        },
+                        {
+                            key: 'vnpay',
+                            title: 'Thanh toán trực tuyến',
+                            desc: 'Thanh toán qua VNPay (ATM, Visa, MasterCard)',
+                            icon: <CreditCardOutlined className="!text-2xl !text-blue-500" />,
+                        },
+                    ].map((method) => (
+                        <label
+                            key={method.key}
+                            htmlFor={method.key}
+                            className={
+                                `block w-full cursor-pointer rounded-xl border transition-all duration-200 ${paymentMethod === method.key
+                                    ? 'border-blue-500 bg-blue-50 shadow-sm'
+                                    : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50/30'}`
+                            }
+                        >
+                            <Radio
+                                id={method.key}
+                                value={method.key}
+                                className="hidden"
+                            />
+                            <div className="flex items-center gap-3 p-4 w-full">
+                                {method.icon}
+                                <div className="flex flex-col">
+                                    <Title level={5} className="!mb-1 !text-base !font-semibold">
+                                        {method.title}
+                                    </Title>
+                                    <Text type="secondary" className="!text-sm">
+                                        {method.desc}
+                                    </Text>
                                 </div>
-                            </Radio>
-                        </div>
-
-                        <div className="w-full">
-                            <Radio value="vnpay" className="w-full" style={{ width: '100%', display: 'flex' }}>
-                                <div className="w-full flex-1">
-                                    <Card
-                                        hoverable
-                                        className={`cursor-pointer transition-all duration-200 ${paymentMethod === 'vnpay'
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-200'
-                                            }`}
-                                        styles={{ body: { padding: '16px' } }}
-                                    >
-                                        <Space align="center">
-                                            <CreditCardOutlined
-                                                className="text-2xl text-blue-500"
-                                            />
-                                            <div>
-                                                <Title level={5} className="mb-1">
-                                                    Thanh toán trực tuyến
-                                                </Title>
-                                                <Text type="secondary">
-                                                    Thanh toán qua VNPay (ATM, Visa, MasterCard)
-                                                </Text>
-                                            </div>
-                                        </Space>
-                                    </Card>
-                                </div>
-                            </Radio>
-                        </div>
-                    </div>
+                            </div>
+                        </label>
+                    ))}
                 </Radio.Group>
 
                 <Button
@@ -165,6 +140,8 @@ export default function PaymentMethods({ orderData }: PaymentMethodsProps) {
                     </Text>
                 )}
             </Space>
+
+
         </Card>
     );
 }

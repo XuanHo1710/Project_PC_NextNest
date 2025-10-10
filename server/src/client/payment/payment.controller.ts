@@ -6,7 +6,7 @@ import { Guest, Public } from 'decorators/customize';
 
 export class CreatePaymentDto {
     orderId: string;
-    amount: number;
+    totalAmount: number;
     orderDescription: string;
 }
 
@@ -21,12 +21,12 @@ export class PaymentController {
         @Guest() guest: any,
         @Req() req: Request
     ) {
-        const { orderId, amount, orderDescription } = createPaymentDto;
+        const { orderId, totalAmount, orderDescription } = createPaymentDto;
 
         // Now we have access to authenticated guest info
         console.log('Guest making payment:', guest);
 
-        return this.vnpayService.createPaymentUrl(orderId, amount, orderDescription);
+        return this.vnpayService.createPaymentUrl(orderId, totalAmount, orderDescription);
     }
 
     @Get('vnpay-return')

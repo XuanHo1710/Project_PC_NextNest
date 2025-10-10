@@ -65,3 +65,18 @@ export interface ICart {
     total: number,
     guestId: string
 }
+
+
+export interface IOrderData {
+    customerInfo: {
+        fullname: string,
+        phone: string,
+        email: string,
+        address: string,
+        note: string
+    },
+    orderDetail: ICartItem[],
+    totalAmount: number,
+    orderDate: Date,
+    status: 'PENDING'
+}
