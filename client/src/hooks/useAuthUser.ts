@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { accountService } from '@/services/client/account.client.service';
 import { toast } from 'react-toastify';
 import { message } from 'antd';
+import useCartStore from '@/hooks/useCart';
 
 
 type User = ILoginResponse['user'];
@@ -63,6 +64,13 @@ const useAuthUser = create<AuthUserState>((set) => ({
             await accountService.logout();
             set({ user: null, accessToken: '' });
             toast.success('Đăng xuất thành công!');
+            const setCart = useCartStore.getState().setCart;
+            setCart({
+                _id: '',
+                cartItems: [],
+                total: 0,
+                guestId: '',
+            });
         } catch (error) {
             message.error('Logout error:' + error);
             set({ user: null, accessToken: '' });

@@ -114,4 +114,15 @@ const useCartStore = create<CartState>((set, get) => ({
     },
 }));
 
+
+// Đọc localStorage sau khi client render
+if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("cart");
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        useCartStore.setState({ cart: parsed });
+    }
+}
+
+
 export default useCartStore;

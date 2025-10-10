@@ -14,6 +14,7 @@ export interface ICategoryPreview {
         stock: number,
         soldCount: number
     }[],
+    slug?: string;
 }
 
 export interface IProductCard {

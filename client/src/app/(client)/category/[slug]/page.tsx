@@ -21,6 +21,13 @@ export default function CategoryClient() {
     const { addToCart } = useCartStore();
 
 
+    const params = new URLSearchParams(searchParams.toString());
+
+    const sort = searchParams.get("sort") || "";
+
+    console.log(sort)
+
+
     const { data: dataCategory, isLoading: isLoadingCategory } = useQuery<(ICategory) | null>({
         queryKey: ['get-by-idcategory', slug], // key để cache
         queryFn: () => categoryClientService.getCategoryBySlug(slug as string),
@@ -28,8 +35,8 @@ export default function CategoryClient() {
     });
 
     const { data: dataProduct, isLoading } = useQuery<(IProductWithPagination) | null>({
-        queryKey: ['product-by-category', dataCategory?._id, page, searchParams.toString()], // key để cache
-        queryFn: () => productClientService.getProductsByCategoryId(dataCategory?._id as string, page, searchParams.toString()),
+        queryKey: ['product-by-category', dataCategory?._id, page, sort], // key để cache
+        queryFn: () => productClientService.getProductsByCategoryId(dataCategory?._id as string, page, sort),
         enabled: !!dataCategory?._id, // 5 phút cache không gọi lại
     });
 
@@ -41,13 +48,18 @@ export default function CategoryClient() {
 
     const handlePagination = (value: number) => {
         setPage(value);
+        if (value > 1) {
+            params.set("page", value.toString());
+        } else {
+            params.delete("page");
+        }
+        router.push(`/category/${slug}/?${params.toString()}`);
         window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll mượt lên top
     }
 
 
     const handleFilter = (e: React.MouseEvent<HTMLButtonElement>, value: string) => {
         setActiveFilter(value);
-        const params = new URLSearchParams(searchParams.toString());
         if (value) {
             params.set("sort", value);
         } else {

@@ -237,7 +237,7 @@ instance.interceptors.response.use(
           toast.info('Không tìm thấy tài nguyên (404)');
           break;
         case 500:
-          toast.error('Lỗi máy chủ (500). Vui lòng thử lại sau.');
+          toast.error(data.message || 'Lỗi máy chủ (500). Vui lòng thử lại sau.');
           break;
         default:
           toast.error(data.message || 'Đã xảy ra lỗi không xác định');

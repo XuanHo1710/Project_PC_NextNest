@@ -18,6 +18,7 @@ export class ProductService {
   ) { }
 
   async findProductByIdCategory(categoryId: string, page: number, sort: string) {
+
     const filterProduct = {
       category: categoryId
     }
@@ -27,8 +28,8 @@ export class ProductService {
     };
 
     if (sort !== "") {
-      const keySort = sort.split("=")[1].split("_")[0];
-      const valueSort = parseInt(sort.split("=")[1].split("_")[1]);
+      const keySort = sort.split("_")[0];
+      const valueSort = parseInt(sort.split("_")[1]);
       sortProduct[keySort] = valueSort;
     }
 

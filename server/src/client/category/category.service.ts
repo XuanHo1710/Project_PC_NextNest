@@ -47,7 +47,7 @@ export class CategoryService {
             ]
         }
       },
-      { $project: { name: 1, products: 1 } },
+      { $project: { name: 1, products: 1, slug: 1 } },
       { $sort: { name: -1 } },
       { $limit: 5 }
     ]);

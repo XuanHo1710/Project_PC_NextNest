@@ -291,7 +291,7 @@ export default function HomeClient() {
                             <div key={category?._id} className='box-promotion mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-lg'>
                                 <div className='flex items-center justify-between'>
                                     <h1 className='text-xl md:text-3xl font-bold text-blue-500'>{category?.name}</h1>
-                                    <Link href={`/category/${category?._id}`}>
+                                    <Link href={`/category/${category?.slug}`}>
                                         <p className='text-sm font-bold text-slate-500 cursor-pointer'>Xem tất cả</p>
                                     </Link>
                                 </div>

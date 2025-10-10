@@ -6,6 +6,7 @@ import { IProductCard, IProductWithPagination } from '@/types/model.client'
 
 class ProductClientService {
     async getProductsByCategoryId(categoryId: string, page: number = 1, sort: string = ""): Promise<(IProductWithPagination | null)> {
+        console.log(categoryId, page, sort)
         const response = await axios.get(`product/get-by-category/${categoryId}`, {
             params: { page, sort },
         })
