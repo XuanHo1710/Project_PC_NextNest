@@ -6,6 +6,17 @@ import { ProductInteractionDetail } from 'src/admin/product/entities/product-int
 import { ProductInteraction } from 'src/admin/product/entities/product-interaction.entity';
 import { Product } from 'src/admin/product/entities/product.entity';
 
+interface ProductCondition {
+  other?: {
+    $elemMatch: {
+      key: string;
+      value: {
+        $in: RegExp[];
+      };
+    };
+  };
+}
+
 
 @Injectable()
 export class ProductService {
@@ -17,7 +28,7 @@ export class ProductService {
 
   ) { }
 
-  async findProductByIdCategory(categoryId: string, page: number, sort: string) {
+  async findProductByIdCategory(categoryId: string, page: number, sort: string, cpu: string, ram: string, price: string) {
 
     const filterProduct = {
       category: categoryId
@@ -27,16 +38,43 @@ export class ProductService {
 
     };
 
+    const conditions: ProductCondition[] = [];
+
+
     if (sort !== "") {
       const keySort = sort.split("_")[0];
       const valueSort = parseInt(sort.split("_")[1]);
       sortProduct[keySort] = valueSort;
     }
 
+    if (cpu !== "") {
+      const cpuValues = cpu.split(",").map(value => new RegExp(value.trim(), "i"));
+      conditions.push({
+        other: { $elemMatch: { key: "CPU", value: { $in: cpuValues } } }
+      });
+    }
+
+    if (ram !== "") {
+      const ramValues = ram.split(",").map(value => new RegExp(value.trim(), "i"));
+      conditions.push({
+        other: { $elemMatch: { key: "RAM", value: { $in: ramValues } } }
+      });
+    }
+
+    if (conditions.length > 0) {
+      filterProduct["$and"] = conditions;
+    }
+
+    if (price !== "") {
+      console.log(price)
+      filterProduct["newPrice"] = { $gte: (+price.split("-")[0] * 1000000), $lte: (+price.split("-")[1] * 1000000) };
+    }
+
+
     const limit = 8;
     const skip = (page - 1) * limit;
     // Đếm tổng số sản phẩm để tính totalPages
-    const totalItems = await this.productModel.countDocuments({ category: categoryId });
+    const totalItems = await this.productModel.countDocuments(filterProduct);
 
 
     const products = await this.productModel.find(
@@ -294,4 +332,5 @@ export class ProductService {
     const wishlistEntries = await this.productModelInteraction.find({ productId: productId, guestId: guestId, isWishlisted: true });
     return { isWishlisted: wishlistEntries.length > 0 }
   }
+
 }

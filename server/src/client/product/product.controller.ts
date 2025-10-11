@@ -8,8 +8,14 @@ export class ProductController {
   constructor(private readonly productService: ProductService) { }
 
   @Get("/get-by-category/:categoryId")
-  findProductByIdCategory(@Param("categoryId") categoryId: string, @Query("page") page: number = 1, @Query("sort") sort: string = "") {
-    return this.productService.findProductByIdCategory(categoryId, page, sort);
+  findProductByIdCategory(@Param("categoryId") categoryId: string,
+    @Query("page") page: number = 1,
+    @Query("sort") sort: string = "",
+    @Query("cpu") cpu: string = "",
+    @Query("ram") ram: string = "",
+    @Query("price") price: string = ""
+  ) {
+    return this.productService.findProductByIdCategory(categoryId, page, sort, cpu, ram, price);
   }
 
   @Get("/search")

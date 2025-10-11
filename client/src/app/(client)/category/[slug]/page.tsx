@@ -4,13 +4,16 @@ import useCartStore from "@/hooks/useCart";
 import { categoryClientService, productClientService } from "@/services/client";
 import { IProductWithPagination } from "@/types/model.client";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Carousel, Checkbox, Drawer, Image, Pagination, Spin } from "antd";
+import { Button, Carousel, Checkbox, Drawer, Image, Pagination } from "antd";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { CategoryPageSkeleton } from "@/components/Skeletons";
 import { ICategory } from "@/types/modal";
+
+import { FiShoppingCart } from "react-icons/fi";
+
 
 export default function CategoryClient() {
     const { slug } = useParams();
@@ -20,12 +23,17 @@ export default function CategoryClient() {
     const [activeFilter, setActiveFilter] = useState<string>("");
     const { addToCart } = useCartStore();
 
+    // Filter states
+    const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
+    const [selectedCPU, setSelectedCPU] = useState<string[]>([]);
+    const [selectedRAM, setSelectedRAM] = useState<string[]>([]);
 
     const params = new URLSearchParams(searchParams.toString());
 
     const sort = searchParams.get("sort") || "";
-
-    console.log(sort)
+    const cpuQuery = searchParams.get("cpu") || "";
+    const ramQuery = searchParams.get("ram") || "";
+    const priceQuery = searchParams.get("price") || "";
 
 
     const { data: dataCategory, isLoading: isLoadingCategory } = useQuery<(ICategory) | null>({
@@ -35,8 +43,8 @@ export default function CategoryClient() {
     });
 
     const { data: dataProduct, isLoading } = useQuery<(IProductWithPagination) | null>({
-        queryKey: ['product-by-category', dataCategory?._id, page, sort], // key để cache
-        queryFn: () => productClientService.getProductsByCategoryId(dataCategory?._id as string, page, sort),
+        queryKey: ['product-by-category', dataCategory?._id, page, sort, cpuQuery, ramQuery, priceQuery], // key để cache
+        queryFn: () => productClientService.getProductsByCategoryId(dataCategory?._id as string, page, sort, cpuQuery, ramQuery, priceQuery),
         enabled: !!dataCategory?._id, // 5 phút cache không gọi lại
     });
 
@@ -44,7 +52,7 @@ export default function CategoryClient() {
         if (!isLoading) {
             window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll mượt lên top
         }
-    }, [isLoading, page]);
+    }, [isLoading, page, sort, cpuQuery, ramQuery, priceQuery]);
 
     const handlePagination = (value: number) => {
         setPage(value);
@@ -69,8 +77,45 @@ export default function CategoryClient() {
     };
 
 
-    const handleFilterProduct = (e: React.MouseEvent<HTMLButtonElement>) => {
-        console.log(e);
+    const handleFilterProduct = () => {
+        console.log('Selected Filters:', {
+            prices: selectedPrices,
+            cpu: selectedCPU,
+            ram: selectedRAM
+        });
+
+        // Selected Filters Price Min & Max (Only get min value of price and max value of price if has => change String):
+        const filteredPrices = selectedPrices.map(price => {
+            const match = price.match(/price_(\d+)-(\d+)/);
+            if (match) {
+                return { min: parseInt(match[1]), max: parseInt(match[2]) };
+            }
+            return null;
+        }).filter(item => item !== null);
+
+        //Get only one min in filteredPrices and one max in filteredPrices
+        const minPrice = filteredPrices.length > 0 ? Math.min(...filteredPrices.map(p => p!.min)) : null;
+        const maxPrice = filteredPrices.length > 0 ? Math.max(...filteredPrices.map(p => p!.max)) : null;
+        const price = minPrice + "-" + maxPrice;
+
+        if (selectedCPU.length > 0) {
+            params.set("cpu", selectedCPU.join(","));
+        } else {
+            params.delete("cpu");
+        }
+
+        if (selectedRAM.length > 0) {
+            params.set("ram", selectedRAM.join(","));
+        } else {
+            params.delete("ram");
+        }
+
+        if (filteredPrices.length > 0) {
+            params.set("price", price);
+        } else {
+            params.delete("price");
+        }
+        router.push(`/category/${slug}/?${params.toString()}`);
     }
 
 
@@ -109,34 +154,34 @@ export default function CategoryClient() {
         },
         {
             label: 'Trên 35 triệu',
-            value: 'price_35-99999',
+            value: 'price_35-99999999',
         }
     ];
 
     const cpu = [
         {
             label: 'Intel Core i5',
-            value: 'CPU_Core i5',
+            value: '5',
         },
         {
             label: 'Intel Core i7',
-            value: 'CPU_Core i7',
+            value: '7',
         },
         {
             label: 'Intel Core i9',
-            value: 'CPU_Core i9',
+            value: '9',
         },
         {
             label: 'AMD Ryzen 5',
-            value: 'CPU_Ryzen 5',
+            value: 'Ryzen 5',
         },
         {
             label: 'AMD Ryzen 7',
-            value: 'CPU_Ryzen 7',
+            value: 'Ryzen 7',
         },
         {
             label: 'AMD Ryzen 9',
-            value: 'CPU_Ryzen 9',
+            value: 'Ryzen 9',
         },
 
     ];
@@ -144,19 +189,22 @@ export default function CategoryClient() {
     const ram = [
         {
             label: '16GB',
-            value: 'RAM_16GB',
+            value: '16GB',
         },
         {
             label: '32GB',
-            value: 'RAM_32GB',
+            value: '32GB',
         },
         {
             label: '64GB',
-            value: 'RAM_64GB',
+            value: '64GB',
         },
     ];
+
+
+    const isLoadingPage = isLoading || isLoadingCategory;
     // Hiển thị trang Loading khi đang tải dữ liệu
-    if (isLoading || isLoadingCategory) {
+    if (isLoadingPage) {
         return <CategoryPageSkeleton />;
     }
 
@@ -165,18 +213,33 @@ export default function CategoryClient() {
             <Drawer className='dark:!bg-blue-900 dark:!text-white' title="Bộ lọc sản phẩm" placement='bottom' onClose={onClose} open={open} height={550}>
                 <div className='mb-5'>
                     <h3 className='uppercase font-semibold py-3 border-solid border-b-2 border-b-stone-200'>Khoảng giá</h3>
-                    <Checkbox.Group className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white' options={prices} />
+                    <Checkbox.Group
+                        className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white'
+                        options={prices}
+                        value={selectedPrices}
+                        onChange={setSelectedPrices}
+                    />
                 </div>
                 <div className='my-5'>
                     <h3 className='uppercase font-semibold py-3 border-solid border-b-2 border-b-stone-200'>CPU</h3>
-                    <Checkbox.Group className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white' options={cpu} />
+                    <Checkbox.Group
+                        className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white'
+                        options={cpu}
+                        value={selectedCPU}
+                        onChange={setSelectedCPU}
+                    />
                 </div>
                 <div className='my-5'>
                     <h3 className='uppercase font-semibold py-3 border-solid border-b-2 border-b-stone-200'>Ram</h3>
-                    <Checkbox.Group className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white' options={ram} />
+                    <Checkbox.Group
+                        className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white'
+                        options={ram}
+                        value={selectedRAM}
+                        onChange={setSelectedRAM}
+                    />
                 </div>
                 <Button
-                    //  onClick={handleFilterProduct} 
+                    onClick={handleFilterProduct}
                     className="uppercase w-full my-3 py-6 border-blue-500 font-bold text-blue-500 button"
                 >
                     Lọc sản phẩm
@@ -197,18 +260,33 @@ export default function CategoryClient() {
                 <div className='mx-5 xl:mx-32 mt-5 content-body grid grid-flow-row grid-cols-12 lg:gap-12 '>
                     <div className='hidden lg:block lg:col-span-3 p-5 rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-h-max'>
 
-                        <button onClick={(e) => handleFilterProduct(e)} className="w-full transition-all button-primary">Lọc sản phẩm</button>
+                        <button onClick={handleFilterProduct} className="w-full transition-all button-primary">Lọc sản phẩm</button>
                         <div className='my-5'>
                             <h3 className='uppercase font-semibold py-3 border-solid border-b-2 border-b-stone-200'>Khoảng giá</h3>
-                            <Checkbox.Group className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white' options={prices} />
+                            <Checkbox.Group
+                                className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white'
+                                options={prices}
+                                value={selectedPrices}
+                                onChange={setSelectedPrices}
+                            />
                         </div>
                         <div className='my-5'>
                             <h3 className='uppercase font-semibold py-3 border-solid border-b-2 border-b-stone-200'>CPU</h3>
-                            <Checkbox.Group className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white' options={cpu} />
+                            <Checkbox.Group
+                                className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white'
+                                options={cpu}
+                                value={selectedCPU}
+                                onChange={setSelectedCPU}
+                            />
                         </div>
                         <div className='my-5'>
                             <h3 className='uppercase font-semibold py-3 border-solid border-b-2 border-b-stone-200'>Ram</h3>
-                            <Checkbox.Group className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white' options={ram} />
+                            <Checkbox.Group
+                                className='flex flex-col gap-3 mt-3 font-medium text-black dark:text-white'
+                                options={ram}
+                                value={selectedRAM}
+                                onChange={setSelectedRAM}
+                            />
                         </div>
                     </div>
                     <div className='col-span-12 lg:col-span-9'>
@@ -340,9 +418,11 @@ export default function CategoryClient() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        )) :
-                                        <div className='text-center py-32 col-span-12'>
-                                            <Spin className='text-center' size="large"></Spin>
+                                        ))
+                                        :
+                                        <div className='col-span-12 text-center py-10'>
+                                            <FiShoppingCart className='text-6xl mx-auto mb-5 text-stone-400' />
+                                            <h2 className='text-2xl font-semibold'>Chưa có sản phẩm nào trong danh mục này</h2>
                                         </div>
                                     }
                                 </div>
@@ -353,9 +433,11 @@ export default function CategoryClient() {
                                             <div key={product._id} className=' col-span-6 lg:col-span-3 p-1 border-solid border-2 dark:border-stone-900 border-stone-100'>
                                                 <CardProduct css="" product={product} />
                                             </div>
-                                        )) :
-                                        <div className='text-center py-32 col-span-12'>
-                                            <Spin className='text-center' size="large"></Spin>
+                                        ))
+                                        :
+                                        <div className='col-span-12 text-center py-10'>
+                                            <FiShoppingCart className='text-6xl mx-auto mb-5 text-stone-400' />
+                                            <h2 className='text-2xl font-semibold'>Chưa có sản phẩm nào trong danh mục này</h2>
                                         </div>
                                     }
                                 </div>

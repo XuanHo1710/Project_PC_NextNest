@@ -62,6 +62,7 @@ export default function ProductDetailClient() {
         enabled: !!slug,
     });
 
+    console.log("product", product);
     const { data: dataWishlist, isLoading: isLoadingWishlist } = useQuery<{ isWishlisted: boolean }>({
         queryKey: ['product-isWishlist', product?._id, user?.id],
         queryFn: () => productClientService.isWishlistByGuestAndProduct(user?.id || "", product?._id as string),
