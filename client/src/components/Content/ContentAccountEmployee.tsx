@@ -7,14 +7,13 @@ import EditSortAccountEmployee from "@/components/EditSort/account-employee/Edit
 import TableContent from "@/components/TableContent/TableContent";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useAccountEmployeeStore } from "@/stores/server/accountEmployeeStore";
 import { IAccountEmployee, IEmployee } from "@/types/modal.d";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { useAccountEmployees, useDeleteAccountEmployee } from "@/hooks/admin";
 
 
 
@@ -34,22 +33,21 @@ export default function ContentAccountEmployee() {
         "role"
     ]);
 
-    const { accountEmployees, deleteAccountEmployee, fetchAccountEmployees, loading, message } = useAccountEmployeeStore()
+    // Use TanStack Query hooks
+    const {
+        data: accountEmployees = [],
+        isLoading: loading
+    } = useAccountEmployees(queryParams.toString());
+
+    const deleteAccountEmployee = useDeleteAccountEmployee();
     const { accountLogin } = useAuthEmployee();
-
-
-    useEffect(() => {
-        fetchAccountEmployees("?" + queryParams.toString() as string)
-    }, [fetchAccountEmployees, queryParams, message]);
-
 
     const handleDelete = async (id: string) => {
         try {
-            const status = await deleteAccountEmployee(id);
-            if (status !== 500)
-                toast.success("Xóa tài khoản này thành công !!");
+            await deleteAccountEmployee.mutateAsync(id);
         } catch (err) {
-            toast.error("Xóa tài khoản này thất bại do lỗi: " + err);
+            // Error handling is done in the hook
+            console.error('Delete failed:', err);
         }
     }
 
@@ -123,7 +121,7 @@ export default function ContentAccountEmployee() {
     if (!loading && accountEmployees.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
     )) {
-        dataTable = accountEmployees.map((item, index) => {
+        dataTable = accountEmployees.map((item: IAccountEmployee, index: number) => {
             const row = {
                 key: index.toString(),
                 _id: item._id,

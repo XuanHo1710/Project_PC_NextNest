@@ -1,6 +1,4 @@
 'use client'
-import { useCategoryStore } from '@/stores/server/categoryStore';
-import { useProductStore } from '@/stores/server/productStore';
 import { ICategory, IProduct } from '@/types/modal.d';
 import { buildCategoryTree } from '@/utils/buildTree';
 import { UploadImages } from '@/utils/uploadImage';
@@ -8,8 +6,8 @@ import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
-import { JSX, useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
+import { JSX, useState } from 'react';
+import { useCategories, useCreateProduct } from '@/hooks/admin';
 
 interface UploadState {
     files: Array<File>;
@@ -21,14 +19,10 @@ export default function ContentModalProduct() {
         files: [],
         images: []
     });
-    const { addProduct, loading } = useProductStore();
 
-    const { categorys, fetchCategorys } = useCategoryStore();
-
-    useEffect(() => {
-        fetchCategorys();
-    }, [fetchCategorys]);
-
+    // Use TanStack Query hooks
+    const addProduct = useCreateProduct();
+    const { data: categorys = [] } = useCategories();
 
     const [form] = Form.useForm();
 
@@ -75,7 +69,7 @@ export default function ContentModalProduct() {
         if (data.otherString.trim() !== "") {
             // Check A:B;C:D,....
             if (!data.otherString.match(/^\w+:\w+(;\w+:\w+)*$/)) {
-                toast.error("Vui lòng nhập trường other đúng cú pháp !!")
+                console.error("Vui lòng nhập trường other đúng cú pháp !!");
                 return;
             }
             const mapped = Array.from(data.otherString.split(";")).map(x => (
@@ -99,14 +93,11 @@ export default function ContentModalProduct() {
         };
 
         try {
-            const status = await addProduct(product as IProduct);
-            if (status !== 500) {
-                toast.success("Thêm sản phẩm thành công!!");
-                form.resetFields();
-            }
-
+            await addProduct.mutateAsync(product as IProduct);
+            form.resetFields();
         } catch (error) {
-            toast.error(error as string);
+            // Error handling is done in the hook
+            console.error('Add product failed:', error);
         }
     }
 
@@ -133,7 +124,7 @@ export default function ContentModalProduct() {
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={addProduct.isPending}>
                 <h2 className='text-lg font-bold my-4'>Thêm mới sản phẩm:</h2>
                 <Form
                     className='border-b-2 border-solid border-slate-200'

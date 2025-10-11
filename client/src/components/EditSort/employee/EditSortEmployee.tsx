@@ -4,15 +4,14 @@
 import { useSelectedRowsEmployee } from "@/components/Content/ContentEmployee";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useEmployeeStore } from "@/stores/server/employeeStore";
 import { Button, Form, Select } from "antd";
-import { toast } from "react-toastify";
+import { useUpdateManyEmployees } from "@/hooks/admin";
 
 
 const EditSortEmployee = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsEmployee();
-    const { updateManyEmployee, fetchEmployees } = useEmployeeStore();
+    const updateManyEmployees = useUpdateManyEmployees();
     const { accountLogin } = useAuthEmployee();
 
 
@@ -42,14 +41,12 @@ const EditSortEmployee = () => {
 
         if (selectedRows.length > 0) {
             try {
-                const status = await updateManyEmployee(selectedRows, type);
-
-                if (status !== 500) {
-                    toast.success("Cập nhật thành công !!");
-                    fetchEmployees("?" + queryParams.toString() as string);
-                    if (type.split(":")[0] === "delete")
-                        setSelectedRows([]);
-                }
+                await updateManyEmployees.mutateAsync({
+                    ids: selectedRows,
+                    typeUpdate: type
+                });
+                if (type.split(":")[0] === "delete")
+                    setSelectedRows([]);
             } catch (err) {
                 console.log(err);
             }

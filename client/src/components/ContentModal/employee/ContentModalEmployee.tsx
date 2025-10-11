@@ -1,5 +1,4 @@
 'use client'
-import { useEmployeeStore } from '@/stores/server/employeeStore';
 import { IEmployee } from '@/types/modal.d';
 import { UploadImage } from '@/utils/uploadImage';
 import '@ant-design/v5-patch-for-react-19';
@@ -7,7 +6,7 @@ import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Image, Input, InputNumber, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useState } from 'react';
-import { toast } from 'react-toastify';
+import { useCreateEmployee } from '@/hooks/admin';
 
 
 interface UploadState {
@@ -18,8 +17,7 @@ interface UploadState {
 
 export default function ContentModalEmployee() {
     const [filesUpload, setFilesUpload] = useState<UploadState | null>(null);
-    const { addEmployee, loading } = useEmployeeStore();
-
+    const addEmployee = useCreateEmployee();
     const [form] = Form.useForm();
 
     const handlePreviewUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,14 +52,11 @@ export default function ContentModalEmployee() {
         };
 
         try {
-            const status = await addEmployee(employee);
-            if (status !== 500) {
-                toast.success("Thêm nhân viên thành công!!");
-                form.resetFields();
-            }
-
+            await addEmployee.mutateAsync(employee);
+            form.resetFields();
         } catch (error) {
-            toast.error(error as string);
+            // Error handling is done in the hook
+            console.error('Add employee failed:', error);
         }
 
     }
@@ -69,7 +64,7 @@ export default function ContentModalEmployee() {
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={addEmployee.isPending}>
                 <h2 className='text-lg font-bold my-4'>Thêm mới nhân viên:</h2>
                 <Form
                     onFinish={handleAdd}

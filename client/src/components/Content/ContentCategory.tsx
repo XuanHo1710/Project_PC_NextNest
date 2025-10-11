@@ -1,13 +1,11 @@
 'use client'
 import { Modal, Popconfirm, Spin } from "antd";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { createContext, useContext, useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { createContext, useContext, useState } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import EditSortCategory from "@/components/EditSort/category/EditSortCategory";
 import ActionCategory from "@/components/ActionFilter/category/ActionCategory";
-import { useCategoryStore } from "@/stores/server/categoryStore";
 import { ColumnsType } from "antd/es/table";
 import FilterCategory from "@/components/ActionFilter/category/FilterCategory";
 import ContentModalCategory from "@/components/ContentModal/category/ContentModalCategory";
@@ -15,6 +13,7 @@ import UpdateModalCategory from "@/components/ContentModal/category/UpdateModalC
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { ICategory } from "@/types/modal.d";
+import { useCategories, useDeleteCategory } from "@/hooks/admin/useCategory";
 
 const SelectedContextCategory = createContext<SelectedContextType | undefined>(undefined);
 
@@ -25,24 +24,21 @@ export default function ContentCategory() {
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
 
     const { accountLogin } = useAuthEmployee();
-    const { deleteCategory, fetchCategorys, loading, message, categorys } = useCategoryStore();
 
+    // Use TanStack Query hooks
+    const {
+        data: categorys = [],
+        isLoading: loading
+    } = useCategories(queryParams.toString());
 
-
-    useEffect(() => {
-        fetchCategorys("?" + queryParams.toString() as string)
-    }, [fetchCategorys, queryParams, message]);
-
+    const deleteCategory = useDeleteCategory();
 
     const handleDelete = async (id: string) => {
         try {
-            const status = await deleteCategory(id);
-            if (status !== 500) {
-                toast.success("Xóa danh mục này thành công !!");
-                fetchCategorys("?" + queryParams.toString() as string)
-            }
+            await deleteCategory.mutateAsync(id);
         } catch (err) {
-            toast.error("Xóa danh mục này thất bại do lỗi: " + err);
+            // Error handling is done in the hook
+            console.error('Delete failed:', err);
         }
     }
 
@@ -106,7 +102,7 @@ export default function ContentCategory() {
     if (!loading && categorys.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
     )) {
-        dataTable = categorys.map((item: ICategory, index) => {
+        dataTable = categorys.map((item: ICategory, index: number) => {
             const row: DataType<ICategory> = {
                 key: index.toString(),
                 _id: item._id,

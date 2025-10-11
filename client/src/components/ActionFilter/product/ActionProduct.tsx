@@ -5,12 +5,12 @@ import { SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import { JSX, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
-import { useProductStore } from '@/stores/server/productStore';
 import TableImportProductCSV from '@/components/ContentModal/product/CSVModalProduct';
 import ConfigModalProduct from '@/components/ContentModal/product/ConfigModalProduct';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { DataType } from '@/types/table.d';
 import { IProduct } from '@/types/modal.d';
+import { useCreateProduct, useProducts } from '@/hooks/admin';
 
 type ConfigFieldsType = {
     fields: Array<string>;
@@ -23,7 +23,8 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
     const [openConfig, setOpenConfig] = useState<boolean>(false);
     const [fileData, setFileData] = useState<DataType<IProduct>[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const { addProduct, products } = useProductStore();
+    const addProduct = useCreateProduct();
+    const { data: products = [] } = useProducts();
     const { accountLogin } = useAuthEmployee();
 
 
@@ -102,7 +103,7 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
 
         fileData.forEach(async (item) => {
             // Thêm sản phẩm vào cơ sở dữ liệu
-            await addProduct(item);
+            await addProduct.mutateAsync(item as Omit<IProduct, '_id'>);
         })
 
 

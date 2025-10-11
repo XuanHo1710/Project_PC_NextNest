@@ -1,14 +1,13 @@
 'use client'
-import { useDiscountStore } from '@/stores/server/discountStore';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
-import { toast } from 'react-toastify';
 import { DatePicker } from 'antd';
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import { IDiscount } from '@/types/modal.d';
+import { useCreateDiscount } from '@/hooks/admin';
 
 
 
@@ -17,7 +16,7 @@ const { RangePicker } = DatePicker;
 
 export default function ContentModalDiscount() {
     const [isMoney, setIsMoney] = useState(false);
-    const { addDiscount, loading } = useDiscountStore();
+    const addDiscount = useCreateDiscount();
 
     const [form] = Form.useForm();
 
@@ -42,13 +41,10 @@ export default function ContentModalDiscount() {
         };
 
         try {
-            const status = await addDiscount(discount as IDiscount);
-            if (status !== 500) {
-                toast.success("Thêm khuyến mãi thành công!!");
-                form.resetFields();
-            }
-        } catch (error) {
-            toast.error(error as string);
+            await addDiscount.mutateAsync(discount as Omit<IDiscount, '_id'>);
+            form.resetFields();
+        } catch {
+            // Error is handled in the hook
         }
     }
 
@@ -57,7 +53,7 @@ export default function ContentModalDiscount() {
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={addDiscount.isPending}>
                 <h2 className='text-lg font-bold my-4'>Thêm mới khuyến mãi:</h2>
                 <Form
                     onFinish={handleAdd}
@@ -142,8 +138,8 @@ export default function ContentModalDiscount() {
                         </Select>
                     </Form.Item>
                     <div className='text-right mb-10'>
-                        <Button loading={loading} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
-                        <Button loading={loading} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
+                        <Button loading={addDiscount.isPending} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
+                        <Button loading={addDiscount.isPending} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                     </div>
                 </Form>
             </Spin >

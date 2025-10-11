@@ -1,0 +1,101 @@
+'use client';
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { categoryService } from '@/services/admin';
+import { ICategory } from '@/types/modal.d';
+import { toast } from 'react-toastify';
+
+// Query Keys
+export const categoryKeys = {
+    all: ['categories'] as const,
+    lists: () => [...categoryKeys.all, 'list'] as const,
+    list: (params: string) => [...categoryKeys.lists(), params] as const,
+    details: () => [...categoryKeys.all, 'detail'] as const,
+    detail: (id: string) => [...categoryKeys.details(), id] as const,
+};
+
+// Hooks for Categories
+export const useCategories = (queryParams: string = '') => {
+    return useQuery({
+        queryKey: categoryKeys.list(queryParams),
+        queryFn: () => categoryService.getAll(queryParams ? `?${queryParams}` : ''),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+    });
+};
+
+export const useCategory = (id: string) => {
+    return useQuery({
+        queryKey: categoryKeys.detail(id),
+        queryFn: () => categoryService.getById(id),
+        enabled: !!id,
+    });
+};
+
+export const useCreateCategory = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (data: Omit<ICategory, '_id'>) => categoryService.create(data),
+        onSuccess: (response) => {
+            queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+            toast.success('Thêm danh mục thành công!');
+            return response;
+        },
+        onError: (error: Error) => {
+            toast.error(`Thêm danh mục thất bại: ${error.message}`);
+            throw error;
+        },
+    });
+};
+
+export const useUpdateCategory = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }: { id: string; data: Partial<ICategory> }) =>
+            categoryService.update(id, data),
+        onSuccess: (response, { id }) => {
+            queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: categoryKeys.detail(id) });
+            toast.success('Cập nhật danh mục thành công!');
+            return response;
+        },
+        onError: (error: Error) => {
+            toast.error(`Cập nhật danh mục thất bại: ${error.message}`);
+            throw error;
+        },
+    });
+};
+
+export const useDeleteCategory = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string) => categoryService.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+            toast.success('Xóa danh mục thành công!');
+        },
+        onError: (error: Error) => {
+            toast.error(`Xóa danh mục thất bại: ${error.message}`);
+            throw error;
+        },
+    });
+};
+
+export const useUpdateManyCategories = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ ids, typeUpdate }: { ids: string[]; typeUpdate: string }) =>
+            categoryService.updateMany(ids, typeUpdate),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+            toast.success('Cập nhật nhiều danh mục thành công!');
+        },
+        onError: (error: Error) => {
+            toast.error(`Cập nhật nhiều danh mục thất bại: ${error.message}`);
+            throw error;
+        },
+    });
+};

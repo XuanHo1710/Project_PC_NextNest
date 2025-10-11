@@ -1,17 +1,12 @@
 'use client'
-import { useRoleStore } from '@/stores/server/roleStore';
 import { IRole } from '@/types/modal.d';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Spin } from 'antd';
-import { toast } from 'react-toastify';
-
-
-
+import { useCreateRole } from '@/hooks/admin';
 
 export default function ContentModalRole() {
-    const { addRole, loading } = useRoleStore();
-
+    const addRole = useCreateRole();
     const [form] = Form.useForm();
 
     const layout = {
@@ -28,19 +23,17 @@ export default function ContentModalRole() {
             ...data,
         };
         try {
-            const status = await addRole(role);
-            if (status !== 500) {
-                toast.success("Thêm vai trò thành công!!");
-                form.resetFields();
-            }
+            await addRole.mutateAsync(role);
+            form.resetFields();
         } catch (error) {
-            toast.error(error as string);
+            // Error handling is done in the hook
+            console.error('Add role failed:', error);
         }
     }
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={addRole.isPending}>
                 <h2 className='text-lg font-bold my-4'>Thêm mới vai trò:</h2>
                 <Form
                     onFinish={handleAdd}
@@ -62,8 +55,8 @@ export default function ContentModalRole() {
                         <Input placeholder='Nhập mô tả ...' />
                     </Form.Item>
                     <div className='text-right mb-10'>
-                        <Button loading={loading} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
-                        <Button loading={loading} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
+                        <Button loading={addRole.isPending} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
+                        <Button loading={addRole.isPending} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                     </div>
                 </Form>
             </Spin >

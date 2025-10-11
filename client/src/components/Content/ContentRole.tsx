@@ -2,12 +2,10 @@
 
 import { Modal, Popconfirm, Spin } from "antd";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { createContext, useContext, useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { createContext, useContext, useState } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import { ColumnsType } from "antd/es/table";
-import { useRoleStore } from "@/stores/server/roleStore";
 import UpdateModalRole from "@/components/ContentModal/role/UpdateModalRole";
 import ActionRole from "@/components/ActionFilter/role/ActionRole";
 import FilterRole from "@/components/ActionFilter/role/FilterRole";
@@ -16,6 +14,7 @@ import ContentModalRole from "@/components/ContentModal/role/ContentModalRole";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { IRole } from "@/types/modal.d";
+import { useRoles, useDeleteRole } from "@/hooks/admin";
 
 
 const SelectedContextRole = createContext<SelectedContextType | undefined>(undefined);
@@ -27,25 +26,21 @@ export default function ContentRole() {
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
 
-    const { deleteRole, fetchRoles, loading, message, roles } = useRoleStore();
+    // Use TanStack Query hooks
+    const {
+        data: roles = [],
+        isLoading: loading
+    } = useRoles(queryParams.toString());
+
+    const deleteRole = useDeleteRole();
     const { accountLogin } = useAuthEmployee();
-
-
-
-    useEffect(() => {
-        fetchRoles("?" + queryParams.toString() as string)
-    }, [fetchRoles, queryParams, message]);
-
 
     const handleDelete = async (id: string) => {
         try {
-            const status = await deleteRole(id);
-            if (status !== 500) {
-                toast.success("Xóa vai trò này thành công !!");
-                fetchRoles("?" + queryParams.toString() as string)
-            }
+            await deleteRole.mutateAsync(id);
         } catch (err) {
-            toast.error("Xóa vai trò này thất bại do lỗi: " + err);
+            // Error handling is done in the hook
+            console.error('Delete failed:', err);
         }
     }
 
@@ -108,7 +103,7 @@ export default function ContentRole() {
     if (!loading && roles.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/role"
     )) {
-        dataTable = roles.map((item: IRole, index) => {
+        dataTable = roles.map((item: IRole, index: number) => {
             const row: DataType<IRole> = {
                 key: index.toString(),
                 _id: item._id,

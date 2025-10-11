@@ -2,11 +2,9 @@
 import { Modal, Popconfirm, Spin, Tag } from "antd";
 import type { ColumnsType, ColumnType } from "antd/es/table";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { createContext, useContext, useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { createContext, useContext, useState } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
-import { useDiscountStore } from "@/stores/server/discountStore";
 import UpdateModalDiscount from "@/components/ContentModal/discount/UpdateModalDiscount";
 import ActionDiscount from "@/components/ActionFilter/discount/ActionDiscount";
 import FilterDiscount from "@/components/ActionFilter/discount/FilterDiscount";
@@ -15,6 +13,7 @@ import ContentModalDiscount from "@/components/ContentModal/discount/ContentModa
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { IDiscount } from "@/types/modal.d";
+import { useDiscounts, useDeleteDiscount } from "@/hooks/admin";
 
 
 
@@ -37,22 +36,21 @@ export default function ContentDiscount() {
         "valueDiscount",
     ]);
 
-    const { discounts, deleteDiscount, fetchDiscounts, loading, message } = useDiscountStore()
+    // Use TanStack Query hooks
+    const {
+        data: discounts = [],
+        isLoading: loading
+    } = useDiscounts(queryParams.toString());
+
+    const deleteDiscount = useDeleteDiscount();
     const { accountLogin } = useAuthEmployee();
-
-
-    useEffect(() => {
-        fetchDiscounts("?" + queryParams.toString() as string)
-    }, [fetchDiscounts, queryParams, message]);
-
 
     const handleDelete = async (id: string) => {
         try {
-            const status = await deleteDiscount(id);
-            if (status !== 500)
-                toast.success("Xóa khuyến mãi này thành công !!");
+            await deleteDiscount.mutateAsync(id);
         } catch (err) {
-            toast.error("Xóa khuyến mãi này thất bại do lỗi: " + err);
+            // Error handling is done in the hook
+            console.error('Delete failed:', err);
         }
     }
 
@@ -131,7 +129,7 @@ export default function ContentDiscount() {
     if (!loading && discounts.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/discount"
     )) {
-        dataTable = discounts.map((item, index) => {
+        dataTable = discounts.map((item: IDiscount, index: number) => {
             const row = {
                 key: index.toString(),
                 _id: item._id,

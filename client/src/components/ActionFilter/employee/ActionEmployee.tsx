@@ -5,12 +5,12 @@ import { SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import { JSX, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-toastify';
-import { useEmployeeStore } from '@/stores/server/employeeStore';
 import ConfigModalEmployee from '@/components/ContentModal/employee/ConfigModalEmployee';
 import TableImportEmployeeCSV from '@/components/ContentModal/employee/CSVModalEmployee';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { DataType } from '@/types/table.d';
 import { IEmployee } from '@/types/modal.d';
+import { useCreateEmployee, useEmployees } from '@/hooks/admin';
 
 type ConfigFieldsType = {
     fields: Array<string>;
@@ -23,7 +23,8 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
     const [openConfig, setOpenConfig] = useState<boolean>(false);
     const [fileData, setFileData] = useState<DataType<IEmployee>[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const { addEmployee, employees } = useEmployeeStore();
+    const addEmployee = useCreateEmployee();
+    const { data: employees = [] } = useEmployees();
     const { accountLogin } = useAuthEmployee();
 
 
@@ -97,7 +98,7 @@ export default function ActionEmployee({ ContentModal, EditSort, Filter, ConfigF
 
         fileData.forEach(async (item) => {
             // Thêm nhân viên vào cơ sở dữ liệu
-            await addEmployee(item);
+            await addEmployee.mutateAsync(item as Omit<IEmployee, '_id'>);
         })
 
 

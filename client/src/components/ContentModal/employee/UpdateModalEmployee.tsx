@@ -4,10 +4,9 @@ import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Image, Input, InputNumber, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
-import { useEmployeeStore } from '@/stores/server/employeeStore';
 import { UploadImage } from '@/utils/uploadImage';
 import { IEmployee } from '@/types/modal.d';
+import { useUpdateEmployee } from '@/hooks/admin';
 
 
 
@@ -20,7 +19,7 @@ interface UploadState {
 export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmployee: IEmployee | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [filesUpload, setFilesUpload] = useState<UploadState | null>(null);;
     const [form] = Form.useForm();
-    const { updateEmployee, loading } = useEmployeeStore();
+    const updateEmployee = useUpdateEmployee();
 
 
     useEffect(() => {
@@ -77,15 +76,17 @@ export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmp
             _id: dataEmployee?._id
         }
 
+        if (!dataEmployee?._id) return;
+
         try {
-            const status = await updateEmployee(employee);
-            if (status !== 500) {
-                toast.success("Sửa nhân viên thành công !!");
-                form.resetFields(); // reset form
-                setOpen(false);
-            }
-        } catch (err) {
-            toast.error("Sửa nhân viên thất bại do lỗi: " + err)
+            await updateEmployee.mutateAsync({
+                id: dataEmployee._id,
+                data: employee
+            });
+            form.resetFields(); // reset form
+            setOpen(false);
+        } catch {
+            // Error is handled in the hook
         }
     }
 
@@ -93,7 +94,7 @@ export default function UpdateModalEmployee({ dataEmployee, setOpen }: { dataEmp
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={updateEmployee.isPending}>
                 <h2 className='text-lg font-bold my-4'>Cập nhật nhân viên:</h2>
                 {dataEmployee !== null &&
                     <Form

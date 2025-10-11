@@ -7,14 +7,13 @@ import EditSortProduct from "@/components/EditSort/product/EditSortProduct";
 import TableContent from "@/components/TableContent/TableContent";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useProductStore } from "@/stores/server/productStore";
 import { ICategory, IProduct } from "@/types/modal.d";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { Image, Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { useProducts, useDeleteProduct } from "@/hooks/admin";
 
 
 const SelectedProductContext = createContext<SelectedContextType | undefined>(undefined);
@@ -40,24 +39,20 @@ export default function ContentProduct() {
         "newPrice"
     ]);
 
-    // createdBy
-    // updateBy
+    // Use TanStack Query hooks
+    const {
+        data: products = [],
+        isLoading: loading
+    } = useProducts(queryParams.toString());
 
-    const { products, deleteProduct, fetchProducts, loading } = useProductStore()
-
-
-    useEffect(() => {
-        fetchProducts("?" + queryParams.toString() as string)
-    }, [fetchProducts, queryParams]);
-
+    const deleteProduct = useDeleteProduct();
 
     const handleDelete = async (id: string) => {
         try {
-            const status = await deleteProduct(id);
-            if (status !== 500)
-                toast.success("Xóa sản phẩm này thành công !!");
+            await deleteProduct.mutateAsync(id);
         } catch (err) {
-            toast.error("Xóa sản phẩm này thất bại do lỗi: " + err);
+            // Error handling is done in the hook
+            console.error('Delete failed:', err);
         }
     }
 
@@ -166,11 +161,11 @@ export default function ContentProduct() {
     if (!loading && products.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/product"
     )) {
-        dataTable = products.map((item, index) => {
+        dataTable = products.map((item: IProduct, index: number) => {
             const row = {
                 key: index.toString(),
                 _id: item._id,
-                otherString: item.other.map((o, index) => {
+                otherString: item.other.map((o: { key: string; value: string }, index: number) => {
                     if (item.other.length - 1 === index) {
                         return o.key + ":" + o.value;
                     }

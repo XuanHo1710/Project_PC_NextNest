@@ -1,9 +1,9 @@
 'use client'
-import { useRoleStore } from "@/stores/server/roleStore";
 import { IRole } from "@/types/modal.d";
 import { Button, Collapse, Switch } from "antd";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { useUpdateRole } from "@/hooks/admin";
 
 interface IProp {
     name?: string;
@@ -103,7 +103,7 @@ export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) 
     }, [roleSelected]);
 
 
-    const { updateRole } = useRoleStore();
+    const updateRole = useUpdateRole();
 
     const handleChange = (isSelected: boolean, method: string, path: string) => {
         if (roleSelected === null) {
@@ -123,16 +123,17 @@ export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) 
     }
 
     const handleSubmit = async () => {
-        if (roleSelected === null) {
+        if (roleSelected === null || !roleSelected._id) {
             toast.error("Vui lòng chọn vai trò !!")
             return;
         }
         roleSelected.permission = selected;
         try {
-            const status = await updateRole(roleSelected);
-            if (status !== 500) {
-                toast.success("Cập nhật quyền vai trò thành công !!");
-            }
+            await updateRole.mutateAsync({
+                id: roleSelected._id,
+                data: { permission: selected }
+            });
+            toast.success("Cập nhật quyền vai trò thành công !!");
         } catch (err) {
             toast.error("Cập nhật quyền vai trò thất bại do lỗi: " + err)
         }

@@ -3,14 +3,13 @@
 import { useSelectedRowsProduct } from "@/components/Content/ContentProduct";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useProductStore } from "@/stores/server/productStore";
 import { Button, Form, Select } from "antd";
-import { toast } from "react-toastify";
+import { useUpdateManyProducts } from "@/hooks/admin";
 
 const EditSortProduct = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsProduct();
-    const { updateManyProduct, fetchProducts } = useProductStore();
+    const updateManyProducts = useUpdateManyProducts();
     const { accountLogin } = useAuthEmployee();
 
 
@@ -40,14 +39,12 @@ const EditSortProduct = () => {
 
         if (selectedRows.length > 0) {
             try {
-                const status = await updateManyProduct(selectedRows, type);
-
-                if (status !== 500) {
-                    toast.success("Cập nhật thành công !!");
-                    fetchProducts("?" + queryParams.toString() as string);
-                    if (type.split(":")[0] === "delete")
-                        setSelectedRows([]);
-                }
+                await updateManyProducts.mutateAsync({
+                    ids: selectedRows,
+                    typeUpdate: type
+                });
+                if (type.split(":")[0] === "delete")
+                    setSelectedRows([]);
             } catch (err) {
                 console.log(err);
             }

@@ -7,14 +7,13 @@ import EditSortEmployee from "@/components/EditSort/employee/EditSortEmployee";
 import TableContent from "@/components/TableContent/TableContent";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useEmployeeStore } from "@/stores/server/employeeStore";
 import { IEmployee } from "@/types/modal.d";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { Avatar, Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { useEmployees, useDeleteEmployee } from "@/hooks/admin";
 
 
 const SelectedContext = createContext<SelectedContextType | undefined>(undefined);
@@ -32,19 +31,21 @@ export default function ContentEmployee() {
         "email",
         "gender",
     ]);
-    const { employees, deleteEmployee, fetchEmployees, loading, message } = useEmployeeStore();
 
-    useEffect(() => {
-        fetchEmployees("?" + queryParams.toString() as string)
-    }, [fetchEmployees, queryParams, message]);
+    // Use TanStack Query hooks
+    const {
+        data: employees = [],
+        isLoading: loading
+    } = useEmployees(queryParams.toString());
+
+    const deleteEmployee = useDeleteEmployee();
 
     const handleDelete = async (id: string) => {
         try {
-            const status = await deleteEmployee(id);
-            if (status !== 500)
-                toast.success("Xóa nhân viên này thành công !!");
+            await deleteEmployee.mutateAsync(id);
         } catch (err) {
-            toast.error("Xóa nhân viên này thất bại do lỗi: " + err);
+            // Error handling is done in the hook
+            console.error('Delete failed:', err);
         }
     }
 
@@ -116,7 +117,7 @@ export default function ContentEmployee() {
     if (!loading && employees.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/employee"
     )) {
-        dataTable = employees.map((item, index) => {
+        dataTable = employees.map((item: IEmployee, index: number) => {
             const row = {
                 key: index.toString(),
                 avatar: item.avatar,

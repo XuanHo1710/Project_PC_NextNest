@@ -1,25 +1,18 @@
 'use client'
 import { GroupCollapse } from "@/components/GroupCollapse/GroupCollapse";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
-import { useRoleStore } from "@/stores/server/roleStore";
-import { IRole } from "@/types/modal.d";
 import { Select } from "antd";
-import { useEffect, useState } from "react";
-
-
-
-
+import { useState } from "react";
+import { useRoles, useRole } from "@/hooks/admin";
 
 export default function SelectRole() {
     const { accountLogin } = useAuthEmployee();
-    const { fetchRoles, roles, getRoleById } = useRoleStore();
-    const [roleSelected, setRoleSelected] = useState<IRole | null>(null);
-    useEffect(() => {
-        fetchRoles();
-    }, [fetchRoles]);
-    const handleChangeRole = async (id: string) => {
-        const role = await getRoleById(id);
-        setRoleSelected(role);
+    const { data: roles = [] } = useRoles();
+    const [selectedRoleId, setSelectedRoleId] = useState<string>("");
+    const { data: roleSelected } = useRole(selectedRoleId);
+
+    const handleChangeRole = (id: string) => {
+        setSelectedRoleId(id);
     }
     return (
         <>
@@ -41,7 +34,7 @@ export default function SelectRole() {
                     <div className="bg-slate-50 shadow-xl py-5 px-3 my-10 rounded-2xl">
                         <h2 className="pb-2 border-b-2 border-solid border-slate-300">Danh sách các quyền:</h2>
                         <div className="my-4">
-                            <GroupCollapse roleSelected={roleSelected} />
+                            <GroupCollapse roleSelected={roleSelected || null} />
                         </div>
                     </div>
                 </>

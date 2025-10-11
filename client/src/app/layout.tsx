@@ -6,6 +6,7 @@ import "./globals.css";
 
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { ToastContainer } from 'react-toastify';
+import { QueryProvider } from '@/providers/QueryProvider';
 // import { AuthEmployeeProvider } from '@/hooks/AuthEmployeeContext';
 
 const geistSans = Geist({
@@ -41,7 +42,9 @@ export default function RootLayout({
 
         <ToastContainer position='top-right'></ToastContainer>
         {/* <AuthEmployeeProvider> */}
-        <AntdRegistry>{children}</AntdRegistry>
+        <QueryProvider>
+          <AntdRegistry>{children}</AntdRegistry>
+        </QueryProvider>
         {/* </AuthEmployeeProvider> */}
 
       </body>

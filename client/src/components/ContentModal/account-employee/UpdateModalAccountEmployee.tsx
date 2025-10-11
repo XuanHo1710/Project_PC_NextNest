@@ -3,21 +3,16 @@ import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { useQueryParams } from '@/hooks/QueryParamsContext';
-import { useAccountEmployeeStore } from '@/stores/server/accountEmployeeStore';
-import { useEmployeeStore } from '@/stores/server/employeeStore';
-import { useRoleStore } from '@/stores/server/roleStore';
 import { IAccountEmployee } from '@/types/modal.d';
+import { useUpdateAccountEmployee, useEmployeesNoAccount, useRoles } from '@/hooks/admin';
 
 
 
 export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpen }: { dataAccountEmployee: IAccountEmployee | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [form] = Form.useForm();
-    const { updateAccountEmployee, fetchAccountEmployees, loading } = useAccountEmployeeStore();
-    const { employees, getEmployeesNoAccount } = useEmployeeStore();
-    const { queryParams } = useQueryParams();
-    const { roles, fetchRoles } = useRoleStore();
+    const updateAccountEmployee = useUpdateAccountEmployee();
+    const { data: employees = [] } = useEmployeesNoAccount();
+    const { data: roles = [] } = useRoles();
 
 
 
@@ -30,10 +25,8 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
                 employeeId: dataAccountEmployee.employee._id,
                 roleId: dataAccountEmployee?.role ? dataAccountEmployee?.role._id : ""
             });
-            getEmployeesNoAccount();
-            fetchRoles();
         }
-    }, [getEmployeesNoAccount, fetchRoles, dataAccountEmployee, form]);
+    }, [dataAccountEmployee, form]);
 
 
     const layout = {
@@ -53,16 +46,17 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
             employeeId: data.employeeId
         }
 
+        if (!dataAccountEmployee?._id) return;
+
         try {
-            const status = await updateAccountEmployee(account);
-            if (status !== 500) {
-                toast.success("Sửa tài khoản thành công !!");
-                fetchAccountEmployees("?" + queryParams.toString() as string)
-                form.resetFields(); // reset form
-                setOpen(false);
-            }
-        } catch (err) {
-            toast.error("Sửa tài khoản thất bại do lỗi: " + err)
+            await updateAccountEmployee.mutateAsync({
+                id: dataAccountEmployee._id,
+                data: account
+            });
+            form.resetFields(); // reset form
+            setOpen(false);
+        } catch {
+            // Error is handled in the hook
         }
     }
 
@@ -70,7 +64,7 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={updateAccountEmployee.isPending}>
                 <h2 className='text-lg font-bold my-4'>Cập nhật nhân viên:</h2>
                 {dataAccountEmployee !== null &&
                     <Form
@@ -122,8 +116,8 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
                             </Select>
                         </Form.Item>
                         <div className='text-right mb-10'>
-                            <Button loading={loading} htmlType='submit' variant='solid' color='primary' className='text-right'>Sửa</Button>
-                            <Button loading={loading} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
+                            <Button loading={updateAccountEmployee.isPending} htmlType='submit' variant='solid' color='primary' className='text-right'>Sửa</Button>
+                            <Button loading={updateAccountEmployee.isPending} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                         </div>
                     </Form>
                 }

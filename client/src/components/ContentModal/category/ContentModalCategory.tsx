@@ -1,17 +1,17 @@
 'use client'
-import { useCategoryStore } from '@/stores/server/categoryStore';
 import { ICategory } from '@/types/modal.d';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { JSX } from 'react';
-import { toast } from 'react-toastify';
+import { useCreateCategory, useCategories } from '@/hooks/admin';
 
 
 
 
 export default function ContentModalCategory() {
-    const { addCategory, loading, categorys } = useCategoryStore();
+    const addCategory = useCreateCategory();
+    const { data: categories = [] } = useCategories();
 
     const [form] = Form.useForm();
 
@@ -29,13 +29,10 @@ export default function ContentModalCategory() {
             ...data,
         };
         try {
-            const status = await addCategory(category);
-            if (status !== 500) {
-                toast.success("Thêm danh mục sản phẩm thành công!!");
-                form.resetFields();
-            }
-        } catch (error) {
-            toast.error(error as string);
+            await addCategory.mutateAsync(category as Omit<ICategory, '_id'>);
+            form.resetFields();
+        } catch {
+            // Error is handled in the hook
         }
     }
 
@@ -92,7 +89,7 @@ export default function ContentModalCategory() {
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={addCategory.isPending}>
                 <h2 className='text-lg font-bold my-4'>Thêm mới danh mục sản phẩm:</h2>
                 <Form
                     onFinish={handleAdd}
@@ -109,13 +106,13 @@ export default function ContentModalCategory() {
                     <Form.Item label="Chọn danh mục cha" name="parent" className='font-sans text-lg'>
                         <Select allowClear showSearch placeholder="Chọn danh mục cha (nếu có)">
                             <Select.Option value="">Không</Select.Option>
-                            {renderCategoryOptions(buildCategoryTree(categorys))}
+                            {renderCategoryOptions(buildCategoryTree(categories))}
 
                         </Select>
                     </Form.Item>
                     <div className='text-right mb-10'>
-                        <Button loading={loading} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
-                        <Button loading={loading} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
+                        <Button loading={addCategory.isPending} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
+                        <Button loading={addCategory.isPending} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                     </div>
                 </Form>
             </Spin >

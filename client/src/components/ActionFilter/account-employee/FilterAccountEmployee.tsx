@@ -1,9 +1,9 @@
 'use client';
 
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useRoleStore } from "@/stores/server/roleStore";
 import { Button, Form, Input, Select } from "antd";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRoles } from "@/hooks/admin";
 
 const FilterAccountEmployee = () => {
 
@@ -16,12 +16,7 @@ const FilterAccountEmployee = () => {
         { label: "Dừng hoạt động", value: "status_INACTIVE" },
     ]
 
-    const { roles, fetchRoles } = useRoleStore();
-
-
-    useEffect(() => {
-        fetchRoles();
-    }, [fetchRoles]);
+    const { data: roles = [] } = useRoles();
 
 
     const handleSearch = (values: { search: string }) => {

@@ -3,15 +3,14 @@
 import { useSelectedRowsAccountEmployee } from "@/components/Content/ContentAccountEmployee";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useAccountEmployeeStore } from "@/stores/server/accountEmployeeStore";
 import { Button, Form, Select } from "antd";
-import { toast } from "react-toastify";
+import { useUpdateManyAccountEmployees } from "@/hooks/admin";
 
 
 const EditSortAccountEmployee = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsAccountEmployee();
-    const { updateManyAccountEmployee, fetchAccountEmployees } = useAccountEmployeeStore();
+    const updateManyAccountEmployees = useUpdateManyAccountEmployees();
     const { accountLogin } = useAuthEmployee();
 
     const handleSortChange = (value: string) => {
@@ -40,14 +39,12 @@ const EditSortAccountEmployee = () => {
 
         if (selectedRows.length > 0) {
             try {
-                const status = await updateManyAccountEmployee(selectedRows, type);
-
-                if (status !== 500) {
-                    toast.success("Cập nhật thành công !!");
-                    fetchAccountEmployees("?" + queryParams.toString() as string);
-                    if (type.split(":")[0] === "delete")
-                        setSelectedRows([]);
-                }
+                await updateManyAccountEmployees.mutateAsync({
+                    ids: selectedRows,
+                    typeUpdate: type
+                });
+                if (type.split(":")[0] === "delete")
+                    setSelectedRows([]);
             } catch (err) {
                 console.log(err);
             }
@@ -72,7 +69,7 @@ const EditSortAccountEmployee = () => {
                         />
                     </div>
                     <div className="flex items-center justify-center w-2/5">
-                        {accountLogin && accountLogin.role.permission.some(
+                        {accountLogin && accountLogin.role?.permission.some(
                             (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/updateMany"
                         ) &&
                             <Form onFinish={handleEditMulti} className='flex items-center justify-center'>

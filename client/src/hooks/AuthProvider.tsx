@@ -2,16 +2,15 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
-import { useRoleStore } from '@/stores/server/roleStore';
 import { IAccountLogin } from '@/types/modal.d';
 import { pathAdminRoutes } from '@/config/route';
 import { useRouter } from 'next/navigation';
+import { roleService } from '@/services/admin/role.service';
 
 
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const { setAccountLogin, setAccessToken, resetAuth } = useAuthEmployee();
-    const { getRoleById } = useRoleStore();
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -20,7 +19,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             try {
                 const res = await axios.post('/api/admin/auth/token', {});
                 if (res.data !== null && res.data.data) {
-                    const role = await getRoleById(res.data.data.roleId);
+                    const role = await roleService.getById(res.data.data.roleId);
                     setAccountLogin({
                         IDEmp: res.data.data.IDEmp,
                         username: res.data.data.username,
@@ -44,7 +43,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             }
         };
         fetchAccount();
-    }, [setAccountLogin, setAccessToken, getRoleById, resetAuth]);
+    }, [setAccountLogin, setAccessToken, resetAuth, router]);
 
     if (loading) {
         return (

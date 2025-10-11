@@ -4,12 +4,10 @@ import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { JSX, useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
-import { useProductStore } from '@/stores/server/productStore';
-import { useCategoryStore } from '@/stores/server/categoryStore';
 import { UploadImages } from '@/utils/uploadImage';
-import { useQueryParams } from '@/hooks/QueryParamsContext';
 import { ICategory, IProduct } from '@/types/modal.d';
+import { toast } from 'react-toastify';
+import { useUpdateProduct, useCategories } from '@/hooks/admin';
 
 interface UploadState {
     files: Array<File>;
@@ -26,14 +24,8 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
     console.log(dataProduct);
 
     const [form] = Form.useForm();
-    const { updateProduct, loading, fetchProducts } = useProductStore();
-    const { queryParams } = useQueryParams();
-
-    const { categorys, fetchCategorys } = useCategoryStore();
-
-    useEffect(() => {
-        fetchCategorys();
-    }, [fetchCategorys]);
+    const updateProduct = useUpdateProduct();
+    const { data: categories = [] } = useCategories();
 
 
     useEffect(() => {
@@ -140,14 +132,16 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
             _id: dataProduct?._id
         };
 
+        if (!dataProduct?._id) return;
+
         try {
-            const status = await updateProduct(product as IProduct);
-            if (status !== 500) {
-                toast.success("Sửa sản phẩm thành công !!");
-                form.resetFields(); // reset form
-                await fetchProducts("?" + queryParams.toString());
-                setOpen(false);
-            }
+            await updateProduct.mutateAsync({
+                id: dataProduct._id,
+                data: product as Partial<IProduct>
+            });
+            toast.success("Sửa sản phẩm thành công !!");
+            form.resetFields(); // reset form
+            setOpen(false);
         } catch (err) {
             toast.error("Sửa sản phẩm thất bại do lỗi: " + err)
         }
@@ -206,7 +200,7 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={updateProduct.isPending}>
                 <h2 className='text-lg font-bold my-4'>Cập nhật sản phẩm:</h2>
                 {dataProduct !== null &&
                     <Form
@@ -220,8 +214,8 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
                         <Form.Item label="Chọn danh mục" name="category" className='font-sans text-lg'>
                             <Select allowClear showSearch placeholder="Chọn danh mục">
                                 <Select.Option value="">Không</Select.Option>
-                                {categorys.length > 0 &&
-                                    renderCategoryOptions(buildCategoryTree(categorys))
+                                {categories.length > 0 &&
+                                    renderCategoryOptions(buildCategoryTree(categories))
                                 }
                             </Select>
                         </Form.Item>

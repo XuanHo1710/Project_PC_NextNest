@@ -3,15 +3,14 @@
 import { useSelectedRowsDiscount } from "@/components/Content/ContentDiscount";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useDiscountStore } from "@/stores/server/discountStore";
 import { Button, Form, Select } from "antd";
-import { toast } from "react-toastify";
+import { useUpdateManyDiscounts } from "@/hooks/admin";
 
 
 const EditSortDiscount = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsDiscount();
-    const { updateManyDiscount, fetchDiscounts } = useDiscountStore();
+    const updateManyDiscounts = useUpdateManyDiscounts();
     const { accountLogin } = useAuthEmployee();
 
 
@@ -42,14 +41,12 @@ const EditSortDiscount = () => {
 
         if (selectedRows.length > 0) {
             try {
-                const status = await updateManyDiscount(selectedRows, type);
-
-                if (status !== 500) {
-                    toast.success("Cập nhật thành công !!");
-                    fetchDiscounts("?" + queryParams.toString() as string);
-                    if (type.split(":")[0] === "delete")
-                        setSelectedRows([]);
-                }
+                await updateManyDiscounts.mutateAsync({
+                    ids: selectedRows,
+                    typeUpdate: type
+                });
+                if (type.split(":")[0] === "delete")
+                    setSelectedRows([]);
             } catch (err) {
                 console.log(err);
             }

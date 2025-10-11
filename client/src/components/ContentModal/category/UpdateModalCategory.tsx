@@ -3,18 +3,16 @@ import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { JSX, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { useCategoryStore } from '@/stores/server/categoryStore';
-import { useQueryParams } from '@/hooks/QueryParamsContext';
 import { ICategory } from '@/types/modal.d';
+import { useUpdateCategory, useCategories } from '@/hooks/admin';
 
 
 
 
 export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCategory: ICategory | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [form] = Form.useForm();
-    const { updateCategory, fetchCategorys, loading, categorys } = useCategoryStore();
-    const { queryParams } = useQueryParams();
+    const updateCategory = useUpdateCategory();
+    const { data: categories = [] } = useCategories();
 
     useEffect(() => {
         if (dataCategory !== null) {
@@ -38,21 +36,17 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
     };
 
     const handleUpdate = async (data: ICategory) => {
-        const category = {
-            ...data,
-            _id: dataCategory?._id
-        }
+        if (!dataCategory?._id) return;
 
         try {
-            const status = await updateCategory(category);
-            if (status !== 500) {
-                toast.success("Sửa danh mục thành công !!");
-                fetchCategorys("?" + queryParams.toString() as string)
-                form.resetFields(); // reset form
-                setOpen(false);
-            }
-        } catch (err) {
-            toast.error("Sửa danh mục thất bại do lỗi: " + err)
+            await updateCategory.mutateAsync({
+                id: dataCategory._id,
+                data: data
+            });
+            form.resetFields(); // reset form
+            setOpen(false);
+        } catch {
+            // Error is handled in the hook
         }
     }
 
@@ -112,7 +106,7 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={updateCategory.isPending}>
                 <h2 className='text-lg font-bold my-4'>Cập nhật danh mục:</h2>
                 {dataCategory !== null &&
                     <Form
@@ -126,12 +120,12 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
                         <Form.Item label="Chọn danh mục cha" name="parent" className='font-sans text-lg'>
                             <Select placeholder="Chọn danh mục cha (nếu có)">
                                 <Select.Option value="">Không</Select.Option>
-                                {renderCategoryOptions(buildCategoryTree(categorys))}
+                                {renderCategoryOptions(buildCategoryTree(categories))}
                             </Select>
                         </Form.Item>
                         <div className='text-right mb-10'>
-                            <Button loading={loading} htmlType='submit' variant='solid' color='primary' className='text-right'>Sửa</Button>
-                            <Button loading={loading} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
+                            <Button loading={updateCategory.isPending} htmlType='submit' variant='solid' color='primary' className='text-right'>Sửa</Button>
+                            <Button loading={updateCategory.isPending} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                         </div>
                     </Form>
                 }

@@ -3,15 +3,13 @@
 import { useSelectedRowsCategory } from "@/components/Content/ContentCategory";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useCategoryStore } from "@/stores/server/categoryStore";
 import { Button, Form, Select } from "antd";
-import { toast } from "react-toastify";
-
+import { useUpdateManyCategories } from "@/hooks/admin";
 
 const EditSortCategory = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsCategory();
-    const { fetchCategorys, updateManyCategory } = useCategoryStore();
+    const updateManyCategory = useUpdateManyCategories();
     const { accountLogin } = useAuthEmployee();
 
 
@@ -41,14 +39,11 @@ const EditSortCategory = () => {
 
         if (selectedRows.length > 0) {
             try {
-                const status = await updateManyCategory(selectedRows, type);
-                if (status !== 500) {
-                    toast.success("Xóa thành công !!");
-                    fetchCategorys("?" + queryParams.toString() as string)
-                    setSelectedRows([]);
-                }
+                await updateManyCategory.mutateAsync({ ids: selectedRows, typeUpdate: type });
+                setSelectedRows([]);
             } catch (err) {
-                console.log(err);
+                // Error handling is done in the hook
+                console.error('Update many failed:', err);
             }
         }
     }

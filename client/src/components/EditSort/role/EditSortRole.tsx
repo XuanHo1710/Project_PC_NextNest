@@ -3,15 +3,13 @@
 import { useSelectedRowsRole } from "@/components/Content/ContentRole";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { useRoleStore } from "@/stores/server/roleStore";
 import { Button, Form, Select } from "antd";
-import { toast } from "react-toastify";
-
+import { useUpdateManyRoles } from "@/hooks/admin";
 
 const EditSortRole = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsRole();
-    const { updateManyRole, fetchRoles } = useRoleStore();
+    const updateManyRole = useUpdateManyRoles();
     const { accountLogin } = useAuthEmployee();
 
 
@@ -41,16 +39,12 @@ const EditSortRole = () => {
 
         if (selectedRows.length > 0) {
             try {
-                const status = await updateManyRole(selectedRows, type);
-
-                if (status !== 500) {
-                    toast.success("Cập nhật thành công !!");
-                    fetchRoles("?" + queryParams.toString() as string);
-                    if (type.split(":")[0] === "delete")
-                        setSelectedRows([]);
-                }
+                await updateManyRole.mutateAsync({ ids: selectedRows, typeUpdate: type });
+                if (type.split(":")[0] === "delete")
+                    setSelectedRows([]);
             } catch (err) {
-                console.log(err);
+                // Error handling is done in the hook
+                console.error('Update many failed:', err);
             }
         }
     }

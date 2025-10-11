@@ -3,12 +3,10 @@ import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, DatePicker, Form, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
-import { useQueryParams } from '@/hooks/QueryParamsContext';
-import { useDiscountStore } from '@/stores/server/discountStore';
 import TextArea from 'antd/es/input/TextArea';
 import dayjs from 'dayjs';
 import { IDiscount } from '@/types/modal.d';
+import { useUpdateDiscount } from '@/hooks/admin';
 
 const { RangePicker } = DatePicker;
 
@@ -16,8 +14,7 @@ const { RangePicker } = DatePicker;
 
 export default function UpdateModalDiscount({ dataDiscount, setOpen }: { dataDiscount: IDiscount | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [form] = Form.useForm();
-    const { updateDiscount, fetchDiscounts, loading } = useDiscountStore();
-    const { queryParams } = useQueryParams();
+    const updateDiscount = useUpdateDiscount();
     const [isMoney, setIsMoney] = useState(false);
 
 
@@ -60,16 +57,17 @@ export default function UpdateModalDiscount({ dataDiscount, setOpen }: { dataDis
             endDate: endDate,
         }
 
+        if (!dataDiscount?._id) return;
+
         try {
-            const status = await updateDiscount(discount);
-            if (status !== 500) {
-                toast.success("Sửa khuyến mãi thành công !!");
-                fetchDiscounts("?" + queryParams.toString() as string)
-                form.resetFields(); // reset form
-                setOpen(false);
-            }
-        } catch (err) {
-            toast.error("Sửa khuyến mãi thất bại do lỗi: " + err)
+            await updateDiscount.mutateAsync({
+                id: dataDiscount._id,
+                data: discount
+            });
+            form.resetFields(); // reset form
+            setOpen(false);
+        } catch {
+            // Error is handled in the hook
         }
     }
 
@@ -77,7 +75,7 @@ export default function UpdateModalDiscount({ dataDiscount, setOpen }: { dataDis
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={updateDiscount.isPending}>
                 <h2 className='text-lg font-bold my-4'>Cập nhật khuyến mãi:</h2>
                 {dataDiscount !== null &&
                     <Form
@@ -156,8 +154,8 @@ export default function UpdateModalDiscount({ dataDiscount, setOpen }: { dataDis
                             </Select>
                         </Form.Item>
                         <div className='text-right mb-10'>
-                            <Button loading={loading} htmlType='submit' variant='solid' color='primary' className='text-right'>Sửa</Button>
-                            <Button loading={loading} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
+                            <Button loading={updateDiscount.isPending} htmlType='submit' variant='solid' color='primary' className='text-right'>Sửa</Button>
+                            <Button loading={updateDiscount.isPending} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                         </div>
                     </Form>
                 }

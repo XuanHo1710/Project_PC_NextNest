@@ -2,26 +2,17 @@
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
-import { toast } from 'react-toastify';
-import { useEmployeeStore } from '@/stores/server/employeeStore';
-import { useAccountEmployeeStore } from '@/stores/server/accountEmployeeStore';
-import { useEffect } from 'react';
-import { useRoleStore } from '@/stores/server/roleStore';
 import { IAccountEmployee } from '@/types/modal.d';
+import { useCreateAccountEmployee, useEmployeesNoAccount, useRoles } from '@/hooks/admin';
 
 
 
 
 
 export default function ContentModalAccountEmployee() {
-    const { addAccountEmployee, loading, fetchAccountEmployees } = useAccountEmployeeStore();
-    const { employees, getEmployeesNoAccount } = useEmployeeStore();
-    const { roles, fetchRoles } = useRoleStore();
-
-    useEffect(() => {
-        getEmployeesNoAccount();
-        fetchRoles();
-    }, [getEmployeesNoAccount, fetchRoles])
+    const addAccountEmployee = useCreateAccountEmployee();
+    const { data: employees = [] } = useEmployeesNoAccount();
+    const { data: roles = [] } = useRoles();
 
     const [form] = Form.useForm();
 
@@ -41,14 +32,10 @@ export default function ContentModalAccountEmployee() {
         }
 
         try {
-            const status = await addAccountEmployee(account);
-            if (status !== 500) {
-                toast.success("Thêm tài khoản thành công!!");
-                fetchAccountEmployees();
-                form.resetFields();
-            }
-        } catch (error) {
-            toast.error(error as string);
+            await addAccountEmployee.mutateAsync(account as Omit<IAccountEmployee, '_id'>);
+            form.resetFields();
+        } catch {
+            // Error is handled in the hook
         }
     }
 
@@ -57,7 +44,7 @@ export default function ContentModalAccountEmployee() {
 
     return (
         <>
-            <Spin size='large' spinning={loading}>
+            <Spin size='large' spinning={addAccountEmployee.isPending}>
                 <h2 className='text-lg font-bold my-4'>Thêm mới tài khoản nhân viên:</h2>
                 <Form
                     onFinish={handleAdd}
@@ -114,8 +101,8 @@ export default function ContentModalAccountEmployee() {
                         </Select>
                     </Form.Item>
                     <div className='text-right mb-10'>
-                        <Button loading={loading} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
-                        <Button loading={loading} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
+                        <Button loading={addAccountEmployee.isPending} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>
+                        <Button loading={addAccountEmployee.isPending} htmlType='reset' variant='outlined' color='primary' className='text-right mx-2'>Làm mới</Button>
                     </div>
                 </Form>
             </Spin >
