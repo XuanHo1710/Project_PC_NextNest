@@ -1,8 +1,8 @@
 import axiosClient from '@/config/axiosClient';
+import { IOrderData } from '@/types/model.client';
 
-export interface CreatePaymentRequest {
+export interface CreatePaymentRequest extends IOrderData {
     orderId: string;
-    totalAmount: number;
     orderDescription: string;
 }
 

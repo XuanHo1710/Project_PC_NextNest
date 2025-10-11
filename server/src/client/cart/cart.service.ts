@@ -13,8 +13,6 @@ export class CartService {
   }
 
   async update(id: string, updateCartDto: UpdateCartDto) {
-    console.log(id);
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
       // Nếu id không hợp lệ, tạo mới giỏ hàng
       const cartItems = updateCartDto.cartItems?.map(item => {

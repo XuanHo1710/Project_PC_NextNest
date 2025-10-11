@@ -294,7 +294,7 @@ export default function OrderSuccessPage() {
                                     Tiếp tục mua sắm
                                 </Title>
                                 <Space size="large" className="flex flex-col sm:flex-row">
-                                    <Link href="/">
+                                    <Link href="/home">
                                         <Button
                                             type="primary"
                                             size="large"
@@ -304,7 +304,7 @@ export default function OrderSuccessPage() {
                                             Về trang chủ
                                         </Button>
                                     </Link>
-                                    <Link href="/product">
+                                    <Link href="/home">
                                         <Button
                                             size="large"
                                             icon={<ShoppingOutlined />}

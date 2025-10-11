@@ -36,7 +36,6 @@ export class GuestService implements OnModuleInit {
                 { gender: 'other' },
                 { $set: { gender: 'OTHER' } }
             );
-            console.log('Gender values migration completed');
         } catch (error) {
             console.error('Error migrating gender values:', error);
         }

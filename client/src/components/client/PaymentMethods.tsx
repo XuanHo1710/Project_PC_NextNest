@@ -8,6 +8,9 @@ import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { pathClientRoutes } from '@/config/route';
 import { IOrderData } from '@/types/model.client';
+import { useMutation } from '@tanstack/react-query';
+import { orderClientService } from '@/services/client/order.client.service';
+import useCartStore from '@/hooks/useCart';
 
 const { Title, Text } = Typography;
 
@@ -16,6 +19,38 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
     const [paymentMethod, setPaymentMethod] = useState<'cod' | 'vnpay'>('cod');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { clearCart } = useCartStore();
+
+    const createOrderMutation = useMutation({
+        mutationFn: async (newOrderData: IOrderData) => {
+            return await orderClientService.createOrder(newOrderData);
+        },
+        onSuccess: (data) => {
+            toast.success('Đơn hàng đã được tạo thành công!');
+            // Tạo thông tin đơn hàng mẫu để chuyển đến trang success
+            const orderInfo = {
+                orderId: data._id || "",
+                customerName: data.customerInfo.fullname,
+                phone: data.customerInfo.phone,
+                address: data.customerInfo.address,
+                total: data.totalAmount.toString() || "0"
+            };
+
+            // Chuyển hướng đến trang order-success với thông tin đơn hàng
+            const params = new URLSearchParams(orderInfo);
+            if (sessionStorage.getItem('orderData'))
+                sessionStorage.removeItem('orderData');
+
+            // Xóa giỏ hàng
+            clearCart();
+
+            router.push(`${pathClientRoutes.orderSuccess}?${params.toString()}`);
+            return;
+        },
+        onError: () => {
+            toast.error('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.');
+        }
+    })
 
     const handlePaymentMethodChange = (e: RadioChangeEvent) => {
         setPaymentMethod(e.target.value);
@@ -24,28 +59,7 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
     const handlePayment = async () => {
         if (paymentMethod === 'cod') {
             // Xử lý thanh toán khi nhận hàng
-            toast.success('Đặt hàng thành công! Bạn sẽ thanh toán khi nhận hàng.');
-
-            // Tạo thông tin đơn hàng mẫu để chuyển đến trang success
-            const orderInfo = {
-                orderId: `ORD${Date.now()}`,
-                customerName: orderData.customerInfo.fullname, // Có thể lấy từ form hoặc context
-                phone: orderData.customerInfo.phone,
-                address: orderData.customerInfo.address,
-                total: orderData.totalAmount || 0
-            };
-
-            // Chuyển hướng đến trang order-success với thông tin đơn hàng
-            const params = new URLSearchParams({
-                orderId: orderInfo.orderId,
-                customerName: orderInfo.customerName,
-                phone: orderInfo.phone,
-                address: orderInfo.address,
-                total: orderInfo.total.toString()
-            });
-
-            router.push(`${pathClientRoutes.orderSuccess}?${params.toString()}`);
-            return;
+            createOrderMutation.mutate(orderData);
         }
 
         if (paymentMethod === 'vnpay' && orderData) {
@@ -53,8 +67,8 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
                 setLoading(true);
                 const paymentUrl = await paymentClientService.createVnpayPayment({
                     orderId: `DH${Date.now().toString().slice(-6)}`,
-                    totalAmount: orderData.totalAmount,
-                    orderDescription: `Thanh toan don hang`
+                    orderDescription: `Thanh toan don hang`,
+                    ...orderData
                 });
 
 

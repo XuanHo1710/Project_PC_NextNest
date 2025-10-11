@@ -6,11 +6,13 @@ import { Card, Result, Button, Spin, Typography } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { paymentClientService } from '@/services/client/payment.client.service';
 import Link from 'next/link';
+import useCartStore from '@/hooks/useCart';
 
 const { Text } = Typography;
 
 export default function VnpayReturnPage() {
     const searchParams = useSearchParams();
+    const { clearCart } = useCartStore();
     const [loading, setLoading] = useState(true);
     const [result, setResult] = useState<{
         isValid: boolean;
@@ -23,13 +25,12 @@ export default function VnpayReturnPage() {
             try {
                 const urlParams = new URLSearchParams(searchParams.toString());
                 const response = await paymentClientService.verifyVnpayReturn(urlParams);
-                console.log(response);
-
                 setResult({
                     isValid: response.isValid,
                     message: response.message,
                     transactionData: response.transactionData
                 });
+                clearCart();
             } catch (error) {
                 console.error('Lỗi xác thực thanh toán:', error);
                 setResult({
@@ -50,7 +51,7 @@ export default function VnpayReturnPage() {
                 message: 'Không tìm thấy thông tin giao dịch'
             });
         }
-    }, [searchParams]);
+    }, [searchParams, clearCart]);
 
     if (loading) {
         return (

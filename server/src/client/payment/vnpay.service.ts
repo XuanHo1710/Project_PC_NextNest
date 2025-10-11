@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import * as crypto from 'crypto';
 import * as moment from 'moment';
 import { ConfigService } from '@nestjs/config';
 import { ProductCode, VNPay, VnpLocale } from 'vnpay';
+import { CreatePaymentDto } from 'src/client/payment/payment.controller';
+import { Order } from 'src/client/order/entities/order.entity';
+import { Model } from 'mongoose';
+import { Product } from 'src/admin/product/entities/product.entity';
+import { Cart } from 'src/client/cart/entities/cart.entity';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class VnpayService {
@@ -10,16 +15,24 @@ export class VnpayService {
     private secretKey: string;
     private vnpUrl: string;
     private returnUrl: string;
+    private orderData: CreatePaymentDto;
 
-    constructor(private configService: ConfigService) {
+    constructor(
+        private configService: ConfigService,
+        @InjectModel(Order.name) private orderModel: Model<Order>,
+        @InjectModel(Product.name) private productModel: Model<Product>,
+        @InjectModel(Cart.name) private cartModel: Model<Cart>,
+    ) {
         this.tmnCode = this.configService.get<string>('VNPAY_TMN_CODE') || '';
         this.secretKey = this.configService.get<string>('VNPAY_SECRET_KEY') || '';
         this.vnpUrl = this.configService.get<string>('VNPAY_URL') || '';
         this.returnUrl = this.configService.get<string>('VNPAY_RETURN_URL') || '';
+        this.orderData = {} as CreatePaymentDto;
     }
 
-    async createPaymentUrl(orderId: string = "", totalAmount: number = 0, orderDescription: string = "") {
-        console.log(totalAmount)
+    async createPaymentUrl(createPaymentDto: CreatePaymentDto) {
+        const { orderId, totalAmount, orderDescription } = createPaymentDto;
+        this.orderData = createPaymentDto;
         const date = new Date();
         const createDate = moment(date).format('YYYYMMDDHHmmss');
         const expireDate = moment(date).add(15, 'minutes').format('YYYYMMDDHHmmss');
@@ -50,7 +63,7 @@ export class VnpayService {
         return { vnpayResponse };
     }
 
-    verifyReturnUrl(vnpParams: any): { isValid: boolean; message: string; transactionData?: Record<string, string> } {
+    async verifyReturnUrl(vnpParams: any): Promise<{ isValid: boolean; message: string; transactionData?: Record<string, string>; }> {
         try {
             // Tạo đối tượng VNPay với config giống như khi tạo payment
             const vnpay = new VNPay({
@@ -81,6 +94,40 @@ export class VnpayService {
             if (isValid) {
                 const responseCode = vnpParams['vnp_ResponseCode'];
                 if (responseCode === '00') {
+                    // Xu ly luu thong tin giao dich vao hoa don, cap nhat trang thai don hang, ...
+                    const dataCreate = {
+                        guestId: this.orderData.guestId,
+                        customerInfo: {
+                            fullname: this.orderData.customerInfo.fullname,
+                            address: this.orderData.customerInfo.address,
+                            email: this.orderData.customerInfo.email,
+                            phone: this.orderData.customerInfo.phone,
+                            note: this.orderData.customerInfo.note,
+                        },
+                        orderDetail: this.orderData.orderDetail.map(item => ({
+                            product: item.product._id,
+                            quantity: item.quantity,
+                            subtotal: item.subtotal,
+                            price: item.price,
+                        })),
+                        totalAmount: this.orderData.totalAmount,
+                        payment: {
+                            isCheckout: true,
+                            type: 'CARD'
+                        }
+                    }
+
+                    await Promise.all(this.orderData.orderDetail.map(async (item) => {
+                        // Cập nhật số lượng đã bán và tồn kho của sản phẩm
+                        await this.productModel.findByIdAndUpdate(item.product._id, { $inc: { soldCount: item.quantity, stock: -item.quantity } });
+                    }));
+
+                    // Xóa giỏ hàng sau khi tạo đơn hàng
+                    await this.cartModel.findOneAndDelete({ guestId: this.orderData.guestId });
+
+                    // Tao don hang
+                    await this.orderModel.create(dataCreate);
+
                     return {
                         isValid: true,
                         message: 'Giao dịch thành công',

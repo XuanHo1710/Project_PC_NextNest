@@ -68,6 +68,8 @@ export interface ICart {
 
 
 export interface IOrderData {
+    _id?: string,
+    guestId: string,
     customerInfo: {
         fullname: string,
         phone: string,

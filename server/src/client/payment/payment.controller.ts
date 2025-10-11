@@ -3,10 +3,10 @@ import { VnpayService } from './vnpay.service';
 import { Request } from 'express';
 import { ClientJwtAuthGuard } from '../auth/client-jwt-auth.guard';
 import { Guest, Public } from 'decorators/customize';
+import { CreateOrderDto } from 'src/client/order/dto/create-order.dto';
 
-export class CreatePaymentDto {
+export class CreatePaymentDto extends CreateOrderDto {
     orderId: string;
-    totalAmount: number;
     orderDescription: string;
 }
 
@@ -17,16 +17,9 @@ export class PaymentController {
 
     @Post('create-vnpay-url')
     createVnpayPaymentUrl(
-        @Body() createPaymentDto: CreatePaymentDto,
-        @Guest() guest: any,
-        @Req() req: Request
+        @Body() createPaymentDto: CreatePaymentDto
     ) {
-        const { orderId, totalAmount, orderDescription } = createPaymentDto;
-
-        // Now we have access to authenticated guest info
-        console.log('Guest making payment:', guest);
-
-        return this.vnpayService.createPaymentUrl(orderId, totalAmount, orderDescription);
+        return this.vnpayService.createPaymentUrl(createPaymentDto);
     }
 
     @Get('vnpay-return')

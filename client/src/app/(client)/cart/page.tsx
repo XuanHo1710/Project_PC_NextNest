@@ -243,6 +243,7 @@ export default function CartClient() {
 
         // Prepare order data
         const orderData: IOrderData = {
+            guestId: user?.id || "guest",
             customerInfo: {
                 fullname: data.fullname,
                 phone: data.phone,
