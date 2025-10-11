@@ -174,31 +174,31 @@ export default function ProfileDetail() {
                                     <span className='font-medium'>Thông tin tài khoản</span>
                                 </li>
                             </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-200 rounded-lg text-stone-600' href={"/profile/order"}>
+                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/order"}>
                                 <li className='inline-block'>
                                     <i className="far fa-list-alt w-9"></i>
                                     <span className='font-medium'>Tra cứu đơn hàng</span>
                                 </li>
                             </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-200 rounded-lg text-stone-600' href={"/profile/wishlist"}>
+                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/wishlist"}>
                                 <li className='inline-block'>
                                     <i className="fa-solid fa-heart w-9"></i>
                                     <span className='font-medium'>Danh sách yêu thích</span>
                                 </li>
                             </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-200 rounded-lg text-stone-600' href={"/profile/address"}>
+                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/address"}>
                                 <li className='inline-block'>
                                     <i className="fa-solid fa-location-dot w-9"></i>
                                     <span className='font-medium'>Quản lý địa chỉ</span>
                                 </li>
                             </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-200 rounded-lg text-stone-600' href={"/profile/password"}>
+                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/password"}>
                                 <li className='inline-block'>
                                     <i className="fas fa-lock w-9"></i>
                                     <span className='font-medium'>Thay đổi mật khẩu</span>
                                 </li>
                             </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-200 rounded-lg text-stone-600' href={"/home"}>
+                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/home"}>
                                 <li className='inline-block'>
                                     <i className="fas fa-sign-out-alt w-9"></i>
                                     <span className='font-medium'>Đăng xuất</span>

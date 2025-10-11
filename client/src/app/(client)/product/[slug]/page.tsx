@@ -4,7 +4,7 @@ import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
 import { IProductCard, IProductWithPagination } from "@/types/model.client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Carousel, Image, Rate, Tag, Tabs, message } from "antd";
+import { Button, Carousel, Rate, Tag, Tabs, message } from "antd";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ProductDetailSkeleton } from "@/components/Skeletons";
@@ -22,6 +22,7 @@ import {
 import CommentProduct from '@/components/client/ProductDetail/Comment';
 import DescriptionProduct from '@/components/client/ProductDetail/Description';
 import SpecificationsProduct from '@/components/client/ProductDetail/Specifications';
+import ProductImageGallery from '@/components/client/ProductDetail/ProductImageGallery';
 import useCartStore from '@/hooks/useCart';
 import Swal from "sweetalert2";
 import useAuthUser from '@/hooks/useAuthUser';
@@ -54,13 +55,6 @@ export default function ProductDetailClient() {
     const { addToCart } = useCartStore();
     const { user } = useAuthUser();
     const queryClient = useQueryClient();
-    // const { data: guestWishlist, isLoading: isLoadingGuestWishlist } = useQuery<IProductCard[]>({
-    //     queryKey: ['product-guestWishlist', id, user?.id],
-    //     queryFn: () => guestClientService.getWishlist(user?.id || ""),
-    //     enabled: !!id && !!user?.id,
-    // });
-
-    // console.log(guestWishlist);
 
     const { data: product, isLoading: isLoadingProduct } = useQuery<IProductCard>({
         queryKey: ['product-by-id', slug],
@@ -174,34 +168,10 @@ export default function ProductDetailClient() {
                         <div className='grid grid-cols-1 lg:grid-cols-12 my-6 gap-8'>
                             {/* Hình ảnh sản phẩm */}
                             <div className='lg:col-span-5 xl:col-span-4'>
-                                <div className="bg-white rounded-lg shadow-sm p-2 mb-4">
-                                    <Carousel className='w-full' autoplay autoplaySpeed={3000} touchMove effect="fade">
-                                        {product.images.map((img, index) => (
-                                            <div key={index} className="h-[300px] md:h-[400px] flex items-center justify-center bg-gray-50">
-                                                <Image
-                                                    src={img}
-                                                    alt={product.name}
-                                                    className="object-contain !w-96 !h-96"
-                                                    preview={true}
-                                                />
-                                            </div>
-                                        ))}
-                                    </Carousel>
-                                </div>
-
-                                {/* Thumbnails */}
-                                <div className='grid grid-cols-5 gap-2'>
-                                    {product.images.map((img, index) => (
-                                        <div key={index} className="border border-gray-200 hover:border-blue-500 rounded-md overflow-hidden transition-all cursor-pointer">
-                                            <Image
-                                                src={img}
-                                                alt={`thumbnail-${index}`}
-                                                className="object-cover w-full h-16"
-                                                preview={false}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
+                                <ProductImageGallery
+                                    images={product.images}
+                                    productName={product.name}
+                                />
 
                                 {/* Đánh giá */}
                                 <div className='mt-8 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex items-center justify-between'>

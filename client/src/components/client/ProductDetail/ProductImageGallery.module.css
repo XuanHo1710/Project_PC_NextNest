@@ -1,0 +1,117 @@
+/* Additional styles for ProductImageGallery */
+.product-image-gallery {
+    width: 100%;
+}
+
+.main-image-container {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.main-image-swiper {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.main-image-swiper .swiper-slide {
+    height: auto;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.thumbnails-swiper {
+    margin-top: 16px;
+}
+
+.thumbnails-swiper .swiper-slide {
+    width: auto !important;
+    margin-right: 8px;
+}
+
+/* Disable default Swiper navigation buttons */
+.main-image-swiper .swiper-button-next,
+.main-image-swiper .swiper-button-prev {
+    display: none !important;
+}
+
+/* Custom arrow styles */
+.gallery-arrow {
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.gallery-arrow:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.gallery-arrow:active {
+    transform: scale(0.95);
+}
+
+/* Thumbnail hover effects */
+.thumbnails-swiper .swiper-slide:hover {
+    transform: translateY(-2px);
+}
+
+/* Loading state for images */
+.ant-image {
+    transition: opacity 0.3s ease;
+}
+
+.ant-image-img {
+    transition: opacity 0.3s ease;
+}
+
+/* Dark mode adjustments */
+.dark .main-image-container {
+    background: #1f2937;
+}
+
+.dark .main-image-swiper .swiper-slide {
+    background: #1f2937;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .gallery-arrow {
+        width: 32px;
+        height: 32px;
+    }
+
+    .main-image-container {
+        border-radius: 8px;
+    }
+}
+
+/* Image counter styles */
+.image-counter {
+    backdrop-filter: blur(4px);
+    border-radius: 20px;
+}
+
+/* Smooth transitions for all elements */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.thumbnails-swiper .swiper-wrapper {
+    transition-timing-function: ease-out;
+}
+
+/* Active thumbnail indicator */
+.thumbnail-active::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border-color: aqua;
+    z-index: 10;
+}
