@@ -80,5 +80,5 @@ export interface IOrderData {
     orderDetail: ICartItem[],
     totalAmount: number,
     orderDate: Date,
-    status: 'PENDING'
+    status?: 'PENDING' | 'SHIPPING' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED';
 }

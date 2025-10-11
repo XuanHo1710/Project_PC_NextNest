@@ -1,97 +1,128 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Steps, Card, Button, Divider, Space, Tag } from 'antd';
+import React, { useState } from 'react';
+import { Steps, Card, Button, Divider, Tag, Image } from 'antd';
 import { CheckCircleOutlined, ClockCircleOutlined, TruckOutlined, CloseCircleOutlined, UndoOutlined } from '@ant-design/icons';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
     OrderPageSkeleton,
     ProfilePageSkeleton
 } from "@/components/Skeletons";
+import { IOrderData } from '@/types/model.client';
+import { useQuery } from '@tanstack/react-query';
+import useAuthUser from '@/hooks/useAuthUser';
+import { orderClientService } from '@/services/client/order.client.service';
+
+interface IOrderItem {
+    id: string,
+    productName: string,
+    quantity: number,
+    price: number,
+    originalPrice: number,
+    image: string,
+    status: string,
+    slug: string,
+}
 
 export default function OrderPage() {
     const [currentStep, setCurrentStep] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const { user } = useAuthUser();
+
+    const { data: dataListOrder, isLoading: isLoadingOrder } = useQuery<(IOrderData[]) | []>({
+        queryKey: ['get-order-by-guest-id', user?.id], // key để cache
+        queryFn: () => orderClientService.getOrdersByGuestId(user?.id as string),
+        enabled: !!user?.id, // 5 phút cache không gọi lại
+    });
+
+
 
     // Mock data đơn hàng
     const orderData = {
-        0: [ // Chờ xác nhận
-            {
-                id: 'DH123456',
-                productName: 'Laptop Gaming ASUS ROG',
-                quantity: 1,
-                price: 25000000,
-                originalPrice: undefined,
-                status: 'pending',
-                image: '/laptop.png'
-            }
-        ],
-        1: [ // Vận chuyển
-            {
-                id: 'DH789012',
-                productName: 'Chuột Gaming Logitech G502',
-                quantity: 2,
-                price: 1500000,
-                originalPrice: undefined,
-                status: 'shipping',
-                image: '/laptop.png'
-            }
-        ],
-        2: [ // Chờ giao hàng
-            {
-                id: 'DH345678',
-                productName: 'Bàn phím cơ Corsair K70',
-                quantity: 1,
-                price: 2500000,
-                originalPrice: undefined,
-                status: 'delivery',
-                image: '/laptop.png'
-            }
-        ],
-        3: [ // Hoàn thành
-            {
-                id: 'CALA33',
-                productName: 'Bánh Quy Viên Kem Socola Star Cup Thái Lan (100 cốc)',
-                quantity: 1,
-                price: 75000,
-                originalPrice: 78000,
-                status: 'completed',
-                image: '/laptop.png'
-            }
-        ],
-        4: [ // Đã hủy
-            {
-                id: 'DH999999',
-                productName: 'Tai nghe Sony WH-1000XM4',
-                quantity: 1,
-                price: 8500000,
-                originalPrice: undefined,
-                status: 'cancelled',
-                image: '/laptop.png'
-            }
-        ],
-        5: [ // Trả hàng/Hoàn tiền
-            {
-                id: 'DH777777',
-                productName: 'Màn hình Dell UltraSharp 27',
-                quantity: 1,
-                price: 7500000,
-                originalPrice: undefined,
-                status: 'refund',
-                image: '/laptop.png'
-            }
-        ]
+        0: // Chờ xác nhận
+            dataListOrder?.filter(order => order.status === 'PENDING').reduce((acc: IOrderItem[], order) => {
+                const items = order.orderDetail.map(item => ({
+                    id: order._id,
+                    productName: item.product.name,
+                    quantity: item.quantity || 1,
+                    price: item.product.newPrice || 0,
+                    originalPrice: item.product.oldPrice || 0,
+                    image: item.product.images[0] || '/laptop.png',
+                    slug: item.product.slug || '',
+                    status: 'pending'
+                }) as IOrderItem);
+                return acc.concat(items);
+            }, []),
+        1:  // Vận chuyển
+            dataListOrder?.filter(order => order.status === 'SHIPPING').reduce((acc: IOrderItem[], order) => {
+                const items = order.orderDetail.map(item => ({
+                    id: order._id,
+                    productName: item.product.name,
+                    quantity: item.quantity || 1,
+                    price: item.product.newPrice || 0,
+                    originalPrice: item.product.oldPrice || 0,
+                    image: item.product.images[0] || '/laptop.png',
+                    slug: item.product.slug || '',
+                    status: 'shipping'
+                }) as IOrderItem);
+                return acc.concat(items);
+            }, []),
+        2: // Chờ giao hàng
+            dataListOrder?.filter(order => order.status === 'DELIVERED').reduce((acc: IOrderItem[], order) => {
+                const items = order.orderDetail.map(item => ({
+                    id: order._id,
+                    productName: item.product.name,
+                    quantity: item.quantity || 1,
+                    price: item.product.newPrice || 0,
+                    originalPrice: item.product.oldPrice || 0,
+                    image: item.product.images[0] || '/laptop.png',
+                    slug: item.product.slug || '',
+                    status: 'delivery'
+                }) as IOrderItem);
+                return acc.concat(items);
+            }, []),
+        3:  // Hoàn thành
+            dataListOrder?.filter(order => order.status === 'COMPLETED').reduce((acc: IOrderItem[], order) => {
+                const items = order.orderDetail.map(item => ({
+                    id: order._id,
+                    productName: item.product.name,
+                    quantity: item.quantity || 1,
+                    price: item.product.newPrice || 0,
+                    originalPrice: item.product.oldPrice || 0,
+                    image: item.product.images[0] || '/laptop.png',
+                    slug: item.product.slug || '',
+                    status: 'completed'
+                }) as IOrderItem);
+                return acc.concat(items);
+            }, []),
+        4: // Đã hủy
+            dataListOrder?.filter(order => order.status === 'CANCELLED').reduce((acc: IOrderItem[], order) => {
+                const items = order.orderDetail.map(item => ({
+                    id: order._id,
+                    productName: item.product.name,
+                    quantity: item.quantity || 1,
+                    price: item.product.newPrice || 0,
+                    originalPrice: item.product.oldPrice || 0,
+                    image: item.product.images[0] || '/laptop.png',
+                    slug: item.product.slug || '',
+                    status: 'cancelled'
+                }) as IOrderItem);
+                return acc.concat(items);
+            }, []),
+        5: // Trả hàng/Hoàn tiền
+            dataListOrder?.filter(order => order.status === 'REFUNDED').reduce((acc: IOrderItem[], order) => {
+                const items = order.orderDetail.map(item => ({
+                    id: order._id,
+                    productName: item.product.name,
+                    quantity: item.quantity || 1,
+                    price: item.product.newPrice || 0,
+                    originalPrice: item.product.oldPrice || 0,
+                    image: item.product.images[0] || '/laptop.png',
+                    slug: item.product.slug || '',
+                    status: 'refund'
+                }) as IOrderItem);
+                return acc.concat(items);
+            }, [])
     };
-
-    useEffect(() => {
-        // Simulate initial data fetch
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1500); // Simulate a 1.5-second load time
-
-        return () => clearTimeout(timer);
-    }, []);
 
     const stepItems = [
         {
@@ -153,7 +184,7 @@ export default function OrderPage() {
 
     const currentOrders = orderData[currentStep as keyof typeof orderData] || [];
 
-    if (loading) {
+    if (isLoadingOrder) {
         return (
             <ProfilePageSkeleton>
                 <OrderPageSkeleton />
@@ -262,15 +293,36 @@ export default function OrderPage() {
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center space-x-3">
                                                 <span className="font-semibold">{order.id}</span>
-                                                <Button type="link" size="small" className="text-blue-500">
-                                                    Chat
-                                                </Button>
-                                                <Button type="link" size="small" className="text-blue-500">
-                                                    Xem Shop
-                                                </Button>
+                                                {order.status === 'cancelled' || order.status === 'delivery' || order.status === 'refund' ?
+                                                    null
+                                                    :
+                                                    <Button type="link" size="small" className="text-blue-500">
+                                                        Hủy đơn hàng/Trả hàng
+                                                    </Button>
+                                                }
+
                                             </div>
                                             <div className="flex items-center space-x-2">
-                                                <span className="text-green-500 font-medium">Đơn hàng đã giao thành công</span>
+                                                {order.status === 'completed' &&
+                                                    <span className="text-green-500 font-medium">Đơn hàng đã giao thành công</span>
+                                                }
+                                                {order.status === 'pending' &&
+                                                    <span className="text-red-500 font-medium">Đơn hàng đang chờ xử lý</span>
+                                                }
+                                                {order.status === 'cancelled' &&
+                                                    <span className="text-gray-500 font-medium">Đơn hàng đã bị hủy</span>
+                                                }
+                                                {order.status === 'shipping' &&
+                                                    <span className="text-blue-500 font-medium">Đơn hàng đang được vận chuyển</span>
+                                                }
+                                                {order.status === 'delivery' &&
+                                                    <span className="text-cyan-500 font-medium">Đơn hàng đang chờ giao</span>
+                                                }
+                                                {order.status === 'refund' &&
+                                                    <span className="text-purple-500 font-medium">Đơn hàng đã được hoàn tiền</span>
+                                                }
+
+
                                                 <Tag color={getStatusColor(order.status)} className="font-medium">
                                                     {getStatusText(order.status)}
                                                 </Tag>
@@ -312,14 +364,14 @@ export default function OrderPage() {
                                                     {formatCurrency(order.price * order.quantity)}
                                                 </span>
                                             </div>
-                                            <Space>
-                                                <Button className="border-red-500 text-red-500 hover:bg-red-50">
+                                            <div className="flex items-center space-x-3">
+                                                <Link type='link' href={`/product/${order.slug}`} className="!border-[1px] !px-10 !py-1 rounded-md !border-red-500 !text-red-500 hover:!bg-red-50">
                                                     Mua Lại
-                                                </Button>
+                                                </Link>
                                                 <Button type="default">
                                                     Liên Hệ Người Bán
                                                 </Button>
-                                            </Space>
+                                            </div>
                                         </div>
                                     </Card>
                                 ))

@@ -96,7 +96,7 @@ export default function VnpayReturnPage() {
                                         size="large"
                                         className="w-full sm:w-auto min-w-[200px] h-12 hover:border-blue-500"
                                     >
-                                        <Link href="/orders">
+                                        <Link href="/profile/order">
                                             Xem đơn hàng
                                         </Link>
                                     </Button>

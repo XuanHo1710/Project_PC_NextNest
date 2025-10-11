@@ -45,6 +45,10 @@ export class OrderService {
     return await this.orderModel.create(dataCreate);
   }
 
+  async getAllOrdersByGuestId(guestId: string) {
+    return await this.orderModel.find({ guestId: guestId }).populate('orderDetail.product').sort({ createdAt: -1 });
+  }
+
   async updateOrderStatus(id: string, updateOrderDto: UpdateOrderDto) {
 
   }
