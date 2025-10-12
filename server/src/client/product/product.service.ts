@@ -182,7 +182,16 @@ export class ProductService {
         }
       );
     }
-    return await this.productModelInteraction.create(dataComment);
+
+    const result = await this.productModelInteraction.create(dataComment);
+
+    // Invalidate comment cache for this product (all pages)
+    // Since we don't know how many pages exist, we'll invalidate common pages
+    for (let page = 1; page <= 10; page++) {
+      const cacheKey = `product:comments:${createProductInteractionDto.productId}:page:${page}`;
+      await this.cacheManager.del(cacheKey);
+    }
+    return result;
   }
 
   async getAllCommentByProductId(productId: string, page: number) {
@@ -271,7 +280,15 @@ export class ProductService {
       isAdminReply: isAdminReply,
       isReply: true
     }
-    return await this.productModelInteractionDetail.create(dataReply);
+
+    const result = await this.productModelInteractionDetail.create(dataReply);
+
+    // Invalidate comment cache for this product (all pages)
+    for (let page = 1; page <= 10; page++) {
+      const cacheKey = `product:comments:${interaction.productId}:page:${page}`;
+      await this.cacheManager.del(cacheKey);
+    }
+    return result;
   }
 
 
@@ -326,6 +343,11 @@ export class ProductService {
         );
       }
 
+      // Invalidate comment cache for this product (all pages)
+      for (let page = 1; page <= 10; page++) {
+        const cacheKey = `product:comments:${interaction.productId}:page:${page}`;
+        await this.cacheManager.del(cacheKey);
+      }
       return { message: 'Cập nhật tương tác thành công' };
     } else {
       await this.productModelInteractionDetail.create({
@@ -345,6 +367,12 @@ export class ProductService {
           { _id: interaction._id },
           { $inc: { dislikes: 1 } }
         );
+      }
+
+      // Invalidate comment cache for this product (all pages)
+      for (let page = 1; page <= 10; page++) {
+        const cacheKey = `product:comments:${interaction.productId}:page:${page}`;
+        await this.cacheManager.del(cacheKey);
       }
       return { message: 'Tạo tương tác thành công' };
     }

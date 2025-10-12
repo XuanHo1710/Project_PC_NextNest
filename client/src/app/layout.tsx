@@ -1,5 +1,8 @@
 
+import '@/utils/suppressAntdWarnings.early';
 import '@ant-design/v5-patch-for-react-19';
+import '@/utils/suppressAntdWarnings';
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
