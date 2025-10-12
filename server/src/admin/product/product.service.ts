@@ -5,15 +5,23 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Product } from './entities/product.entity';
 import { Model } from 'mongoose';
 import { TypeQueryProduct, TypeUpdateManyProduct } from 'types/product';
+import { CacheInvalidationService } from '../../redis/cache-invalidation.service';
 
 
 @Injectable()
 export class ProductService {
-  constructor(@InjectModel(Product.name) private productModel: Model<Product>) { }
+  constructor(
+    @InjectModel(Product.name) private productModel: Model<Product>,
+    private cacheInvalidationService: CacheInvalidationService
+  ) { }
 
   async create(createProductDto: CreateProductDto) {
     createProductDto.newPrice = createProductDto.oldPrice * (1 - createProductDto.discount);
     const product = await this.productModel.create(createProductDto);
+
+    // Invalidate product cache
+    await this.cacheInvalidationService.invalidateProductCache();
+
     return product;
   }
 
@@ -50,14 +58,22 @@ export class ProductService {
 
   async update(id: string, updateProductDto: UpdateProductDto) {
     updateProductDto.newPrice = (updateProductDto.oldPrice ?? 0) * (1 - (updateProductDto.discount ?? 0));
-    return await this.productModel.updateOne({ _id: id }, { $set: updateProductDto });
+    const result = await this.productModel.updateOne({ _id: id }, { $set: updateProductDto });
+
+    // Invalidate product cache
+    await this.cacheInvalidationService.invalidateProductCache();
+
+    return result;
   }
 
   async updateMany(dataUpdate: TypeUpdateManyProduct) {
     const type = dataUpdate.typeUpdate.split(':')[0];
+    let result: any = null;
+
     switch (type) {
       case "delete": {
-        return await this.productModel.deleteMany({ _id: { $in: dataUpdate.ids } });
+        result = await this.productModel.deleteMany({ _id: { $in: dataUpdate.ids } });
+        break;
       }
       case "update": {
         const keyUpdate = dataUpdate.typeUpdate.split(":")[1].split("_")[0];
@@ -67,13 +83,23 @@ export class ProductService {
         };
 
         update[keyUpdate] = valueUpdate;
-        return await this.productModel.updateMany({ _id: { $in: dataUpdate.ids } }, update);
+        result = await this.productModel.updateMany({ _id: { $in: dataUpdate.ids } }, update);
+        break;
       }
     }
-    return null;
+
+    // Invalidate product cache
+    await this.cacheInvalidationService.invalidateProductCache();
+
+    return result;
   }
 
   async remove(id: string) {
-    return await this.productModel.deleteOne({ _id: id });
+    const result = await this.productModel.deleteOne({ _id: id });
+
+    // Invalidate product cache
+    await this.cacheInvalidationService.invalidateProductCache();
+
+    return result;
   }
 }

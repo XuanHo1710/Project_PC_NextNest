@@ -21,11 +21,8 @@ export class CategoryService {
     // Try to get from cache
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) {
-      console.log('📦 Cache HIT for findAll categories');
       return cached;
     }
-
-    console.log('🔍 Cache MISS for findAll categories - querying MongoDB');
 
     let sortCategory = {};
 
@@ -62,11 +59,8 @@ export class CategoryService {
     // Try to get from cache
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) {
-      console.log('📦 Cache HIT for category preview');
       return cached;
     }
-
-    console.log('🔍 Cache MISS for category preview - querying MongoDB');
 
     const categories = await this.categoryModel.aggregate([
       {
@@ -98,11 +92,9 @@ export class CategoryService {
     // Try to get from cache
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) {
-      console.log(`📦 Cache HIT for category slug: ${slug}`);
       return cached;
     }
 
-    console.log(`🔍 Cache MISS for category slug: ${slug} - querying MongoDB`);
 
     const category = await this.categoryModel.findOne({ slug: slug }).exec();
 
@@ -116,7 +108,6 @@ export class CategoryService {
 
   // Cache invalidation method (to be called when categories are updated in admin)
   async invalidateCache() {
-    console.log('🗑️  Invalidating all category caches');
     // Delete specific cache keys
     await this.cacheManager.del('categories:preview');
     // For production, you might want to track all cache keys or use Redis pattern matching

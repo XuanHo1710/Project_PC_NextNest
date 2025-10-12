@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Guest, GuestDocument } from 'src/admin/guest/entities/guest.entity';
@@ -6,6 +6,8 @@ import * as bcrypt from 'bcrypt';
 import { AccountGuest, AccountGuestDocument } from 'src/admin/account-guest/entities/account-guest.entity';
 import { Product } from 'src/admin/product/entities/product.entity';
 import { ProductInteraction } from 'src/admin/product/entities/product-interaction.entity';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class GuestService implements OnModuleInit {
@@ -14,6 +16,7 @@ export class GuestService implements OnModuleInit {
         @InjectModel(AccountGuest.name) private accountModel: Model<AccountGuestDocument>,
         @InjectModel(ProductInteraction.name) private productInteractionModel: Model<ProductInteraction>,
         @InjectModel(Product.name) private productModel: Model<Product>,
+        @Inject(CACHE_MANAGER) private cacheManager: Cache
     ) { }
 
     async onModuleInit() {
@@ -43,6 +46,15 @@ export class GuestService implements OnModuleInit {
 
 
     async findOne(id: string): Promise<Guest> {
+        // Generate cache key
+        const cacheKey = `guest:profile:${id}`;
+
+        // Try to get from cache
+        const cached = await this.cacheManager.get(cacheKey);
+        if (cached) {
+            return cached as Guest;
+        }
+
         const guestInfo = await this.guestModel
             .findOne({ _id: id, deletedAt: { $exists: false } })
             .select('-authProvider -resetPasswordToken -resetPasswordExpires')
@@ -51,6 +63,9 @@ export class GuestService implements OnModuleInit {
         if (!guestInfo) {
             throw new NotFoundException('Guest not found');
         }
+
+        // Cache for 1 hour
+        await this.cacheManager.set(cacheKey, guestInfo, 3600000);
 
         return guestInfo;
     }
@@ -70,6 +85,11 @@ export class GuestService implements OnModuleInit {
         if (!updatedGuest) {
             throw new NotFoundException('Guest not found');
         }
+
+        // Invalidate guest profile cache
+        const cacheKey = `guest:profile:${id}`;
+        await this.cacheManager.del(cacheKey);
+
         return {
             message: 'Profile updated successfully',
         };
@@ -114,7 +134,6 @@ export class GuestService implements OnModuleInit {
                 address: addedAddress
             };
         } catch (error) {
-            console.error('Error in addAddress:', error);
             if (error instanceof NotFoundException || error instanceof BadRequestException) {
                 throw error;
             }
@@ -153,7 +172,6 @@ export class GuestService implements OnModuleInit {
             await guest.save();
             return { message: 'Address updated successfully' };
         } catch (error) {
-            console.error('Error in updateAddress:', error);
             if (error instanceof NotFoundException || error instanceof BadRequestException) {
                 throw error;
             }
@@ -237,10 +255,23 @@ export class GuestService implements OnModuleInit {
     }
 
     async getWishlist(guestId: string): Promise<Product[]> {
+        // Generate cache key
+        const cacheKey = `guest:wishlist:${guestId}`;
+
+        // Try to get from cache
+        const cached = await this.cacheManager.get(cacheKey);
+        if (cached) {
+            return cached as Product[];
+        }
+
         const listIdWishlist = await this.productInteractionModel.find({ guestId: guestId, isWishlisted: true }).select('productId').exec();
         const products = await this.productModel.find({ _id: { $in: listIdWishlist.map(item => item.productId) }, deletedAt: { $exists: false } },
             { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1 }
         ).exec();
+
+        // Cache for 30 minutes
+        await this.cacheManager.set(cacheKey, products, 1800000);
+
         return products;
     }
 }

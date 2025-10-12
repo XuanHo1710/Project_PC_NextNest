@@ -1,5 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { Model } from 'mongoose';
 import { CreateProductInteractionDto } from 'src/admin/product/dto/create-product-interaction.entity';
 import { ProductInteractionDetail } from 'src/admin/product/entities/product-interaction-detail.entity';
@@ -23,12 +25,19 @@ export class ProductService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<Product>,
     @InjectModel(ProductInteraction.name) private productModelInteraction: Model<ProductInteraction>,
-    @InjectModel(ProductInteractionDetail.name) private productModelInteractionDetail: Model<ProductInteractionDetail>
-
-
+    @InjectModel(ProductInteractionDetail.name) private productModelInteractionDetail: Model<ProductInteractionDetail>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) { }
 
   async findProductByIdCategory(categoryId: string, page: number, sort: string, cpu: string, ram: string, price: string) {
+    // Generate cache key based on all filters
+    const cacheKey = `products:category:${categoryId}:page:${page}:sort:${sort}:cpu:${cpu}:ram:${ram}:price:${price}`;
+
+    // Try to get from cache
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
     const filterProduct = {
       category: categoryId
@@ -66,7 +75,6 @@ export class ProductService {
     }
 
     if (price !== "") {
-      console.log(price)
       filterProduct["newPrice"] = { $gte: (+price.split("-")[0] * 1000000), $lte: (+price.split("-")[1] * 1000000) };
     }
 
@@ -82,7 +90,7 @@ export class ProductService {
       { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, slug: 1 }
     ).sort(sortProduct).skip(skip).limit(limit).populate("category");
 
-    return {
+    const result = {
       products,
       pagination: {
         totalItems,
@@ -90,19 +98,49 @@ export class ProductService {
         currentPage: page,
         limit,
       }
-    }
+    };
+
+    // Cache for 30 minutes (products change frequently)
+    await this.cacheManager.set(cacheKey, result, 1800000);
+
+    return result;
 
   }
 
   async findOne(slug: string) {
-    return await this.productModel.findOne(
+    // Generate cache key
+    const cacheKey = `product:slug:${slug}`;
+
+    // Try to get from cache
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const product = await this.productModel.findOne(
       { slug: slug },
       { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, other: 1, ratingAvg: 1, totalRatings: 1 }
     ).populate("category");
+
+    // Cache for 1 hour
+    if (product) {
+      await this.cacheManager.set(cacheKey, product, 3600000);
+    }
+
+    return product;
   }
 
 
   async searchProductByName(keyname: string = "") {
+    // Generate cache key
+    const cacheKey = `products:search:${keyname}`;
+
+    // Try to get from cache
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const filterProduct = {};
 
     if (keyname !== "") {
@@ -110,11 +148,15 @@ export class ProductService {
         { name: { $regex: keyname, $options: "i" } },   // tìm trong tên
       ];
     }
-    return await this.productModel.find(
+    const products = await this.productModel.find(
       filterProduct,
       { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1 }
     ).limit(10).populate("category");
 
+    // Cache for 15 minutes (search results can change)
+    await this.cacheManager.set(cacheKey, products, 900000);
+
+    return products;
   }
 
 
@@ -144,6 +186,15 @@ export class ProductService {
   }
 
   async getAllCommentByProductId(productId: string, page: number) {
+    // Generate cache key
+    const cacheKey = `product:comments:${productId}:page:${page}`;
+
+    // Try to get from cache
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const filterProduct = {
       productId: productId,
       isRating: true
@@ -189,7 +240,7 @@ export class ProductService {
     );
 
 
-    return {
+    const result = {
       statistics,
       comments,
       pagination: {
@@ -198,7 +249,12 @@ export class ProductService {
         currentPage: +page,
         limit,
       }
-    }
+    };
+
+    // Cache for 10 minutes (comments change frequently)
+    await this.cacheManager.set(cacheKey, result, 600000);
+
+    return result;
   }
 
   async replyCommentProduct(commentId: string, guestReplyId: string, content: string, images: string[], isAdminReply: boolean = false) {
@@ -308,12 +364,22 @@ export class ProductService {
           { _id: userWishlist._id },
           { $set: { isWishlisted: true } }
         );
+
+        // Invalidate wishlist cache
+        const cacheKey = `guest:wishlist:${guestId}`;
+        await this.cacheManager.del(cacheKey);
+
         return { message: 'Thêm sản phẩm vào danh sách yêu thích thành công' };
       } else {
         await this.productModelInteraction.updateOne(
           { _id: userWishlist._id },
           { $set: { isWishlisted: false } }
         );
+
+        // Invalidate wishlist cache
+        const cacheKey = `guest:wishlist:${guestId}`;
+        await this.cacheManager.del(cacheKey);
+
         return { message: 'Bỏ sản phẩm khỏi danh sách yêu thích thành công' };
       }
     } else {
@@ -324,6 +390,11 @@ export class ProductService {
         isWishlisted: true
       });
       await wishlistEntry.save();
+
+      // Invalidate wishlist cache
+      const cacheKey = `guest:wishlist:${guestId}`;
+      await this.cacheManager.del(cacheKey);
+
       return { message: 'Thêm sản phẩm vào danh sách yêu thích thành công' };
     }
   }

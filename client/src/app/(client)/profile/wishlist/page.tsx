@@ -37,6 +37,8 @@ export default function WishlistPage() {
         enabled: !!user?.id,
     });
 
+    console.log(wishlistProducts)
+
     // Mutation to remove from wishlist
     const removeFromWishlistMutation = useMutation({
         mutationFn: ({ productId }: { productId: string }) =>
@@ -209,7 +211,7 @@ export default function WishlistPage() {
                         <div className='bg-white dark:bg-gray-800 rounded-lg shadow-md p-6'>
                             <div className='flex items-center justify-between mb-6'>
                                 <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center'>
-                                    <HeartFilled className='text-red-500 mr-3' />
+                                    <HeartFilled className='!text-red-500 mr-3' />
                                     Danh sách yêu thích
                                 </h2>
                                 <div className='text-sm text-gray-500 dark:text-gray-400'>
@@ -235,7 +237,7 @@ export default function WishlistPage() {
                                     }
                                 />
                             ) : (
-                                <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
+                                <div className='grid max-h-[900px] overflow-y-scroll grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
                                     {wishlistProducts.map((product) => (
                                         <div key={product._id} className='group bg-white dark:bg-gray-700 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-600 transform hover:-translate-y-1'>
                                             {/* Product Image */}
@@ -314,11 +316,11 @@ export default function WishlistPage() {
                                                 </div>
 
                                                 {/* Sold Count */}
-                                                {product.soldCount > 0 && (
-                                                    <div className='mb-4 text-xs text-gray-500 dark:text-gray-400'>
-                                                        Đã bán: {product.soldCount} sản phẩm
-                                                    </div>
-                                                )}
+
+                                                <div className='mb-4 text-xs text-gray-500 dark:text-gray-400'>
+                                                    Đã bán: {product.soldCount || 0} sản phẩm
+                                                </div>
+
 
                                                 {/* Action Buttons */}
                                                 <div className='flex space-x-2'>
