@@ -3,11 +3,8 @@ import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
-import { JwtAuthGuard } from 'src/admin/auth/jwt-auth.guard';
-import { JwtService } from '@nestjs/jwt';
 import { AllExceptionsFilter } from 'core/exception.filter';
 import { TransformInterceptor } from 'core/transform.interceptor';
-import { RoleService } from 'src/admin/role/role.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

@@ -3,12 +3,11 @@ import { AppController } from './app.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
-// import { APP_GUARD } from '@nestjs/core';
-// import { AuthGuard } from 'src/auth/auth.guard';
 import { ClientModule } from './client/client.module';
 import { AdminModule } from './admin/admin.module';
 import { AppService } from 'src/app.service';
 import { ChatbotModule } from './chatbot/chatbot.module';
+import { RedisModule } from './redis/redis.module';
 const mongooseAutoPopulate = require('mongoose-autopopulate');
 
 
@@ -26,6 +25,7 @@ const mongooseAutoPopulate = require('mongoose-autopopulate');
       }),
       inject: [ConfigService]
     }),
+    RedisModule,
     AdminModule,
     ClientModule,
     ChatbotModule,

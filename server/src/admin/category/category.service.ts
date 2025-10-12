@@ -5,10 +5,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Category } from './entities/category.entity';
 import mongoose, { Model } from 'mongoose';
 import { TypeUpdateManyCategory, TypeQueryCategory } from 'types/category';
+import { CacheInvalidationService } from 'src/redis/cache-invalidation.service';
 
 @Injectable()
 export class CategoryService {
-  constructor(@InjectModel(Category.name) private categoryModel: Model<Category>) { }
+  constructor(
+    @InjectModel(Category.name) private categoryModel: Model<Category>,
+    private cacheInvalidationService: CacheInvalidationService
+  ) { }
 
 
 
@@ -34,6 +38,10 @@ export class CategoryService {
     if (category !== null && parentCategory !== null) {
       await this.categoryModel.updateOne({ _id: parentCategory._id }, { $addToSet: { children: { _id: category._id, name: category.name } } })
     }
+
+    // Invalidate cache after creating category
+    await this.cacheInvalidationService.invalidateCategoryCache();
+
     return category;
   }
 
@@ -120,6 +128,9 @@ export class CategoryService {
       }
     }
 
+    // Invalidate cache after updating category
+    await this.cacheInvalidationService.invalidateCategoryCache();
+
     return await this.categoryModel.findById(id);
   }
 
@@ -128,9 +139,12 @@ export class CategoryService {
     const type = dataUpdate.typeUpdate.split(':')[0];
     switch (type) {
       case "delete": {
-        return dataUpdate.ids.forEach(async id => {
+        const result = dataUpdate.ids.forEach(async id => {
           await this.remove(new mongoose.Types.ObjectId(id));
-        })
+        });
+        // Invalidate cache after bulk delete
+        await this.cacheInvalidationService.invalidateCategoryCache();
+        return result;
       }
     }
     return null;
@@ -156,6 +170,9 @@ export class CategoryService {
       const listIDChildren = category.children.map(child => child._id);
       await this.categoryModel.updateMany({ _id: { $in: listIDChildren } }, { $set: { parent: null } });
     }
+
+    // Invalidate cache after deleting category
+    await this.cacheInvalidationService.invalidateCategoryCache();
 
     return await this.categoryModel.deleteOne({ _id: id });
   }

@@ -3,7 +3,7 @@ import '@ant-design/v5-patch-for-react-19';
 import { Button, Modal, Upload } from "antd";
 import { SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import { JSX, useState } from 'react';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { toast } from 'react-toastify';
 import TableImportProductCSV from '@/components/ContentModal/product/CSVModalProduct';
 import ConfigModalProduct from '@/components/ContentModal/product/ConfigModalProduct';
@@ -29,38 +29,75 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
 
 
 
-    const beforeUpload = (file: File) => {
+    const beforeUpload = async (file: File) => {
         setLoading(true);
         const reader = new FileReader();
 
-        reader.onload = (e: ProgressEvent<FileReader>) => {
-            const arrayBuffer = e.target?.result;
-            const data = new Uint8Array(arrayBuffer as ArrayBuffer);
+        reader.onload = async (e: ProgressEvent<FileReader>) => {
+            try {
+                const arrayBuffer = e.target?.result as ArrayBuffer;
 
-            // Đọc file Excel từ ArrayBuffer
-            const workbook = XLSX.read(data, { type: 'array' });
-            // Lấy sheet đầu tiên
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            // Chuyển sheet thành JSON
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true });
-            // In dữ liệu ra console để kiểm tra
+                // Đọc file Excel từ ArrayBuffer với ExcelJS
+                const workbook = new ExcelJS.Workbook();
+                await workbook.xlsx.load(arrayBuffer);
 
-            // Lấy hàng đầu tiên (tiêu đề cột)
-            const headers = Object.keys(jsonData[0] || {});
+                // Lấy sheet đầu tiên
+                const worksheet = workbook.worksheets[0];
 
-            // Kiểm tra xem các trường name, address, email có tồn tại trong tiêu đề không
-            const requiredFields = ['name', 'images', 'description', 'stock', 'discount', 'oldPrice', 'other', 'status', 'feature', 'position'];
-            const missingFields = requiredFields.filter(field => !headers.map(h => h.toLowerCase()).includes(field.toLowerCase()));
+                if (!worksheet) {
+                    toast.error("File Excel không có sheet nào!");
+                    setLoading(false);
+                    return false;
+                }
 
-            if (missingFields.length > 0) {
-                toast.error(`Không thể import file CSV vì thiếu các trường bắt buộc`);
-                return false; // Ngăn upload và xóa file khỏi quá trình xử lý
+                // Chuyển sheet thành JSON
+                const jsonData: Record<string, unknown>[] = [];
+                const headers: string[] = [];
+
+                // Lấy header từ dòng đầu tiên
+                const headerRow = worksheet.getRow(1);
+                headerRow.eachCell((cell, colNumber) => {
+                    headers.push(cell.value?.toString().toLowerCase() || `column${colNumber}`);
+                });
+
+                // Lấy data từ các dòng còn lại
+                worksheet.eachRow((row, rowNumber) => {
+                    if (rowNumber === 1) return; // Skip header row
+
+                    const rowData: Record<string, unknown> = {};
+                    row.eachCell((cell, colNumber) => {
+                        const header = headers[colNumber - 1];
+                        rowData[header] = cell.value;
+                    });
+
+                    // Chỉ thêm row nếu có data
+                    if (Object.keys(rowData).length > 0) {
+                        jsonData.push(rowData);
+                    }
+                });
+
+                // Kiểm tra xem các trường bắt buộc có tồn tại trong tiêu đề không
+                const requiredFields = ['name', 'images', 'description', 'stock', 'discount', 'oldPrice', 'other', 'status', 'feature', 'position'];
+                const missingFields = requiredFields.filter(field =>
+                    !headers.includes(field.toLowerCase())
+                );
+
+                if (missingFields.length > 0) {
+                    toast.error(`Không thể import file vì thiếu các trường bắt buộc: ${missingFields.join(', ')}`);
+                    setLoading(false);
+                    return false;
+                }
+
+                setFileData(jsonData as unknown as DataType<IProduct>[]);
+                setLoading(false);
+                toast.success("Đã đọc file Excel thành công!");
+                return jsonData;
+            } catch (error) {
+                console.error('Error reading Excel file:', error);
+                toast.error("Lỗi khi đọc file Excel!");
+                setLoading(false);
+                return false;
             }
-            setFileData(jsonData as DataType<IProduct>[]);
-            setLoading(false);
-            toast.success("Đã đọc file CSV thành công!");
-            return jsonData;
         };
 
         // Đọc file dưới dạng ArrayBuffer
@@ -70,28 +107,72 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
     };
 
     // Hàm xuất file Excel
-    const exportToExcel = () => {
-        // Tạo một workbook và worksheet
-        const wb = XLSX.utils.book_new();
-        const dataRefactor = products.map((product) => {
-            return {
-                name: product.name,
-                description: product.description,
-                stock: product.stock,
-                discount: product.discount,
-                oldPrice: product.oldPrice,
-                other: product.other,
-                status: product.status,
-                feature: product.feature,
-                position: product.position,
-                images: product.images,
-            }
-        });
-        const ws = XLSX.utils.json_to_sheet(dataRefactor);
-        // Thêm worksheet vào workbook
-        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-        // Xuất file Excel
-        XLSX.writeFile(wb, "report_product" + "_" + new Date().getDay() + "/" + new Date().getMonth() + "/" + new Date().getFullYear() + '.xlsx');
+    const exportToExcel = async () => {
+        try {
+            // Tạo workbook và worksheet với ExcelJS
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Sheet1');
+
+            // Chuẩn bị data
+            const dataRefactor = products.map((product) => {
+                return {
+                    name: product.name,
+                    description: product.description,
+                    stock: product.stock,
+                    discount: product.discount,
+                    oldPrice: product.oldPrice,
+                    other: JSON.stringify(product.other), // Convert object/array to string
+                    status: product.status,
+                    feature: product.feature,
+                    position: product.position,
+                    images: JSON.stringify(product.images), // Convert array to string
+                }
+            });
+
+            // Thêm columns (headers)
+            worksheet.columns = [
+                { header: 'Name', key: 'name', width: 30 },
+                { header: 'Description', key: 'description', width: 40 },
+                { header: 'Stock', key: 'stock', width: 10 },
+                { header: 'Discount', key: 'discount', width: 10 },
+                { header: 'Old Price', key: 'oldPrice', width: 15 },
+                { header: 'Other', key: 'other', width: 30 },
+                { header: 'Status', key: 'status', width: 10 },
+                { header: 'Feature', key: 'feature', width: 10 },
+                { header: 'Position', key: 'position', width: 10 },
+                { header: 'Images', key: 'images', width: 40 }
+            ];
+
+            // Thêm rows
+            worksheet.addRows(dataRefactor);
+
+            // Style header row
+            worksheet.getRow(1).font = { bold: true };
+            worksheet.getRow(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFE0E0E0' }
+            };
+
+            // Tạo file name
+            const date = new Date();
+            const fileName = `report_product_${date.getDate()}_${date.getMonth() + 1}_${date.getFullYear()}.xlsx`;
+
+            // Export file
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            toast.success("Export file Excel thành công!");
+        } catch (error) {
+            console.error('Error exporting Excel file:', error);
+            toast.error("Lỗi khi export file Excel!");
+        }
     };
 
     const handleImport = () => {
