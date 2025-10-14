@@ -8,6 +8,7 @@ import { guestClientService, productClientService } from '@/services/client';
 import useAuthUser from '@/hooks/useAuthUser';
 import useCartStore from '@/hooks/useCart';
 import { WishlistSkeleton } from '@/components/Skeletons/WishlistSkeleton';
+import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import {
     HeartFilled,
     ShoppingCartOutlined,
@@ -30,6 +31,8 @@ export default function WishlistPage() {
         }).format(amount);
     };
 
+    console.log('User in avatar:', user?.avatar);
+
     // Fetch wishlist data
     const { data: wishlistProducts = [], isLoading } = useQuery<IProductCard[]>({
         queryKey: ['wishlist', user?.id],
@@ -37,7 +40,6 @@ export default function WishlistPage() {
         enabled: !!user?.id,
     });
 
-    console.log(wishlistProducts)
 
     // Mutation to remove from wishlist
     const removeFromWishlistMutation = useMutation({
@@ -81,7 +83,13 @@ export default function WishlistPage() {
                     {/* Sidebar */}
                     <div className='col-span-12 lg:col-span-3'>
                         <div className='flex items-center'>
-                            <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                            {user && user.avatar ? (
+                                <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
+                            ) : (
+                                <>
+                                    <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                                </>
+                            )}
                             <div className='mx-4'>
                                 <h6 className='text-base font-semibold'>Tài khoản của,</h6>
                                 <h1 className='font-bold text-lg'>{user?.fullname || 'Khách hàng'}</h1>
@@ -146,6 +154,13 @@ export default function WishlistPage() {
 
     return (
         <>
+            <DynamicMetadata
+                title={`Danh sách yêu thích (${wishlistProducts?.length || 0} sản phẩm) - PC Store`}
+                description="Quản lý danh sách sản phẩm yêu thích của bạn tại PC Store. Dễ dàng theo dõi và mua sắm các sản phẩm bạn quan tâm."
+                keywords="danh sách yêu thích, wishlist, sản phẩm yêu thích, theo dõi sản phẩm"
+                ogTitle="Danh sách yêu thích của tôi - PC Store"
+                ogDescription="Quản lý và theo dõi các sản phẩm yêu thích của bạn"
+            />
             <div className='container mx-auto'>
                 {/* Breadcrumb */}
                 <div className='flex items-center mt-3 mx-5 xl:mx-32'>
@@ -160,7 +175,14 @@ export default function WishlistPage() {
                     {/* Sidebar */}
                     <div className='col-span-12 lg:col-span-3'>
                         <div className='flex items-center'>
-                            <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                            {user && user?.avatar ? (
+                                <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
+                            ) : (
+                                <>
+                                    <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                                </>
+                            )}
+
                             <div className='mx-4'>
                                 <h6 className='text-base font-semibold'>Tài khoản của,</h6>
                                 <h1 className='font-bold text-lg'>{user?.fullname || 'Khách hàng'}</h1>
@@ -324,7 +346,7 @@ export default function WishlistPage() {
 
                                                 {/* Action Buttons */}
                                                 <div className='flex space-x-2'>
-                                                    <Link href={`/product/${product._id}`} className='flex-1'>
+                                                    <Link href={`/product/${product.slug}`} className='flex-1'>
                                                         <Button
                                                             type="primary"
                                                             block

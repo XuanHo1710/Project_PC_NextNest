@@ -266,7 +266,7 @@ export class GuestService implements OnModuleInit {
 
         const listIdWishlist = await this.productInteractionModel.find({ guestId: guestId, isWishlisted: true }).select('productId').exec();
         const products = await this.productModel.find({ _id: { $in: listIdWishlist.map(item => item.productId) }, deletedAt: { $exists: false } },
-            { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1 }
+            { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, slug: 1 }
         ).exec();
 
         // Cache for 30 minutes

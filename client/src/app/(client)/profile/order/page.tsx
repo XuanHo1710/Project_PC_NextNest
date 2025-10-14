@@ -12,6 +12,7 @@ import { IOrderData } from '@/types/model.client';
 import { useQuery } from '@tanstack/react-query';
 import useAuthUser from '@/hooks/useAuthUser';
 import { orderClientService } from '@/services/client/order.client.service';
+import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 interface IOrderItem {
     id: string,
@@ -28,7 +29,7 @@ export default function OrderPage() {
     const [currentStep, setCurrentStep] = useState(0);
     const { user } = useAuthUser();
 
-    const { data: dataListOrder, isLoading: isLoadingOrder } = useQuery<(IOrderData[]) | []>({
+    const { data: dataListOrder, isLoading: isLoadingOrder } = useQuery<IOrderData[] | []>({
         queryKey: ['get-order-by-guest-id', user?.id], // key để cache
         queryFn: () => orderClientService.getOrdersByGuestId(user?.id as string),
         enabled: !!user?.id, // 5 phút cache không gọi lại
@@ -39,7 +40,7 @@ export default function OrderPage() {
     // Mock data đơn hàng
     const orderData = {
         0: // Chờ xác nhận
-            dataListOrder?.filter(order => order.status === 'PENDING').reduce((acc: IOrderItem[], order) => {
+            dataListOrder?.filter((order: IOrderData) => order.status === 'PENDING').reduce((acc: IOrderItem[], order) => {
                 const items = order.orderDetail.map(item => ({
                     id: order._id,
                     productName: item.product.name,
@@ -53,7 +54,7 @@ export default function OrderPage() {
                 return acc.concat(items);
             }, []),
         1:  // Vận chuyển
-            dataListOrder?.filter(order => order.status === 'SHIPPING').reduce((acc: IOrderItem[], order) => {
+            dataListOrder?.filter((order: IOrderData) => order.status === 'SHIPPING').reduce((acc: IOrderItem[], order) => {
                 const items = order.orderDetail.map(item => ({
                     id: order._id,
                     productName: item.product.name,
@@ -67,7 +68,7 @@ export default function OrderPage() {
                 return acc.concat(items);
             }, []),
         2: // Chờ giao hàng
-            dataListOrder?.filter(order => order.status === 'DELIVERED').reduce((acc: IOrderItem[], order) => {
+            dataListOrder?.filter((order: IOrderData) => order.status === 'DELIVERED').reduce((acc: IOrderItem[], order) => {
                 const items = order.orderDetail.map(item => ({
                     id: order._id,
                     productName: item.product.name,
@@ -81,7 +82,7 @@ export default function OrderPage() {
                 return acc.concat(items);
             }, []),
         3:  // Hoàn thành
-            dataListOrder?.filter(order => order.status === 'COMPLETED').reduce((acc: IOrderItem[], order) => {
+            dataListOrder?.filter((order: IOrderData) => order.status === 'COMPLETED').reduce((acc: IOrderItem[], order) => {
                 const items = order.orderDetail.map(item => ({
                     id: order._id,
                     productName: item.product.name,
@@ -95,7 +96,7 @@ export default function OrderPage() {
                 return acc.concat(items);
             }, []),
         4: // Đã hủy
-            dataListOrder?.filter(order => order.status === 'CANCELLED').reduce((acc: IOrderItem[], order) => {
+            dataListOrder?.filter((order: IOrderData) => order.status === 'CANCELLED').reduce((acc: IOrderItem[], order) => {
                 const items = order.orderDetail.map(item => ({
                     id: order._id,
                     productName: item.product.name,
@@ -109,7 +110,7 @@ export default function OrderPage() {
                 return acc.concat(items);
             }, []),
         5: // Trả hàng/Hoàn tiền
-            dataListOrder?.filter(order => order.status === 'REFUNDED').reduce((acc: IOrderItem[], order) => {
+            dataListOrder?.filter((order: IOrderData) => order.status === 'REFUNDED').reduce((acc: IOrderItem[], order) => {
                 const items = order.orderDetail.map(item => ({
                     id: order._id,
                     productName: item.product.name,
@@ -194,6 +195,13 @@ export default function OrderPage() {
 
     return (
         <>
+            <DynamicMetadata
+                title={`Quản lý đơn hàng (${dataListOrder?.length || 0} đơn) - PC Store`}
+                description="Theo dõi và quản lý đơn hàng của bạn tại PC Store. Xem trạng thái giao hàng, lịch sử mua hàng và chi tiết đơn hàng."
+                keywords="quản lý đơn hàng, theo dõi đơn hàng, lịch sử mua hàng, đơn hàng của tôi"
+                ogTitle="Quản lý đơn hàng - PC Store"
+                ogDescription="Theo dõi trạng thái và quản lý đơn hàng của bạn một cách dễ dàng"
+            />
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
                 <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
                     <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">Trang chủ</Link>
@@ -207,10 +215,16 @@ export default function OrderPage() {
                     {/* Sidebar */}
                     <div className='col-span-12 lg:col-span-3'>
                         <div className='flex items-center'>
-                            <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                            {user && user.avatar ? (
+                                <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
+                            ) : (
+                                <>
+                                    <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                                </>
+                            )}
                             <div className='mx-4'>
                                 <h6 className='text-base font-semibold'>Tài khoản của,</h6>
-                                <h1 className='font-bold text-lg'>Nguyễn Xuân Hồ</h1>
+                                <h1 className='font-bold text-lg'>{user?.fullname || ""}</h1>
                             </div>
                         </div>
                         <ul className='pl-0 my-5'>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, Input, message } from "antd";
+import { Button, Form, Image, Input, message } from "antd";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { EyeInvisibleOutlined, EyeTwoTone, LockOutlined } from '@ant-design/icons';
@@ -10,6 +10,7 @@ import {
 } from "@/components/Skeletons";
 import { guestClientService } from "@/services/client/guest.client.service";
 import useAuthUser from "@/hooks/useAuthUser";
+import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 interface PasswordFormValues {
     currentPassword: string;
@@ -88,6 +89,13 @@ export default function ProfilePassword() {
 
     return (
         <>
+            <DynamicMetadata
+                title="Đổi mật khẩu - PC Store"
+                description="Đổi mật khẩu tài khoản PC Store để bảo mật thông tin cá nhân. Đơn giản, nhanh chóng và an toàn."
+                keywords="đổi mật khẩu, thay đổi mật khẩu, bảo mật tài khoản, reset password"
+                ogTitle="Thay đổi mật khẩu - PC Store"
+                ogDescription="Cập nhật mật khẩu để bảo mật tài khoản của bạn"
+            />
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
                 <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
                     <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">Trang chủ</Link>
@@ -100,7 +108,13 @@ export default function ProfilePassword() {
                 <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
                     <div className='col-span-12 lg:col-span-3'>
                         <div className='flex items-center'>
-                            <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                            {user && user.avatar ? (
+                                <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
+                            ) : (
+                                <>
+                                    <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                                </>
+                            )}
                             <div className='mx-4'>
                                 <h6 className='text-base font-semibold'>Tài khoản của,</h6>
                                 <h1 className='font-bold text-lg'>{user?.fullname || 'Người dùng'}</h1>

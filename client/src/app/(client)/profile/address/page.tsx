@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Card, Form, Input, Modal, Select, Tag, message, Popconfirm } from "antd";
+import { Button, Card, Form, Input, Modal, Select, Tag, message, Popconfirm, Image } from "antd";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined } from '@ant-design/icons';
@@ -11,6 +11,7 @@ import {
 import { guestClientService } from "@/services/client/guest.client.service";
 import useAuthUser from "@/hooks/useAuthUser";
 import { IAddress } from "@/types/account";
+import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 interface Province {
     code: number;
@@ -277,6 +278,13 @@ export default function ProfileAddress() {
 
     return (
         <>
+            <DynamicMetadata
+                title="Quản lý địa chỉ - PC Store"
+                description="Quản lý địa chỉ giao hàng của bạn tại PC Store. Thêm, sửa, xóa địa chỉ để nhận hàng nhanh chóng và thuận tiện."
+                keywords="quản lý địa chỉ, địa chỉ giao hàng, sổ địa chỉ, thêm địa chỉ"
+                ogTitle="Quản lý địa chỉ giao hàng - PC Store"
+                ogDescription="Quản lý địa chỉ nhận hàng một cách dễ dàng"
+            />
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
                 <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
                     <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">Trang chủ</Link>
@@ -289,7 +297,13 @@ export default function ProfileAddress() {
                 <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
                     <div className='col-span-12 lg:col-span-3'>
                         <div className='flex items-center'>
-                            <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                            {user && user.avatar ? (
+                                <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
+                            ) : (
+                                <>
+                                    <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                                </>
+                            )}
                             <div className='mx-4'>
                                 <h6 className='text-base font-semibold'>Tài khoản của,</h6>
                                 <h1 className='font-bold text-lg'>{user?.fullname || 'Người dùng'}</h1>

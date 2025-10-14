@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { CategoryPageSkeleton } from "@/components/Skeletons";
 import { ICategory } from "@/types/modal";
+import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 import { FiShoppingCart } from "react-icons/fi";
 
@@ -210,6 +211,15 @@ export default function CategoryClient() {
 
     return (
         <>
+            {dataCategory && (
+                <DynamicMetadata
+                    title={`${dataCategory.name} - PC Store | Mua ${dataCategory.name} chính hãng giá tốt`}
+                    description={`Mua ${dataCategory.name} chính hãng với giá tốt nhất tại PC Store. Đa dạng sản phẩm, bảo hành uy tín, giao hàng nhanh, hỗ trợ trả góp 0%. Tổng ${dataProduct?.pagination.totalItems || 0} sản phẩm.`}
+                    keywords={`${dataCategory.name}, mua ${dataCategory.name}, ${dataCategory.name} giá rẻ, ${dataCategory.name} chính hãng, ${dataCategory.name} uy tín`}
+                    ogTitle={`${dataCategory.name} - Hơn ${dataProduct?.pagination.totalItems || 0} sản phẩm chính hãng`}
+                    ogDescription={`Khám phá bộ sưu tập ${dataCategory.name} đa dạng tại PC Store. Giá tốt, chất lượng cao, bảo hành chính hãng.`}
+                />
+            )}
             <Drawer className='dark:!bg-blue-900 dark:!text-white' title="Bộ lọc sản phẩm" placement='bottom' onClose={onClose} open={open} height={550}>
                 <div className='mb-5'>
                     <h3 className='uppercase font-semibold py-3 border-solid border-b-2 border-b-stone-200'>Khoảng giá</h3>

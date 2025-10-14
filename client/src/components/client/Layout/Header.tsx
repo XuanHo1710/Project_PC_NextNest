@@ -321,14 +321,14 @@ export default function HeaderClient() {
                                                     </div>
                                                     <div className='flex-grow ml-3'>
                                                         <div className='flex justify-between'>
-                                                            <Link href={"/product/" + c.product._id}>
+                                                            <Link onClick={() => setOpenCart(false)} href={"/product/" + c.product.slug}>
                                                                 <h2 className='hover:text-blue-500 font-semibold text-sm line-clamp-2 pr-4'>
                                                                     {c.product.name}
                                                                 </h2>
                                                             </Link>
                                                             <button
                                                                 onClick={() => removeFromCart(c.product._id)}
-                                                                className="text-gray-400 hover:text-red-500"
+                                                                className="text-gray-400 hover:text-red-500 cursor-pointer"
                                                             >
                                                                 <i className="fa-solid fa-xmark"></i>
                                                             </button>

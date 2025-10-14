@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, Input, DatePicker, Select, message, Avatar, Upload } from "antd";
+import { Button, Form, Input, DatePicker, Select, message, Avatar, Upload, Image } from "antd";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { UserOutlined, CameraOutlined } from '@ant-design/icons';
@@ -15,6 +15,7 @@ import { IGuest } from "@/types/account";
 import { useQuery } from "@tanstack/react-query";
 import { guestClientService } from "@/services/client";
 import { UploadImage } from "@/utils/uploadImage";
+import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 interface ProfileFormValues {
     fullname: string;
@@ -49,14 +50,6 @@ export default function ProfileDetail() {
 
             if (fileUrl) {
                 const avatarUploadedUrl: string = await UploadImage(fileUrl);
-                console.log('Uploaded Avatar URL:', avatarUploadedUrl);
-                // TODO: Implement API call to update profile
-                console.log('Profile update values:', {
-                    ...values,
-                    dateOfBirth: values.dateOfBirth?.format('YYYY-MM-DD'),
-                    avatar: avatarUrl
-                });
-
                 const inforGuestUpdate = {
                     fullname: values.fullname,
                     phone: values.phone,
@@ -149,6 +142,13 @@ export default function ProfileDetail() {
 
     return (
         <>
+            <DynamicMetadata
+                title="Thông tin cá nhân - PC Store"
+                description="Quản lý thông tin cá nhân, cập nhật hồ sơ người dùng tại PC Store. Cập nhật thông tin để nhận ưu đãi và quà tặng hấp dẫn."
+                keywords="thông tin cá nhân, hồ sơ, tài khoản, cập nhật thông tin"
+                ogTitle="Quản lý thông tin cá nhân - PC Store"
+                ogDescription="Cập nhật và quản lý thông tin cá nhân của bạn"
+            />
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
                 <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
                     <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">Trang chủ</Link>
@@ -161,10 +161,16 @@ export default function ProfileDetail() {
                 <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
                     <div className='col-span-12 lg:col-span-3'>
                         <div className='flex items-center'>
-                            <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                            {user && user.avatar ? (
+                                <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
+                            ) : (
+                                <>
+                                    <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+                                </>
+                            )}
                             <div className='mx-4'>
                                 <h6 className='text-base font-semibold'>Tài khoản của,</h6>
-                                <h1 className='font-bold text-lg'>Nguyễn Xuân Hồ</h1>
+                                <h1 className='font-bold text-lg'>{user?.fullname || ""}</h1>
                             </div>
                         </div>
                         <ul className='pl-0 my-5'>
@@ -303,9 +309,9 @@ export default function ProfileDetail() {
                                     className="dark:bg-gray-700"
                                     placeholder="Chọn giới tính"
                                 >
-                                    <Select.Option value="male">Nam</Select.Option>
-                                    <Select.Option value="female">Nữ</Select.Option>
-                                    <Select.Option value="other">Khác</Select.Option>
+                                    <Select.Option value="MALE">Nam</Select.Option>
+                                    <Select.Option value="FEMALE">Nữ</Select.Option>
+                                    <Select.Option value="OTHER">Khác</Select.Option>
                                 </Select>
                             </Form.Item>
 

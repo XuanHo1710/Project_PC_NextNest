@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { guestClientService } from "@/services/client";
 import { useRouter } from "next/navigation";
 import { IOrderData } from "@/types/model.client";
+import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 
 
@@ -268,6 +269,13 @@ export default function CartClient() {
 
     return (
         <>
+            <DynamicMetadata
+                title={`Giỏ hàng của bạn - PC Store`}
+                description={`Xem lại giỏ hàng và hoàn tất đơn hàng của bạn tại PC Store. Miễn phí vận chuyển cho đơn hàng trên 2 triệu. Hỗ trợ trả góp 0%.`}
+                keywords="giỏ hàng, thanh toán, mua hàng, đơn hàng, pc store"
+                ogTitle={`Giỏ hàng`}
+                ogDescription="Hoàn tất đơn hàng ngay để nhận ưu đãi miễn phí vận chuyển và trả góp 0%"
+            />
             <div className="md:pt-3 pt-52 dark:bg-slate-900">
                 <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
                     <Link href="/home" className="font-medium text-lg text-stone-500 mr-3 header-nav active">Trang chủ</Link>

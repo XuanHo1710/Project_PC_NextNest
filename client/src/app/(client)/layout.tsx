@@ -1,21 +1,11 @@
 'use client'
-// import { Metadata } from 'next';
 import '@ant-design/v5-patch-for-react-19';
 
 
 import FooterClient from "@/components/client/Layout/Footer";
 import HeaderClient from "@/components/client/Layout/Header";
-// import GlobalLoading from "@/components/GlobalLoading/GlobalLoading";
 import { ChatBot } from "@/components/Chat";
 
-// export const metadata: Metadata = {
-//   title: 'Not found 404',
-//   description: 'Trang này không tồn tại',
-//   icons: [
-//     { rel: 'icon', type: 'image/png', sizes: '32x32', url: '/laptop.png?v=2' },
-//     { rel: 'apple-touch-icon', url: '/laptop.png?v=2' },
-//   ],
-// };
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/providers/AuthProviderClient';

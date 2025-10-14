@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Image, Spin } from "antd";
 import Link from "next/link";
 import { HomePageSkeleton } from "@/components/Skeletons";
+import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 import { MdKeyboardArrowRight, MdLaptopChromebook, MdPhoneIphone, MdTv, MdHeadset, MdCameraAlt, MdWatch } from "react-icons/md";
 
@@ -70,6 +71,14 @@ export default function HomeClient() {
     ];
     return (
         <>
+            <DynamicMetadata
+                title="PC Store - Mua sắm PC Gaming, Laptop, Linh kiện chính hãng"
+                description="Chuyên cung cấp PC Gaming, Laptop Gaming, Linh kiện máy tính chính hãng với giá tốt nhất. Bảo hành uy tín, giao hàng toàn quốc, trả góp 0%."
+                keywords="pc gaming, laptop gaming, laptop văn phòng, linh kiện máy tính, màn hình gaming, bàn phím cơ, chuột gaming, tai nghe gaming, pc build, pc giá rẻ, laptop giá rẻ"
+                ogTitle="PC Store - Siêu thị PC & Laptop Gaming chính hãng"
+                ogDescription="Hệ thống bán lẻ PC, Laptop, linh kiện chính hãng uy tín với giá tốt nhất. Bảo hành toàn diện, giao hàng nhanh, hỗ trợ trả góp 0%."
+                ogImage="/logo.jpg"
+            />
             <div className="dark:bg-slate-900 md:pt-3 pt-52 py-10 bg-slate-50">
                 <div className='content-header mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5'>
                     <div className='row-span-3 hidden xl:block col-span-3 rounded-lg shadow-lg bg-white'>
