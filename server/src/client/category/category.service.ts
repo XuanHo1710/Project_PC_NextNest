@@ -64,7 +64,7 @@ export class CategoryService {
 
     const categories = await this.categoryModel.aggregate([
       {
-        $match: { parent: null }
+        $match: { children: [] }
       },
       {
         $lookup: {

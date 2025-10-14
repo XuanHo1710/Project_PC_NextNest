@@ -129,6 +129,10 @@ export class GuestService implements OnModuleInit {
             // Get the newly added address with its _id
             const addedAddress = savedGuest.addresses[savedGuest.addresses.length - 1];
 
+            // Invalidate guest profile cache
+            const cacheKey = `guest:profile:${guestId}`;
+            await this.cacheManager.del(cacheKey);
+
             return {
                 message: 'Address added successfully',
                 address: addedAddress
@@ -170,6 +174,11 @@ export class GuestService implements OnModuleInit {
             };
 
             await guest.save();
+
+            // Invalidate guest profile cache
+            const cacheKey = `guest:profile:${guestId}`;
+            await this.cacheManager.del(cacheKey);
+
             return { message: 'Address updated successfully' };
         } catch (error) {
             if (error instanceof NotFoundException || error instanceof BadRequestException) {
@@ -198,6 +207,10 @@ export class GuestService implements OnModuleInit {
         guest.addresses.splice(addressIndex, 1);
         await guest.save();
 
+        // Invalidate guest profile cache
+        const cacheKey = `guest:profile:${guestId}`;
+        await this.cacheManager.del(cacheKey);
+
         return { message: 'Address deleted successfully' };
     }
 
@@ -218,6 +231,10 @@ export class GuestService implements OnModuleInit {
         // Set selected address as default
         guest.addresses[addressIndex].isDefault = true;
         await guest.save();
+
+        // Invalidate guest profile cache
+        const cacheKey = `guest:profile:${guestId}`;
+        await this.cacheManager.del(cacheKey);
 
         return { message: 'Default address updated successfully' };
     }

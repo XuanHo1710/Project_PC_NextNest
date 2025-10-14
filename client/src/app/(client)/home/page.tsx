@@ -1,8 +1,8 @@
 'use client';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
-import { categoryClientService } from "@/services/client";
-import { ICategory } from "@/types/modal.d";
-import { ICategoryPreview } from "@/types/model.client";
+import { categoryClientService, productClientService } from "@/services/client";
+import { ICategory, IProduct } from "@/types/modal.d";
+import { ICategoryPreview, IProductCard } from "@/types/model.client";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Image, Spin } from "antd";
 import Link from "next/link";
@@ -10,28 +10,34 @@ import { HomePageSkeleton } from "@/components/Skeletons";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 import { MdKeyboardArrowRight, MdLaptopChromebook, MdPhoneIphone, MdTv, MdHeadset, MdCameraAlt, MdWatch } from "react-icons/md";
+import { useState } from "react";
 
 
 export default function HomeClient() {
+    const [type, setType] = useState<string>("");
 
     const { data: categoriesPreview, isLoading } = useQuery<ICategoryPreview[] | []>({
         queryKey: ['categories-preview'], // key để cache
         queryFn: () => categoryClientService.getCategoriesPreview(),
-        staleTime: 1000 * 60 * 5, // 5 phút cache không gọi lại
+        staleTime: 1000 * 60 * 5,
     });
 
     const { data: categories } = useQuery<ICategory[] | []>({
         queryKey: ['categories'], // key để cache
         queryFn: () => categoryClientService.getAllCategories(),
-        staleTime: 1000 * 60 * 5, // 5 phút cache không gọi lại
+        staleTime: 1000 * 60 * 5,
+    });
+
+    const { data: featureProducts, isLoading: isLoadingFeature } = useQuery<IProductCard[] | []>({
+        queryKey: ['feature-products', type],
+        queryFn: () => productClientService.getBannerProducts(type),
+        staleTime: 1000 * 60 * 5,
     });
 
 
 
-    if (isLoading) {
+    if (isLoading || isLoadingFeature) {
         return <HomePageSkeleton />
-    } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll mượt lên top
     }
 
 
@@ -59,7 +65,9 @@ export default function HomeClient() {
         },
     ];
 
-
+    const handleChangeFeature = (type: string) => {
+        setType(type);
+    };
 
     const ListIcon = [
         <MdLaptopChromebook key={1} className="text-xl" />,
@@ -233,7 +241,7 @@ export default function HomeClient() {
                 <div className='content-center my-10'>
                     <div className='mx-5 xl:mx-32 grid grid-flow-row grid-cols-6 lg:flex gap-2 lg:gap-4 my-16'>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button className="w-full active button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button onClick={() => handleChangeFeature("")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "" ? "active" : "")}>
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Top PC Bán Chạy</h2>
                                     <p className='hidden md:block font-medium'>Nhất năm 2025</p>
@@ -241,7 +249,7 @@ export default function HomeClient() {
                             </Button>
                         </div>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button className="w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button onClick={() => handleChangeFeature("aio")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "aio" ? "active" : "")}>
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Giải nhiệt pc</h2>
                                     <p className='hidden md:block font-medium'>Nâng cao hiệu suất</p>
@@ -249,7 +257,7 @@ export default function HomeClient() {
                             </Button>
                         </div>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button className="w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button onClick={() => handleChangeFeature("pc")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "pc" ? "active" : "")}>
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Top PC Cực Khủng</h2>
                                     <p className='hidden md:block font-medium'>Dành cho dân đồ họa</p>
@@ -257,7 +265,7 @@ export default function HomeClient() {
                             </Button>
                         </div>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button className="w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button onClick={() => handleChangeFeature("screen")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "screen" ? "active" : "")}>
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>màn hình đồ họa</h2>
                                     <p className='hidden md:block font-medium'>Nhiều ưu đãi hấp dẫn</p>
@@ -265,7 +273,7 @@ export default function HomeClient() {
                             </Button>
                         </div>
                         <div className='col-span-2 lg:basis-1/5'>
-                            <Button className="w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500">
+                            <Button onClick={() => handleChangeFeature("discount")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "discount" ? "active" : "")}>
                                 <div className='flex-wrap'>
                                     <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Góc thanh lý</h2>
                                     <p className='hidden md:block font-medium'>Xả hàng không lợi nhuận</p>
@@ -284,8 +292,8 @@ export default function HomeClient() {
                         autoplaySpeed={2000}
                         responsive={responsiveSettings}
                     >
-                        {categoriesPreview && categoriesPreview.length > 0 &&
-                            categoriesPreview[1].products.map(product => (
+                        {featureProducts && featureProducts.length > 0 &&
+                            featureProducts.map((product: IProductCard) => (
                                 <div key={product?._id} className='px-1.5'>
                                     <CardProduct css="p-3" product={product} />
                                 </div>

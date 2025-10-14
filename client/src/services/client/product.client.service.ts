@@ -12,6 +12,13 @@ class ProductClientService {
         return response.data
     }
 
+    async getBannerProducts(type: string): Promise<(IProductCard[])> {
+        const response = await axios.get(`product/get-banner-products`, {
+            params: { type }
+        })
+        return response.data
+    }
+
     async getProductsBySlug(productSlug: string): Promise<(IProductCard)> {
         const response = await axios.get(`product/${productSlug}`)
         return response.data

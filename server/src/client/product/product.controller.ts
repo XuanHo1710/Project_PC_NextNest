@@ -23,6 +23,11 @@ export class ProductController {
     return this.productService.searchProductByName(keyword);
   }
 
+  @Get("/get-banner-products")
+  getBannerProducts(@Query("type") type: string) {
+    return this.productService.getBannerProducts(type);
+  }
+
 
   @Get(':slug')
   findOne(@Param('slug') slug: string) {
@@ -61,6 +66,8 @@ export class ProductController {
   isWishlistByGuestAndProduct(@Param("guestId") guestId: string, @Query("productId") productId: string) {
     return this.productService.isWishlistByGuestAndProduct(guestId, productId);
   }
+
+
 
 
 }

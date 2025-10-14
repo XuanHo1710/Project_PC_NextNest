@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import * as moment from 'moment';
 import { ConfigService } from '@nestjs/config';
 import { ProductCode, VNPay, VnpLocale } from 'vnpay';
@@ -8,6 +8,8 @@ import { Model } from 'mongoose';
 import { Product } from 'src/admin/product/entities/product.entity';
 import { Cart } from 'src/client/cart/entities/cart.entity';
 import { InjectModel } from '@nestjs/mongoose';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class VnpayService {
@@ -22,6 +24,7 @@ export class VnpayService {
         @InjectModel(Order.name) private orderModel: Model<Order>,
         @InjectModel(Product.name) private productModel: Model<Product>,
         @InjectModel(Cart.name) private cartModel: Model<Cart>,
+        @Inject(CACHE_MANAGER) private cacheManager: Cache
     ) {
         this.tmnCode = this.configService.get<string>('VNPAY_TMN_CODE') || '';
         this.secretKey = this.configService.get<string>('VNPAY_SECRET_KEY') || '';
@@ -120,13 +123,23 @@ export class VnpayService {
                     await Promise.all(this.orderData.orderDetail.map(async (item) => {
                         // Cập nhật số lượng đã bán và tồn kho của sản phẩm
                         await this.productModel.findByIdAndUpdate(item.product._id, { $inc: { soldCount: item.quantity, stock: -item.quantity } });
+
+
                     }));
 
                     // Xóa giỏ hàng sau khi tạo đơn hàng
                     await this.cartModel.findOneAndDelete({ guestId: this.orderData.guestId });
 
+                    // Invalidate cart cache
+                    const cartCacheKey = `cart:guest:${this.orderData.guestId}`;
+                    await this.cacheManager.del(cartCacheKey);
+
                     // Tao don hang
                     await this.orderModel.create(dataCreate);
+
+                    // Invalidate orders cache
+                    const ordersCacheKey = `guest:orders:${this.orderData.guestId}`;
+                    await this.cacheManager.del(ordersCacheKey);
 
                     return {
                         isValid: true,

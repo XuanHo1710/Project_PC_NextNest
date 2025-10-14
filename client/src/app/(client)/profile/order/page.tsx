@@ -41,7 +41,7 @@ export default function OrderPage() {
     const orderData = {
         0: // Chờ xác nhận
             dataListOrder?.filter((order: IOrderData) => order.status === 'PENDING').reduce((acc: IOrderItem[], order) => {
-                const items = order.orderDetail.map(item => ({
+                const items = order.orderDetail?.map(item => ({
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
@@ -55,7 +55,7 @@ export default function OrderPage() {
             }, []),
         1:  // Vận chuyển
             dataListOrder?.filter((order: IOrderData) => order.status === 'SHIPPING').reduce((acc: IOrderItem[], order) => {
-                const items = order.orderDetail.map(item => ({
+                const items = order.orderDetail?.map(item => ({
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
@@ -69,7 +69,7 @@ export default function OrderPage() {
             }, []),
         2: // Chờ giao hàng
             dataListOrder?.filter((order: IOrderData) => order.status === 'DELIVERED').reduce((acc: IOrderItem[], order) => {
-                const items = order.orderDetail.map(item => ({
+                const items = order.orderDetail?.map(item => ({
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
@@ -83,7 +83,7 @@ export default function OrderPage() {
             }, []),
         3:  // Hoàn thành
             dataListOrder?.filter((order: IOrderData) => order.status === 'COMPLETED').reduce((acc: IOrderItem[], order) => {
-                const items = order.orderDetail.map(item => ({
+                const items = order.orderDetail?.map(item => ({
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
@@ -97,7 +97,7 @@ export default function OrderPage() {
             }, []),
         4: // Đã hủy
             dataListOrder?.filter((order: IOrderData) => order.status === 'CANCELLED').reduce((acc: IOrderItem[], order) => {
-                const items = order.orderDetail.map(item => ({
+                const items = order.orderDetail?.map(item => ({
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
@@ -111,7 +111,7 @@ export default function OrderPage() {
             }, []),
         5: // Trả hàng/Hoàn tiền
             dataListOrder?.filter((order: IOrderData) => order.status === 'REFUNDED').reduce((acc: IOrderItem[], order) => {
-                const items = order.orderDetail.map(item => ({
+                const items = order.orderDetail?.map(item => ({
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,

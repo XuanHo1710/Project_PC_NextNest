@@ -17,7 +17,7 @@ const PaymentPage = () => {
                 return {
                     name: item.product.name,
                     quantity: item.quantity,
-                    price: item.subtotal
+                    price: item.price
                 }
             }),
             shipping: 200000,

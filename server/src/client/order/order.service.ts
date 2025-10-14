@@ -38,12 +38,32 @@ export class OrderService {
     }
 
     await Promise.all(createOrderDto.orderDetail.map(async (item) => {
+      // Get full product details for cache invalidation
+      const product = await this.productModel.findById(item.product._id).select('slug category').exec();
+
       // Cập nhật số lượng đã bán và tồn kho của sản phẩm
       await this.productModel.findByIdAndUpdate(item.product._id, { $inc: { soldCount: item.quantity, stock: -item.quantity } });
+
+      if (product) {
+        // Invalidate product cache
+        const productCacheKey = `product:slug:${product.slug}`;
+        await this.cacheManager.del(productCacheKey);
+
+        // Invalidate product category cache
+        if (product.category) {
+          for (let page = 1; page <= 10; page++) {
+            await this.cacheManager.del(`products:category:${product.category}:page:${page}:sort::cpu::ram::price:`);
+          }
+        }
+      }
     }));
 
     // Xóa giỏ hàng sau khi tạo đơn hàng
     await this.cartModel.findOneAndDelete({ guestId: createOrderDto.guestId });
+
+    // Invalidate cart cache
+    const cartCacheKey = `cart:guest:${createOrderDto.guestId}`;
+    await this.cacheManager.del(cartCacheKey);
 
     const order = await this.orderModel.create(dataCreate);
 

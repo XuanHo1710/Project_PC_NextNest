@@ -228,7 +228,7 @@ export default function HeaderClient() {
                                         </div>
                                     ) : (
                                         products && products.length > 0 ? (
-                                            products.map(p => (
+                                            products.map((p: IProductCard) => (
                                                 <div
                                                     key={p._id}
                                                     className="col-span-12 h-28 flex gap-4 py-2 px-4 border-b hover:bg-gray-50 transition rounded-lg cursor-pointer"
@@ -247,7 +247,7 @@ export default function HeaderClient() {
                                                             <Link onClick={() => {
                                                                 setSearch("");
                                                                 setOpenSearch(false);
-                                                            }} href={"/product/" + p._id} className="font-semibold line-clamp-2 text-wrap text-gray-800 truncate">{p.name}</Link>
+                                                            }} href={"/product/" + p.slug} className="font-semibold line-clamp-2 text-wrap text-gray-800 truncate">{p.name}</Link>
                                                             <p className="text-sm line-clamp-1">{p.description}</p>
                                                         </div>
                                                         <div className="flex justify-between">
@@ -316,17 +316,17 @@ export default function HeaderClient() {
                                             {cart && cart.cartItems.map((c, index) => (
                                                 <div key={index} className='flex items-center border-b border-gray-100 py-3 px-3'>
                                                     <div className='w-16 h-16 flex-shrink-0'>
-                                                        <Image alt={c.product.name} src={c.product.images[0]} />
+                                                        <Image alt={c.product?.name} src={c.product?.images[0]} />
                                                     </div>
                                                     <div className='flex-grow ml-3'>
                                                         <div className='flex justify-between'>
-                                                            <Link onClick={() => setOpenCart(false)} href={"/product/" + c.product.slug}>
+                                                            <Link onClick={() => setOpenCart(false)} href={"/product/" + c.product?.slug}>
                                                                 <h2 className='hover:text-blue-500 font-semibold text-sm line-clamp-2 pr-4'>
-                                                                    {c.product.name}
+                                                                    {c.product?.name}
                                                                 </h2>
                                                             </Link>
                                                             <button
-                                                                onClick={() => removeFromCart(c.product._id)}
+                                                                onClick={() => removeFromCart(c.product?._id)}
                                                                 className="text-gray-400 hover:text-red-500 cursor-pointer"
                                                             >
                                                                 <i className="fa-solid fa-xmark"></i>

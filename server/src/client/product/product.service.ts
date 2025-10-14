@@ -29,6 +29,37 @@ export class ProductService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) { }
 
+
+  async getBannerProducts(type: string = "") {
+    switch (type) {
+      case "pc":
+        return this.productModel.find(
+          { name: { $regex: /.*pc.*/i } },
+          { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, slug: 1 }
+        ).limit(10).populate("category");
+      case "screen":
+        return this.productModel.find(
+          { name: { $regex: /.*screen.*/i } },
+          { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, slug: 1 }
+        ).limit(10).populate("category");
+      case "aio":
+        return this.productModel.find(
+          { name: { $regex: /.*aio.*/i } },
+          { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, slug: 1 }
+        ).limit(10).populate("category");
+      case "discount":
+        return this.productModel.find(
+          {},
+          { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, slug: 1 }
+        ).sort({ discount: -1 }).limit(10).populate("category");
+      default:
+        return this.productModel.find(
+          {},
+          { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, slug: 1 }
+        ).sort({ soldCount: -1 }).limit(10).populate("category");
+    }
+  }
+
   async findProductByIdCategory(categoryId: string, page: number, sort: string, cpu: string, ram: string, price: string) {
     // Generate cache key based on all filters
     const cacheKey = `products:category:${categoryId}:page:${page}:sort:${sort}:cpu:${cpu}:ram:${ram}:price:${price}`;
@@ -150,7 +181,7 @@ export class ProductService {
     }
     const products = await this.productModel.find(
       filterProduct,
-      { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1 }
+      { oldPrice: 1, name: 1, newPrice: 1, discount: 1, stock: 1, soldCount: 1, description: 1, images: 1, category: 1, slug: 1 }
     ).limit(10).populate("category");
 
     // Cache for 15 minutes (search results can change)
