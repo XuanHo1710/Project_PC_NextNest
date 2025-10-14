@@ -29,7 +29,11 @@ export function CartProvider({ children }: CartProviderProps) {
                 localCart.cartItems.forEach(localItem => {
                     const existingItem = mergedItems.find(item => item.product._id === localItem.product._id);
                     if (existingItem) {
-                        existingItem.quantity += localItem.quantity;
+                        if (existingItem.quantity + localItem.quantity > localItem.product.stock) {
+                            existingItem.quantity = localItem.product.stock; // Giới hạn không vượt quá stock
+                        } else {
+                            existingItem.quantity += localItem.quantity;
+                        }
                         existingItem.subtotal = existingItem.quantity * existingItem.price;
                     } else {
                         mergedItems.push(localItem);

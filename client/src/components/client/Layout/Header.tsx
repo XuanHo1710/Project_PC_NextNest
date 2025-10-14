@@ -16,7 +16,6 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ICategory } from "@/types/modal.d";
 import { categoryClientService, productClientService } from "@/services/client";
-// import { buildCategoryTree } from "@/utils/buildTree";
 import { IProductCard } from "@/types/model.client";
 import useCartStore from "@/hooks/useCart";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
@@ -336,14 +335,14 @@ export default function HeaderClient() {
                                                         <div className='flex justify-between mt-2 items-center'>
                                                             <div className='flex items-center border border-gray-200 rounded'>
                                                                 <Button
-                                                                    onClick={() => updateQuantity(c.product._id, -1)}
+                                                                    onClick={() => updateQuantity(c.product, -1)}
                                                                     className='border-none px-2'
                                                                 >
                                                                     <i className="fa-solid fa-minus"></i>
                                                                 </Button>
                                                                 <span className='w-8 text-center'>{c.quantity}</span>
                                                                 <Button
-                                                                    onClick={() => updateQuantity(c.product._id, 1)}
+                                                                    onClick={() => updateQuantity(c.product, 1)}
                                                                     className='border-none px-2'
                                                                 >
                                                                     <i className="fa-solid fa-plus"></i>

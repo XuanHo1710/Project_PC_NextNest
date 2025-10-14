@@ -7,7 +7,7 @@ interface CartState {
     cart: ICart | null;
     addToCart: (product: IProductCard, quantity?: number) => void;
     removeFromCart: (productId: string) => void;
-    updateQuantity: (productId: string, quantity: number) => void;
+    updateQuantity: (product: IProductCard, quantity: number) => void;
     clearCart: () => void;
     setCart: (cart: ICart) => void;
     calculateTotal: () => number;
@@ -31,7 +31,7 @@ const useCartStore = create<CartState>((set, get) => ({
 
         if (existingItem) {
             updatedItems = state.cart!.cartItems.map((item) =>
-                item.product._id === product._id
+                item.product._id === product._id && product.stock <= item.quantity
                     ? {
                         ...item,
                         quantity: item.quantity + quantity,
@@ -40,13 +40,15 @@ const useCartStore = create<CartState>((set, get) => ({
                     : item
             );
         } else {
-            const newItem: ICartItem = {
-                product,
-                quantity,
-                price: product.newPrice,
-                subtotal: product.newPrice * quantity,
-            };
-            updatedItems = [...state.cart!.cartItems, newItem];
+            if (product.stock > 0) {
+                const newItem: ICartItem = {
+                    product,
+                    quantity,
+                    price: product.newPrice,
+                    subtotal: product.newPrice * quantity,
+                };
+                updatedItems = [...state.cart!.cartItems, newItem];
+            }
         }
 
         const updatedCart: ICart = {
@@ -76,17 +78,20 @@ const useCartStore = create<CartState>((set, get) => ({
         debouncedSync(updatedCart, state.cart!.guestId); // ⚡ gọi API sau khi user ngừng thao tác 0.5s
     },
 
-    updateQuantity: (productId, qty) => {
+    updateQuantity: (product, qty) => {
         const state = get();
         const updatedItems = state.cart!.cartItems
-            .map((item) =>
-                item.product._id === productId
-                    ? {
-                        ...item,
-                        quantity: item.quantity + qty,
-                        subtotal: (item.quantity + qty) * item.price,
-                    }
-                    : item
+            .map((item) => {
+                if (item.product._id === product._id) {
+                    if (item.quantity + qty <= product.stock)
+                        return {
+                            ...item,
+                            quantity: item.quantity + qty,
+                            subtotal: (item.quantity + qty) * item.price,
+                        }
+                }
+                return item;
+            }
             )
             .filter((item) => item.quantity > 0);
 

@@ -1,4 +1,4 @@
-import { ICartItem } from "@/types/model.client";
+import { ICartItem, IProductCard } from "@/types/model.client";
 import { Button, Image } from "antd"
 import Link from "next/link";
 
@@ -7,7 +7,7 @@ interface CartProductProps {
     cartItem: ICartItem;
     handle: {
         removeFromCart: (id: string) => void;
-        updateQuantity: (id: string, qty: number) => void;
+        updateQuantity: (product: IProductCard, qty: number) => void;
         // Add other handler functions if needed
     };
 }
@@ -37,11 +37,11 @@ const CartProduct = ({ cartItem, handle }: CartProductProps) => {
                             </div>
                             <div className='text-stone-600 flex flex-col items-end'>
                                 <div className='flex items-center text-sm md:text-xl'>
-                                    <Button onClick={() => handle.updateQuantity(cartItem.product._id, -1)} className='rounded-none px-1 md:px-3 dark:bg-black dark:text-white dark:border-slate-700'>
+                                    <Button onClick={() => handle.updateQuantity(cartItem.product, -1)} className='rounded-none px-1 md:px-3 dark:bg-black dark:text-white dark:border-slate-700'>
                                         <i className="fa-solid fa-minus"></i>
                                     </Button>
                                     <input type='text' className='dark:bg-black bg-stone-100 dark:text-white w-5 md:w-14 text-center h-8 border-solid' disabled value={cartItem.quantity} />
-                                    <Button onClick={() => handle.updateQuantity(cartItem.product._id, 1)} className='rounded-none px-1 md:px-3 dark:bg-black dark:text-white dark:border-slate-700'>
+                                    <Button onClick={() => handle.updateQuantity(cartItem.product, 1)} className='rounded-none px-1 md:px-3 dark:bg-black dark:text-white dark:border-slate-700'>
                                         <i className="fa-solid fa-plus"></i>
                                     </Button>
                                 </div>
