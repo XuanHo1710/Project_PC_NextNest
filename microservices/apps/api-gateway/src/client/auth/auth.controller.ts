@@ -43,7 +43,9 @@ export class AuthController {
       throw new BadRequestException('Email hoặc mật khẩu không chính xác');
     }
 
-    return this.authService.send('auth.login', { guest, response }).toPromise();
+    return await this.authService
+      .send('auth.login', { guest, response })
+      .toPromise();
   }
 
   @Post('register')
