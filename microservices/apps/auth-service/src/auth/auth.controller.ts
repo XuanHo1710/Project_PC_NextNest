@@ -14,6 +14,14 @@ import mongoose from 'mongoose';
 export class AuthController {
   constructor(private readonly authService: ClientAuthService) {}
 
+  @MessagePattern('auth.signIn')
+  async signIn(@Payload() data: { email: string; password: string }) {
+    console.log('auth.signIn payload:', data);
+    const { email, password } = data;
+
+    return this.authService.signIn(email, password);
+  }
+
   async login(
     @Body() loginDto: { email: string; password: string },
     @Res({ passthrough: true }) response: Response,
@@ -32,8 +40,9 @@ export class AuthController {
     return this.authService.login(guest as any, response);
   }
 
+  @MessagePattern('auth.register')
   async register(
-    @Body()
+    @Payload()
     registerDto: {
       email: string;
       password: string;
@@ -53,6 +62,8 @@ export class AuthController {
       fullname,
       phone,
     );
+
+    console.log('Registered guest:', guest);
     return {
       user: {
         id: guest.account.guestId,

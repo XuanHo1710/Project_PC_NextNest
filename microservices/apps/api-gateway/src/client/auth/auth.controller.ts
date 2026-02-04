@@ -16,36 +16,29 @@ import type { Request, Response } from 'express';
 import { Guest, Public } from '../../decorators/customize';
 import { GoogleAuthGuard } from '../../guards/google-auth.guard';
 import { ClientJwtAuthGuard } from '../../guards/client-jwt-auth.guard';
-
-@Controller('auth')
+import { ClientLocalAuthGuard } from 'guards/client-local-jwt.guard';
+import { firstValueFrom } from 'rxjs';
+@Controller('client/auth')
 export class AuthController {
   constructor(
     @Inject(MICROSERVICE.AUTH_SERVICE)
     private readonly authService: ClientProxy,
   ) {}
 
+  @UseGuards(ClientLocalAuthGuard)
   @Post('login')
   @Public()
   async login(
-    @Body() loginDto: { email: string; password: string },
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const { email, password } = loginDto;
+    console.log('AuthController - login called');
+    const user = request.user;
+    return { user };
 
-    if (!email || !password) {
-      throw new BadRequestException('Email và mật khẩu không được để trống');
-    }
-
-    const guest = await this.authService
-      .send('auth.signIn', { email, password })
-      .toPromise();
-    if (!guest) {
-      throw new BadRequestException('Email hoặc mật khẩu không chính xác');
-    }
-
-    return await this.authService
-      .send('auth.login', { guest, response })
-      .toPromise();
+    // return await this.authService
+    //   .send('auth.login', { user, response })
+    //   .toPromise();
   }
 
   @Post('register')
@@ -65,22 +58,15 @@ export class AuthController {
       throw new BadRequestException('Vui lòng điền đầy đủ thông tin');
     }
 
-    const guest = await this.authService
-      .send('auth.register', {
+    const guest = await firstValueFrom(
+      this.authService.send('auth.register', {
         email,
         password,
         fullname,
         phone,
-      })
-      .toPromise();
-    return {
-      user: {
-        id: guest.account.guestId,
-        email: guest.account.email,
-        fullname: guest.guest.fullname,
-        phone: guest.guest.phone,
-      },
-    };
+      }),
+    );
+    return guest;
   }
 
   @Get('google')

@@ -12,13 +12,6 @@ import { ConfigModule } from '@nestjs/config';
 
     ClientsModule.register([
       {
-        name: MICROSERVICE.AUTH_SERVICE,
-        transport: Transport.TCP,
-        options: {
-          port: 3001,
-        },
-      },
-      {
         name: MICROSERVICE.PRODUCT_SERVICE,
         transport: Transport.TCP,
         options: {
