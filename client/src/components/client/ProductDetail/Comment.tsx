@@ -35,9 +35,6 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
         staleTime: 30000, // 30 seconds
     });
 
-    console.log(productComments);
-
-
     // Mutation for posting comments
     const commentMutation = useMutation({
         mutationFn: (data: ICreateProductInteraction) => productClientService.postCommentOnProduct(data),
@@ -46,7 +43,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
             setUserRating(0);
             setIsLoadingSubmit(false);
             queryClient.invalidateQueries({ queryKey: ['product-comments', product._id] });
-            queryClient.invalidateQueries({ queryKey: ['product-by-id', product._id] });
+            queryClient.invalidateQueries({ queryKey: ['product-by-id', product.slug] });
         },
         onError: () => {
             message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.');

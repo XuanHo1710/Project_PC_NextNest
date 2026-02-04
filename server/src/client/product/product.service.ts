@@ -212,16 +212,19 @@ export class ProductService {
           $set: { ratingAvg: newAvg, totalRatings: newTotal },
         }
       );
+      // Delete cache of product details to update average rating and total ratings
+      const productCacheKey = `product:slug:${product.slug}`;
+      await this.cacheManager.del(productCacheKey);
     }
 
     const result = await this.productModelInteraction.create(dataComment);
 
     // Invalidate comment cache for this product (all pages)
-    // Since we don't know how many pages exist, we'll invalidate common pages
-    for (let page = 1; page <= 10; page++) {
+    for (let page = 1; page <= 30; page++) {
       const cacheKey = `product:comments:${createProductInteractionDto.productId}:page:${page}`;
       await this.cacheManager.del(cacheKey);
     }
+
     return result;
   }
 

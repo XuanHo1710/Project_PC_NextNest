@@ -60,7 +60,7 @@ export default function ProductDetailClient() {
     const { data: product, isLoading: isLoadingProduct } = useQuery<IProductCard>({
         queryKey: ['product-by-id', slug],
         queryFn: () => productClientService.getProductsBySlug(slug as string),
-        enabled: !!slug,
+        staleTime: 1000 * 60 * 5, // 5 minutes cache
     });
 
     console.log("product", product);

@@ -36,6 +36,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         const targetPath = request?.route?.path;
         const targetMethod = request?.method;
 
+
+
         if (user?.role?.permission && user?.role?.permission.length > 0) {
 
             const isExist = user?.role?.permission?.find(p => (
