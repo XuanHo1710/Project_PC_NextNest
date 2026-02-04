@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ClientModule } from 'client/client.module';
-import { MICROSERVICE } from 'constrain';
+import { MICROSERVICE } from 'constraint';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({

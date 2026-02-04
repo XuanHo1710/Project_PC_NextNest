@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ProductController } from './product.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE } from 'constrain';
+import { MICROSERVICE } from 'constraint';
 
 @Module({
   imports: [

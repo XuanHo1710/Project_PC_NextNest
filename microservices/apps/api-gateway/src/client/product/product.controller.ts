@@ -1,6 +1,6 @@
 import { Controller, Inject } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { MICROSERVICE } from 'constrain';
+import { MICROSERVICE } from 'constraint';
 
 @Controller('product')
 export class ProductController {
