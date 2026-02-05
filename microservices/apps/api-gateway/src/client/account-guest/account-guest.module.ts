@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AccountGuestController } from './account-guest.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE } from 'constraint';
+import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
 
 @Module({
   imports: [
     ClientsModule.register([
       {
-        name: MICROSERVICE.ACCOUNT_GUEST_SERVICE,
+        name: MICROSERVICE.AUTH_SERVICE,
         transport: Transport.TCP,
         options: {
-          port: 3002,
+          port: MICROSERVICE_PORT.AUTH_SERVICE,
         },
       },
     ]),

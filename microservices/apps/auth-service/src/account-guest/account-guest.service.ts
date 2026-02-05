@@ -11,9 +11,10 @@ import {
   AccountGuest,
   AccountGuestDocument,
 } from './entities/account-guest.entity';
-import { CreateAccountGuestDto } from './dto/create-account-guest.dto';
-import { UpdateAccountGuestDto } from './dto/update-account-guest.dto';
-import { QueryAccountGuestDto } from './dto/query-account-guest.dto';
+import {
+  CreateAccountGuestDto,
+  UpdateAccountGuestDto,
+} from '@project-pc/common';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -83,7 +84,7 @@ export class AccountGuestService {
     return createdAccount.save();
   }
 
-  async findAll(query: QueryAccountGuestDto) {
+  async findAll(query: any) {
     const {
       page = 1,
       limit = 10,

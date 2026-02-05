@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import Redis from 'ioredis';
-import { MICROSERVICE } from 'src/contraint';
+import { MICROSERVICE } from '@project-pc/common';
 
 @Global()
 @Module({

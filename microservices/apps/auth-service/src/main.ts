@@ -1,13 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { MICROSERVICE_PORT } from '@project-pc/common';
 
 async function bootstrap() {
   const appAuthService =
     await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
       transport: Transport.TCP,
       options: {
-        port: 3001,
+        port: MICROSERVICE_PORT.AUTH_SERVICE,
       },
     });
 
@@ -15,9 +16,10 @@ async function bootstrap() {
     await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
       transport: Transport.REDIS,
       options: {
-        host: 'localhost',
-        port: 6379,
-        password: '123',
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD,
+        db: Number(process.env.REDIS_DB),
       },
     });
 

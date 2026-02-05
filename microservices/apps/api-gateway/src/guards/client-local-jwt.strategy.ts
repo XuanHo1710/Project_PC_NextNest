@@ -1,9 +1,9 @@
 import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { MICROSERVICE } from 'constraint';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { MICROSERVICE } from '@project-pc/common';
 
 @Injectable()
 export class ClientLocalStrategy extends PassportStrategy(

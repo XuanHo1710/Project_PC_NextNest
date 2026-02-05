@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ProductController } from './product.controller';
+import { AccountEmployeeController } from './account-employee.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
 
@@ -7,15 +7,15 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
   imports: [
     ClientsModule.register([
       {
-        name: MICROSERVICE.PRODUCT_SERVICE,
+        name: MICROSERVICE.AUTH_SERVICE,
         transport: Transport.TCP,
         options: {
-          port: MICROSERVICE_PORT.PRODUCT_SERVICE,
+          port: MICROSERVICE_PORT.AUTH_SERVICE,
         },
       },
     ]),
   ],
-  controllers: [ProductController],
+  controllers: [AccountEmployeeController],
   providers: [],
 })
-export class ProductModule {}
+export class AccountEmployeeModule {}

@@ -9,9 +9,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { AccountEmployeeService } from './account-employee.service';
-import { CreateAccountEmployeeDto } from './dto/create-account-employee.dto';
-import { UpdateAccountEmployeeDto } from './dto/update-account-employee.dto';
+import {
+  CreateAccountEmployeeDto,
+  UpdateAccountEmployeeDto,
+} from '@project-pc/common';
 import mongoose, { Types } from 'mongoose';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('/admin/account-employee')
 export class AccountEmployeeController {
@@ -19,44 +22,52 @@ export class AccountEmployeeController {
     private readonly accountEmployeeService: AccountEmployeeService,
   ) {}
 
-  @Post()
-  create(@Body() createAccountEmployeeDto: CreateAccountEmployeeDto) {
-    return this.accountEmployeeService.create(createAccountEmployeeDto);
+  @MessagePattern('account_employee.create')
+  create(
+    @Payload() data: { createAccountEmployeeDto: CreateAccountEmployeeDto },
+  ) {
+    return this.accountEmployeeService.create(data.createAccountEmployeeDto);
   }
 
-  @Get()
-  findAll(@Query() filter: any) {
-    return this.accountEmployeeService.findAll(filter);
+  @MessagePattern('account_employee.findAll')
+  findAll(@Payload() data: { filter: any }) {
+    return this.accountEmployeeService.findAll(data.filter);
   }
 
-  @Get('/get-account')
-  findAccountByIDEmp(IDEmp: string) {
-    return this.accountEmployeeService.findAccountByIDEmp(IDEmp);
+  @MessagePattern('account_employee.findAccountByIDEmp')
+  findAccountByIDEmp(@Payload() data: { IDEmp: string }) {
+    return this.accountEmployeeService.findAccountByIDEmp(data.IDEmp);
   }
 
-  @Patch('/updateMany')
-  updateMany(@Body() dataUpdate: any) {
+  @MessagePattern('account_employee.updateMany')
+  updateMany(@Payload() dataUpdate: any) {
     return this.accountEmployeeService.updateMany(dataUpdate);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    if (!Types.ObjectId.isValid(id)) {
+  @MessagePattern('account_employee.findOne')
+  findOne(@Payload() data: { id: string }) {
+    if (!Types.ObjectId.isValid(data.id)) {
       return { error: 'ID không hợp lệ' };
     }
-    return this.accountEmployeeService.findOne(id);
+    return this.accountEmployeeService.findOne(data.id);
   }
 
-  @Patch(':id')
+  @MessagePattern('account_employee.update')
   update(
-    @Param('id') id: mongoose.Types.ObjectId,
-    @Body() updateAccountEmployeeDto: UpdateAccountEmployeeDto,
+    @Payload()
+    data: {
+      id: mongoose.Types.ObjectId;
+      updateAccountEmployeeDto: UpdateAccountEmployeeDto;
+    },
   ) {
-    return this.accountEmployeeService.update(id, updateAccountEmployeeDto);
+    return this.accountEmployeeService.update(
+      data.id,
+      data.updateAccountEmployeeDto,
+    );
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: mongoose.Types.ObjectId) {
-    return this.accountEmployeeService.remove(id);
+  @MessagePattern('account_employee.remove')
+  remove(@Payload() data: { id: mongoose.Types.ObjectId }) {
+    return this.accountEmployeeService.remove(data.id);
   }
 }

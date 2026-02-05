@@ -9,7 +9,7 @@ import { Model } from 'mongoose';
 import { AccountGuest } from 'src/account-guest/entities/account-guest.entity';
 import { AccountGuestService } from 'src/account-guest/account-guest.service';
 import { compareSync } from 'bcrypt';
-import { MICROSERVICE } from 'src/contraint';
+import { MICROSERVICE } from '@project-pc/common';
 import Redis from 'ioredis';
 const ms = require('ms');
 @Injectable()

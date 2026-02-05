@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { MICROSERVICE } from 'constraint';
+import { MICROSERVICE } from '@project-pc/common';
 
 import type { Request, Response } from 'express';
 import { Guest, Public } from '../../decorators/customize';

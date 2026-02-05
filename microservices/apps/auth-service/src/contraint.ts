@@ -1,3 +1,0 @@
-export const MICROSERVICE = {
-  REDIS_SERVICE: 'REDIS_SERVICE',
-};

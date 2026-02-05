@@ -1,6 +1,9 @@
 import { BadGatewayException, Injectable } from '@nestjs/common';
-import { CreateAccountEmployeeDto } from './dto/create-account-employee.dto';
-import { UpdateAccountEmployeeDto } from './dto/update-account-employee.dto';
+import {
+  CreateAccountEmployeeDto,
+  UpdateAccountEmployeeDto,
+} from '@project-pc/common';
+
 import mongoose, { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';

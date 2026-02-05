@@ -22,7 +22,7 @@ import { Guest } from 'decorators/customize';
 @Controller('client/account-guest')
 export class AccountGuestController {
   constructor(
-    @Inject(MICROSERVICE.ACCOUNT_GUEST_SERVICE)
+    @Inject(MICROSERVICE.AUTH_SERVICE)
     private readonly accountGuestService: ClientProxy,
   ) {}
 
@@ -36,7 +36,9 @@ export class AccountGuestController {
 
   @Get()
   findAll(@Query() query: any) {
-    return this.accountGuestService.send('account_guest.findAll', query);
+    return this.accountGuestService.send('account_guest.findAll', {
+      query: query,
+    });
   }
 
   @Get('statistics')
@@ -46,7 +48,7 @@ export class AccountGuestController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.accountGuestService.send('account_guest.findOne', id);
+    return this.accountGuestService.send('account_guest.findOne', { id: id });
   }
 
   @Patch(':id')
@@ -74,7 +76,7 @@ export class AccountGuestController {
 
   @Patch(':id/activate')
   activate(@Param('id') id: string) {
-    return this.accountGuestService.send('account_guest.update', {
+    return this.accountGuestService.send('account_guest.activate', {
       accountStatus: 'ACTIVE',
       isActive: true,
     });
@@ -91,7 +93,7 @@ export class AccountGuestController {
       updateData.adminNotes = reason;
     }
 
-    return this.accountGuestService.send('account_guest.update', {
+    return this.accountGuestService.send('account_guest.suspend', {
       id,
       ...updateData,
     });
@@ -103,10 +105,5 @@ export class AccountGuestController {
       id,
       userId: user?._id,
     });
-  }
-
-  @Get(':id/login-history')
-  getLoginHistory(@Param('id') id: string) {
-    return this.accountGuestService.send('account_guest.getLoginHistory', id);
   }
 }

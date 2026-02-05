@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE } from 'constraint';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ClientLocalStrategy } from 'guards/client-local-jwt.strategy';
+import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { ClientLocalStrategy } from 'guards/client-local-jwt.strategy';
         name: MICROSERVICE.AUTH_SERVICE,
         transport: Transport.TCP,
         options: {
-          port: 3001,
+          port: MICROSERVICE_PORT.AUTH_SERVICE,
         },
       },
     ]),
