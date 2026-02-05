@@ -1,15 +1,8 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
-import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
+import { BadRequestException, Controller } from '@nestjs/common';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ClientAuthService } from 'src/auth/auth.service';
-import type { Request, Response } from 'express';
 import { AccountGuest } from 'src/account-guest/entities/account-guest.entity';
+import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
 
 @Controller()
 export class AuthController {
@@ -76,7 +69,32 @@ export class AuthController {
 
   @MessagePattern('auth.logout')
   async logout(@Payload() data: { id: string }) {
-    console.log('auth.logout payload:', data);
     return this.authService.logout(data.id);
+  }
+
+  // Admin service handlers
+  @MessagePattern('auth.loginAdmin')
+  async loginAdmin(@Payload() data: { accountAdmin: AccountEmployee }) {
+    return this.authService.loginAdmin(data.accountAdmin);
+  }
+
+  @MessagePattern('auth.logoutAdmin')
+  handleLogout(@Payload() data: { id: string }) {
+    return this.authService.logoutAdmin(data.id);
+  }
+
+  @MessagePattern('auth.refreshTokenAdmin')
+  refreshToken(@Payload() data: { refreshToken: string }) {
+    if (!data.refreshToken) {
+      throw new BadRequestException('Refresh token không tồn tại');
+    }
+    return this.authService.processNewTokenAdmin(data.refreshToken);
+  }
+
+  @MessagePattern('auth.signInAdmin')
+  async signInAdmin(@Payload() data: { IDEmp: string; password: string }) {
+    console.log('auth.signInAdmin payload:', data);
+    const { IDEmp, password } = data;
+    return this.authService.signInAdmin(IDEmp, password);
   }
 }

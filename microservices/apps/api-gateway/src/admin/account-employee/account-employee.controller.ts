@@ -17,6 +17,7 @@ import {
   CreateAccountEmployeeDto,
   UpdateAccountEmployeeDto,
 } from '@project-pc/common';
+import { Public } from 'decorators/customize';
 
 @Controller('/admin/account-employee')
 export class AccountEmployeeController {
@@ -25,6 +26,7 @@ export class AccountEmployeeController {
     private readonly accountEmployeeService: ClientProxy,
   ) {}
 
+  @Public()
   @Post()
   create(@Body() createAccountEmployeeDto: CreateAccountEmployeeDto) {
     return this.accountEmployeeService.send('account_employee.create', {

@@ -4,10 +4,8 @@ import {
   UpdateAccountEmployeeDto,
 } from '@project-pc/common';
 
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
 
 const bcrypt = require('bcrypt');
@@ -18,13 +16,9 @@ export class AccountEmployeeService {
   constructor(
     @InjectModel(AccountEmployee.name)
     private accountEmployeeModel: Model<AccountEmployee>,
-    private jwtService: JwtService,
-    private configService: ConfigService,
   ) {}
 
   async create(createAccountEmployeeDto: CreateAccountEmployeeDto) {
-    createAccountEmployeeDto.employee = createAccountEmployeeDto.employeeId;
-
     // Hash password
     const hashPassword = bcrypt.hashSync(
       createAccountEmployeeDto.password,
@@ -32,10 +26,24 @@ export class AccountEmployeeService {
     );
     createAccountEmployeeDto.password = hashPassword;
 
-    const account = await this.accountEmployeeModel.create(
-      createAccountEmployeeDto,
-    );
-    return account;
+    const existingAccount = await this.accountEmployeeModel.findOne({
+      $or: [
+        { IDEmp: createAccountEmployeeDto.IDEmp },
+        { email: createAccountEmployeeDto.email },
+      ],
+    });
+
+    if (existingAccount) {
+      throw new BadGatewayException('Nhân viên đã tồn tại');
+    }
+
+    const payload = {
+      ...createAccountEmployeeDto,
+      roleId: new Types.ObjectId(createAccountEmployeeDto.roleId),
+    };
+
+    const account = new this.accountEmployeeModel(payload);
+    return account.save();
   }
 
   async findAll(filter: any) {
@@ -105,8 +113,6 @@ export class AccountEmployeeService {
     id: mongoose.Types.ObjectId,
     updateAccountEmployeeDto: UpdateAccountEmployeeDto,
   ) {
-    updateAccountEmployeeDto.employee = updateAccountEmployeeDto.employeeId;
-
     // Hash password
     if (updateAccountEmployeeDto.password) {
       const hashPassword = bcrypt.hashSync(
@@ -116,10 +122,12 @@ export class AccountEmployeeService {
       updateAccountEmployeeDto.password = hashPassword;
     }
 
-    return await this.accountEmployeeModel.updateOne(
-      { _id: id },
-      updateAccountEmployeeDto,
-    );
+    const payload = {
+      ...updateAccountEmployeeDto,
+      roleId: new Types.ObjectId(updateAccountEmployeeDto.roleId),
+    };
+
+    return await this.accountEmployeeModel.updateOne({ _id: id }, payload);
   }
 
   async remove(id: mongoose.Types.ObjectId) {

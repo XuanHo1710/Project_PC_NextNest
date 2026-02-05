@@ -3,11 +3,11 @@ import {
   ForbiddenException,
   Injectable,
   UnauthorizedException,
-} from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { AuthGuard } from "@nestjs/passport";
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { AuthGuard } from '@nestjs/passport';
 @Injectable()
-export class JwtAuthGuard extends AuthGuard("jwt") {
+export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(private reflector: Reflector) {
     super();
   }
@@ -15,7 +15,7 @@ export class JwtAuthGuard extends AuthGuard("jwt") {
   canActivate(context: ExecutionContext) {
     // Add your custom authentication logic here
     // for example, call super.logIn(request) to establish a session.
-    const isPublic = this.reflector.getAllAndOverride<boolean>("isPublic", [
+    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -45,11 +45,11 @@ export class JwtAuthGuard extends AuthGuard("jwt") {
 
       if (
         isExist === undefined &&
-        targetPath !== "/api/v1/admin/account-employee" &&
-        targetPath !== "/api/v1/admin/auth/decode-access" &&
-        targetPath !== "/api/v1/admin/auth/refresh-token" &&
-        targetPath !== "/api/v1/admin/auth/profile" &&
-        targetPath !== "/api/v1/admin/auth/logout"
+        targetPath !== '/api/v1/admin/account-employee' &&
+        targetPath !== '/api/v1/admin/auth/decode-access' &&
+        targetPath !== '/api/v1/admin/auth/refresh-token' &&
+        targetPath !== '/api/v1/admin/auth/profile' &&
+        targetPath !== '/api/v1/admin/auth/logout'
       ) {
         throw new ForbiddenException(
           "You don't have permission to access this endpoint",
@@ -58,7 +58,7 @@ export class JwtAuthGuard extends AuthGuard("jwt") {
     }
 
     if (err || !user) {
-      throw err || new UnauthorizedException("Token is not valid");
+      throw err || new UnauthorizedException('Token is not valid');
     }
 
     return user;

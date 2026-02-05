@@ -1,20 +1,20 @@
-import { ExtractJwt, Strategy } from "passport-jwt";
-import { PassportStrategy } from "@nestjs/passport";
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { PassportStrategy } from '@nestjs/passport';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 // import { RoleService } from 'src/admin/role/role.service';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private configService: ConfigService,
     // private roleService: RoleService
   ) {
-    const secret = configService.get<string>("JWT_ACCESS_TOKEN_SECRET");
+    const secret = configService.get<string>('JWT_ACCESS_TOKEN_SECRET');
 
     if (!secret) {
       throw new Error(
-        "JWT_ACCESS_TOKEN_SECRET is not defined in environment variables",
+        'JWT_ACCESS_TOKEN_SECRET is not defined in environment variables',
       );
     }
     super({

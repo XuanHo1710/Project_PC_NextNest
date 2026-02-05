@@ -11,6 +11,8 @@ import { AccountGuestService } from 'src/account-guest/account-guest.service';
 import { compareSync } from 'bcrypt';
 import { MICROSERVICE } from '@project-pc/common';
 import Redis from 'ioredis';
+import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
+import { AccountEmployeeService } from 'src/account-employee/account-employee.service';
 const ms = require('ms');
 @Injectable()
 export class ClientAuthService {
@@ -18,6 +20,7 @@ export class ClientAuthService {
     @InjectModel(AccountGuest.name)
     private accountGuestModel: Model<AccountGuest>,
     private accountGuestService: AccountGuestService,
+    private accountEmployeeService: AccountEmployeeService,
     private jwtService: JwtService,
     private configService: ConfigService,
     @Inject(MICROSERVICE.REDIS_SERVICE) private readonly redisClient: Redis,
@@ -161,7 +164,6 @@ export class ClientAuthService {
       'EX',
       ms(this.configService.get<string>('JWT_REFRESH_EXPIRE')!) / 1000,
     );
-    console.log(`Refresh token stored in Redis for guest ${refresh_token}`);
 
     return {
       access_token,
@@ -193,7 +195,7 @@ export class ClientAuthService {
     return await this.accountGuestService.verifyEmail(token);
   }
 
-  processNewToken = async (refreshToken: string) => {
+  async processNewToken(refreshToken: string) {
     try {
       const detailPayload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
@@ -230,7 +232,7 @@ export class ClientAuthService {
         'Refresh token không hợp lệ hoặc đã hết hạn',
       );
     }
-  };
+  }
 
   createAccessToken = (payload: any) => {
     const access_token = this.jwtService.sign(payload, {
@@ -246,5 +248,101 @@ export class ClientAuthService {
     await this.redisClient.del(redisKey);
     console.log(`Refresh token deleted from Redis for guest ${id}`);
     return { message: 'Đăng xuất thành công' };
+  }
+
+  // Handle for admin service login
+  async loginAdmin(account: AccountEmployee) {
+    const payload = {
+      IDEmp: account.IDEmp,
+      username: account.name,
+      roleId: account.roleId,
+      employeeId: account._id,
+      _id: account._id.toString(),
+    };
+
+    const access_token = this.createAccessToken(payload);
+
+    const refresh_token = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRE'),
+    } as SignOptions);
+
+    // Save refresh token in redis db
+    const redisKey = `admin_refresh_token:${account._id.toString()}`;
+
+    const existingToken = await this.redisClient.get(redisKey);
+    if (existingToken) {
+      await this.redisClient.del(redisKey);
+    }
+    await this.redisClient.set(
+      redisKey,
+      refresh_token,
+      'EX',
+      ms(this.configService.get<string>('JWT_REFRESH_EXPIRE')!) / 1000,
+    );
+
+    return {
+      access_token,
+      refresh_token,
+      payload,
+    };
+  }
+
+  async processNewTokenAdmin(refreshToken: string) {
+    console.log('Refresh token nè kakakak');
+
+    try {
+      const detailPayload = this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      });
+
+      //  Check refresh token in redis
+      const storedRefreshToken = await this.redisClient.get(
+        `admin_refresh_token:${detailPayload._id}`,
+      );
+
+      const payload = this.jwtService.verify(storedRefreshToken!, {
+        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      });
+
+      if (!payload) {
+        throw new BadRequestException('Tài khoản không tồn tại');
+      }
+
+      const payloadFinal = {
+        IDEmp: detailPayload.IDEmp,
+        username: detailPayload.username,
+        roleId: detailPayload.roleId,
+        employeeId: detailPayload.employeeId,
+        _id: detailPayload._id.toString(),
+      };
+
+      const access_token = this.createAccessToken(payloadFinal);
+
+      return { access_token, ...payloadFinal };
+    } catch (err) {
+      throw new BadRequestException(
+        'Refresh token không hợp lệ hoặc đã hết hạn',
+      );
+    }
+  }
+
+  async logoutAdmin(id: string) {
+    // Remove refresh token from redis
+    const redisKey = `admin_refresh_token:${id}`;
+    await this.redisClient.del(redisKey);
+    console.log(`Refresh token deleted from Redis for admin ${id}`);
+    return { message: 'Đăng xuất thành công' };
+  }
+
+  async signInAdmin(IDEmp: string, password: string) {
+    const account = await this.accountEmployeeService.findAccountByIDEmp(IDEmp);
+    if (!account) return null;
+    const isCorrect = compareSync(password, account.password || '');
+    if (account && isCorrect) {
+      return account;
+    } else {
+      return null;
+    }
   }
 }

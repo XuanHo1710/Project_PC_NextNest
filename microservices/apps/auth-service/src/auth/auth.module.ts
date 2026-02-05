@@ -11,6 +11,7 @@ import {
 } from 'src/account-guest/entities/account-guest.entity';
 import { AccountGuestModule } from 'src/account-guest/account-guest.module';
 import { RedisModule } from 'src/redis/redis.module';
+import { AccountEmployeeModule } from 'src/account-employee/account-employee.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RedisModule } from 'src/redis/redis.module';
     ]),
     ConfigModule, // 👈 BẮT BUỘC
     AccountGuestModule,
+    AccountEmployeeModule,
     RedisModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

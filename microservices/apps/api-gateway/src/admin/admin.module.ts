@@ -5,9 +5,15 @@ import { APP_GUARD } from '@nestjs/core';
 import { AccountEmployeeModule } from 'admin/account-employee/account-employee.module';
 import { JwtAuthGuard } from 'guards/jwt-auth.guard';
 import { JwtStrategy } from 'guards/jwt.strategy';
+import { AuthModule } from 'admin/auth/auth.module';
 
 @Module({
-  imports: [AccountEmployeeModule, ConfigModule, JwtModule.register({})],
+  imports: [
+    AccountEmployeeModule,
+    ConfigModule,
+    AuthModule,
+    JwtModule.register({}),
+  ],
   providers: [
     {
       provide: APP_GUARD,

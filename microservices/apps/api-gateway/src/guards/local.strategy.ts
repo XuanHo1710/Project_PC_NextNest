@@ -1,23 +1,28 @@
-// import { Strategy } from 'passport-local';
-// import { PassportStrategy } from '@nestjs/passport';
-// import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Strategy } from 'passport-local';
+import { PassportStrategy } from '@nestjs/passport';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { MICROSERVICE } from '@project-pc/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+@Injectable()
+export class LocalStrategy extends PassportStrategy(Strategy) {
+  constructor(
+    @Inject(MICROSERVICE.AUTH_SERVICE) private authService: ClientProxy,
+  ) {
+    super({
+      usernameField: 'IDEmp', // <-- Quan trọng
+      passwordField: 'password',
+    });
+  }
 
-// @Injectable()
-// export class LocalStrategy extends PassportStrategy(Strategy) {
-//     constructor(
-//         private authService: AuthService
-//     ) {
-//         super({
-//             usernameField: 'IDEmp', // <-- Quan trọng
-//             passwordField: 'password'
-//         });
-//     }
-
-//     async validate(IDEmp: string, password: string): Promise<AccountEmployee> {
-//         const account = await this.authService.signIn(IDEmp, password);
-//         if (!account) {
-//             throw new UnauthorizedException("Wrong ID Employee or Password");
-//         }
-//         return account;
-//     }
-// }
+  async validate(IDEmp: string, password: string) {
+    console.log('LocalStrategy validate called with ', { IDEmp, password });
+    const account = await firstValueFrom(
+      this.authService.send('auth.signInAdmin', { IDEmp, password }),
+    );
+    if (!account) {
+      throw new UnauthorizedException('Wrong ID Employee or Password');
+    }
+    return account;
+  }
+}
