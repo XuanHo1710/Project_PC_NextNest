@@ -6,13 +6,26 @@ import { AccountEmployeeModule } from 'admin/account-employee/account-employee.m
 import { JwtAuthGuard } from 'guards/jwt-auth.guard';
 import { JwtStrategy } from 'guards/jwt.strategy';
 import { AuthModule } from 'admin/auth/auth.module';
+import { RoleModule } from 'admin/role/role.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
 
 @Module({
   imports: [
     AccountEmployeeModule,
+    RoleModule,
     ConfigModule,
     AuthModule,
     JwtModule.register({}),
+    ClientsModule.register([
+      {
+        name: MICROSERVICE.AUTH_SERVICE,
+        transport: Transport.TCP,
+        options: {
+          port: MICROSERVICE_PORT.AUTH_SERVICE,
+        },
+      },
+    ]),
   ],
   providers: [
     {

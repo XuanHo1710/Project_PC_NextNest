@@ -1,14 +1,16 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ClientProxy } from '@nestjs/microservices';
 // import { RoleService } from 'src/admin/role/role.service';
-
+import { MICROSERVICE } from '@project-pc/common';
+import { firstValueFrom } from 'rxjs';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private configService: ConfigService,
-    // private roleService: RoleService
+    @Inject(MICROSERVICE.AUTH_SERVICE) private roleService: ClientProxy,
   ) {
     const secret = configService.get<string>('JWT_ACCESS_TOKEN_SECRET');
 
@@ -25,7 +27,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: any) {
-    // const role = await this.roleService.findOne(payload?.roleId);
+    const role = await firstValueFrom(
+      this.roleService.send('role.findOne', { id: payload.roleId }),
+    );
+
+    payload.role = role;
     return { ...payload };
   }
 }
