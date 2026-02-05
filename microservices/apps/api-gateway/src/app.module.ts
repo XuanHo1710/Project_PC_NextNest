@@ -5,6 +5,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ClientModule } from 'client/client.module';
 import { MICROSERVICE } from 'constraint';
 import { ConfigModule } from '@nestjs/config';
+import { AccountGuestModule } from './client/account-guest/account-guest.module';
 
 @Module({
   imports: [

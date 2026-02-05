@@ -109,7 +109,7 @@ export class ClientAuthService {
           {
             authProvider: 'google',
             googleId: googleId,
-            avatar: picture || guest.avatar,
+            avatar: guest.avatar || picture,
           },
         );
       }
@@ -147,8 +147,7 @@ export class ClientAuthService {
     // Update login info
     await this.accountGuestService.updateLoginInfo(accountGuest._id.toString());
 
-    // // Set cookies
-
+    // Set cookies
     // Save refresh token in redis db
     const redisKey = `guest_refresh_token:${accountGuest._id.toString()}`;
 
@@ -241,9 +240,11 @@ export class ClientAuthService {
     return access_token;
   };
 
-  async logout(response: Response) {
-    response.clearCookie('client_refresh_token');
-    response.clearCookie('client_access_token');
+  async logout(id: string) {
+    // Remove refresh token from redis
+    const redisKey = `guest_refresh_token:${id}`;
+    await this.redisClient.del(redisKey);
+    console.log(`Refresh token deleted from Redis for guest ${id}`);
     return { message: 'Đăng xuất thành công' };
   }
 }

@@ -4,8 +4,9 @@ import {
   Controller,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 import { ClientAuthService } from 'src/auth/auth.service';
 import type { Request, Response } from 'express';
 import { AccountGuest } from 'src/account-guest/entities/account-guest.entity';
@@ -53,32 +54,15 @@ export class AuthController {
     return guest;
   }
 
-  async googleAuth(@Req() req: Request) {
-    // Initiates the Google OAuth2 login flow
-  }
-
-  async googleAuthRedirect(@Req() req: Request, @Res() response: Response) {
-    const user = req.user;
-
-    if (!user) {
-      return response.status(400).json({
-        message: 'Đăng nhập Google thất bại',
-      });
-    }
-
+  @MessagePattern('auth.googleLogin')
+  async googleAuthRedirect(@Payload() data: { user: any }) {
+    const user = data.user;
     try {
       const guest = await this.authService.googleLogin(user);
-      const result = await this.authService.login(guest);
-
-      // Redirect to frontend with success
-      return response.redirect(
-        `${process.env.CLIENT_URL}/auth/success?token=${result.access_token}`,
-      );
+      return guest;
     } catch (error) {
       console.error('Google auth error:', error);
-      return response.redirect(
-        `${process.env.CLIENT_URL}?error=google_auth_failed`,
-      );
+      return null;
     }
   }
 
@@ -90,21 +74,9 @@ export class AuthController {
     return this.authService.processNewToken(data.refreshToken);
   }
 
-  async logout(@Res({ passthrough: true }) response: Response) {
-    return this.authService.logout(response);
-  }
-
-  async getProfile(guest: any) {
-    // Now we can access the authenticated guest directly
-    return {
-      message: 'Profile retrieved successfully',
-      user: {
-        guestId: guest.guestId,
-        email: guest.email,
-        fullname: guest.fullname,
-        avatar: guest.avatar,
-        authProvider: guest.authProvider,
-      },
-    };
+  @MessagePattern('auth.logout')
+  async logout(@Payload() data: { id: string }) {
+    console.log('auth.logout payload:', data);
+    return this.authService.logout(data.id);
   }
 }

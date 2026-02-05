@@ -15,7 +15,6 @@ import { MICROSERVICE } from 'constraint';
 import type { Request, Response } from 'express';
 import { Guest, Public } from '../../decorators/customize';
 import { GoogleAuthGuard } from '../../guards/google-auth.guard';
-import { ClientJwtAuthGuard } from '../../guards/client-jwt-auth.guard';
 import { ClientLocalAuthGuard } from 'guards/client-local-jwt.guard';
 import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
@@ -50,7 +49,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: 'client/auth/refresh',
+      path: '/',
       maxAge: ms(
         this.configService.get<string>('JWT_REFRESH_EXPIRE') as string,
       ),
@@ -100,30 +99,52 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Guest() user: any, @Res() response: Response) {
     if (!user) {
-      return response.status(400).json({
-        message: 'Đăng nhập Google thất bại',
-      });
+      return response.send(`
+      <script>
+        window.opener.postMessage(
+          { type: 'GOOGLE_LOGIN_FAILED' },
+          '${process.env.CLIENT_URL}'
+        );
+        window.close();
+      </script>
+    `);
     }
-
     try {
-      // const guest = await this.authService.googleLogin(user);
-      // const result = await this.authService.login(guest, response);
-
-      // Redirect to frontend with success
-      return response.redirect(
-        // `${process.env.CLIENT_URL}/auth/success?token=${result.access_token}`,
-        '',
+      const checkAccountGoogle = await firstValueFrom(
+        this.authService.send('auth.googleLogin', {
+          user: user,
+        }),
       );
+      const result = await firstValueFrom(
+        this.authService.send('auth.login', { user: checkAccountGoogle }),
+      );
+      return response.send(`
+      <script>
+        window.opener.postMessage(
+          {
+            type: 'GOOGLE_LOGIN_SUCCESS',
+            payload: ${JSON.stringify(result)}
+          },
+          '${process.env.CLIENT_URL}'
+        );
+        window.close();
+      </script>
+    `);
     } catch (error) {
-      console.error('Google auth error:', error);
-      return response.redirect(
-        `${process.env.CLIENT_URL}?error=google_auth_failed`,
-      );
+      return response.send(`
+      <script>
+        window.opener.postMessage(
+          { type: 'GOOGLE_LOGIN_FAILED' },
+          '${process.env.CLIENT_URL}'
+        );
+        window.close();
+      </script>
+    `);
     }
   }
 
   @Post('refresh')
-  // @Public()
+  @Public()
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
@@ -152,48 +173,22 @@ export class AuthController {
   }
 
   @Post('logout')
-  @Public()
-  async logout(@Res({ passthrough: true }) response: Response) {
-    // return this.authService.logout(response);
+  async logout(
+    @Guest() guest: any,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    if (request.cookies?.client_refresh_token) {
+      response.clearCookie('client_refresh_token', {
+        path: '/',
+      });
+    }
+
+    return this.authService.send('auth.logout', { id: guest._id });
   }
 
   @Get('profile')
   async getProfile(@Guest() guest: any) {
-    // Now we can access the authenticated guest directly
-    return {
-      message: 'Profile retrieved successfully',
-
-      user: {
-        guestId: guest.guestId,
-        email: guest.email,
-        fullname: guest.fullname,
-        avatar: guest.avatar,
-        authProvider: guest.authProvider,
-      },
-    };
-  }
-
-  @Post('refresh-token')
-  @Public()
-  async refreshToken(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const refreshToken = request.cookies['client_refresh_token'];
-    if (!refreshToken) {
-      throw new BadRequestException('Refresh token không tồn tại');
-    }
-
-    try {
-      // const result = await this.authService.processNewToken(
-      //   refreshToken,
-      //   response,
-      // );
-      // return result;
-    } catch (error) {
-      throw new BadRequestException(
-        'Refresh token không hợp lệ hoặc đã hết hạn',
-      );
-    }
+    return guest;
   }
 }

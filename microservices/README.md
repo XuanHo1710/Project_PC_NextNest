@@ -1,135 +1,124 @@
-# Turborepo starter
+# Project PC - Microservices
 
-This Turborepo starter is maintained by the Turborepo core team.
+Monorepo architecture với Turborepo, NestJS microservices và shared packages.
 
-## Using this example
-
-Run the following command:
-
-```sh
-npx create-turbo@latest
-```
-
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## 📁 Cấu Trúc
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+microservices/
+├── apps/
+│   ├── api-gateway/      # API Gateway (public endpoints)
+│   ├── auth-service/     # Authentication service
+│   └── product-service/  # Product management service
+├── packages/
+│   ├── common/          # ✅ Shared DTOs & utilities
+│   ├── eslint-config/   # Shared ESLint config
+│   ├── typescript-config/ # Shared TS config
+│   └── ui/              # Shared UI components
+└── turbo.json           # Turborepo configuration
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## 🚀 Quick Start
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+### 1. Install Dependencies
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+```bash
+npm install
 ```
 
-### Develop
+### 2. Build Common Package (Required First!)
 
-To develop all apps and packages, run the following command:
+```bash
+# Linux/Mac
+npm run build --workspace=@project-pc/common
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+# Hoặc dùng script
+./build-common.sh      # Linux/Mac
+build-common.bat       # Windows
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### 3. Start All Services
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+```bash
+npm run start:dev
 ```
 
-### Remote Caching
+## 📦 Shared DTOs (@project-pc/common)
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+### Import trong bất kỳ service nào:
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```typescript
+import {
+  LoginDto,
+  RefreshTokenDto,
+  CreateAccountGuestDto,
+  TokenResponseDto,
+} from "@project-pc/common";
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### Xem thêm:
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+- 📖 [Usage Guide](./USAGE_GUIDE.ts) - Chi tiết cách sử dụng
+- ✅ [Fix Summary](./FIX_SUMMARY.md) - Log những gì đã fix
+- 📚 [Common Package README](./packages/common/README.md)
 
+## 🛠️ Development
+
+### Start services riêng lẻ:
+
+```bash
+# API Gateway
+cd apps/api-gateway && npm run start:dev
+
+# Auth Service
+cd apps/auth-service && npm run start:dev
+
+# Product Service
+cd apps/product-service && npm run start:dev
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+### Build all:
+
+```bash
+npm run build
 ```
 
-## Useful Links
+### Lint:
 
-Learn more about the power of Turborepo:
+```bash
+npm run lint
+```
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+## ⚠️ Important Notes
+
+1. **Common package MUST be built first** trước khi start services
+2. Mỗi khi thêm DTO mới vào common, phải rebuild: `npm run build -w @project-pc/common`
+3. Services tự động restart khi có thay đổi (watch mode)
+4. Turbo caching giúp build nhanh hơn
+
+## 🎯 Available DTOs
+
+- ✅ `LoginDto` - Email & password login
+- ✅ `RefreshTokenDto` - Token refresh
+- ✅ `TokenResponseDto` - Auth response
+- ✅ `LogoutDto` - Logout with optional token
+- ✅ `CreateAccountGuestDto` - Guest account creation
+
+## 📝 Thêm DTO Mới
+
+1. Tạo trong `packages/common/src/dto/[module]/`
+2. Export trong `packages/common/src/dto/index.ts`
+3. Build: `npm run build -w @project-pc/common`
+4. Import ở service: `import { YourDto } from '@project-pc/common'`
+
+## 🔧 Tech Stack
+
+- **Monorepo**: Turborepo
+- **Framework**: NestJS
+- **Language**: TypeScript
+- **Validation**: class-validator
+- **Communication**: Microservices pattern với message queues
+
+---
+
+**📖 Need help?** Xem [USAGE_GUIDE.ts](./USAGE_GUIDE.ts) hoặc [FIX_SUMMARY.md](./FIX_SUMMARY.md)!

@@ -6,9 +6,16 @@ import { ClientJwtStrategy } from 'guards/client-jwt.strategy';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ClientJwtAuthGuard } from 'guards/client-jwt-auth.guard';
+import { AccountGuestModule } from 'client/account-guest/account-guest.module';
 
 @Module({
-  imports: [ConfigModule, AuthModule, ProductModule, JwtModule.register({})],
+  imports: [
+    AccountGuestModule,
+    ConfigModule,
+    AuthModule,
+    ProductModule,
+    JwtModule.register({}),
+  ],
   providers: [
     {
       provide: APP_GUARD,
