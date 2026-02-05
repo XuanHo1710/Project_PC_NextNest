@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
@@ -9,6 +9,8 @@ import { Model } from 'mongoose';
 import { AccountGuest } from 'src/account-guest/entities/account-guest.entity';
 import { AccountGuestService } from 'src/account-guest/account-guest.service';
 import { compareSync } from 'bcrypt';
+import { MICROSERVICE } from 'src/contraint';
+import Redis from 'ioredis';
 const ms = require('ms');
 @Injectable()
 export class ClientAuthService {
@@ -18,6 +20,7 @@ export class ClientAuthService {
     private accountGuestService: AccountGuestService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    @Inject(MICROSERVICE.REDIS_SERVICE) private readonly redisClient: Redis,
   ) {}
 
   async signIn(email: string, password: string) {
@@ -118,28 +121,16 @@ export class ClientAuthService {
     return guest;
   }
 
-  async login(
-    accountGuest: AccountGuest & { _id: mongoose.Schema.Types.ObjectId },
-    response: Response,
-    req?: any,
-  ) {
-    // Get populated guest data
-    const guestWithProfile = await this.accountGuestModel
-      .findById(accountGuest._id)
-      .exec();
-
-    if (!guestWithProfile) {
-      throw new BadRequestException('Tài khoản không tồn tại');
-    }
+  async login(accountGuest: AccountGuest) {
     const payload = {
       _id: accountGuest._id.toString(),
-      guestId: guestWithProfile._id.toString(),
+      guestId: accountGuest._id.toString(),
       email: accountGuest.email,
-      avatar: guestWithProfile?.avatar || '',
+      avatar: accountGuest?.avatar || '',
       accountStatus: accountGuest.accountStatus,
-      fullname: guestWithProfile?.fullname || '',
+      fullname: accountGuest?.fullname || '',
       authProvider:
-        guestWithProfile?.authProvider || accountGuest.authProvider || 'local',
+        accountGuest?.authProvider || accountGuest.authProvider || 'local',
     };
 
     const access_token = this.createAccessToken(payload);
@@ -154,46 +145,29 @@ export class ClientAuthService {
     );
 
     // Update login info
-    await this.accountGuestService.updateLoginInfo(
-      accountGuest._id.toString(),
-      {
-        ip: req?.ip || req?.connection?.remoteAddress,
-        userAgent: req?.headers?.['user-agent'],
-        token: access_token,
-      },
+    await this.accountGuestService.updateLoginInfo(accountGuest._id.toString());
+
+    // // Set cookies
+
+    // Save refresh token in redis db
+    const redisKey = `guest_refresh_token:${accountGuest._id.toString()}`;
+
+    const existingToken = await this.redisClient.get(redisKey);
+    if (existingToken) {
+      await this.redisClient.del(redisKey);
+    }
+    await this.redisClient.set(
+      redisKey,
+      refresh_token,
+      'EX',
+      ms(this.configService.get<string>('JWT_REFRESH_EXPIRE')!) / 1000,
     );
-
-    // Set cookies
-    response.cookie('client_refresh_token', refresh_token, {
-      httpOnly: true,
-      maxAge: ms(
-        this.configService.get<string>('JWT_REFRESH_EXPIRE') as string,
-      ),
-    });
-
-    response.cookie('client_access_token', access_token, {
-      httpOnly: true,
-      maxAge: ms(this.configService.get<string>('JWT_ACCESS_EXPIRE') as string),
-    });
+    console.log(`Refresh token stored in Redis for guest ${refresh_token}`);
 
     return {
       access_token,
       refresh_token,
-      user: {
-        id: accountGuest._id,
-        guestId: guestWithProfile._id,
-        email: accountGuest.email,
-        fullname: guestWithProfile?.fullname || '',
-        avatar: guestWithProfile?.avatar || '',
-        authProvider:
-          guestWithProfile?.authProvider ||
-          accountGuest.authProvider ||
-          'local',
-        accountStatus: accountGuest.accountStatus,
-        isEmailVerified: accountGuest.isEmailVerified,
-        phone: guestWithProfile?.phone || '',
-        gender: guestWithProfile?.gender || 'OTHER',
-      },
+      payload: payload,
     };
   }
 
@@ -220,50 +194,36 @@ export class ClientAuthService {
     return await this.accountGuestService.verifyEmail(token);
   }
 
-  processNewToken = async (refreshToken: string, response: Response) => {
+  processNewToken = async (refreshToken: string) => {
     try {
       const detailPayload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
       });
 
-      const accountGuestData = await this.accountGuestService.findOne(
-        detailPayload._id,
+      //  Check refresh token in redis
+      const storedRefreshToken = await this.redisClient.get(
+        `guest_refresh_token:${detailPayload._id}`,
       );
-      if (!accountGuestData) {
+
+      const payload = this.jwtService.verify(storedRefreshToken!, {
+        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
+      });
+
+      if (!payload) {
         throw new BadRequestException('Tài khoản không tồn tại');
       }
 
-      const accountGuest = await this.accountGuestModel
-        .findById(accountGuestData._id)
-        .lean()
-        .exec();
-      if (!accountGuest) {
-        throw new BadRequestException('Tài khoản không tồn tại');
-      }
-
-      const payload = {
-        _id: accountGuest._id.toString(),
-        guestId: accountGuest._id,
-        email: accountGuest.email,
-        avatar: accountGuest.avatar || '',
-        accountStatus: accountGuest.accountStatus,
-        fullname: accountGuest.fullname || '',
-        authProvider: accountGuest.authProvider || 'local',
+      const payloadFinal = {
+        _id: payload._id,
+        guestId: payload.guestId,
+        email: payload.email,
+        avatar: payload.avatar,
+        accountStatus: payload.accountStatus,
+        fullname: payload.fullname,
+        authProvider: payload.authProvider,
       };
 
-      const access_token = this.createAccessToken(payload);
-
-      // Set new access_token cookie
-      await this.accountGuestModel
-        .updateOne({ _id: accountGuest._id }, { verifyToken: access_token })
-        .exec();
-
-      response.cookie('client_access_token', access_token, {
-        httpOnly: true,
-        maxAge: ms(
-          this.configService.get<string>('JWT_ACCESS_EXPIRE') as string,
-        ),
-      });
+      const access_token = this.createAccessToken(payloadFinal);
 
       return { access_token, ...payload };
     } catch (err) {

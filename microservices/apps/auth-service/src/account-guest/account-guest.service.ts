@@ -246,18 +246,33 @@ export class AccountGuestService {
     return account.save();
   }
 
-  async updateLoginInfo(
-    id: string,
-    loginInfo: { ip?: string; userAgent?: string; token?: string },
-  ): Promise<void> {
-    await this.accountGuestModel.findByIdAndUpdate(id, {
-      lastLoginAt: new Date(),
-      $inc: { loginCount: 1 },
-      lastLoginIP: loginInfo.ip,
-      userAgent: loginInfo.userAgent,
-      verifyToken: loginInfo.token,
-      failedLoginAttempts: 0, // Reset failed attempts on successful login
-    });
+  async updateLoginInfo(id: string): Promise<void> {
+    const loginDate = new Date();
+    loginDate.setHours(0, 0, 0, 0);
+
+    const result = await this.accountGuestModel.updateOne(
+      {
+        id: id,
+        'loginInformation.loginAt': loginDate,
+      },
+      {
+        $inc: { 'loginInformation.$.loginCount': 1 },
+      },
+    );
+
+    if (result.matchedCount === 0) {
+      await this.accountGuestModel.updateOne(
+        { id: id },
+        {
+          $push: {
+            loginInformation: {
+              loginAt: loginDate,
+              loginCount: 1,
+            },
+          },
+        },
+      );
+    }
   }
 
   async softDelete(id: string, deletedBy?: string): Promise<void> {

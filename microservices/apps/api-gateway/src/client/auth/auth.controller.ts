@@ -18,11 +18,16 @@ import { GoogleAuthGuard } from '../../guards/google-auth.guard';
 import { ClientJwtAuthGuard } from '../../guards/client-jwt-auth.guard';
 import { ClientLocalAuthGuard } from 'guards/client-local-jwt.guard';
 import { firstValueFrom } from 'rxjs';
+import { ConfigService } from '@nestjs/config';
+
+const ms = require('ms');
+
 @Controller('client/auth')
 export class AuthController {
   constructor(
     @Inject(MICROSERVICE.AUTH_SERVICE)
     private readonly authService: ClientProxy,
+    private readonly configService: ConfigService,
   ) {}
 
   @UseGuards(ClientLocalAuthGuard)
@@ -32,13 +37,27 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    console.log('AuthController - login called');
     const user = request.user;
-    return { user };
+    const dataLogin = await firstValueFrom(
+      this.authService.send('auth.login', { user }),
+    );
 
-    // return await this.authService
-    //   .send('auth.login', { user, response })
-    //   .toPromise();
+    // Set cookies
+    // Refresh token saved in redis db
+
+    // Make refresh token cookie available to the API routes (path '/api/v1/client/auth/refresh')
+    response.cookie('client_refresh_token', dataLogin.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: 'client/auth/refresh',
+      maxAge: ms(
+        this.configService.get<string>('JWT_REFRESH_EXPIRE') as string,
+      ),
+    });
+
+    // Set cookies in here
+    return dataLogin;
   }
 
   @Post('register')
@@ -104,16 +123,32 @@ export class AuthController {
   }
 
   @Post('refresh')
-  @Public()
+  // @Public()
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const refreshToken = request.cookies['client_refresh_token'];
-    if (!refreshToken) {
-      throw new BadRequestException('Refresh token không tồn tại');
+    try {
+      const refreshToken = request.cookies?.client_refresh_token;
+      if (!refreshToken) {
+        throw new BadRequestException('Refresh token không tồn tại');
+      }
+
+      const result = await firstValueFrom(
+        this.authService.send('auth.refreshToken', {
+          refreshToken,
+        }),
+      );
+
+      if (!result || !result.access_token) {
+        throw new BadRequestException('Không thể tạo access token mới');
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error in refresh handler:', error);
+      throw error;
     }
-    // return this.authService.processNewToken(refreshToken, response);
   }
 
   @Post('logout')
@@ -123,7 +158,6 @@ export class AuthController {
   }
 
   @Get('profile')
-  @UseGuards(ClientJwtAuthGuard)
   async getProfile(@Guest() guest: any) {
     // Now we can access the authenticated guest directly
     return {

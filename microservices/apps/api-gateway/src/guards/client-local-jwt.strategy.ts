@@ -20,7 +20,6 @@ export class ClientLocalStrategy extends PassportStrategy(
   }
 
   async validate(email: string, password: string) {
-    console.log('ClientLocalStrategy validate:', { email, password });
     const account = await firstValueFrom(
       this.authService.send('auth.signIn', { email, password }),
     );
@@ -28,6 +27,5 @@ export class ClientLocalStrategy extends PassportStrategy(
       throw new UnauthorizedException('Wrong Email or Password');
     }
     return account;
-    return null;
   }
 }

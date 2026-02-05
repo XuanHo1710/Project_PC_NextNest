@@ -10,6 +10,7 @@ import {
   AccountGuestSchema,
 } from 'src/account-guest/entities/account-guest.entity';
 import { AccountGuestModule } from 'src/account-guest/account-guest.module';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   imports: [
@@ -18,14 +19,15 @@ import { AccountGuestModule } from 'src/account-guest/account-guest.module';
     ]),
     ConfigModule, // 👈 BẮT BUỘC
     AccountGuestModule,
+    RedisModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_ACCESS_TOKEN_SECRET', 'secret'),
+        secret: configService.get('JWT_ACCESS_TOKEN_SECRET'),
         signOptions: {
-          expiresIn: configService.get('JWT_ACCESS_EXPIRE', '3600s'),
+          expiresIn: configService.get('JWT_ACCESS_EXPIRE'),
         },
       }),
     }),

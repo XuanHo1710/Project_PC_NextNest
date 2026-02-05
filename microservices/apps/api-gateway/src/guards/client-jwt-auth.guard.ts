@@ -33,21 +33,23 @@ export class ClientJwtAuthGuard extends AuthGuard('client-jwt') {
     const targetPath = request?.route?.path;
     const targetMethod = request?.method;
 
-    // Allow access to certain client endpoints without strict validation
-    const publicClientPaths = [
-      '/api/v1/client/auth/decode-access',
-      '/api/v1/client/auth/refresh-token',
-      '/api/v1/client/auth/profile',
-      '/api/v1/client/auth/logout',
-      '/api/v1/client/auth/login',
-      '/api/v1/client/auth/register',
-      '/api/v1/client/auth/google-login',
-    ];
+    console.log('ClientJwtAuthGuard - Target Path:', user);
 
-    // If it's a public client path, allow access
-    if (publicClientPaths.includes(targetPath)) {
-      return user || null; // Return user if exists, null if not
-    }
+    // // Allow access to certain client endpoints without strict validation
+    // const publicClientPaths = [
+    //   '/api/v1/client/auth/decode-access',
+    //   '/api/v1/client/auth/refresh-token',
+    //   '/api/v1/client/auth/profile',
+    //   '/api/v1/client/auth/logout',
+    //   '/api/v1/client/auth/login',
+    //   '/api/v1/client/auth/register',
+    //   '/api/v1/client/auth/google-login',
+    // ];
+
+    // // If it's a public client path, allow access
+    // if (publicClientPaths.includes(targetPath)) {
+    //   return user || null; // Return user if exists, null if not
+    // }
 
     // For protected client routes (like orders, payments, profile updates)
     if (err || !user) {
@@ -60,7 +62,7 @@ export class ClientJwtAuthGuard extends AuthGuard('client-jwt') {
     }
 
     // Additional validation for client users
-    if (!user.guestId) {
+    if (!user._id) {
       throw new UnauthorizedException('Thông tin người dùng không hợp lệ');
     }
 

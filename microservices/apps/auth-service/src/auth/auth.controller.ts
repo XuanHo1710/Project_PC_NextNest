@@ -8,7 +8,7 @@ import {
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ClientAuthService } from 'src/auth/auth.service';
 import type { Request, Response } from 'express';
-import mongoose from 'mongoose';
+import { AccountGuest } from 'src/account-guest/entities/account-guest.entity';
 
 @Controller()
 export class AuthController {
@@ -22,22 +22,9 @@ export class AuthController {
     return this.authService.signIn(email, password);
   }
 
-  async login(
-    @Body() loginDto: { email: string; password: string },
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const { email, password } = loginDto;
-
-    if (!email || !password) {
-      throw new BadRequestException('Email và mật khẩu không được để trống');
-    }
-
-    const guest = await this.authService.signIn(email, password);
-    if (!guest) {
-      throw new BadRequestException('Email hoặc mật khẩu không chính xác');
-    }
-
-    return this.authService.login(guest as any, response);
+  @MessagePattern('auth.login')
+  async login(@Payload() loginDto: { user: AccountGuest }) {
+    return this.authService.login(loginDto.user);
   }
 
   @MessagePattern('auth.register')
@@ -81,7 +68,7 @@ export class AuthController {
 
     try {
       const guest = await this.authService.googleLogin(user);
-      const result = await this.authService.login(guest, response);
+      const result = await this.authService.login(guest);
 
       // Redirect to frontend with success
       return response.redirect(
@@ -95,15 +82,12 @@ export class AuthController {
     }
   }
 
-  async refresh(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const refreshToken = request.cookies['client_refresh_token'];
-    if (!refreshToken) {
+  @MessagePattern('auth.refreshToken')
+  async refresh(@Payload() data: { refreshToken: string }) {
+    if (!data.refreshToken) {
       throw new BadRequestException('Refresh token không tồn tại');
     }
-    return this.authService.processNewToken(refreshToken, response);
+    return this.authService.processNewToken(data.refreshToken);
   }
 
   async logout(@Res({ passthrough: true }) response: Response) {
@@ -122,27 +106,5 @@ export class AuthController {
         authProvider: guest.authProvider,
       },
     };
-  }
-
-  async refreshToken(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const refreshToken = request.cookies['client_refresh_token'];
-    if (!refreshToken) {
-      throw new BadRequestException('Refresh token không tồn tại');
-    }
-
-    try {
-      const result = await this.authService.processNewToken(
-        refreshToken,
-        response,
-      );
-      return result;
-    } catch (error) {
-      throw new BadRequestException(
-        'Refresh token không hợp lệ hoặc đã hết hạn',
-      );
-    }
   }
 }
