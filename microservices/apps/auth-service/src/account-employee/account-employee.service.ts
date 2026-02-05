@@ -70,29 +70,6 @@ export class AccountEmployeeService {
     return await this.accountEmployeeModel.findOne({ IDEmp: IDEmp });
   }
 
-  async findEmployeeByToken(token: string) {
-    const detailPayload = this.jwtService.verify(token, {
-      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
-    });
-    const account = (await this.accountEmployeeModel.findOne({
-      IDEmp: detailPayload.IDEmp,
-    })) as AccountEmployee | null;
-    if (account) {
-      return {
-        ...detailPayload,
-        access_token: account.accessToken,
-      };
-    } else throw new BadGatewayException('Not found account');
-  }
-
-  async updateAccountEmployeeToken(token: string, expire: number, id: string) {
-    const update = await this.accountEmployeeModel.updateOne(
-      { _id: new mongoose.Types.ObjectId(id) },
-      { accessToken: token, expireToken: expire },
-    );
-    return update;
-  }
-
   async findOne(id: string) {
     return await this.accountEmployeeModel.findById(id);
   }

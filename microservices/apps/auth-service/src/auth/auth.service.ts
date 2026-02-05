@@ -9,14 +9,12 @@ import { Model } from 'mongoose';
 import { AccountGuest } from 'src/account-guest/entities/account-guest.entity';
 import { AccountGuestService } from 'src/account-guest/account-guest.service';
 import { compareSync } from 'bcrypt';
-import { Guest, GuestDocument } from 'src/guest/entities/guest.entity';
 const ms = require('ms');
 @Injectable()
 export class ClientAuthService {
   constructor(
     @InjectModel(AccountGuest.name)
     private accountGuestModel: Model<AccountGuest>,
-    @InjectModel(Guest.name) private guestModel: Model<GuestDocument>,
     private accountGuestService: AccountGuestService,
     private jwtService: JwtService,
     private configService: ConfigService,
@@ -34,24 +32,10 @@ export class ClientAuthService {
 
     if (!guest) return null;
 
-    // // Check if account is locked
-    // if (guest.lockedUntil && guest.lockedUntil > new Date()) {
-    //     throw new BadRequestException('Tài khoản đã bị khóa tạm thời');
-    // }
-
     const isCorrect = compareSync(password, guest.password || '');
     if (guest && isCorrect) {
-      // Reset failed login attempts on successful login
-      if (guest.failedLoginAttempts > 0) {
-        await this.accountGuestService.updateLoginInfo(
-          guest._id.toString(),
-          {},
-        );
-      }
       return guest;
     } else {
-      // Increment failed login attempts
-      await this.accountGuestService.incrementFailedLoginAttempts(email);
       return null;
     }
   }
@@ -65,28 +49,20 @@ export class ClientAuthService {
         $or: [{ email: email }, { googleId: googleId }],
         deletedAt: { $exists: false },
       })
+      .lean()
       .exec();
 
     if (!guest) {
       // Tạo user mới nếu chưa tồn tại
-      const result = await this.accountGuestService.createGuestWithAccount(
-        {
-          fullname: `${firstName} ${lastName}`,
-          email: email,
-          avatar: picture,
-        },
-        {
-          googleId: googleId,
-          authProvider: 'google',
-          registrationSource: 'WEB',
-          termsAccepted: true,
-          privacyPolicyAccepted: true,
-        },
-      );
-      guest = await this.accountGuestModel
-        .findById((result.account as any)._id)
-        .populate('guestId')
-        .exec();
+      const result = await this.accountGuestService.create({
+        fullname: `${firstName} ${lastName}`,
+        email: email,
+        avatar: picture,
+        password: googleId + '@..sGH', // Sử dụng googleId làm mật khẩu tạm thời
+        authProvider: 'google',
+        googleId: googleId,
+      });
+      return result;
     } else {
       // Update thông tin nếu user đã tồn tại
       await this.accountGuestService.update(guest._id.toString(), {
@@ -97,29 +73,46 @@ export class ClientAuthService {
       });
 
       // Update guest profile - QUAN TRỌNG: Cập nhật authProvider trong Guest collection
-      if (guest.guestId) {
-        await this.accountGuestModel.updateOne(
-          { _id: guest._id },
-          { lastLoginAt: new Date() },
+      if (guest.email) {
+        const loginDate = new Date();
+        loginDate.setHours(0, 0, 0, 0);
+        const result = await this.accountGuestModel.updateOne(
+          {
+            email: guest.email,
+            'loginInformation.loginAt': loginDate,
+          },
+          {
+            $inc: { 'loginInformation.$.loginCount': 1 },
+          },
         );
 
+        if (result.matchedCount === 0) {
+          await this.accountGuestModel.updateOne(
+            { email: guest.email },
+            {
+              $push: {
+                loginInformation: {
+                  loginAt: loginDate,
+                  loginCount: 1,
+                },
+              },
+            },
+          );
+        }
+
         // Update Guest collection authProvider
-        const guestId = (guest.guestId as any)._id || guest.guestId;
-        await this.guestModel.updateOne(
-          { _id: guestId },
+        await this.accountGuestModel.updateOne(
+          { email: guest.email },
           {
             authProvider: 'google',
             googleId: googleId,
-            avatar: picture || (guest.guestId as any).avatar,
+            avatar: picture || guest.avatar,
           },
         );
       }
 
       // Reload guest with updated data
-      guest = await this.accountGuestModel
-        .findById(guest._id)
-        .populate('guestId')
-        .exec();
+      guest = await this.accountGuestService.getGuestById(guest._id.toString());
     }
 
     return guest;
@@ -133,20 +126,20 @@ export class ClientAuthService {
     // Get populated guest data
     const guestWithProfile = await this.accountGuestModel
       .findById(accountGuest._id)
-      .populate('guestId')
       .exec();
 
-    const guestProfile = guestWithProfile?.guestId as any;
-
+    if (!guestWithProfile) {
+      throw new BadRequestException('Tài khoản không tồn tại');
+    }
     const payload = {
       _id: accountGuest._id.toString(),
-      guestId: guestProfile._id.toString(),
+      guestId: guestWithProfile._id.toString(),
       email: accountGuest.email,
-      avatar: guestProfile?.avatar || '',
+      avatar: guestWithProfile?.avatar || '',
       accountStatus: accountGuest.accountStatus,
-      fullname: guestProfile?.fullname || '',
+      fullname: guestWithProfile?.fullname || '',
       authProvider:
-        guestProfile?.authProvider || accountGuest.authProvider || 'local',
+        guestWithProfile?.authProvider || accountGuest.authProvider || 'local',
     };
 
     const access_token = this.createAccessToken(payload);
@@ -188,16 +181,18 @@ export class ClientAuthService {
       refresh_token,
       user: {
         id: accountGuest._id,
-        guestId: guestProfile?._id,
+        guestId: guestWithProfile._id,
         email: accountGuest.email,
-        fullname: guestProfile?.fullname || '',
-        avatar: guestProfile?.avatar || '',
+        fullname: guestWithProfile?.fullname || '',
+        avatar: guestWithProfile?.avatar || '',
         authProvider:
-          guestProfile?.authProvider || accountGuest.authProvider || 'local',
+          guestWithProfile?.authProvider ||
+          accountGuest.authProvider ||
+          'local',
         accountStatus: accountGuest.accountStatus,
         isEmailVerified: accountGuest.isEmailVerified,
-        phone: guestProfile?.phone || '',
-        gender: guestProfile?.gender || 'OTHER',
+        phone: guestWithProfile?.phone || '',
+        gender: guestWithProfile?.gender || 'OTHER',
       },
     };
   }
@@ -207,29 +202,16 @@ export class ClientAuthService {
     password: string,
     fullname: string,
     phone: string,
-    additionalData?: any,
   ) {
     // Create Guest and AccountGuest together
-    const result = await this.accountGuestService.createGuestWithAccount(
-      {
-        fullname,
-        email,
-        phone: phone,
-        avatar: additionalData?.avatar,
-        gender: additionalData?.gender || 'OTHER',
-        birthday: additionalData?.birthday,
-      },
-      {
-        password,
-        authProvider: 'local',
-        registrationSource: 'WEB',
-        termsAccepted: additionalData?.termsAccepted || false,
-        privacyPolicyAccepted: additionalData?.privacyPolicyAccepted || false,
-        emailNotifications: additionalData?.emailNotifications ?? true,
-        smsNotifications: additionalData?.smsNotifications ?? true,
-        marketingEmails: additionalData?.marketingEmails ?? false,
-      },
-    );
+    const result = await this.accountGuestService.create({
+      fullname,
+      email,
+      phone: phone,
+      password: password,
+      authProvider: 'local',
+      avatar: '',
+    });
 
     return result;
   }
@@ -252,21 +234,20 @@ export class ClientAuthService {
       }
 
       const accountGuest = await this.accountGuestModel
-        .findById((accountGuestData as any)._id)
-        .populate('guestId')
+        .findById(accountGuestData._id)
+        .lean()
         .exec();
       if (!accountGuest) {
         throw new BadRequestException('Tài khoản không tồn tại');
       }
 
-      const guestProfile = accountGuest.guestId as any; // This will be populated
       const payload = {
         _id: accountGuest._id.toString(),
-        guestId: guestProfile._id,
+        guestId: accountGuest._id,
         email: accountGuest.email,
-        avatar: guestProfile?.avatar || '',
+        avatar: accountGuest.avatar || '',
         accountStatus: accountGuest.accountStatus,
-        fullname: guestProfile?.fullname || '',
+        fullname: accountGuest.fullname || '',
         authProvider: accountGuest.authProvider || 'local',
       };
 

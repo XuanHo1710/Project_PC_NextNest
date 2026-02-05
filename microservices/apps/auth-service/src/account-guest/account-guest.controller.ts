@@ -30,11 +30,6 @@ export class AccountGuestController {
     return this.accountGuestService.updateAccountUserToken(token, id);
   }
 
-  @Post('/token-account')
-  findUserByToken(@Body() { token }: { token: string }) {
-    return this.accountGuestService.findUserByToken(token);
-  }
-
   @Get()
   findAll(@Query() query: QueryAccountGuestDto) {
     return this.accountGuestService.findAll(query);
@@ -93,14 +88,6 @@ export class AccountGuestController {
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req: any) {
     return this.accountGuestService.softDelete(id, req.user?.id);
-  }
-
-  @Post(':id/unlock')
-  unlockAccount(@Param('id') id: string) {
-    return this.accountGuestService.update(id, {
-      failedLoginAttempts: 0,
-      lockedUntil: undefined,
-    });
   }
 
   @Get(':id/login-history')

@@ -29,20 +29,6 @@ export class AccountEmployeeController {
     return this.accountEmployeeService.findAll(filter);
   }
 
-  @Patch('/update-token')
-  updateAccountEmployeeToken(token: string, expire: number, id: string) {
-    return this.accountEmployeeService.updateAccountEmployeeToken(
-      token,
-      expire,
-      id,
-    );
-  }
-
-  @Post('/token-account')
-  findEmployeeByToken(@Body() { token }: { token: string }) {
-    return this.accountEmployeeService.findEmployeeByToken(token);
-  }
-
   @Get('/get-account')
   findAccountByIDEmp(IDEmp: string) {
     return this.accountEmployeeService.findAccountByIDEmp(IDEmp);

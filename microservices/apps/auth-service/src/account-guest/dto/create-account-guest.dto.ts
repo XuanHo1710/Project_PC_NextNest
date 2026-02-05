@@ -1,45 +1,42 @@
-import { IsString, IsEmail, IsOptional, IsEnum, IsBoolean, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsMongoId,
+  IsNotEmpty,
+  IsStrongPassword,
+  IsPhoneNumber,
+} from 'class-validator';
 
 export class CreateAccountGuestDto {
-    @IsMongoId()
-    guestId: string;
+  @IsEmail()
+  email: string;
 
-    @IsEmail()
-    email: string;
+  @IsString()
+  @IsStrongPassword(
+    {},
+    { message: 'Phải có ít nhất 1 kí tự chữ, số, chữ hoa, đặc biệt' },
+  )
+  password: string;
 
-    @IsOptional()
-    @IsString()
-    password?: string;
+  @IsNotEmpty({ message: 'Tên không được để trống' })
+  fullname: string;
 
-    @IsOptional()
-    @IsString()
-    googleId?: string;
+  @IsOptional()
+  @IsNotEmpty({ message: 'Số điện thoại không được để trống' })
+  @IsPhoneNumber('VN', { message: 'Số điện thoại không hợp lệ' })
+  phone?: string;
 
-    @IsOptional()
-    @IsEnum(['local', 'google'])
-    authProvider?: string;
+  @IsOptional()
+  @IsString()
+  googleId?: string;
 
-    @IsOptional()
-    @IsEnum(['WEB', 'MOBILE', 'ADMIN'])
-    registrationSource?: string;
+  @IsOptional()
+  @IsEnum(['local', 'google'])
+  authProvider?: string;
 
-    @IsOptional()
-    @IsBoolean()
-    termsAccepted?: boolean;
-
-    @IsOptional()
-    @IsBoolean()
-    privacyPolicyAccepted?: boolean;
-
-    @IsOptional()
-    @IsBoolean()
-    emailNotifications?: boolean;
-
-    @IsOptional()
-    @IsBoolean()
-    smsNotifications?: boolean;
-
-    @IsOptional()
-    @IsBoolean()
-    marketingEmails?: boolean;
+  @IsOptional()
+  avatar: string;
 }

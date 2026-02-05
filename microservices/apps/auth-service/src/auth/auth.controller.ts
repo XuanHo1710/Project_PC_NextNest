@@ -63,15 +63,7 @@ export class AuthController {
       phone,
     );
 
-    console.log('Registered guest:', guest);
-    return {
-      user: {
-        id: guest.account.guestId,
-        email: guest.account.email,
-        fullname: guest.guest.fullname,
-        phone: guest.guest.phone,
-      },
-    };
+    return guest;
   }
 
   async googleAuth(@Req() req: Request) {

@@ -9,14 +9,12 @@ import {
   AccountGuest,
   AccountGuestSchema,
 } from 'src/account-guest/entities/account-guest.entity';
-import { Guest, GuestSchema } from 'src/guest/entities/guest.entity';
 import { AccountGuestModule } from 'src/account-guest/account-guest.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: AccountGuest.name, schema: AccountGuestSchema },
-      { name: Guest.name, schema: GuestSchema },
     ]),
     ConfigModule, // 👈 BẮT BUỘC
     AccountGuestModule,

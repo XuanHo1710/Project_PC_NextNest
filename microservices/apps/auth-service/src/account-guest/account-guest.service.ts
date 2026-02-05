@@ -11,23 +11,16 @@ import {
   AccountGuest,
   AccountGuestDocument,
 } from './entities/account-guest.entity';
-import { Guest, GuestDocument } from '../guest/entities/guest.entity';
 import { CreateAccountGuestDto } from './dto/create-account-guest.dto';
 import { UpdateAccountGuestDto } from './dto/update-account-guest.dto';
 import { QueryAccountGuestDto } from './dto/query-account-guest.dto';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AccountGuestService {
   constructor(
     @InjectModel(AccountGuest.name)
     private accountGuestModel: Model<AccountGuestDocument>,
-    @InjectModel(Guest.name) private guestModel: Model<GuestDocument>,
-    private jwtService: JwtService,
-    private configService: ConfigService,
   ) {}
 
   async updateAccountUserToken(token: string, id: string) {
@@ -36,21 +29,6 @@ export class AccountGuestService {
       { verifyToken: token },
       { new: true },
     );
-  }
-
-  async findUserByToken(token: string) {
-    const detailPayload = this.jwtService.verify(token, {
-      secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
-    });
-    const account = (await this.accountGuestModel.findOne({
-      guestId: detailPayload.guestId,
-    })) as AccountGuest | null;
-    if (account) {
-      return {
-        ...detailPayload,
-        access_token: account.verifyToken,
-      };
-    } else throw new BadGatewayException('Not found account');
   }
 
   async create(
@@ -66,20 +44,13 @@ export class AccountGuestService {
       throw new ConflictException('Email already exists');
     }
 
-    if (!createAccountGuestDto || !createAccountGuestDto.guestId) {
+    if (!createAccountGuestDto) {
       throw new BadRequestException('Invalid account data');
-    }
-    // Check if guestId exists
-    const existingGuest = await this.guestModel.findById(
-      createAccountGuestDto.guestId,
-    );
-    if (!existingGuest) {
-      throw new NotFoundException('Guest not found');
     }
 
     // Check if this guest already has an account
     const existingGuestAccount = await this.accountGuestModel.findOne({
-      guestId: new Types.ObjectId(createAccountGuestDto.guestId),
+      email: createAccountGuestDto.email,
       deletedAt: { $exists: false },
     });
 
@@ -94,65 +65,22 @@ export class AccountGuestService {
     }
 
     // Generate email verification token
-    const emailVerificationToken = crypto.randomUUID();
+    const otpCodeForEmail = Math.floor(100000 + Math.random() * 900000);
     const emailVerificationExpires = new Date();
     emailVerificationExpires.setHours(emailVerificationExpires.getHours() + 24); // 24 hours
+
+    // Send mail to verify email in here (send emit comment to notification service)
 
     const accountData = {
       ...createAccountGuestDto,
       password: hashedPassword,
-      emailVerificationToken,
+      otpCodeForEmail,
       emailVerificationExpires,
       accountStatus: 'PENDING',
-      termsAcceptedAt: createAccountGuestDto.termsAccepted
-        ? new Date()
-        : undefined,
-      privacyPolicyAcceptedAt: createAccountGuestDto.privacyPolicyAccepted
-        ? new Date()
-        : undefined,
     };
 
     const createdAccount = new this.accountGuestModel(accountData);
     return createdAccount.save();
-  }
-
-  // Helper method to create Guest and AccountGuest together
-  async createGuestWithAccount(
-    guestData: {
-      fullname: string;
-      email: string;
-      phone?: string;
-      avatar?: string;
-      gender?: string;
-      birthday?: Date;
-    },
-    accountData: {
-      password?: string;
-      googleId?: string;
-      authProvider?: string;
-      registrationSource?: string;
-      termsAccepted?: boolean;
-      privacyPolicyAccepted?: boolean;
-      emailNotifications?: boolean;
-      smsNotifications?: boolean;
-      marketingEmails?: boolean;
-    },
-  ) {
-    // Create Guest first
-    const guest = new this.guestModel(guestData);
-    const savedGuest = await guest.save();
-
-    // Create AccountGuest
-    const accountGuest = await this.create({
-      guestId: savedGuest._id.toString(),
-      email: guestData.email,
-      ...accountData,
-    });
-
-    return {
-      guest: savedGuest,
-      account: accountGuest,
-    };
   }
 
   async findAll(query: QueryAccountGuestDto) {
@@ -255,6 +183,7 @@ export class AccountGuestService {
   async findByEmail(email: string): Promise<AccountGuest | null> {
     return this.accountGuestModel
       .findOne({ email, deletedAt: { $exists: false } })
+      .lean()
       .exec();
   }
 
@@ -312,7 +241,6 @@ export class AccountGuestService {
 
     account.isEmailVerified = true;
     account.accountStatus = 'ACTIVE';
-    account.emailVerificationToken = undefined;
     account.emailVerificationExpires = undefined;
 
     return account.save();
@@ -330,20 +258,6 @@ export class AccountGuestService {
       verifyToken: loginInfo.token,
       failedLoginAttempts: 0, // Reset failed attempts on successful login
     });
-  }
-
-  async incrementFailedLoginAttempts(email: string): Promise<void> {
-    const account = await this.accountGuestModel.findOne({ email });
-    if (account) {
-      account.failedLoginAttempts += 1;
-
-      // Lock account after 5 failed attempts for 30 minutes
-      if (account.failedLoginAttempts >= 5) {
-        account.lockedUntil = new Date(Date.now() + 30 * 60 * 1000);
-      }
-
-      await account.save();
-    }
   }
 
   async softDelete(id: string, deletedBy?: string): Promise<void> {
@@ -400,16 +314,9 @@ export class AccountGuestService {
     );
   }
 
-  async findByGuestId(guestId: string): Promise<AccountGuest | null> {
-    return this.accountGuestModel
-      .findOne({ guestId, deletedAt: { $exists: false } })
-      .exec();
-  }
-
-  async getGuestWithAccount(guestId: string) {
+  async getGuestById(guestId: string) {
     const account = await this.accountGuestModel
-      .findOne({ guestId, deletedAt: { $exists: false } })
-      .populate('guestId')
+      .findOne({ _id: guestId, deletedAt: { $exists: false } })
       .select(
         '-password -emailVerificationToken -resetPasswordToken -twoFactorSecret',
       )

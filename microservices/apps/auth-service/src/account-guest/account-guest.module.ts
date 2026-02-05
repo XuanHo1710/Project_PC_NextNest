@@ -6,7 +6,6 @@ import {
   AccountGuest,
   AccountGuestSchema,
 } from './entities/account-guest.entity';
-import { Guest, GuestSchema } from '../guest/entities/guest.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 
@@ -14,7 +13,6 @@ import { ConfigModule } from '@nestjs/config';
   imports: [
     MongooseModule.forFeature([
       { name: AccountGuest.name, schema: AccountGuestSchema },
-      { name: Guest.name, schema: GuestSchema },
     ]),
     JwtModule,
     ConfigModule,

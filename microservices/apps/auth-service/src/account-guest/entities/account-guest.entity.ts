@@ -1,23 +1,17 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
-import { Guest } from 'src/guest/entities/guest.entity';
 
 export type AccountGuestDocument = HydratedDocument<AccountGuest>;
 
 @Schema({ timestamps: true })
 export class AccountGuest {
-  // Reference to Guest profile
-  @Prop({
-    type: Types.ObjectId,
-    ref: Guest.name,
-    required: true,
-    unique: true,
-  })
-  guestId: Types.ObjectId;
-
+  _id: Types.ObjectId;
   // Authentication fields only
   @Prop({ required: true, unique: true })
   email: string;
+
+  @Prop({ default: '' })
+  avatar?: string;
 
   @Prop()
   password?: string;
@@ -33,12 +27,6 @@ export class AccountGuest {
   isEmailVerified: boolean;
 
   @Prop()
-  verifyToken?: string; // Access token for this account
-
-  @Prop()
-  resetPasswordToken?: string;
-
-  @Prop()
   resetPasswordExpires?: Date;
 
   // Account status and security
@@ -51,68 +39,92 @@ export class AccountGuest {
   @Prop({ default: true })
   isActive: boolean;
 
-  // Email verification
-  @Prop()
-  emailVerificationToken?: string;
-
   @Prop()
   emailVerificationExpires?: Date;
 
-  // Security and login tracking
-  @Prop()
-  twoFactorSecret?: string;
+  @Prop({ default: null })
+  otpCodeForEmail?: number;
 
-  @Prop({ default: false })
-  twoFactorEnabled: boolean;
+  @Prop({ type: Array, default: [] })
+  loginInformation: [
+    {
+      loginCount: { type: Number; default: 0 };
+      loginAt: { type: Date };
+    },
+  ];
 
-  @Prop()
-  lastLoginAt?: Date;
+  // Information guest profile
+
+  // Sản phẩm yêu thích
+  @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }])
+  favoriteProducts: mongoose.Schema.Types.ObjectId[];
+
+  // Sản phẩm đã xem gần đây
+  @Prop([
+    {
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      viewedAt: { type: Date, default: Date.now },
+    },
+  ])
+  recentlyViewed: Array<{
+    productId: mongoose.Schema.Types.ObjectId;
+    viewedAt: Date;
+  }>;
+
+  // Thống kê khách hàng
+  @Prop({ default: 0 })
+  totalOrders: number;
 
   @Prop({ default: 0 })
-  loginCount: number;
+  totalSpent: number;
 
-  @Prop()
-  lastLoginIP?: string;
-
-  @Prop()
-  userAgent?: string;
-
-  // Account locks
   @Prop({ default: 0 })
-  failedLoginAttempts: number;
+  totalReviews: number;
 
-  @Prop()
-  lockedUntil?: Date;
+  @Prop({ default: 0 })
+  loyaltyPoints: number;
 
-  // Registration and terms
-  @Prop({ enum: ['WEB', 'MOBILE', 'ADMIN'], default: 'WEB' })
-  registrationSource: string;
+  // Địa chỉ mặc định
+  @Prop([
+    {
+      label: { type: String, required: true }, // 'Nhà riêng', 'Văn phòng'
+      province: {
+        code: { type: Number, required: true },
+        name: { type: String, required: true },
+      },
+      district: {
+        code: { type: Number, required: true },
+        name: { type: String, required: true },
+      },
+      ward: {
+        code: { type: Number, required: true },
+        name: { type: String, required: true },
+      },
+      detailAddress: { type: String, required: true },
+      isDefault: { type: Boolean, default: false },
+    },
+  ])
+  addresses: Array<{
+    _id?: string; // MongoDB sẽ tự tạo _id
+    label: string;
+    province: { code: number; name: string };
+    district: { code: number; name: string };
+    ward: { code: number; name: string };
+    detailAddress: string;
+    isDefault: boolean;
+  }>;
 
-  @Prop({ default: false })
-  termsAccepted: boolean;
+  @Prop({ enum: ['MALE', 'FEMALE', 'OTHER'], default: 'OTHER' })
+  gender: string;
 
-  @Prop()
-  termsAcceptedAt?: Date;
+  @Prop({ required: true })
+  fullname: string;
 
-  @Prop({ default: false })
-  privacyPolicyAccepted: boolean;
+  @Prop({ default: '' })
+  phone: string;
 
-  @Prop()
-  privacyPolicyAcceptedAt?: Date;
-
-  // Notification preferences
-  @Prop({ default: true })
-  emailNotifications: boolean;
-
-  @Prop({ default: true })
-  smsNotifications: boolean;
-
-  @Prop({ default: true })
-  marketingEmails: boolean;
-
-  // Admin fields
-  @Prop()
-  adminNotes?: string;
+  @Prop({ default: '' })
+  adminNotes: string;
 
   // Soft delete
   @Prop()
@@ -127,13 +139,6 @@ export const AccountGuestSchema = SchemaFactory.createForClass(AccountGuest);
 // Indexes for better performance
 AccountGuestSchema.index({ email: 1 });
 AccountGuestSchema.index({ googleId: 1 });
-AccountGuestSchema.index({ guestId: 1 });
 AccountGuestSchema.index({ accountStatus: 1 });
 AccountGuestSchema.index({ isActive: 1 });
 AccountGuestSchema.index({ createdAt: -1 });
-AccountGuestSchema.index({ lastLoginAt: -1 });
-
-// Auto-populate Guest when querying AccountGuest
-AccountGuestSchema.pre(/^find/, function (this: any) {
-  this.populate('guestId');
-});
