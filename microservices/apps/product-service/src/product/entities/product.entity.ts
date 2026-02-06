@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
+import { ProductVariant } from 'src/product/entities/product-variant';
 export type ProductDocument = HydratedDocument<Product>;
 
 @Schema({ timestamps: true })
@@ -12,11 +13,11 @@ export class Product {
   @Prop()
   description: string;
 
-  //   @Prop()
-  //   brand: string;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Brand' })
+  brand: Types.ObjectId;
 
-  //   @Prop()
-  //   category: string;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Category' })
+  category: Types.ObjectId;
 
   // Mapping variants attributes
 
@@ -33,7 +34,7 @@ export class Product {
   })
   status: string;
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'ProductVariant' })
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: ProductVariant.name })
   defaultProductVariantId: Types.ObjectId;
 
   @Prop()

@@ -27,6 +27,9 @@ export class ProductVariant {
     [key: string]: string;
   }; // { color: 'red', size: 'M' }
 
+  @Prop({ type: [String], default: [] })
+  images: string[]; // Danh sách ảnh đại diện cho biến thể sản phẩm
+
   @Prop()
   createdAt: Date;
 

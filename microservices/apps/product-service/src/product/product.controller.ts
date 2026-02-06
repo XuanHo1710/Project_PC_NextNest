@@ -1,35 +1,218 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ProductService } from './product.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import {
+  CreateProductDto,
+  UpdateProductDto,
+  SearchProductDto,
+  CreateProductVariantDto,
+  UpdateProductVariantDto,
+  CreateProductAttributeDto,
+  UpdateProductAttributeDto,
+  CreateProductAttributeValueDto,
+  UpdateProductAttributeValueDto,
+  CreateProductAttributeAllowValueDto,
+  UpdateProductAttributeAllowValueDto,
+} from '@project-pc/common';
 
 @Controller()
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
+  // ============= PRODUCT ENDPOINTS =============
   @MessagePattern('product.create')
-  create(@Payload() createProductDto: CreateProductDto) {
-    return this.productService.create(createProductDto);
+  createProduct(@Payload() data: { createProductDto: CreateProductDto }) {
+    return this.productService.createProduct(data.createProductDto);
   }
 
   @MessagePattern('product.findAll')
-  findAll() {
-    return this.productService.findAll();
+  findAllProducts(@Payload() data: { searchDto?: SearchProductDto }) {
+    return this.productService.findAllProducts(data?.searchDto);
   }
 
   @MessagePattern('product.findOne')
-  findOne(@Payload() id: number) {
-    return this.productService.findOne(id);
+  findOneProduct(@Payload() data: { id: string }) {
+    return this.productService.findOneProduct(data.id);
   }
 
   @MessagePattern('product.update')
-  update(@Payload() updateProductDto: UpdateProductDto) {
-    return this.productService.update(updateProductDto.id, updateProductDto);
+  updateProduct(
+    @Payload() data: { id: string; updateProductDto: UpdateProductDto },
+  ) {
+    return this.productService.updateProduct(data.id, data.updateProductDto);
   }
 
   @MessagePattern('product.remove')
-  remove(@Payload() id: number) {
-    return this.productService.remove(id);
+  removeProduct(@Payload() data: { id: string }) {
+    return this.productService.removeProduct(data.id);
+  }
+
+  @MessagePattern('product.search')
+  searchProducts(@Payload() data: { searchDto: SearchProductDto }) {
+    return this.productService.findAllProducts(data.searchDto);
+  }
+
+  // ============= PRODUCT VARIANT ENDPOINTS =============
+  @MessagePattern('product.variant.create')
+  createProductVariant(
+    @Payload() data: { createProductVariantDto: CreateProductVariantDto },
+  ) {
+    return this.productService.createProductVariant(
+      data.createProductVariantDto,
+    );
+  }
+
+  @MessagePattern('product.variant.findAll')
+  findAllProductVariants(@Payload() data?: { productId?: string }) {
+    return this.productService.findAllProductVariants(data?.productId);
+  }
+
+  @MessagePattern('product.variant.findOne')
+  findOneProductVariant(@Payload() data: { id: string }) {
+    return this.productService.findOneProductVariant(data.id);
+  }
+
+  @MessagePattern('product.variant.update')
+  updateProductVariant(
+    @Payload()
+    data: {
+      id: string;
+      updateProductVariantDto: UpdateProductVariantDto;
+    },
+  ) {
+    return this.productService.updateProductVariant(
+      data.id,
+      data.updateProductVariantDto,
+    );
+  }
+
+  @MessagePattern('product.variant.remove')
+  removeProductVariant(@Payload() data: { id: string }) {
+    return this.productService.removeProductVariant(data.id);
+  }
+
+  // ============= PRODUCT ATTRIBUTE ENDPOINTS =============
+  @MessagePattern('product.attribute.create')
+  createProductAttribute(
+    @Payload() data: { createProductAttributeDto: CreateProductAttributeDto },
+  ) {
+    return this.productService.createProductAttribute(
+      data.createProductAttributeDto,
+    );
+  }
+
+  @MessagePattern('product.attribute.findAll')
+  findAllProductAttributes() {
+    return this.productService.findAllProductAttributes();
+  }
+
+  @MessagePattern('product.attribute.findOne')
+  findOneProductAttribute(@Payload() data: { id: string }) {
+    return this.productService.findOneProductAttribute(data.id);
+  }
+
+  @MessagePattern('product.attribute.update')
+  updateProductAttribute(
+    @Payload()
+    data: {
+      id: string;
+      updateProductAttributeDto: UpdateProductAttributeDto;
+    },
+  ) {
+    return this.productService.updateProductAttribute(
+      data.id,
+      data.updateProductAttributeDto,
+    );
+  }
+
+  @MessagePattern('product.attribute.remove')
+  removeProductAttribute(@Payload() data: { id: string }) {
+    return this.productService.removeProductAttribute(data.id);
+  }
+
+  // ============= PRODUCT ATTRIBUTE VALUE ENDPOINTS =============
+  @MessagePattern('product.attributeValue.create')
+  createProductAttributeValue(
+    @Payload()
+    data: {
+      createProductAttributeValueDto: CreateProductAttributeValueDto;
+    },
+  ) {
+    return this.productService.createProductAttributeValue(
+      data.createProductAttributeValueDto,
+    );
+  }
+
+  @MessagePattern('product.attributeValue.findAll')
+  findAllProductAttributeValues(@Payload() data?: { attributeId?: string }) {
+    return this.productService.findAllProductAttributeValues(data?.attributeId);
+  }
+
+  @MessagePattern('product.attributeValue.findOne')
+  findOneProductAttributeValue(@Payload() data: { id: string }) {
+    return this.productService.findOneProductAttributeValue(data.id);
+  }
+
+  @MessagePattern('product.attributeValue.update')
+  updateProductAttributeValue(
+    @Payload()
+    data: {
+      id: string;
+      updateProductAttributeValueDto: UpdateProductAttributeValueDto;
+    },
+  ) {
+    return this.productService.updateProductAttributeValue(
+      data.id,
+      data.updateProductAttributeValueDto,
+    );
+  }
+
+  @MessagePattern('product.attributeValue.remove')
+  removeProductAttributeValue(@Payload() data: { id: string }) {
+    return this.productService.removeProductAttributeValue(data.id);
+  }
+
+  // ============= PRODUCT ATTRIBUTE ALLOW VALUE ENDPOINTS =============
+  @MessagePattern('product.attributeAllowValue.create')
+  createProductAttributeAllowValue(
+    @Payload()
+    data: {
+      createProductAttributeAllowValueDto: CreateProductAttributeAllowValueDto;
+    },
+  ) {
+    return this.productService.createProductAttributeAllowValue(
+      data.createProductAttributeAllowValueDto,
+    );
+  }
+
+  @MessagePattern('product.attributeAllowValue.findAll')
+  findAllProductAttributeAllowValues(@Payload() data?: { productId?: string }) {
+    return this.productService.findAllProductAttributeAllowValues(
+      data?.productId,
+    );
+  }
+
+  @MessagePattern('product.attributeAllowValue.findOne')
+  findOneProductAttributeAllowValue(@Payload() data: { id: string }) {
+    return this.productService.findOneProductAttributeAllowValue(data.id);
+  }
+
+  @MessagePattern('product.attributeAllowValue.update')
+  updateProductAttributeAllowValue(
+    @Payload()
+    data: {
+      id: string;
+      updateProductAttributeAllowValueDto: UpdateProductAttributeAllowValueDto;
+    },
+  ) {
+    return this.productService.updateProductAttributeAllowValue(
+      data.id,
+      data.updateProductAttributeAllowValueDto,
+    );
+  }
+
+  @MessagePattern('product.attributeAllowValue.remove')
+  removeProductAttributeAllowValue(@Payload() data: { id: string }) {
+    return this.productService.removeProductAttributeAllowValue(data.id);
   }
 }
