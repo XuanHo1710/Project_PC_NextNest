@@ -23,3 +23,7 @@ export * from "./product/search-product.dto";
 
 export * from "./category/create-category.dto";
 export * from "./category/update-category.dto";
+
+export * from "./brand/create-brand.dto";
+export * from "./brand/update-brand.dto";
+export * from "./brand/search-brand.dto";

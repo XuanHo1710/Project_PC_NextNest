@@ -10,6 +10,7 @@ import { RoleModule } from 'admin/role/role.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
 import { CategoryModule } from 'admin/category/category.module';
+import { BrandModule } from 'admin/brand/brand.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { CategoryModule } from 'admin/category/category.module';
     ConfigModule,
     AuthModule,
     CategoryModule,
+    BrandModule,
     JwtModule.register({}),
     ClientsModule.register([
       {
