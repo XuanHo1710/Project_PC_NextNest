@@ -12,6 +12,7 @@ import { AccountEmployeeService } from './account-employee.service';
 import {
   CreateAccountEmployeeDto,
   UpdateAccountEmployeeDto,
+  UpdateProfileDto,
 } from '@project-pc/common';
 import mongoose, { Types } from 'mongoose';
 import { MessagePattern, Payload } from '@nestjs/microservices';
@@ -69,5 +70,19 @@ export class AccountEmployeeController {
   @MessagePattern('account_employee.remove')
   remove(@Payload() data: { id: mongoose.Types.ObjectId }) {
     return this.accountEmployeeService.remove(data.id);
+  }
+
+  @MessagePattern('account_employee.update_profile')
+  updateProfile(
+    @Payload()
+    data: {
+      id: string;
+      updateProfileDto: UpdateProfileDto;
+    },
+  ) {
+    return this.accountEmployeeService.updateProfile(
+      data.id,
+      data.updateProfileDto,
+    );
   }
 }

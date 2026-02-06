@@ -86,6 +86,21 @@ const ContextCollapse = (prop: IProp) => {
                         </div>
                     </div>
                 </div>
+                {prop.path === "account-employee" && (
+                    <div className="col-span-6 p-4 rounded-2xl border border-solid border-slate-200">
+                        <div className="flex gap-4 items-center">
+                            <Switch
+                                checked={prop.selected.some(
+                                    (p) => p.method === "GET" && p.path === "/api/v1/admin/" + prop.path + "/:id/history"
+                                )} onChange={(isSelected) => prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path + "/:id/history")}
+                            />
+                            <div>
+                                <h3 className="font-semibold text-lg">Get History {prop.name}</h3>
+                                <p className="text-slate-500"><span className="text-blue-500 font-bold">GET</span>  /api/v1/admin/{prop.path}/:id/history</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
         </>

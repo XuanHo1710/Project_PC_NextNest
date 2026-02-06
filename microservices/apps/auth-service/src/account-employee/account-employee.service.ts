@@ -2,6 +2,7 @@ import { BadGatewayException, Injectable } from '@nestjs/common';
 import {
   CreateAccountEmployeeDto,
   UpdateAccountEmployeeDto,
+  UpdateProfileDto,
 } from '@project-pc/common';
 
 import mongoose, { Model, Types } from 'mongoose';
@@ -162,5 +163,9 @@ export class AccountEmployeeService {
 
   async remove(id: mongoose.Types.ObjectId) {
     return await this.accountEmployeeModel.deleteOne({ _id: id });
+  }
+
+  async updateProfile(id: string, updateProfileDto: UpdateProfileDto) {
+    return await this.accountEmployeeModel.findByIdAndUpdate(id, updateProfileDto, { new: true });
   }
 }

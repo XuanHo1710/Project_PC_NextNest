@@ -3,6 +3,8 @@ import {
   Controller,
   Get,
   Inject,
+  Patch,
+  Body,
   Post,
   Req,
   Res,
@@ -68,5 +70,23 @@ export class AuthController {
   @Get('profile')
   getProfile(@Employee() employee: any) {
     return employee;
+  }
+
+  @Patch('profile')
+  async updateProfile(@Employee() employee: any, @Body() body: any) {
+    const { _id } = employee;
+    return this.authService.send('account_employee.update_profile', {
+      id: _id,
+      updateProfileDto: body,
+    });
+  }
+
+  @Patch('/change-password')
+  async changePassword(@Employee() employee: any, @Body() body: any) {
+    const { _id } = employee;
+    return this.authService.send('auth.changePasswordAdmin', {
+      id: _id,
+      body,
+    });
   }
 }

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AccountEmployeeModule } from 'admin/account-employee/account-employee.module';
 import { AccountGuestModule } from 'admin/account-guest/account-guest.module';
 import { JwtAuthGuard } from 'guards/jwt-auth.guard';
@@ -13,6 +13,8 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
 import { CategoryModule } from 'admin/category/category.module';
 import { BrandModule } from 'admin/brand/brand.module';
 import { ProductModule } from 'admin/product/product.module';
+import { HistoryLogInterceptor } from 'admin/interceptors/history-log.interceptor';
+import { HistoryModule } from 'admin/history/history.module';
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { ProductModule } from 'admin/product/product.module';
     CategoryModule,
     BrandModule,
     ProductModule,
+    HistoryModule,
     JwtModule.register({}),
     ClientsModule.register([
       {
@@ -39,6 +42,10 @@ import { ProductModule } from 'admin/product/product.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HistoryLogInterceptor,
     },
     JwtStrategy,
   ],

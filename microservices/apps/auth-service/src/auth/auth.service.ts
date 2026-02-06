@@ -348,4 +348,15 @@ export class ClientAuthService {
       return null;
     }
   }
+
+  async changePasswordAdmin(id: string, body: any) {
+    const { currentPassword, newPassword } = body;
+    const account = await this.accountEmployeeService.findOne(id);
+    if (!account) throw new BadRequestException('Tài khoản không tồn tại');
+
+    const isMatch = compareSync(currentPassword, account.password);
+    if (!isMatch) throw new BadRequestException('Mật khẩu hiện tại không đúng');
+
+    return await this.accountEmployeeService.update(new mongoose.Types.ObjectId(id), { password: newPassword } as any);
+  }
 }

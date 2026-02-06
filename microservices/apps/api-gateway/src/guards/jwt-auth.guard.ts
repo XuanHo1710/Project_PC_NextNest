@@ -49,6 +49,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         targetPath !== '/api/v1/admin/auth/decode-access' &&
         targetPath !== '/api/v1/admin/auth/refresh-token' &&
         targetPath !== '/api/v1/admin/auth/profile' &&
+        targetPath !== '/api/v1/admin/history' &&
         targetPath !== '/api/v1/admin/auth/logout'
       ) {
         throw new ForbiddenException(

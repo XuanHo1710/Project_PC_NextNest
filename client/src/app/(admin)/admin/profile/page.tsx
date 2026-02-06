@@ -3,6 +3,7 @@
 import { Tabs } from 'antd';
 import ProfileDetails from './_components/ProfileDetails';
 import ChangePassword from './_components/ChangePassword';
+import ActivityLog from './_components/ActivityLog';
 import { UserOutlined, LockOutlined, HistoryOutlined } from '@ant-design/icons';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 
@@ -13,7 +14,7 @@ export default function ProfilePage() {
         {
             key: '1',
             label: (
-                <span>
+                <span className='flex items-center gap-2'>
                     <UserOutlined />
                     Thông tin cá nhân
                 </span>
@@ -23,7 +24,7 @@ export default function ProfilePage() {
         {
             key: '2',
             label: (
-                <span>
+                <span className='flex items-center gap-2'>
                     <LockOutlined />
                     Đổi mật khẩu
                 </span>
@@ -33,18 +34,12 @@ export default function ProfilePage() {
         {
             key: '3',
             label: (
-                <span>
+                <span className='flex items-center gap-2'>
                     <HistoryOutlined />
                     Nhật ký hoạt động
                 </span>
             ),
-            children: (
-                <div className="p-8 text-center text-gray-500 bg-gray-50 rounded border border-dashed border-gray-300">
-                    <HistoryOutlined style={{ fontSize: 48, marginBottom: 16 }} />
-                    <p className="text-lg">Tính năng Nhật ký hoạt động đang được xây dựng</p>
-                    <p className="text-sm">Tại đây bạn sẽ xem được lịch sử đăng nhập và các thao tác trên hệ thống.</p>
-                </div>
-            )
+            children: <ActivityLog />
         }
     ];
 
@@ -53,9 +48,7 @@ export default function ProfilePage() {
     return (
         <div className="p-6 bg-white rounded-lg shadow-sm m-4 h-[calc(100vh-100px)] overflow-y-auto">
             <h1 className="text-2xl font-bold mb-6 text-gray-800">Hồ sơ quản trị viên</h1>
-            <div className="bg-white">
-                <Tabs defaultActiveKey="1" items={items} size="large" />
-            </div>
+            <Tabs defaultActiveKey="1" items={items} size="large" destroyOnHidden />
         </div>
     );
 }

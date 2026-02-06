@@ -3,6 +3,7 @@ import ActionAccountEmployee from "@/components/ActionFilter/account-employee/Ac
 import FilterAccountEmployee from "@/components/ActionFilter/account-employee/FilterAccountEmployee";
 import ContentModalAccountEmployee from "@/components/ContentModal/account-employee/ContentModalAccountEmployee";
 import UpdateModalAccountEmployee from "@/components/ContentModal/account-employee/UpdateModalAccountEmployee";
+import DetailModalAccountEmployee from "@/components/ContentModal/account-employee/DetailModalAccountEmployee";
 import EditSortAccountEmployee from "@/components/EditSort/account-employee/EditSortAccountEmployee";
 import TableContent from "@/components/TableContent/TableContent";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
@@ -12,20 +13,19 @@ import { DataType, SelectedContextType } from "@/types/table.d";
 import { Avatar, Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
 import { createContext, useContext, useState } from "react";
-import { FaPen, FaTrashAlt } from "react-icons/fa";
+import { FaPen, FaTrashAlt, FaEye } from "react-icons/fa";
 import { useAccountEmployees, useDeleteAccountEmployee } from "@/hooks/admin";
-
-
 
 const SelectedAccountEmployeeContext = createContext<SelectedContextType | undefined>(undefined);
 
 export default function ContentAccountEmployee() {
 
     const [isOpen, setOpen] = useState(false);
+    const [isOpenDetail, setOpenDetail] = useState(false);
     const [dataClick, setDataClick] = useState<null | DataType<IAccountEmployee>>(null);
+    const [dataDetail, setDataDetail] = useState<null | DataType<IAccountEmployee>>(null);
     const { queryParams, setQueryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
-    // Fields theo đúng entity AccountEmployee - dùng roleId thay vì role
     const [fields, setFields] = useState<Array<string>>([
         "IDEmp",
         "avatar",
@@ -37,13 +37,11 @@ export default function ContentAccountEmployee() {
         "gender"
     ]);
 
-    // Use TanStack Query hooks
     const {
         data: result,
         isLoading: loading
     } = useAccountEmployees(queryParams.toString());
 
-    // Handle paginated response structure
     const accountEmployees = (result as any)?.data || [];
     const pagination = (result as any)?.pagination || { currentPage: 1, totalItems: 0, itemsPerPage: 10 };
 
@@ -54,7 +52,6 @@ export default function ContentAccountEmployee() {
         try {
             await deleteAccountEmployee.mutateAsync(id);
         } catch (err) {
-            // Error handling is done in the hook
             console.error('Delete failed:', err);
         }
     }
@@ -67,7 +64,6 @@ export default function ContentAccountEmployee() {
                 key: field,
             };
 
-            // Thêm render tùy chỉnh cho các trường cụ thể
             if (field === "avatar") {
                 columnConfig.render = (_: unknown, record: DataType<IAccountEmployee>) => (
                     record.avatar ? <Avatar src={record.avatar} alt={record.name || 'Avatar'} /> : <Avatar>{record.name?.charAt(0) || 'U'}</Avatar>
@@ -91,12 +87,24 @@ export default function ContentAccountEmployee() {
 
             return columnConfig;
         }),
-        // Cột action luôn xuất hiện
         {
             title: 'Hành động',
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
+                        (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
+                    ) &&
+                        <FaEye
+                            onClick={() => {
+                                setOpenDetail(true);
+                                setDataDetail(record);
+                            }}
+                            className='hover:text-green-500 cursor-pointer text-lg'
+                            title="Xem chi tiết"
+                        />
+                    }
+
                     {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/:id"
                     ) &&
@@ -146,9 +154,9 @@ export default function ContentAccountEmployee() {
         });
     }
 
-
     return (
         <>
+            <DetailModalAccountEmployee isOpen={isOpenDetail} setOpen={setOpenDetail} data={dataDetail} />
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
                 {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/:id"
@@ -184,7 +192,6 @@ export default function ContentAccountEmployee() {
     )
 }
 
-// Helper function để đổi tên field thành tiếng Việt
 function getFieldTitle(field: string): string {
     const titles: Record<string, string> = {
         IDEmp: "Mã NV",
@@ -200,7 +207,6 @@ function getFieldTitle(field: string): string {
     return titles[field] || field.charAt(0).toUpperCase() + field.slice(1);
 }
 
-// Custom hook để dùng trong các component khác
 export const useSelectedRowsAccountEmployee = () => {
     const context = useContext(SelectedAccountEmployeeContext);
     if (!context) {

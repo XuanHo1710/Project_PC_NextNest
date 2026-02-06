@@ -4,6 +4,7 @@ export * from "./role/create-role.dto";
 export * from "./role/update-role.dto";
 export * from "./account-employee/create-account-employee.dto";
 export * from "./account-employee/update-account-employee.dto";
+export * from "./account-employee/update-profile.dto";
 export * from "./auth/login.dto";
 export * from "./auth/refresh-token.dto";
 export * from "./auth/token-response.dto";
@@ -27,3 +28,6 @@ export * from "./category/update-category.dto";
 export * from "./brand/create-brand.dto";
 export * from "./brand/update-brand.dto";
 export * from "./brand/search-brand.dto";
+
+
+export * from './history/create-history.dto'

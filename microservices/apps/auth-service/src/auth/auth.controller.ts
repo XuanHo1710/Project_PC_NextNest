@@ -97,4 +97,9 @@ export class AuthController {
     const { IDEmp, password } = data;
     return this.authService.signInAdmin(IDEmp, password);
   }
+
+  @MessagePattern('auth.changePasswordAdmin')
+  async changePasswordAdmin(@Payload() data: { id: string, body: any }) {
+    return this.authService.changePasswordAdmin(data.id, data.body);
+  }
 }
