@@ -37,7 +37,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    const { setUser, resetAuth, user, loading, isAuthenticated, login, logout, loginWithGoogle } = useAuthUser();
+    const { setUser, setAccessToken, resetAuth, user, loading, isAuthenticated, login, logout, loginWithGoogle } = useAuthUser();
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -47,9 +47,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 const res = await axios.post('/api/client/auth/profile', {});
 
                 if (res.data.success && res.data.data) {
-                    const { user: userData } = res.data.data;
+                    const { user: userData, access_token } = res.data.data;
                     setUser({
                         _id: userData._id,
+                        id: userData._id,
                         email: userData.email,
                         fullname: userData.fullname,
                         avatar: userData.avatar,
@@ -59,6 +60,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
                         phone: userData.phone,
                         gender: userData.gender,
                     });
+                    // Store access_token in Zustand so axiosClient can attach it as Bearer token
+                    if (access_token) {
+                        setAccessToken(access_token);
+                    }
                 } else {
                     resetAuth();
                 }
@@ -70,7 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
 
         fetchProfile();
-    }, [setUser, resetAuth]);
+    }, [setUser, setAccessToken, resetAuth]);
 
     const contextValue: AuthContextType = {
         user,

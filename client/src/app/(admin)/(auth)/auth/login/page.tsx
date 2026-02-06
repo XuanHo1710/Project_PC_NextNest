@@ -10,13 +10,19 @@ import { roleService } from "@/services/admin/role.service";
 
 export default function AuthLogin() {
   const router = useRouter();
-  const { setAccountLogin } = useAuthEmployee();
+  const { setAccountLogin, setAccessToken } = useAuthEmployee();
   const handleSubmit = async (payload: { IDEmp: string, password: string }) => {
     try {
       // Call Next.js API route which sets admin_access_token httpOnly cookie
       const response = await axios.post("/api/admin/auth/login", payload);
 
       const { data } = response?.data;
+
+      // Store access_token in Zustand so admin axios can attach it as Bearer token
+      if (data.access_token) {
+        setAccessToken(data.access_token);
+      }
+
       const role = await roleService.getById(data.payload.roleId);
 
       setAccountLogin(

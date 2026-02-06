@@ -9,7 +9,7 @@ import axios, {
 } from 'axios';
 import { toast } from 'react-toastify';
 
-const baseURL = 'http://localhost:8080/api/v1/admin/';
+const baseURL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1') + '/admin/';
 
 // Track refresh state to prevent multiple refresh calls
 let isRefreshing = false;
@@ -28,15 +28,21 @@ function onRefreshed() {
 const instance = axios.create({
   baseURL,
   timeout: 10000,
-  withCredentials: true, // Important for cookies (backend reads refresh_token from cookie)
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor: cookies are sent automatically via withCredentials
+// Request interceptor: attach access_token from Zustand store as Bearer token
 instance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => config,
+  (config: InternalAxiosRequestConfig) => {
+    const { accessToken } = useAuthEmployee.getState();
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  },
   (error) => Promise.reject(error)
 );
 
@@ -75,17 +81,23 @@ instance.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          // Call backend refresh endpoint — it reads refresh_token from cookie, no Bearer needed
-          await axios.post(
-            `${baseURL}auth/refresh-token`,
+          // Call Next.js API refresh route — it reads admin_refresh_token cookie,
+          // calls backend, and sets new admin_access_token cookie
+          const refreshResponse = await axios.post(
+            '/api/admin/auth/refresh',
             {},
-            { withCredentials: true }
           );
 
-          // Refresh succeeded — backend renewed the cookie
+          if (refreshResponse.data.success && refreshResponse.data.data?.access_token) {
+            // Update Zustand store with new access_token
+            const { setAccessToken } = useAuthEmployee.getState();
+            setAccessToken(refreshResponse.data.data.access_token);
+          }
+
+          // Refresh succeeded — notify queued requests
           onRefreshed();
 
-          // Retry original request (cookie is automatically attached)
+          // Retry original request with new token (interceptor will read from Zustand)
           return instance(originalRequest);
         } catch {
           // Refresh failed — clear auth state and redirect to login

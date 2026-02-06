@@ -2,7 +2,8 @@ import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+  process.env.NEXT_PUBLIC_API_URL + "/client" ||
+  "http://localhost:8080/api/v1/client";
 
 /**
  * POST /api/client/auth/logout
@@ -16,13 +17,12 @@ export async function POST(request: NextRequest) {
     if (accessToken) {
       try {
         await axios.post(
-          `${API_URL}/client/auth/logout`,
+          `${API_URL}/auth/logout`,
           {},
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-            withCredentials: true,
           },
         );
       } catch {
@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
       message: "Đăng xuất thành công",
     });
     response.cookies.delete("client_access_token");
-
     return response;
   } catch (error) {
     console.error("Logout error:", error);
@@ -47,7 +46,6 @@ export async function POST(request: NextRequest) {
       message: "Đăng xuất thành công",
     });
     response.cookies.delete("client_access_token");
-
     return response;
   }
 }

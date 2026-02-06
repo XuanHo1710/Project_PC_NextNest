@@ -121,7 +121,7 @@ client/src/
 │   └── ui/                       # ShadCN/Radix UI primitives
 ├── config/
 │   ├── axios.tsx                 # Admin axios instance (baseURL: /api/v1/admin/)
-│   ├── axiosClient.tsx           # Client axios instance (baseURL: /api/v1/)
+│   ├── axiosClient.tsx           # Client axios instance (baseURL: /api/v1/client/)
 │   └── route.tsx                 # Route path constants
 ├── hooks/
 │   ├── admin/                    # Admin hooks (useEmployee, useProductAttribute, etc.)
@@ -159,7 +159,8 @@ interface IProduct {
   minPrice: number; // computed from variants
   maxPrice: number; // computed from variants
   status: "ACTIVE" | "INACTIVE" | "STOPSOLD";
-  defaultProductVariantId?: string;
+  defaultProductVariantId?: string; // ObjectId ref lấy ảnh/giá/stock ở đây làm đại diện
+  // Nếu có soldCount thì bỏ đi không cần thiết nữa. Hiển thị stock của cái defactultVariant là được
 }
 
 // Variant chứa toàn bộ thông tin giá, ảnh, stock
@@ -170,7 +171,7 @@ interface IProductVariant {
   price: number; // giá gốc
   discount: number; // 0-100 (%)
   stock: number;
-  images: string[];
+  images: string[]; // Lấy ảnh ở đây làm đại diện sản phẩm
   combination: Record<string, string>;
 }
 
@@ -200,10 +201,11 @@ product.images[0]; // KHÔNG TỒN TẠI trên IProductCard
 product.newPrice; // KHÔNG TỒN TẠI
 product.oldPrice; // KHÔNG TỒN TẠI
 product.discount; // KHÔNG TỒN TẠI
+// Lấy từ product.defaultVariant.images, price, discount // Lấy ở default variant là có thông tin price, images, stock (Bỏ newPrice với oldPrice đi vì nó là cái dự án cũ rồi)
 
 // ✅ ĐÚNG — Luôn dùng helper functions
 import {
-  getProductDisplayPrice, // Giá sau discount
+  getProductDisplayPrice, // Giá sau discount variant.price * (1 - variant.discount / 100)
   getProductOriginalPrice, // Giá gốc (variant.price)
   getProductDiscount, // % discount
   getProductImage, // Ảnh đầu tiên
@@ -329,10 +331,10 @@ Client (browser)
 
 ### Hai axios instance riêng biệt:
 
-| Instance      | File                   | Base URL                              | Dùng cho     |
-| ------------- | ---------------------- | ------------------------------------- | ------------ |
-| `instance`    | config/axios.tsx       | `http://localhost:8080/api/v1/admin/` | Admin panel  |
-| `axiosClient` | config/axiosClient.tsx | `NEXT_PUBLIC_API_URL` hoặc fallback   | Client pages |
+| Instance      | File                   | Base URL                                                                   | Dùng cho     |
+| ------------- | ---------------------- | -------------------------------------------------------------------------- | ------------ |
+| `instance`    | config/axios.tsx       | `http://localhost:8080/api/v1/admin/`                                      | Admin panel  |
+| `axiosClient` | config/axiosClient.tsx | `http://localhost:8080/api/v1/client/` `NEXT_PUBLIC_API_URL` hoặc fallback | Client pages |
 
 ### Response flow:
 
@@ -381,3 +383,5 @@ npm run dev
 - Service classes pattern cho API calls
 - TanStack Query cho data fetching
 - Zustand cho client state (cart, auth)
+- Call TanStack Query hooks only inside React components or other hooks. TanStack must call service methods
+- DO NOT CALL SERVICE METHODS DIRECTLY IN REACT COMPONENTS (EXCEPT LOGIC AUTH LOGIN/REGISTER/REFRESH/LOGOUT)

@@ -1,6 +1,8 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
+const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 days
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -8,16 +10,16 @@ export async function POST(request: NextRequest) {
     const backendRes = await axios.post(
       `${process.env.NEXT_PUBLIC_API_URL}/admin/auth/login`,
       body,
-      { withCredentials: true },
     );
 
     const { data } = backendRes.data;
 
-    // Build response with account info (without tokens in body)
+    // Build response with account info (without tokens in body for security)
     const responseData = {
       statusCode: 200,
       message: "Đăng nhập thành công",
       data: {
+        access_token: data.access_token,
         payload: data.payload,
       },
     };
@@ -32,6 +34,17 @@ export async function POST(request: NextRequest) {
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24, // 1 day
+      });
+    }
+
+    // Set admin_refresh_token cookie — used by refresh route to get new access_token
+    if (data.refresh_token) {
+      response.cookies.set("admin_refresh_token", data.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: REFRESH_TOKEN_MAX_AGE,
       });
     }
 

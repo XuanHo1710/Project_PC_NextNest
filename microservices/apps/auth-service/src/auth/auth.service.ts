@@ -195,15 +195,11 @@ export class ClientAuthService {
     return await this.accountGuestService.verifyEmail(token);
   }
 
-  async processNewToken(refreshToken: string) {
+  async processNewToken(sessionId: string) {
     try {
-      const detailPayload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
-      });
-
       //  Check refresh token in redis
       const storedRefreshToken = await this.redisClient.get(
-        `guest_refresh_token:${detailPayload._id}`,
+        `guest_refresh_token:${sessionId}`,
       );
 
       const payload = this.jwtService.verify(storedRefreshToken!, {

@@ -2,15 +2,17 @@ import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+  process.env.NEXT_PUBLIC_API_URL + "/client" ||
+  "http://localhost:8080/api/v1/client";
 const ACCESS_TOKEN_MAX_AGE = parseInt(
   process.env.ACCESS_TOKEN_MAX_AGE || "86400",
-); // 24 hours default
+);
 
 /**
  * POST /api/client/auth/login
- * Receives credentials from client, calls backend, stores client_access_token in cookies
- * Backend manages refresh_token internally (Redis) — frontend only handles access_token
+ * Receives credentials from client, calls backend, stores tokens in httpOnly cookies
+ * - client_access_token: for authenticating API requests
+ * - client_refresh_token: Backend Store it in Redist DB.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -24,11 +26,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await axios.post(
-      `${API_URL}/client/auth/login`,
-      { email, password },
-      { withCredentials: true },
-    );
+    const response = await axios.post(`${API_URL}/auth/login`, {
+      email,
+      password,
+    });
 
     const data = response.data?.data || response.data;
 
@@ -54,12 +55,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Set client_access_token cookie only — backend handles refresh_token in Redis
     res.cookies.set("client_access_token", data.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: ACCESS_TOKEN_MAX_AGE,
+      path: "/",
+    });
+
+    // Set sessionId cookie for user identification
+    res.cookies.set("client_sessionId", data.payload?._id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 31536000, // 1 year
       path: "/",
     });
 

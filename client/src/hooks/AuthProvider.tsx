@@ -10,7 +10,7 @@ import { roleService } from '@/services/admin/role.service';
 
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { setAccountLogin, resetAuth } = useAuthEmployee();
+    const { setAccountLogin, setAccessToken, resetAuth } = useAuthEmployee();
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -19,6 +19,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             try {
                 const res = await axios.post('/api/admin/auth/token', {});
                 if (res.data !== null && res.data.data) {
+                    // Store access_token in Zustand so admin axios can attach it as Bearer token
+                    if (res.data.data.access_token) {
+                        setAccessToken(res.data.data.access_token);
+                    }
                     const role = await roleService.getById(res.data.data.roleId);
                     setAccountLogin({
                         IDEmp: res.data.data.IDEmp,
@@ -40,7 +44,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             }
         };
         fetchAccount();
-    }, [setAccountLogin, resetAuth, router]);
+    }, [setAccountLogin, setAccessToken, resetAuth, router]);
 
     if (loading) {
         return (

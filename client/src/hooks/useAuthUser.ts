@@ -7,6 +7,7 @@ import axios from "axios";
 
 interface AuthUserState {
   user: IClientUser | null;
+  accessToken: string | null;
   loading: boolean;
   isAuthenticated: boolean;
 
@@ -16,11 +17,13 @@ interface AuthUserState {
   loginWithGoogle: () => void;
 
   setUser: (user: IClientUser | null) => void;
+  setAccessToken: (token: string | null) => void;
   resetAuth: () => void;
 }
 
 const useAuthUser = create<AuthUserState>((set) => ({
   user: null,
+  accessToken: null,
   loading: false,
   isAuthenticated: false,
 
@@ -28,15 +31,19 @@ const useAuthUser = create<AuthUserState>((set) => ({
     try {
       set({ loading: true });
 
-      // Call Next.js API route → sets client_access_token httpOnly cookie
+      // Call Next.js API route → sets httpOnly cookies (client_access_token + client_refresh_token)
       const response = await axios.post("/api/client/auth/login", {
         email,
         password,
       });
 
       if (response.data.success && response.data.data) {
-        const { user } = response.data.data;
-        set({ user, isAuthenticated: true });
+        const { user, access_token } = response.data.data;
+        set({
+          user,
+          accessToken: access_token,
+          isAuthenticated: true,
+        });
         toast.success("Đăng nhập thành công!");
         return true;
       }
@@ -86,7 +93,7 @@ const useAuthUser = create<AuthUserState>((set) => ({
   logout: async () => {
     try {
       await axios.post("/api/client/auth/logout");
-      set({ user: null, isAuthenticated: false });
+      set({ user: null, accessToken: null, isAuthenticated: false });
       toast.success("Đăng xuất thành công!");
 
       useCartStore.getState().setCart({
@@ -97,7 +104,7 @@ const useAuthUser = create<AuthUserState>((set) => ({
       });
     } catch (error) {
       console.error("Logout error:", error);
-      set({ user: null, isAuthenticated: false });
+      set({ user: null, accessToken: null, isAuthenticated: false });
     }
   },
 
@@ -111,7 +118,10 @@ const useAuthUser = create<AuthUserState>((set) => ({
       isAuthenticated: !!user,
     }),
 
-  resetAuth: () => set({ user: null, isAuthenticated: false }),
+  setAccessToken: (token) => set({ accessToken: token }),
+
+  resetAuth: () =>
+    set({ user: null, accessToken: null, isAuthenticated: false }),
 }));
 
 export default useAuthUser;

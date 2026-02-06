@@ -60,11 +60,11 @@ export class AuthController {
   }
 
   @MessagePattern('auth.refreshToken')
-  async refresh(@Payload() data: { refreshToken: string }) {
-    if (!data.refreshToken) {
-      throw new BadRequestException('Refresh token không tồn tại');
+  async refresh(@Payload() data: { sessionId: string }) {
+    if (!data.sessionId) {
+      throw new BadRequestException('Session ID không tồn tại');
     }
-    return this.authService.processNewToken(data.refreshToken);
+    return this.authService.processNewToken(data.sessionId);
   }
 
   @MessagePattern('auth.logout')

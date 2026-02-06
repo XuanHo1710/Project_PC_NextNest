@@ -21,7 +21,7 @@ import { ConfigService } from '@nestjs/config';
 
 const ms = require('ms');
 
-@Controller('client/auth')
+@Controller('/client/auth')
 export class AuthController {
   constructor(
     @Inject(MICROSERVICE.AUTH_SERVICE)
@@ -40,22 +40,6 @@ export class AuthController {
     const dataLogin = await firstValueFrom(
       this.authService.send('auth.login', { user }),
     );
-
-    // Set cookies
-    // Refresh token saved in redis db
-
-    // Make refresh token cookie available to the API routes (path '/api/v1/client/auth/refresh')
-    response.cookie('client_refresh_token', dataLogin.refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: ms(
-        this.configService.get<string>('JWT_REFRESH_EXPIRE') as string,
-      ),
-    });
-
-    // Set cookies in here
     return dataLogin;
   }
 
@@ -145,19 +129,16 @@ export class AuthController {
 
   @Post('refresh')
   @Public()
-  async refresh(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  async refresh(@Req() request: Request) {
     try {
-      const refreshToken = request.cookies?.client_refresh_token;
-      if (!refreshToken) {
-        throw new BadRequestException('Refresh token không tồn tại');
+      const sessionId = request.cookies?.client_sessionId;
+      if (!sessionId) {
+        throw new BadRequestException('Session ID không tồn tại');
       }
 
       const result = await firstValueFrom(
         this.authService.send('auth.refreshToken', {
-          refreshToken,
+          sessionId,
         }),
       );
 
@@ -189,6 +170,7 @@ export class AuthController {
 
   @Get('profile')
   async getProfile(@Guest() guest: any) {
+    console.log('Called profile endpoint', guest);
     return guest;
   }
 }
