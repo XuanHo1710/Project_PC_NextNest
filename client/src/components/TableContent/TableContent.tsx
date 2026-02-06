@@ -1,5 +1,4 @@
 'use client'
-import '@ant-design/v5-patch-for-react-19';
 
 import { Table } from "antd";
 import { ColumnsType } from 'antd/es/table';

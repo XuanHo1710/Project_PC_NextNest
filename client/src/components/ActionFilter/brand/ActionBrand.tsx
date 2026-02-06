@@ -1,6 +1,5 @@
 'use client'
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
-import '@ant-design/v5-patch-for-react-19';
 import { Button, Modal } from "antd";
 import { JSX, useState } from 'react';
 import React from 'react';

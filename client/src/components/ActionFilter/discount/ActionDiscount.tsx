@@ -2,7 +2,6 @@
 import ConfigModalDiscount from '@/components/ContentModal/discount/ConfigModalDiscount';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { SettingOutlined } from '@ant-design/icons';
-import '@ant-design/v5-patch-for-react-19';
 import { Button, Modal } from "antd";
 import { JSX, useState } from 'react';
 

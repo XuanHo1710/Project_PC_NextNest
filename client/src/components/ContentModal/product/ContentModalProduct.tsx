@@ -3,7 +3,6 @@ import { ICategory } from '@/types/category';
 import { IProduct } from '@/types/product';
 import { buildCategoryTree } from '@/utils/buildTree';
 import { UploadImages } from '@/utils/uploadImage';
-import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
@@ -63,34 +62,11 @@ export default function ContentModalProduct() {
     };
 
     const handleAdd = async (data: IProduct) => {
-        data.discount = data.discount / 100;
-
-        let otherHandle: [{ key: string, value: string }] | [] = [];
-
-        if (data.otherString.trim() !== "") {
-            // Check A:B;C:D,....
-            if (!data.otherString.match(/^\w+:\w+(;\w+:\w+)*$/)) {
-                console.error("Vui lòng nhập trường other đúng cú pháp !!");
-                return;
-            }
-            const mapped = Array.from(data.otherString.split(";")).map(x => (
-                {
-                    key: x.split(":")[0],
-                    value: x.split(":")[1]
-                }
-            ));
-            // Ensure at least one element if not empty
-            if (mapped.length > 0) {
-                otherHandle = mapped as [{ key: string, value: string }];
-            }
-        }
-
         const filesOnline: Array<string> = await UploadImages((filesUpload.files));
 
         const product = {
             ...data,
             images: filesOnline,
-            other: otherHandle
         };
 
         try {

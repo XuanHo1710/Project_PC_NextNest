@@ -1,6 +1,4 @@
 'use client'
-import '@ant-design/v5-patch-for-react-19';
-
 
 import FooterClient from "@/components/client/Layout/Footer";
 import HeaderClient from "@/components/client/Layout/Header";

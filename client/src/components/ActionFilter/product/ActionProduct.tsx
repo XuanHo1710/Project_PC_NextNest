@@ -1,5 +1,4 @@
 'use client'
-import '@ant-design/v5-patch-for-react-19';
 import { Button, Modal, Upload } from "antd";
 import { SettingOutlined, UploadOutlined } from '@ant-design/icons';
 import { JSX, useState } from 'react';

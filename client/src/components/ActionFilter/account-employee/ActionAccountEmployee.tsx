@@ -2,7 +2,6 @@
 import ConfigModalAccountEmployee from '@/components/ContentModal/account-employee/ConfigModalAccountEmployee';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { SettingOutlined } from '@ant-design/icons';
-import '@ant-design/v5-patch-for-react-19';
 import { Button, Modal } from "antd";
 import { JSX, useState } from 'react';
 

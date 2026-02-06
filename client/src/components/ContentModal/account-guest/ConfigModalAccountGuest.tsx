@@ -1,5 +1,4 @@
 'use client'
-import '@ant-design/v5-patch-for-react-19';
 import { Switch } from 'antd';
 
 export default function ConfigModalAccountGuest({ ConfigFields }: { ConfigFields: { fields: Array<string>, setFields: React.Dispatch<React.SetStateAction<Array<string>>> } }) {
@@ -23,17 +22,24 @@ export default function ConfigModalAccountGuest({ ConfigFields }: { ConfigFields
                     />
                 </div>
                 <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
-                    <h2 className='text-base font-semibold'>Password:</h2>
+                    <h2 className='text-base font-semibold'>Họ tên:</h2>
                     <Switch
-                        defaultChecked={ConfigFields.fields.includes("password")}
-                        onClick={(isActive) => handleSwitch("password", isActive)}
+                        defaultChecked={ConfigFields.fields.includes("fullname")}
+                        onClick={(isActive) => handleSwitch("fullname", isActive)}
+                    />
+                </div>
+                <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
+                    <h2 className='text-base font-semibold'>Phone:</h2>
+                    <Switch
+                        defaultChecked={ConfigFields.fields.includes("phone")}
+                        onClick={(isActive) => handleSwitch("phone", isActive)}
                     />
                 </div>
                 <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
                     <h2 className='text-base font-semibold'>Status:</h2>
                     <Switch
-                        defaultChecked={ConfigFields.fields.includes("status")}
-                        onClick={(isActive) => handleSwitch("status", isActive)}
+                        defaultChecked={ConfigFields.fields.includes("accountStatus")}
+                        onClick={(isActive) => handleSwitch("accountStatus", isActive)}
                     />
                 </div>
             </div>

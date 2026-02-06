@@ -1,6 +1,5 @@
 'use client'
 import { useQueryParams } from '@/hooks/QueryParamsContext';
-import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Input, Select } from "antd";
 import { FaSearch } from 'react-icons/fa';
 

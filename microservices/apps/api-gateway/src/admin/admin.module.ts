@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AccountEmployeeModule } from 'admin/account-employee/account-employee.module';
+import { AccountGuestModule } from 'admin/account-guest/account-guest.module';
 import { JwtAuthGuard } from 'guards/jwt-auth.guard';
 import { JwtStrategy } from 'guards/jwt.strategy';
 import { AuthModule } from 'admin/auth/auth.module';
@@ -16,6 +17,7 @@ import { ProductModule } from 'admin/product/product.module';
 @Module({
   imports: [
     AccountEmployeeModule,
+    AccountGuestModule,
     RoleModule,
     ConfigModule,
     AuthModule,
@@ -41,4 +43,4 @@ import { ProductModule } from 'admin/product/product.module';
     JwtStrategy,
   ],
 })
-export class AdminModule {}
+export class AdminModule { }

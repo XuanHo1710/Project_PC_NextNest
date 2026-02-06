@@ -1,6 +1,5 @@
 'use client'
 import { IBrand } from '@/types/brand';
-import '@ant-design/v5-patch-for-react-19';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { useCreateBrand } from '@/hooks/admin/useBrand';
 

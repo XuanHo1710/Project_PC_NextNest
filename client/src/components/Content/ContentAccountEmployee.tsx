@@ -9,7 +9,7 @@ import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { IAccountEmployee } from "@/types";
 import { DataType, SelectedContextType } from "@/types/table.d";
-import { Modal, Popconfirm, Spin, Tag } from "antd";
+import { Avatar, Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
 import { createContext, useContext, useState } from "react";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
@@ -25,12 +25,14 @@ export default function ContentAccountEmployee() {
     const [dataClick, setDataClick] = useState<null | DataType<IAccountEmployee>>(null);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
+    // Fields theo đúng entity AccountEmployee - dùng roleId thay vì role
     const [fields, setFields] = useState<Array<string>>([
         "IDEmp",
-        "password",
-        "employee",
+        "avatar",
+        "name",
+        "email",
         "status",
-        "role"
+        "roleId"
     ]);
 
     // Use TanStack Query hooks
@@ -56,24 +58,24 @@ export default function ContentAccountEmployee() {
     const columns: ColumnsType<DataType<IAccountEmployee>> = [
         ...fields.map((field) => {
             const columnConfig: ColumnType<DataType<IAccountEmployee>> = {
-                title: field.charAt(0).toUpperCase() + field.slice(1), // Tạo title từ field
+                title: getFieldTitle(field),
                 dataIndex: field,
                 key: field,
             };
 
             // Thêm render tùy chỉnh cho các trường cụ thể
-            if (field === "password") {
-                columnConfig.render = () => (
-                    <h2>-----------------------------</h2>
+            if (field === "avatar") {
+                columnConfig.render = (_: unknown, record: DataType<IAccountEmployee>) => (
+                    record.avatar ? <Avatar src={record.avatar} alt={record.name || 'Avatar'} /> : <Avatar>{record.name?.charAt(0) || 'U'}</Avatar>
                 );
             } else if (field === "status") {
                 columnConfig.render = (_: unknown, { status }: { status: string }) => (
-                    <Tag color={status === "ACTIVE" ? "green-inverse" : "volcano-inverse"}>{status === "ACTIVE" ? "Hoạt động" : "Dừng hoạt động"}</Tag>
+                    <Tag color={status === "ACTIVE" ? "green" : "volcano"}>{status === "ACTIVE" ? "Hoạt động" : "Dừng hoạt động"}</Tag>
                 );
 
-            } else if (field === "role") {
+            } else if (field === "roleId") {
                 columnConfig.render = (_: unknown, record: DataType<IAccountEmployee>) => (
-                    <h2>{record.role?.name ? record.role.name : ""}</h2>
+                    <Tag color="blue">{record.roleId?.name || "Chưa có"}</Tag>
                 );
             }
 
@@ -81,7 +83,7 @@ export default function ContentAccountEmployee() {
         }),
         // Cột action luôn xuất hiện
         {
-            title: 'Action',
+            title: 'Hành động',
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
@@ -100,8 +102,8 @@ export default function ContentAccountEmployee() {
                         (p) => p.method === "DELETE" && p.path === "/api/v1/admin/account-employee/:id"
                     ) &&
                         <Popconfirm
-                            title="Xóa dòng của bạn"
-                            description="Bạn có chắc chắn muốn xóa dòng này ?"
+                            title="Xóa tài khoản nhân viên"
+                            description="Bạn có chắc chắn muốn xóa tài khoản này?"
                             onConfirm={() => handleDelete(record._id as string)}
                             okText="Xóa"
                             cancelText="Không"
@@ -119,18 +121,18 @@ export default function ContentAccountEmployee() {
         (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
     )) {
         dataTable = accountEmployees.map((item: IAccountEmployee, index: number) => {
-            const row = {
+            return {
                 key: index.toString(),
                 _id: item._id,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ...fields.reduce((acc: any, field: any) => {
-                    if (item.hasOwnProperty(field)) {
-                        acc[field] = item[field as keyof IAccountEmployee];
-                    }
-                    return acc;
-                }, {}),
-            };
-            return row as DataType<IAccountEmployee>;
+                IDEmp: item.IDEmp,
+                avatar: item.avatar,
+                name: item.name,
+                email: item.email,
+                status: item.status,
+                roleId: item.roleId,
+                gender: item.gender,
+                age: item.age,
+            } as DataType<IAccountEmployee>;
         });
     }
 
@@ -154,6 +156,21 @@ export default function ContentAccountEmployee() {
     )
 }
 
+// Helper function để đổi tên field thành tiếng Việt
+function getFieldTitle(field: string): string {
+    const titles: Record<string, string> = {
+        IDEmp: "Mã NV",
+        avatar: "Ảnh",
+        name: "Họ tên",
+        email: "Email",
+        status: "Trạng thái",
+        roleId: "Vai trò",
+        gender: "Giới tính",
+        age: "Tuổi",
+        phone: "SĐT"
+    };
+    return titles[field] || field.charAt(0).toUpperCase() + field.slice(1);
+}
 
 // Custom hook để dùng trong các component khác
 export const useSelectedRowsAccountEmployee = () => {

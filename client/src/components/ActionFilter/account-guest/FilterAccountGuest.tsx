@@ -12,8 +12,10 @@ const FilterAccountGuest = () => {
 
     const types = [
         { label: "Tất cả", value: "all" },
-        { label: "Hoạt động", value: "status_ACTIVE" },
-        { label: "Bị cấm", value: "status_INACTIVE" },
+        { label: "Chờ xác thực", value: "accountStatus_PENDING" },
+        { label: "Hoạt động", value: "accountStatus_ACTIVE" },
+        { label: "Dừng hoạt động", value: "accountStatus_SUSPENDED" },
+        { label: "Đã xóa", value: "accountStatus_DELETED" },
     ];
 
 

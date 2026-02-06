@@ -1,5 +1,5 @@
 'use client'
-import { Avatar, Spin, Tag } from "antd";
+import { Avatar, Popconfirm, Spin, Tag } from "antd";
 import type { ColumnsType, ColumnType } from "antd/es/table";
 import { createContext, useContext, useState } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
@@ -8,7 +8,10 @@ import ActionAccountGuest from "@/components/ActionFilter/account-guest/ActionAc
 import FilterAccountGuest from "@/components/ActionFilter/account-guest/FilterAccountGuest";
 import EditSortAccountGuest from "@/components/EditSort/account-guest/EditSortAccountGuest";
 import { DataType, SelectedContextType } from "@/types/table.d";
-import { IAccountEmployee } from "@/types/account-employee";
+import { IAccountGuest } from "@/types/account-guest";
+import { useAccountGuests, useDeleteAccountGuest } from "@/hooks/admin";
+import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import { FaTrashAlt } from "react-icons/fa";
 
 
 const SelectedContextAccountGuest = createContext<SelectedContextType | undefined>(undefined);
@@ -16,77 +19,158 @@ const SelectedContextAccountGuest = createContext<SelectedContextType | undefine
 export default function ContentAccountGuest() {
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
+    // Fields theo đúng entity AccountGuest
     const [fields, setFields] = useState<Array<string>>([
+        "avatar",
+        "fullname",
         "email",
-        "password",
-        "status"
+        "phone",
+        "accountStatus",
+        "authProvider"
     ]);
 
-    // const { employees, fetchEmployees, loading, message } = useEmployeeStore()
+    const { accountLogin } = useAuthEmployee();
+
+    // Use TanStack Query hooks
+    const {
+        data: accountGuests = [],
+        isLoading: loading
+    } = useAccountGuests(queryParams.toString());
+
+    const deleteAccountGuest = useDeleteAccountGuest();
+
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteAccountGuest.mutateAsync(id);
+        } catch (err) {
+            console.error('Delete failed:', err);
+        }
+    }
+
+    console.log(accountGuests)
 
 
-    // useEffect(() => {
-    //     fetchEmployees("?" + queryParams.toString() as string)
-    // }, [fetchEmployees, queryParams, message]);
-
-
-
-
-    const columns: ColumnsType<DataType<IAccountEmployee>> = [
+    const columns: ColumnsType<DataType<IAccountGuest>> = [
         ...fields.map((field) => {
-            const columnConfig: ColumnType<DataType<IAccountEmployee>> = {
-                title: field.charAt(0).toUpperCase() + field.slice(1), // Tạo title từ field
+            const columnConfig: ColumnType<DataType<IAccountGuest>> = {
+                title: getFieldTitle(field),
                 dataIndex: field,
                 key: field,
             };
 
             // Thêm render tùy chỉnh cho các trường cụ thể
-            if (field === "name") {
-                // columnConfig.render = (_: unknown, { name, avatar }: { name: string, avatar: string }) => (
-                //     <div className="flex items-center gap-4">
-                //         <Avatar src={avatar} alt={name} />
-                //         <h2 className="text-md">{name}</h2>
-                //     </div>
-                // );
+            if (field === "avatar") {
+                columnConfig.render = (_: unknown, record: DataType<IAccountGuest>) => (
+                    <Avatar src={record.avatar} alt={record.fullname || 'Avatar'} />
+                );
+            } else if (field === "accountStatus") {
+                columnConfig.render = (_: unknown, { accountStatus }: { accountStatus: string }) => {
+                    const statusColors: Record<string, string> = {
+                        ACTIVE: "green",
+                        PENDING: "orange",
+                        SUSPENDED: "red",
+                        DELETED: "gray"
+                    };
+                    const statusLabels: Record<string, string> = {
+                        ACTIVE: "Hoạt động",
+                        PENDING: "Chờ xác nhận",
+                        SUSPENDED: "Đã khóa",
+                        DELETED: "Đã xóa"
+                    };
+                    return (
+                        <Tag color={statusColors[accountStatus] || "default"}>
+                            {statusLabels[accountStatus] || accountStatus}
+                        </Tag>
+                    );
+                };
+            } else if (field === "authProvider") {
+                columnConfig.render = (_: unknown, { authProvider }: { authProvider: string }) => (
+                    <Tag color={authProvider === "google" ? "blue" : "default"}>
+                        {authProvider === "google" ? "Google" : "Email"}
+                    </Tag>
+                );
             } else if (field === "gender") {
                 columnConfig.render = (_: unknown, { gender }: { gender: string }) => (
-                    <Tag color={gender === "Nam" ? "blue" : "pink"}>{gender}</Tag>
+                    <Tag color={gender === "MALE" ? "blue" : gender === "FEMALE" ? "pink" : "default"}>
+                        {gender === "MALE" ? "Nam" : gender === "FEMALE" ? "Nữ" : "Khác"}
+                    </Tag>
                 );
             }
 
             return columnConfig;
-        })
+        }),
+        // Cột action
+        {
+            title: 'Hành động',
+            key: 'action',
+            render: (_, record) => (
+                <div key={record._id} className='flex items-center gap-5'>
+                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
+                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/account-guest/:id"
+                    ) &&
+                        <Popconfirm
+                            title="Xóa tài khoản khách hàng"
+                            description="Bạn có chắc chắn muốn xóa tài khoản này?"
+                            onConfirm={() => handleDelete(record._id as string)}
+                            okText="Xóa"
+                            cancelText="Không"
+                        >
+                            <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
+                        </Popconfirm>
+                    }
+                </div>
+            ),
+        },
     ];
 
-    let dataTable: DataType<IAccountEmployee>[] = [];
-    // if (!loading && employees.length > 0) {
-    //     dataTable = employees.map((item, index) => {
-    //         const row = {
-    //             key: index.toString(),
-    //             avatar: item.avatar,
-    //             _id: item._id,
-    //             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //             ...fields.reduce((acc: any, field: any) => {
-    //                 if (item.hasOwnProperty(field)) {
-    //                     acc[field] = item[field as keyof IAccountEmployee];
-    //                 }
-    //                 return acc;
-    //             }, {}),
-    //         };
-    //         return row as DataType;
-    //     });
-    // }
+    let dataTable: DataType<IAccountGuest>[] = [];
+    if (!loading && accountGuests.length > 0) {
+        dataTable = accountGuests.map((item: IAccountGuest, index: number) => {
+            const row = {
+                key: index.toString(),
+                _id: item._id,
+                avatar: item.avatar,
+                fullname: item.fullname,
+                email: item.email,
+                phone: item.phone,
+                accountStatus: item.accountStatus,
+                authProvider: item.authProvider,
+                gender: item.gender,
+                totalOrders: item.totalOrders,
+                totalSpent: item.totalSpent,
+                loyaltyPoints: item.loyaltyPoints,
+            };
+            return row as DataType<IAccountGuest>;
+        });
+    }
 
     return (
         <>
             <SelectedContextAccountGuest.Provider value={{ selectedRows, setSelectedRows }} >
                 <ActionAccountGuest ConfigFields={{ fields, setFields }} Filter={<FilterAccountGuest />} EditSort={<EditSortAccountGuest />} />
-                <Spin size="large" spinning={false} >
-                    <TableContent<DataType<IAccountEmployee>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                <Spin size="large" spinning={loading} >
+                    <TableContent<DataType<IAccountGuest>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
                 </Spin>
             </SelectedContextAccountGuest.Provider>
         </>
     )
+}
+
+// Helper function để đổi tên field thành tiếng Việt
+function getFieldTitle(field: string): string {
+    const titles: Record<string, string> = {
+        avatar: "Ảnh",
+        fullname: "Họ tên",
+        email: "Email",
+        phone: "SĐT",
+        accountStatus: "Trạng thái",
+        authProvider: "Đăng nhập qua",
+        gender: "Giới tính",
+        totalOrders: "Tổng đơn",
+        totalSpent: "Tổng chi tiêu",
+        loyaltyPoints: "Điểm tích lũy"
+    };
+    return titles[field] || field.charAt(0).toUpperCase() + field.slice(1);
 }
 
 // Custom hook để dùng trong các component khác

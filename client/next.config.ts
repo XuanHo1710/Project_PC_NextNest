@@ -72,14 +72,6 @@ const nextConfig: NextConfig = {
       };
     }
 
-    // Suppress Ant Design React 19 warning
-    if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        '@ant-design/v5-patch-for-react-19': require.resolve('@ant-design/v5-patch-for-react-19'),
-      };
-    }
-
     return config;
   },
 

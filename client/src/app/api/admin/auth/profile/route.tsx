@@ -97,7 +97,6 @@ export async function POST(request: NextRequest) {
         // Clear cookie on error
         const response = NextResponse.json({ success: false, data: null }, { status: 401 });
         response.cookies.delete('admin_access_token');
-        response.cookies.delete("admin_sessionId")
         return response;
     }
 }

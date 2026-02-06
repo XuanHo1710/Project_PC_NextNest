@@ -1,6 +1,5 @@
 'use client'
 import { ICategory } from '@/types/category';
-import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { JSX } from 'react';
@@ -52,8 +51,8 @@ export default function ContentModalCategory() {
         const tree: ICategory[] = [];
 
         categoriesCopy.forEach(cat => {
-            if (cat.parent && cat.parent._id) {
-                const parent = idToNodeMap.get(cat.parent._id);
+            if (cat.parentId) {
+                const parent = idToNodeMap.get(cat.parentId);
                 if (parent) {
                     parent.children = parent.children || [];
                     parent.children.push(cat);

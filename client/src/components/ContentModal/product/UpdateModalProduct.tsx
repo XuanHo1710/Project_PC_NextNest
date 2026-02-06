@@ -1,5 +1,4 @@
 'use client'
-import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
@@ -30,29 +29,29 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
 
 
     useEffect(() => {
-        if (dataProduct !== null) {
-            form.setFieldsValue({
-                name: dataProduct.name,
-                description: dataProduct.description,
-                category: dataProduct.category.name,
-                stock: dataProduct.stock,
-                discount: dataProduct.discount * 100,
-                oldPrice: dataProduct.oldPrice,
-                otherString: dataProduct.otherString,
-                status: dataProduct.status,
-                feature: dataProduct.feature,
-                position: dataProduct.position
-            });
-        }
+        // if (dataProduct !== null) {
+        //     form.setFieldsValue({
+        //         name: dataProduct.name,
+        //         description: dataProduct.description,
+        //         category: dataProduct.category,
+        //         stock: dataProduct.stock,
+        //         discount: dataProduct.discount * 100,
+        //         oldPrice: dataProduct.oldPrice,
+        //         otherString: dataProduct.otherString,
+        //         status: dataProduct.status,
+        //         feature: dataProduct.feature,
+        //         position: dataProduct.position
+        //     });
+        // }
     }, [dataProduct, form]);
 
     useEffect(() => {
-        if (dataProduct && dataProduct.images.length > 0) {
-            setFilesUpload({
-                images: dataProduct.images,
-                files: []
-            });
-        }
+        // if (dataProduct && dataProduct.images.length > 0) {
+        //     setFilesUpload({
+        //         images: dataProduct.images,
+        //         files: []
+        //     });
+        // }
     }, [dataProduct]);
 
     const handlePreviewUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,9 +74,9 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
     const deleteFileUpload = (file: string, index: number) => {
         let imagesUploadClone = filesUpload.images;
         imagesUploadClone = imagesUploadClone.filter(imageUpload => imageUpload !== file);
-        if (dataProduct) {
-            dataProduct.images = dataProduct.images.filter(img => img !== file);
-        }
+        // if (dataProduct) {
+        //     dataProduct.images = dataProduct.images.filter(img => img !== file);
+        // }
         const filesUploadClone = filesUpload.files;
         // Remove one file when knowing index
         filesUploadClone.splice(index, 1);
@@ -96,39 +95,23 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
     };
 
     const handleUpdate = async (data: IProduct) => {
-        data.discount = data.discount / 100;
+        // data.discount = data.discount / 100;
         let otherHandle: [{ key: string, value: string }] | [] = [];
 
         console.log(data);
 
 
-        if (data.otherString.trim() !== "") {
-            // Check A:B;C:D,....
-            if (!data.otherString.match(/^\w+:\w+(;\w+:\w+)*$/)) {
-                toast.error("Vui lòng nhập trường other đúng cú pháp !!")
-                return;
-            }
-            const mapped = Array.from(data.otherString.split(";")).map(x => (
-                {
-                    key: x.split(":")[0],
-                    value: x.split(":")[1]
-                }
-            ));
-            // Ensure at least one element if not empty
-            if (mapped.length > 0) {
-                otherHandle = mapped as [{ key: string, value: string }];
-            }
-        }
-        let filesOnline: string[] = dataProduct?.images || []; // giữ ảnh cũ mặc định
+
+        // let filesOnline: string[] = dataProduct?.images || []; // giữ ảnh cũ mặc định
 
         // Nếu có file mới => upload và thay avatarUrl
         if (filesUpload?.files.length > 0) {
-            filesOnline = [...filesOnline, ...await UploadImages((filesUpload.files))];
+            // filesOnline = [...filesOnline, ...await UploadImages((filesUpload.files))];
         }
 
         const product = {
             ...data,
-            images: filesOnline,
+            // images: filesOnline,
             other: otherHandle,
             _id: dataProduct?._id
         };
@@ -164,8 +147,8 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
         const tree: ICategory[] = [];
 
         categoriesCopy.forEach(cat => {
-            if (cat.parent && cat.parent._id) {
-                const parent = idToNodeMap.get(cat.parent._id);
+            if (cat.parentId) {
+                const parent = idToNodeMap.get(cat.parentId);
                 if (parent) {
                     parent.children = parent.children || [];
                     parent.children.push(cat);

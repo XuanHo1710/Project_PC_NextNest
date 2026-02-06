@@ -49,7 +49,9 @@ export class AccountEmployeeService {
   async findAll(filter: any) {
     const sortAccount = {};
 
-    const filterAccount = {};
+    const filterAccount = {
+      isDeleted: false
+    };
 
     if (filter.search) {
       const keyword = filter.search;
@@ -71,8 +73,10 @@ export class AccountEmployeeService {
     }
 
     const accounts = await this.accountEmployeeModel
-      .find(filterAccount)
+      .find(filterAccount, { password: 0 })
       .sort(sortAccount)
+      .populate('roleId', 'name');
+
     return accounts;
   }
 

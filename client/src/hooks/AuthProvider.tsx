@@ -18,20 +18,23 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             try {
                 const res = await axios.post('/api/admin/auth/profile', {});
                 if (res.data !== null && res.data.data) {
-                    console.log(res)
                     // Store access_token in Zustand so admin axios can attach it as Bearer token
                     if (res.data.data.access_token) {
                         setAccessToken(res.data.data.access_token);
                     }
                     const { user } = res.data.data;
 
-                    const role = await roleService.getById(user.roleId, {
-                        headers: {
-                            Authorization: `Bearer ${res.data.data.access_token}`,
-                        },
-                    });
-
-                    console.log(role)
+                    // Try to get role, but don't fail if it doesn't exist
+                    let role = null;
+                    try {
+                        role = await roleService.getById(user.roleId, {
+                            headers: {
+                                Authorization: `Bearer ${res.data.data.access_token}`,
+                            },
+                        });
+                    } catch (roleErr) {
+                        console.warn('Could not fetch role:', roleErr);
+                    }
 
                     setAccountLogin({
                         IDEmp: user.IDEmp,
@@ -47,7 +50,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             } catch (err) {
                 console.error('Auth error, resetting auth', err);
                 resetAuth();
-                router.replace(pathAdminRoutes.login);
+                // Only redirect if we're not already on login page
+                if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth/login')) {
+                    router.replace(pathAdminRoutes.login);
+                }
             } finally {
                 setLoading(false);
             }

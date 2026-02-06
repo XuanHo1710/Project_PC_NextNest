@@ -1,5 +1,4 @@
 'use client'
-import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { JSX, useEffect } from 'react';
@@ -20,7 +19,7 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
 
             form.setFieldsValue({
                 name: dataCategory.name,
-                parent: dataCategory.parent !== null ? dataCategory.parent?._id : "",
+                parentId: dataCategory.parentId !== null ? dataCategory.parentId : "",
             });
         }
     }, [dataCategory, form]);
@@ -66,8 +65,8 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
         const tree: ICategory[] = [];
 
         categoriesCopy.forEach(cat => {
-            if (cat.parent && cat.parent._id) {
-                const parent = idToNodeMap.get(cat.parent._id);
+            if (cat.parentId) {
+                const parent = idToNodeMap.get(cat.parentId);
                 if (parent) {
                     parent.children = parent.children || [];
                     parent.children.push(cat);

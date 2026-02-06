@@ -1,5 +1,4 @@
 'use client'
-import '@ant-design/v5-patch-for-react-19';
 import { Modal } from "antd";
 import { SettingOutlined } from '@ant-design/icons';
 import { JSX, useState } from 'react';

@@ -1,5 +1,4 @@
 'use client'
-import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, DatePicker, Form, Input, InputNumber, Select, Spin, Switch } from 'antd';
 import { useEffect, useState } from 'react';

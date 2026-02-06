@@ -12,7 +12,7 @@ export class AccountEmployee {
   @Prop()
   password: string;
 
-  @Prop()
+  @Prop({ type: Types.ObjectId, ref: 'Role', required: true })
   roleId: Types.ObjectId;
 
   @Prop({ default: 'ACTIVE' })

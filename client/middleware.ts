@@ -1,3 +1,4 @@
+import { pathAdminRoutes } from "@/config/route";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -27,6 +28,8 @@ export function middleware(request: NextRequest) {
   // Read the correct cookie names set by the login routes
   const clientAccessToken = request.cookies.get("client_access_token")?.value;
   const adminAccessToken = request.cookies.get("admin_access_token")?.value;
+  const adminSessionId = request.cookies.get("admin_sessionId")?.value;
+
 
   // Fix VNPay return URL format - replace first & with ?
   if (
@@ -41,9 +44,9 @@ export function middleware(request: NextRequest) {
   // Admin routes protection — check admin_access_token
   if (
     protectedAdminPaths.some((path) => pathname.startsWith(path)) &&
-    !adminAccessToken
+    !adminAccessToken && !adminSessionId
   ) {
-    return NextResponse.redirect(new URL("/auth/login", request.url));
+    return NextResponse.redirect(new URL(pathAdminRoutes.login, request.url));
   }
 
   // Client routes protection — check client_access_token
@@ -58,7 +61,7 @@ export function middleware(request: NextRequest) {
 
   // Already logged in as admin, redirect from auth pages to dashboard
   if (authPaths.some((path) => pathname.startsWith(path)) && adminAccessToken) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    return NextResponse.redirect(new URL(pathAdminRoutes.dashboard, request.url));
   }
 
   return NextResponse.next();

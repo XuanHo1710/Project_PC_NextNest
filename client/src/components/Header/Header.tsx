@@ -1,7 +1,6 @@
 'use client'
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { BellOutlined, CheckOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
-import '@ant-design/v5-patch-for-react-19';
 import { Button } from "antd";
 
 import axios from 'axios';

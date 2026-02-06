@@ -8,7 +8,7 @@ export interface IAccountEmployee {
   _id: string;
   IDEmp: string;
   password?: string;
-  roleId: string;
+  roleId: IRole;
   status: "ACTIVE" | "INACTIVE";
   avatar?: string;
   name: string;
@@ -23,8 +23,6 @@ export interface IAccountEmployee {
   updatedAt?: string;
   isDeleted?: boolean;
   deletedAt?: string;
-  // Populated fields (when joined)
-  role?: IRole;
 }
 
 // For admin auth context (sidebar, permissions)

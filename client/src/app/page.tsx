@@ -1,4 +1,3 @@
-import '@ant-design/v5-patch-for-react-19';
 import Image from "next/image";
 
 export default function Home() {
@@ -11,7 +10,7 @@ export default function Home() {
           alt="Next.js logo"
           width={180}
           height={38}
-          priority             
+          priority
         />
         <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           <li className="mb-2 tracking-[-.01em]">

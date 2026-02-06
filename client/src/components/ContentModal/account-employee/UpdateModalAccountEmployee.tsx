@@ -1,5 +1,4 @@
 'use client'
-import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { useEffect } from 'react';
@@ -22,8 +21,7 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
                 IDEmp: dataAccountEmployee.IDEmp,
                 password: dataAccountEmployee.password,
                 status: dataAccountEmployee.status,
-                employeeId: dataAccountEmployee.employee._id,
-                roleId: dataAccountEmployee?.role ? dataAccountEmployee?.role._id : ""
+                roleId: dataAccountEmployee?.roleId._id ? dataAccountEmployee?.roleId._id : ""
             });
         }
     }, [dataAccountEmployee, form]);
@@ -43,7 +41,6 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
         const account = {
             ...data,
             _id: dataAccountEmployee?._id,
-            employeeId: data.employeeId
         }
 
         if (!dataAccountEmployee?._id) return;
@@ -89,16 +86,6 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
                             }
                         ]}>
                             <Input.Password placeholder='Nhập mật khẩu ...' />
-                        </Form.Item>
-                        <Form.Item label="Nhân viên" name="employeeId" className='font-sans text-lg'>
-                            <Select placeholder="Chọn nhân viên">
-                                {employees.length > 0 &&
-                                    employees.map(em => (
-                                        <Select.Option key={em._id} value={em._id}>{em.name + "  " + em.age}</Select.Option>
-                                    ))
-                                }
-                                <Select.Option value={dataAccountEmployee.employee._id}>{dataAccountEmployee.employee.name + "  " + dataAccountEmployee.employee.age}</Select.Option>
-                            </Select>
                         </Form.Item>
                         <Form.Item label="Vai trò" name="roleId" className='font-sans text-lg'>
                             <Select placeholder="Chọn vai trò">

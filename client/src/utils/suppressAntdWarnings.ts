@@ -1,12 +1,4 @@
-/**
- * Suppress Ant Design React 19 compatibility warnings
- * 
- * This file patches console.warn to hide the Ant Design compatibility warning
- * for React 19. Ant Design v5 officially supports React 16-18, but works fine
- * with React 19 using the @ant-design/v5-patch-for-react-19 package.
- * 
- * The warning is purely informational and doesn't affect functionality.
- */
+
 
 // Patch console immediately (works both server and client side)
 const originalWarn = console.warn;
