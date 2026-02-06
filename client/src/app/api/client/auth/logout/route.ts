@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
       message: "Đăng xuất thành công",
     });
     response.cookies.delete("client_access_token");
+    response.cookies.delete("client_sessionId");
     return response;
   } catch (error) {
     console.error("Logout error:", error);
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
       message: "Đăng xuất thành công",
     });
     response.cookies.delete("client_access_token");
+    response.cookies.delete("client_sessionId");
     return response;
   }
 }

@@ -13,10 +13,21 @@ const ACCESS_TOKEN_MAX_AGE = parseInt(
  * Reads client_refresh_token from cookies, calls backend to get new access_token,
  * updates the client_access_token cookie, and returns the new token in the body.
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const cookieHeader = request.headers.get("cookie");
+
     // Call backend refresh endpoint with none because refresh token backend holded it
-    const response = await axios.post(`${API_URL}/auth/refresh`, {});
+    const response = await axios.post(
+      `${API_URL}/auth/refresh`,
+      {},
+      {
+        headers: {
+          Cookie: cookieHeader ?? "",
+        },
+        withCredentials: true,
+      },
+    );
 
     const data = response.data?.data || response.data;
 
