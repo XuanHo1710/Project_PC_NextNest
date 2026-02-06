@@ -16,7 +16,7 @@ export class AccountEmployeeService {
   constructor(
     @InjectModel(AccountEmployee.name)
     private accountEmployeeModel: Model<AccountEmployee>,
-  ) {}
+  ) { }
 
   async create(createAccountEmployeeDto: CreateAccountEmployeeDto) {
     // Hash password
@@ -73,7 +73,6 @@ export class AccountEmployeeService {
     const accounts = await this.accountEmployeeModel
       .find(filterAccount)
       .sort(sortAccount)
-      .populate(['employee']);
     return accounts;
   }
 

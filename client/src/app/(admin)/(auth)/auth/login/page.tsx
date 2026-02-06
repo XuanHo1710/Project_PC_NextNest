@@ -23,13 +23,17 @@ export default function AuthLogin() {
         setAccessToken(data.access_token);
       }
 
-      const role = await roleService.getById(data.payload.roleId);
+      console.log(data)
+
+      const role = await roleService.getById(data.user.roleId);
+
+      console.log(role)
 
       setAccountLogin(
         {
-          IDEmp: data.payload.IDEmp,
-          username: data.payload.username,
-          roleId: data.payload.roleId,
+          IDEmp: data.user.IDEmp,
+          username: data.user.username,
+          roleId: data.user.roleId,
           role,
         } as IAccountLogin
       );

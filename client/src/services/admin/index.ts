@@ -8,3 +8,4 @@ export { productAttributeService } from "./product-attribute.service";
 export { productAttributeValueService } from "./product-attribute-value.service";
 export { productVariantService } from "./product-variant.service";
 export { productAttributeAllowValueService } from "./product-attribute-allow-value.service";
+export { brandService } from "./brand.service";

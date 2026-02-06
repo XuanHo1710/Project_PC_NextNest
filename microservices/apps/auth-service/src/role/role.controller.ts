@@ -6,7 +6,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('/admin/role')
 export class RoleController {
-  constructor(private readonly roleService: RoleService) {}
+  constructor(private readonly roleService: RoleService) { }
 
   @MessagePattern('role.create')
   create(@Payload() data: { createRoleDto: CreateRoleDto }) {
@@ -24,7 +24,7 @@ export class RoleController {
   }
 
   @MessagePattern('role.findOne')
-  findOne(@Payload() data: { id: mongoose.Types.ObjectId }) {
+  findOne(@Payload() data: { id: string }) {
     return this.roleService.findOne(data.id);
   }
 
@@ -32,7 +32,7 @@ export class RoleController {
   update(
     @Payload()
     data: {
-      id: mongoose.Types.ObjectId;
+      id: string;
       updateRoleDto: UpdateRoleDto;
     },
   ) {
@@ -40,7 +40,7 @@ export class RoleController {
   }
 
   @MessagePattern('role.remove')
-  remove(@Payload() data: { id: mongoose.Types.ObjectId }) {
+  remove(@Payload() data: { id: string }) {
     return this.roleService.remove(data.id);
   }
 }

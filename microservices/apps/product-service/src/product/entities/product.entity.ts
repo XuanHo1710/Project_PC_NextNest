@@ -1,9 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
-import { ProductVariant } from 'src/product/entities/product-variant';
+import slugify from 'slugify';
 export type ProductDocument = HydratedDocument<Product>;
-const slugMongo = require('mongoose-slug-generator');
-mongoose.plugin(slugMongo);
 @Schema({ timestamps: true })
 export class Product {
   _id: Types.ObjectId;
@@ -11,7 +9,7 @@ export class Product {
   @Prop()
   name: string;
 
-  @Prop({ slugMongo: 'name', unique: true })
+  @Prop({ unique: true, index: true })
   slug: string;
 
   @Prop()
@@ -55,3 +53,26 @@ export class Product {
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
+
+
+
+ProductSchema.pre('save', async function () {
+  if (!this.isModified('name')) return;
+
+  const baseSlug = slugify(this.name, {
+    lower: true,
+    strict: true,
+    locale: 'vi',
+  });
+
+  let slug = baseSlug;
+  let count = 1;
+
+  const ProductSchema = this.constructor as any;
+
+  while (await ProductSchema.exists({ slug })) {
+    slug = `${baseSlug}-${count++}`;
+  }
+
+  this.slug = slug;
+});

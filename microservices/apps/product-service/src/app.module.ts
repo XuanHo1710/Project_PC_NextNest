@@ -6,14 +6,21 @@ import { ProductModule } from './product/product.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CategoryModule } from 'src/category/category.module';
 import { BrandModule } from 'src/brand/brand.module';
+import { Connection } from 'mongoose';
+import mongooseAutoPopulate from 'mongoose-autopopulate';
+
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI') || '',
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGODB_URI'),
+        connectionFactory: (connection: Connection) => {
+          connection.plugin(mongooseAutoPopulate);
+          return connection;
+        },
       }),
       inject: [ConfigService],
     }),
@@ -24,4 +31,4 @@ import { BrandModule } from 'src/brand/brand.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

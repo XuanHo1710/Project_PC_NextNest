@@ -21,46 +21,53 @@ export async function POST(request: NextRequest) {
     let accessToken = request.cookies.get("client_access_token")?.value;
 
     if (!accessToken) {
-      const refreshTokenResponse = await axios.post(
-        `${API_URL}/auth/refresh`,
-        {},
-        {
-          headers: {
-            Cookie: cookieHeader ?? "",
+      try {
+        const refreshTokenResponse = await axios.post(
+          `${API_URL}/auth/refresh`,
+          {},
+          {
+            headers: {
+              Cookie: cookieHeader ?? "",
+            },
+            withCredentials: true,
           },
-          withCredentials: true,
-        },
-      );
+        );
 
-      const refreshData =
-        refreshTokenResponse.data?.data || refreshTokenResponse.data;
-      const res = NextResponse.json({
-        success: true,
-        data: {
-          access_token: refreshData.access_token,
-          user: {
-            _id: refreshData._id,
-            email: refreshData.email,
-            fullname: refreshData.fullname,
-            avatar: refreshData.avatar,
-            authProvider: refreshData.authProvider,
-            accountStatus: refreshData.accountStatus,
-            isEmailVerified: refreshData.isEmailVerified,
-            phone: refreshData.phone,
-            gender: refreshData.gender,
+        const refreshData =
+          refreshTokenResponse.data?.data || refreshTokenResponse.data;
+        const res = NextResponse.json({
+          success: true,
+          data: {
+            access_token: refreshData.access_token,
+            user: {
+              _id: refreshData._id,
+              email: refreshData.email,
+              fullname: refreshData.fullname,
+              avatar: refreshData.avatar,
+              authProvider: refreshData.authProvider,
+              accountStatus: refreshData.accountStatus,
+              isEmailVerified: refreshData.isEmailVerified,
+              phone: refreshData.phone,
+              gender: refreshData.gender,
+            },
           },
-        },
-      });
+        });
 
-      res.cookies.set("client_access_token", refreshData.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: ACCESS_TOKEN_MAX_AGE,
-        path: "/",
-      });
+        res.cookies.set("client_access_token", refreshData.access_token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: ACCESS_TOKEN_MAX_AGE,
+          path: "/",
+        });
 
-      return res;
+        return res;
+      } catch {
+        return NextResponse.json(
+          { success: false, message: "Lỗi khi lấy thông tin tài khoản" },
+          { status: 400 },
+        );
+      }
     }
 
     const profileResponse = await axios.get(`${API_URL}/auth/profile`, {

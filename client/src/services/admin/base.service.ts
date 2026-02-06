@@ -1,5 +1,6 @@
 // services/base.service.ts
 import axiosInstance from "@/config/axios"
+import { AxiosRequestConfig } from "axios"
 
 export class BaseService<T> {
   protected baseUrl: string
@@ -13,8 +14,9 @@ export class BaseService<T> {
     return response.data
   }
 
-  async getById(id: string): Promise<T> {
-    const response = await axiosInstance.get(`${this.baseUrl}/${id}`)
+  async getById(id: string, config?: AxiosRequestConfig): Promise<T> {
+    console.log(id)
+    const response = await axiosInstance.get(`${this.baseUrl}/${id}`, config)
     return response.data
   }
 

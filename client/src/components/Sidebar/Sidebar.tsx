@@ -12,6 +12,7 @@ import { SiAdguard } from 'react-icons/si';
 import { FaPeopleGroup } from 'react-icons/fa6';
 import { GoLaw } from 'react-icons/go';
 import { AiOutlineTags, AiOutlineAppstore } from 'react-icons/ai';
+import { TbBrandApple } from 'react-icons/tb';
 import Link from 'next/link';
 import { MoneyCollectOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
@@ -66,6 +67,13 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     key: 'category',
                     label: <Link href={pathAdminRoutes.category}>Danh mục sản phẩm</Link>,
                     icon: <BiCategory />
+                } : null,
+                accountLogin && accountLogin.role && accountLogin.role.permission.some(
+                    (p) => p.method === "GET" && p.path === "/api/v1/admin/brand"
+                ) ? {
+                    key: 'brand',
+                    label: <Link href={pathAdminRoutes.brand}>Thương hiệu</Link>,
+                    icon: <TbBrandApple />
                 } : null,
                 accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/discount"

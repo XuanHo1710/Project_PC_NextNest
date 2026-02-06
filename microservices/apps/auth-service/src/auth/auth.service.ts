@@ -24,7 +24,7 @@ export class ClientAuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     @Inject(MICROSERVICE.REDIS_SERVICE) private readonly redisClient: Redis,
-  ) {}
+  ) { }
 
   async signIn(email: string, password: string) {
     const guest = await this.accountGuestModel
@@ -284,17 +284,14 @@ export class ClientAuthService {
     };
   }
 
-  async processNewTokenAdmin(refreshToken: string) {
+  async processNewTokenAdmin(sessionId: string) {
     console.log('Refresh token nè kakakak');
 
     try {
-      const detailPayload = this.jwtService.verify(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
-      });
 
       //  Check refresh token in redis
       const storedRefreshToken = await this.redisClient.get(
-        `admin_refresh_token:${detailPayload._id}`,
+        `admin_refresh_token:${sessionId}`,
       );
 
       const payload = this.jwtService.verify(storedRefreshToken!, {
@@ -306,11 +303,11 @@ export class ClientAuthService {
       }
 
       const payloadFinal = {
-        IDEmp: detailPayload.IDEmp,
-        username: detailPayload.username,
-        roleId: detailPayload.roleId,
-        employeeId: detailPayload.employeeId,
-        _id: detailPayload._id.toString(),
+        IDEmp: payload.IDEmp,
+        username: payload.username,
+        roleId: payload.roleId,
+        employeeId: payload.employeeId,
+        _id: payload._id.toString(),
       };
 
       const access_token = this.createAccessToken(payloadFinal);

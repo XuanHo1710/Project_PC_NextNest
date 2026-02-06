@@ -6,7 +6,7 @@ import { AccountEmployee } from 'src/account-employee/entities/account-employee.
 
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: ClientAuthService) {}
+  constructor(private readonly authService: ClientAuthService) { }
 
   @MessagePattern('auth.signIn')
   async signIn(@Payload() data: { email: string; password: string }) {
@@ -84,11 +84,11 @@ export class AuthController {
   }
 
   @MessagePattern('auth.refreshTokenAdmin')
-  refreshToken(@Payload() data: { refreshToken: string }) {
-    if (!data.refreshToken) {
-      throw new BadRequestException('Refresh token không tồn tại');
+  refreshToken(@Payload() data: { sessionId: string }) {
+    if (!data.sessionId) {
+      throw new BadRequestException('Session không tồn tại');
     }
-    return this.authService.processNewTokenAdmin(data.refreshToken);
+    return this.authService.processNewTokenAdmin(data.sessionId);
   }
 
   @MessagePattern('auth.signInAdmin')

@@ -18,7 +18,7 @@ export class RoleController {
   constructor(
     @Inject(MICROSERVICE.AUTH_SERVICE)
     private readonly roleService: ClientProxy,
-  ) {}
+  ) { }
 
   @Post()
   create(@Body() createRoleDto: CreateRoleDto) {
@@ -38,13 +38,14 @@ export class RoleController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: mongoose.Types.ObjectId) {
+  findOne(@Param('id') id: string) {
+    console.log("CALLED", id)
     return this.roleService.send('role.findOne', { id: id });
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: mongoose.Types.ObjectId,
+    @Param('id') id: string,
     @Body() updateRoleDto: UpdateRoleDto,
   ) {
     return this.roleService.send('role.update', {
@@ -54,7 +55,7 @@ export class RoleController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: mongoose.Types.ObjectId) {
+  remove(@Param('id') id: string) {
     return this.roleService.send('role.remove', { id: id });
   }
 }

@@ -260,6 +260,19 @@ export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) 
                                 selected={selected}
                             />
                         ),
+                    },
+                    {
+                        key: '10',
+                        label: <h2 className="text-md font-semibold">BRAND</h2>,
+                        children: (
+                            <ContextCollapse
+                                originName="BRAND"
+                                path="brand"
+                                name="brand"
+                                handleChange={handleChange}
+                                selected={selected}
+                            />
+                        ),
                     }
                 ]}
             />

@@ -7,6 +7,8 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ClientJwtAuthGuard } from 'guards/client-jwt-auth.guard';
 import { AccountGuestModule } from 'client/account-guest/account-guest.module';
+import { BrandModule } from 'client/brand/brand.module';
+import { CategoryModule } from 'client/category/category.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { AccountGuestModule } from 'client/account-guest/account-guest.module';
     ConfigModule,
     AuthModule,
     ProductModule,
+    BrandModule,
+    CategoryModule,
     JwtModule.register({}),
   ],
   providers: [
@@ -24,4 +28,4 @@ import { AccountGuestModule } from 'client/account-guest/account-guest.module';
     ClientJwtStrategy,
   ],
 })
-export class ClientModule {}
+export class ClientModule { }

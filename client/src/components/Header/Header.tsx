@@ -3,8 +3,8 @@ import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { BellOutlined, CheckOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
 import '@ant-design/v5-patch-for-react-19';
 import { Button } from "antd";
-import axios from '@/config/axios';
-// import axios from 'axios';
+
+import axios from 'axios';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { pathAdminRoutes } from '@/config/route';
@@ -20,7 +20,7 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
     //   .then(() => {
     //     window.location.href = "/auth/login"
     //   })
-    await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/admin/auth/logout`, {})
+    await axios.post(`/api/admin/auth/logout`, {})
       .then(() => {
         resetAuth();
       }).catch(error => {

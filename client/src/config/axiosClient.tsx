@@ -104,8 +104,12 @@ axiosClient.interceptors.response.use(
 
           toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
 
-          if (typeof window !== 'undefined') {
-            window.location.href = '/home?login=required';
+          if (typeof window !== undefined) {
+            if (window.location.pathname === '/order'
+              || window.location.pathname === '/profile'
+            ) {
+              window.location.href = '/home';
+            }
           }
 
           return Promise.reject(error);

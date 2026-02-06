@@ -105,7 +105,9 @@ instance.interceptors.response.use(
           toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
 
           if (typeof window !== 'undefined') {
-            window.location.href = pathAdminRoutes.login;
+            if (window.location.pathname !== "/auth/login") {
+              window.location.href = pathAdminRoutes.login;
+            }
           }
 
           return Promise.reject(error);

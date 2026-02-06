@@ -9,7 +9,7 @@ import {
 
 @Controller()
 export class BrandController {
-  constructor(private readonly brandService: BrandService) {}
+  constructor(private readonly brandService: BrandService) { }
 
   @MessagePattern('brand.create')
   create(@Payload() data: { createBrandDto: CreateBrandDto }) {
@@ -39,5 +39,10 @@ export class BrandController {
   @MessagePattern('brand.search')
   search(@Payload() data: { searchDto: SearchBrandDto }) {
     return this.brandService.findAllBrands(data.searchDto);
+  }
+
+  @MessagePattern('brand.updateMany')
+  updateMany(@Payload() data: { ids: string[]; typeUpdate: string }) {
+    return this.brandService.updateManyBrands(data.ids, data.typeUpdate);
   }
 }

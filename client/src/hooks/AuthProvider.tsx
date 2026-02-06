@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { roleService } from '@/services/admin/role.service';
 
 
-
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
     const { setAccountLogin, setAccessToken, resetAuth } = useAuthEmployee();
     const [loading, setLoading] = useState(true);
@@ -17,18 +16,28 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     useEffect(() => {
         const fetchAccount = async () => {
             try {
-                const res = await axios.post('/api/admin/auth/token', {});
+                const res = await axios.post('/api/admin/auth/profile', {});
                 if (res.data !== null && res.data.data) {
+                    console.log(res)
                     // Store access_token in Zustand so admin axios can attach it as Bearer token
                     if (res.data.data.access_token) {
                         setAccessToken(res.data.data.access_token);
                     }
-                    const role = await roleService.getById(res.data.data.roleId);
+                    const { user } = res.data.data;
+
+                    const role = await roleService.getById(user.roleId, {
+                        headers: {
+                            Authorization: `Bearer ${res.data.data.access_token}`,
+                        },
+                    });
+
+                    console.log(role)
+
                     setAccountLogin({
-                        IDEmp: res.data.data.IDEmp,
-                        username: res.data.data.username,
-                        employeeId: res.data.data.employeeId,
-                        roleId: res.data.data.roleId,
+                        IDEmp: user.IDEmp,
+                        username: user.username,
+                        employeeId: user.employeeId,
+                        roleId: user.roleId,
                         role,
                     } as IAccountLogin);
                 } else {

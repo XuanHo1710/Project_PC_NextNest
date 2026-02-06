@@ -12,16 +12,17 @@ import {
 export class BrandService {
   constructor(
     @InjectModel(Brand.name) private brandModel: Model<BrandDocument>,
-  ) {}
+  ) { }
 
   // ============= BRAND CRUD =============
   async createBrand(createBrandDto: CreateBrandDto) {
+    console.log(createBrandDto)
     const brand = new this.brandModel(createBrandDto);
     return await brand.save();
   }
 
   async findAllBrands(searchDto?: SearchBrandDto) {
-    const { keyword, status, page = 1, limit = 10 } = searchDto || {};
+    const { keyword, status, sort, page = 1, limit = 10 } = searchDto || {};
     const query: any = { isDeleted: false };
 
     if (keyword) {
@@ -35,9 +36,29 @@ export class BrandService {
       query.status = status;
     }
 
+    // Handle sorting - default to createdAt desc (newest first)
+    let sortOption: any = { createdAt: -1 };
+    if (sort) {
+      switch (sort) {
+        case 'name_asc':
+          sortOption = { name: 1 };
+          break;
+        case 'name_desc':
+          sortOption = { name: -1 };
+          break;
+        case 'createdAt_asc':
+          sortOption = { createdAt: 1 };
+          break;
+        case 'createdAt_desc':
+        default:
+          sortOption = { createdAt: -1 };
+          break;
+      }
+    }
+
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
-      this.brandModel.find(query).skip(skip).limit(limit).exec(),
+      this.brandModel.find(query).sort(sortOption).skip(skip).limit(limit).exec(),
       this.brandModel.countDocuments(query).exec(),
     ]);
 
@@ -97,5 +118,44 @@ export class BrandService {
       throw new NotFoundException(`Brand with ID ${id} not found`);
     }
     return { message: 'Brand deleted successfully', data: brand };
+  }
+
+  // ============= UPDATE MANY BRANDS =============
+  async updateManyBrands(ids: string[], typeUpdate: string) {
+    const objectIds = ids
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+
+    if (objectIds.length === 0) {
+      throw new NotFoundException('No valid brand IDs provided');
+    }
+
+    let updateData: any = {};
+
+    switch (typeUpdate) {
+      case 'active':
+        updateData = { status: 'ACTIVE' };
+        break;
+      case 'inactive':
+        updateData = { status: 'INACTIVE' };
+        break;
+      case 'delete':
+        updateData = { isDeleted: true, deletedAt: new Date() };
+        break;
+      default:
+        throw new NotFoundException(`Invalid update type: ${typeUpdate}`);
+    }
+
+    const result = await this.brandModel
+      .updateMany(
+        { _id: { $in: objectIds }, isDeleted: false },
+        { $set: updateData },
+      )
+      .exec();
+
+    return {
+      message: `Updated ${result.modifiedCount} brands successfully`,
+      modifiedCount: result.modifiedCount,
+    };
   }
 }

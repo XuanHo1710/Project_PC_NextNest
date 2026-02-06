@@ -2,7 +2,8 @@ import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+  process.env.NEXT_PUBLIC_API_URL + "/admin" ||
+  "http://localhost:8080/api/v1/admin";
 const ACCESS_TOKEN_MAX_AGE = parseInt(
   process.env.ACCESS_TOKEN_MAX_AGE || "86400",
 );
@@ -14,23 +15,17 @@ const ACCESS_TOKEN_MAX_AGE = parseInt(
  */
 export async function POST(request: NextRequest) {
   try {
-    const refreshToken = request.cookies.get("admin_refresh_token")?.value;
+    const cookieHeader = request.headers.get("cookie");
 
-    if (!refreshToken) {
-      return NextResponse.json(
-        { success: false, message: "Refresh token không tồn tại" },
-        { status: 401 },
-      );
-    }
-
-    // Call backend refresh endpoint with the refresh_token cookie forwarded
+    // Call backend refresh endpoint with none because refresh token backend holded it
     const response = await axios.post(
-      `${API_URL}/admin/auth/refresh`,
+      `${API_URL}/auth/refresh`,
       {},
       {
         headers: {
-          Cookie: `admin_refresh_token=${refreshToken}`,
+          Cookie: cookieHeader ?? "",
         },
+        withCredentials: true,
       },
     );
 
@@ -63,13 +58,13 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("Admin refresh token error:", error);
 
-    // Clear cookies if refresh fails
+    // Clear cookies if refresh fails (token is invalid/expired)
     const response = NextResponse.json(
       { success: false, message: "Phiên đăng nhập hết hạn" },
       { status: 401 },
     );
     response.cookies.delete("admin_access_token");
-    response.cookies.delete("admin_refresh_token");
+    response.cookies.delete("admin_sessionId")
 
     return response;
   }

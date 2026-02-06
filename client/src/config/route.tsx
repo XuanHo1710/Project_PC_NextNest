@@ -11,6 +11,7 @@ export const pathAdminRoutes = {
     guest: "/admin/guest",
     permission: "/admin/permission",
     role: "/admin/role",
+    brand: "/admin/brand",
 
     login: "/auth/login"
 }

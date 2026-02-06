@@ -1,8 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
+import slugify from 'slugify';
 export type CategoryDocument = HydratedDocument<Category>;
-const slugMongo = require('mongoose-slug-generator');
-mongoose.plugin(slugMongo);
 @Schema({ timestamps: true })
 export class Category {
   _id: Types.ObjectId;
@@ -18,7 +17,7 @@ export class Category {
   })
   parentId: Types.ObjectId;
 
-  @Prop({ slugMongo: 'name', unique: true })
+  @Prop({ unique: true, index: true })
   slug: string;
 
   @Prop()
@@ -35,3 +34,24 @@ export class Category {
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
+
+CategorySchema.pre('save', async function () {
+  if (!this.isModified('name')) return;
+
+  const baseSlug = slugify(this.name, {
+    lower: true,
+    strict: true,
+    locale: 'vi',
+  });
+
+  let slug = baseSlug;
+  let count = 1;
+
+  const CategoryModel = this.constructor as any;
+
+  while (await CategoryModel.exists({ slug })) {
+    slug = `${baseSlug}-${count++}`;
+  }
+
+  this.slug = slug;
+});

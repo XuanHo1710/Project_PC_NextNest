@@ -10,6 +10,10 @@ export class SearchBrandDto {
   status?: string;
 
   @IsOptional()
+  @IsString()
+  sort?: string;
+
+  @IsOptional()
   @IsNumber()
   @Min(1)
   page?: number;

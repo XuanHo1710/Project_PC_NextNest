@@ -22,10 +22,11 @@ export class BrandController {
   constructor(
     @Inject(MICROSERVICE.PRODUCT_SERVICE)
     private readonly brandService: ClientProxy,
-  ) {}
+  ) { }
 
   @Post()
   create(@Body() createBrandDto: CreateBrandDto) {
+    console.log(createBrandDto)
     return this.brandService.send('brand.create', { createBrandDto });
   }
 
@@ -42,6 +43,15 @@ export class BrandController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.brandService.send('brand.findOne', { id });
+  }
+
+  // updateMany PHẢI đặt TRƯỚC :id để không bị match nhầm
+  @Patch('updateMany')
+  updateMany(@Body() body: { ids: string[]; typeUpdate: string }) {
+    return this.brandService.send('brand.updateMany', {
+      ids: body.ids,
+      typeUpdate: body.typeUpdate,
+    });
   }
 
   @Patch(':id')

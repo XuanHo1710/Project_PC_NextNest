@@ -8,3 +8,4 @@ export * from "./useAccountEmployee";
 export * from "./useProductAttribute";
 export * from "./useProductAttributeValue";
 export * from "./useProductVariant";
+export * from "./useBrand";
