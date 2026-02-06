@@ -5,6 +5,7 @@ import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { Button, Form, Select } from "antd";
 import { useUpdateManyAccountEmployees } from "@/hooks/admin";
+import { toast } from "react-toastify";
 
 
 const EditSortAccountEmployee = () => {
@@ -13,21 +14,17 @@ const EditSortAccountEmployee = () => {
     const updateManyAccountEmployees = useUpdateManyAccountEmployees();
     const { accountLogin } = useAuthEmployee();
 
+    // Backend expects: sort=key_value (e.g., createdAt_desc, name_asc)
     const handleSortChange = (value: string) => {
+        const currentParams = new URLSearchParams(queryParams.toString());
+
         if (value !== "all") {
-            // Lấy các tham số hiện tại từ queryParams
-            const currentParams = new URLSearchParams(queryParams.toString());
-
-            // Cập nhật filter, nhưng giữ các tham số khác
             currentParams.set("sort", value);
-
-            // Cập nhật lại queryParams
-            setQueryParams(currentParams);
         } else {
-            const currentParams = new URLSearchParams(queryParams.toString());
-            currentParams.delete("sort"); // ✅ Xoá key sort nếu là "all"
-            setQueryParams(currentParams);
+            currentParams.delete("sort");
         }
+
+        setQueryParams(currentParams);
     }
 
     const handleEditMulti = async (values: { typeChange: string }) => {
@@ -43,13 +40,19 @@ const EditSortAccountEmployee = () => {
                     ids: selectedRows,
                     typeUpdate: type
                 });
-                if (type.split(":")[0] === "delete")
+                toast.success("Cập nhật thành công!!");
+                if (type.split(":")[0] === "delete") {
                     setSelectedRows([]);
+                }
             } catch (err) {
-                console.log(err);
+                console.error(err);
+                toast.error("Cập nhật thất bại!");
             }
+        } else {
+            toast.warning("Vui lòng chọn ít nhất 1 tài khoản!");
         }
     }
+
     return (
         <>
             <div className="mt-5 rounded-xl bg-white py-5 px-2 border-[1px] border-solid border-slate-200">
@@ -59,12 +62,16 @@ const EditSortAccountEmployee = () => {
                         <h3 className="mx-2 text-sm">Sắp xếp theo tiêu chí: </h3>
                         <Select
                             onChange={handleSortChange}
-                            defaultValue="Tất cả"
+                            defaultValue="all"
                             style={{ width: 200 }}
                             options={[
-                                { value: 'all', label: 'Tất cả' },
-                                { value: 'IDEmp_asc', label: 'Mã số tăng dần A-Z' },
-                                { value: 'IDEmp_desc', label: 'Mã số giảm dần Z-A' }
+                                { value: 'all', label: 'Mặc định' },
+                                { value: 'createdAt_desc', label: 'Mới nhất' },
+                                { value: 'createdAt_asc', label: 'Cũ nhất' },
+                                { value: 'name_asc', label: 'Tên A-Z' },
+                                { value: 'name_desc', label: 'Tên Z-A' },
+                                { value: 'IDEmp_asc', label: 'Mã NV tăng dần' },
+                                { value: 'IDEmp_desc', label: 'Mã NV giảm dần' },
                             ]}
                         />
                     </div>
@@ -80,7 +87,7 @@ const EditSortAccountEmployee = () => {
                                         <Select.Option value="delete">Xóa</Select.Option>
                                     </Select>
                                 </Form.Item>
-                                <Button htmlType="submit" type='primary' className='mx-2'>Thay đổi</Button>
+                                <Button htmlType="submit" type='primary' className='mx-2' loading={updateManyAccountEmployees.isPending}>Thay đổi</Button>
                             </Form>
                         }
                     </div>

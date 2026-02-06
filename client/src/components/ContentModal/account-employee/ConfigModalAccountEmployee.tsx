@@ -12,30 +12,30 @@ export default function ConfigModalAccountEmployee({ ConfigFields }: { ConfigFie
         }
     }
 
+    // Các field theo đúng entity AccountEmployee
+    const fieldConfigs = [
+        { key: "IDEmp", label: "Mã nhân viên" },
+        { key: "avatar", label: "Ảnh đại diện" },
+        { key: "name", label: "Họ tên" },
+        { key: "email", label: "Email" },
+        { key: "age", label: "Tuổi" },
+        { key: "gender", label: "Giới tính" },
+        { key: "status", label: "Trạng thái" },
+        { key: "roleId", label: "Vai trò" },
+    ];
+
     return (
         <>
-            <div className='grid grid-cols-12 gap-10 grid-flow-row'>
-                <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
-                    <h2 className='text-base font-semibold'>Mã nhân viên:</h2>
-                    <Switch
-                        defaultChecked={ConfigFields.fields.includes("IDEmp")}
-                        onClick={(isActive) => handleSwitch("IDEmp", isActive)}
-                    />
-                </div>
-                <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
-                    <h2 className='text-base font-semibold'>Status:</h2>
-                    <Switch
-                        defaultChecked={ConfigFields.fields.includes("status")}
-                        onClick={(isActive) => handleSwitch("status", isActive)}
-                    />
-                </div>
-                <div className='col-span-6 p-5 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
-                    <h2 className='text-base font-semibold'>Role:</h2>
-                    <Switch
-                        defaultChecked={ConfigFields.fields.includes("roleId")}
-                        onClick={(isActive) => handleSwitch("roleId", isActive)}
-                    />
-                </div>
+            <div className='grid grid-cols-12 gap-4 grid-flow-row'>
+                {fieldConfigs.map((field) => (
+                    <div key={field.key} className='col-span-6 p-4 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
+                        <h2 className='text-base font-semibold'>{field.label}:</h2>
+                        <Switch
+                            defaultChecked={ConfigFields.fields.includes(field.key)}
+                            onClick={(isActive) => handleSwitch(field.key, isActive)}
+                        />
+                    </div>
+                ))}
             </div>
         </>
     );

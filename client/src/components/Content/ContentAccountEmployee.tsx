@@ -23,7 +23,7 @@ export default function ContentAccountEmployee() {
 
     const [isOpen, setOpen] = useState(false);
     const [dataClick, setDataClick] = useState<null | DataType<IAccountEmployee>>(null);
-    const { queryParams } = useQueryParams();
+    const { queryParams, setQueryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
     // Fields theo đúng entity AccountEmployee - dùng roleId thay vì role
     const [fields, setFields] = useState<Array<string>>([
@@ -32,14 +32,20 @@ export default function ContentAccountEmployee() {
         "name",
         "email",
         "status",
-        "roleId"
+        "roleId",
+        "age",
+        "gender"
     ]);
 
     // Use TanStack Query hooks
     const {
-        data: accountEmployees = [],
+        data: result,
         isLoading: loading
     } = useAccountEmployees(queryParams.toString());
+
+    // Handle paginated response structure
+    const accountEmployees = (result as any)?.data || [];
+    const pagination = (result as any)?.pagination || { currentPage: 1, totalItems: 0, itemsPerPage: 10 };
 
     const deleteAccountEmployee = useDeleteAccountEmployee();
     const { accountLogin } = useAuthEmployee();
@@ -52,8 +58,6 @@ export default function ContentAccountEmployee() {
             console.error('Delete failed:', err);
         }
     }
-
-
 
     const columns: ColumnsType<DataType<IAccountEmployee>> = [
         ...fields.map((field) => {
@@ -76,6 +80,12 @@ export default function ContentAccountEmployee() {
             } else if (field === "roleId") {
                 columnConfig.render = (_: unknown, record: DataType<IAccountEmployee>) => (
                     <Tag color="blue">{record.roleId?.name || "Chưa có"}</Tag>
+                );
+            } else if (field === "gender") {
+                columnConfig.render = (_: unknown, record: DataType<IAccountEmployee>) => (
+                    <Tag color={record.gender === "MALE" ? "blue" : record.gender === "FEMALE" ? "magenta" : "default"}>
+                        {record.gender === "MALE" ? "Nam" : record.gender === "FEMALE" ? "Nữ" : "Khác"}
+                    </Tag>
                 );
             }
 
@@ -149,7 +159,25 @@ export default function ContentAccountEmployee() {
             <SelectedAccountEmployeeContext.Provider value={{ selectedRows, setSelectedRows }} >
                 <ActionAccountEmployee ConfigFields={{ fields, setFields }} Filter={<FilterAccountEmployee />} EditSort={<EditSortAccountEmployee />} ContentModal={<ContentModalAccountEmployee />} />
                 <Spin size="large" spinning={loading}>
-                    <TableContent<DataType<IAccountEmployee>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                    <TableContent<DataType<IAccountEmployee>>
+                        selectedRows={selectedRows}
+                        setSelectedRows={setSelectedRows}
+                        columns={columns}
+                        data={dataTable}
+                        pagination={{
+                            current: pagination.currentPage,
+                            pageSize: pagination.itemsPerPage,
+                            total: pagination.totalItems,
+                            onChange: (page: number, pageSize: number) => {
+                                setQueryParams((prev) => {
+                                    const newParams = new URLSearchParams(prev);
+                                    newParams.set('page', page.toString());
+                                    newParams.set('limit', pageSize.toString());
+                                    return newParams;
+                                });
+                            }
+                        }}
+                    ></TableContent>
                 </Spin>
             </SelectedAccountEmployeeContext.Provider>
         </>

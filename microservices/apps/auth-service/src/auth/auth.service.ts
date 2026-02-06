@@ -285,18 +285,26 @@ export class ClientAuthService {
   }
 
   async processNewTokenAdmin(sessionId: string) {
-    console.log('Refresh token nè kakakak');
+    console.log('[RefreshAdmin] Starting refresh for sessionId:', sessionId);
 
     try {
-
       //  Check refresh token in redis
       const storedRefreshToken = await this.redisClient.get(
         `admin_refresh_token:${sessionId}`,
       );
 
+      console.log('[RefreshAdmin] Stored refresh token exists:', !!storedRefreshToken);
+
+      if (!storedRefreshToken) {
+        console.log('[RefreshAdmin] No refresh token found in Redis');
+        throw new BadRequestException('Refresh token không tồn tại');
+      }
+
       const payload = this.jwtService.verify(storedRefreshToken!, {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
       });
+
+      console.log('[RefreshAdmin] Payload verified:', !!payload, 'IDEmp:', payload?.IDEmp);
 
       if (!payload) {
         throw new BadRequestException('Tài khoản không tồn tại');
@@ -311,9 +319,11 @@ export class ClientAuthService {
       };
 
       const access_token = this.createAccessToken(payloadFinal);
+      console.log('[RefreshAdmin] New access token created successfully');
 
       return { access_token, ...payloadFinal };
-    } catch (err) {
+    } catch (err: any) {
+      console.error('[RefreshAdmin] Error:', err?.message);
       throw new BadRequestException(
         'Refresh token không hợp lệ hoặc đã hết hạn',
       );

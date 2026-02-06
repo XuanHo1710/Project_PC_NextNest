@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { BellOutlined, CheckOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
 import { Button } from "antd";
@@ -80,8 +81,10 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
                 </div>
               </div>
             </div>
-            <UserOutlined className='rounded-full border-2 p-1' />
-            <h3 className='text-sm font-semibold'>{accountLogin?.username}</h3>
+            <Link href="/admin/profile" className="flex items-center gap-2 cursor-pointer hover:text-blue-500 text-black">
+              <UserOutlined className='rounded-full border-2 p-1' />
+              <h3 className='text-sm font-semibold'>{accountLogin?.username}</h3>
+            </Link>
             <Button onClick={handleLogout} variant='outlined' color='red' className="mx-2">Đăng xuất</Button>
           </div>
         </div>

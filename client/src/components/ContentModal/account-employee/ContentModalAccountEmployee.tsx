@@ -2,15 +2,11 @@
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { IAccountEmployee } from '@/types/account-employee';
-import { useCreateAccountEmployee, useEmployeesNoAccount, useRoles } from '@/hooks/admin';
-
-
-
+import { useCreateAccountEmployee, useRoles } from '@/hooks/admin';
 
 
 export default function ContentModalAccountEmployee() {
     const addAccountEmployee = useCreateAccountEmployee();
-    const { data: employees = [] } = useEmployeesNoAccount();
     const { data: roles = [] } = useRoles();
 
     const [form] = Form.useForm();
@@ -28,6 +24,7 @@ export default function ContentModalAccountEmployee() {
 
         const account = {
             ...data,
+            age: Number(data.age)
         }
 
         try {
@@ -37,9 +34,6 @@ export default function ContentModalAccountEmployee() {
             // Error is handled in the hook
         }
     }
-
-
-
 
     return (
         <>
@@ -51,7 +45,9 @@ export default function ContentModalAccountEmployee() {
                     initialValues={{
                         IDEmp: "",
                         password: "",
-                        employeeId: "",
+                        name: "",
+                        email: "",
+                        age: 18,
                         roleId: "",
                         status: "ACTIVE"
                     }}
@@ -66,6 +62,7 @@ export default function ContentModalAccountEmployee() {
                     ]}>
                         <Input placeholder='Nhập mã số của nhân viên ...' />
                     </Form.Item>
+
                     <Form.Item label="Mật khẩu" name="password" className='font-sans text-lg' rules={[
                         {
                             required: true,
@@ -75,15 +72,38 @@ export default function ContentModalAccountEmployee() {
                     ]}>
                         <Input.Password placeholder='Nhập mật khẩu ...' />
                     </Form.Item>
-                    <Form.Item label="Nhân viên" name="employeeId" className='font-sans text-lg'>
-                        <Select placeholder="Chọn nhân viên">
-                            {employees.length > 0 &&
-                                employees.map(em => (
-                                    <Select.Option key={em._id} value={em._id}>{"Tên: " + em.name + " - Tuổi: " + em.age}</Select.Option>
-                                ))
-                            }
-                        </Select>
+
+                    <Form.Item label="Họ tên" name="name" className='font-sans text-lg' rules={[
+                        {
+                            required: true,
+                            message: 'Họ tên không được để trống',
+                            whitespace: true
+                        }
+                    ]}>
+                        <Input placeholder='Nhập họ tên nhân viên ...' />
                     </Form.Item>
+
+                    <Form.Item label="Email" name="email" className='font-sans text-lg' rules={[
+                        {
+                            required: true,
+                            message: 'Email không được để trống',
+                            whitespace: true
+                        },
+                        {
+                            type: 'email',
+                            message: 'Email không hợp lệ'
+                        }
+                    ]}>
+                        <Input placeholder='Nhập email nhân viên ...' />
+                    </Form.Item>
+
+                    <Form.Item label="Tuổi" name="age" className='font-sans text-lg' rules={[
+                        { required: true, message: 'Tuổi không được để trống' },
+                        { type: 'number', min: 18, message: 'Tuổi phải lớn hơn hoặc bằng 18', transform: (value) => Number(value) }
+                    ]}>
+                        <Input type='number' placeholder='Nhập tuổi nhân viên ...' />
+                    </Form.Item>
+
                     <Form.Item label="Vai trò" name="roleId" className='font-sans text-lg'>
                         <Select placeholder="Chọn vai trò">
                             {roles.length > 0 &&

@@ -10,9 +10,10 @@ type TableContentProps<T> = {
   data: T[];
   selectedRows: Array<string>;
   setSelectedRows: React.Dispatch<React.SetStateAction<Array<string>>>;
+  pagination?: any;
 };
 
-export default function TableContent<T extends { _id?: string }>({ data, columns, setSelectedRows, selectedRows }: TableContentProps<T>) {
+export default function TableContent<T extends { _id?: string }>({ data, columns, setSelectedRows, selectedRows, pagination }: TableContentProps<T>) {
 
   // Selection row key
   const ChangeSelectionRow = (_: unknown, elementsSelect: T[]) => {
@@ -33,7 +34,7 @@ export default function TableContent<T extends { _id?: string }>({ data, columns
       <Table
         // scroll={{ x: 'max-content', y: 200 }}
         scroll={{ x: 1200 }}
-        pagination={{ pageSize: 4 }}
+        pagination={pagination || { pageSize: 10 }}
         rowSelection={rowSelection}
         columns={columns}
         dataSource={data}

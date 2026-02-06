@@ -20,7 +20,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 export class AccountEmployeeController {
   constructor(
     private readonly accountEmployeeService: AccountEmployeeService,
-  ) {}
+  ) { }
 
   @MessagePattern('account_employee.create')
   create(
@@ -40,8 +40,8 @@ export class AccountEmployeeController {
   }
 
   @MessagePattern('account_employee.updateMany')
-  updateMany(@Payload() dataUpdate: any) {
-    return this.accountEmployeeService.updateMany(dataUpdate);
+  updateMany(@Payload() data: { dataUpdate: any }) {
+    return this.accountEmployeeService.updateMany(data.dataUpdate);
   }
 
   @MessagePattern('account_employee.findOne')

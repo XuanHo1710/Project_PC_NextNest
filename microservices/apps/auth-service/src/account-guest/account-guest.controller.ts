@@ -8,7 +8,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('account-guest')
 export class AccountGuestController {
-  constructor(private readonly accountGuestService: AccountGuestService) {}
+  constructor(private readonly accountGuestService: AccountGuestService) { }
 
   @MessagePattern('account_guest.create')
   create(@Payload() data: { createAccountGuestDto: CreateAccountGuestDto }) {
@@ -39,6 +39,11 @@ export class AccountGuestController {
     },
   ) {
     return this.accountGuestService.update(data.id, data.updateAccountGuestDto);
+  }
+
+  @MessagePattern('account_guest.updateMany')
+  updateMany(@Payload() data: { dataUpdate: any }) {
+    return this.accountGuestService.updateMany(data.dataUpdate);
   }
 
   @MessagePattern('account_guest.verifyEmail')

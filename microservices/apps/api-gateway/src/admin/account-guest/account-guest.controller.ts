@@ -53,6 +53,13 @@ export class AccountGuestController {
         });
     }
 
+    @Patch('/updateMany')
+    updateMany(@Body() dataUpdate: any) {
+        return this.accountGuestService.send('account_guest.updateMany', {
+            dataUpdate: dataUpdate,
+        });
+    }
+
     @Patch(':id')
     update(
         @Param('id') id: string,

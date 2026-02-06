@@ -22,7 +22,7 @@ export class AccountGuestService {
   constructor(
     @InjectModel(AccountGuest.name)
     private accountGuestModel: Model<AccountGuestDocument>,
-  ) {}
+  ) { }
 
   async updateAccountUserToken(token: string, id: string) {
     return await this.accountGuestModel.findByIdAndUpdate(
@@ -36,6 +36,8 @@ export class AccountGuestService {
     createAccountGuestDto: CreateAccountGuestDto,
   ): Promise<AccountGuest> {
     // Check if email already exists
+
+    console.log(createAccountGuestDto)
     const existingAccount = await this.accountGuestModel.findOne({
       email: createAccountGuestDto.email,
       deletedAt: { $exists: false },
@@ -227,6 +229,35 @@ export class AccountGuestService {
     }
 
     return updatedAccount;
+  }
+
+  async updateMany(dataUpdate: any) {
+    const type = dataUpdate.typeUpdate.split(':')[0];
+    switch (type) {
+      case 'delete': {
+        return await this.accountGuestModel.updateMany(
+          { _id: { $in: dataUpdate.ids } },
+          {
+            deletedAt: new Date(),
+            isActive: false,
+            accountStatus: 'DELETED'
+          }
+        );
+      }
+      case 'update': {
+        const keyUpdate = dataUpdate.typeUpdate.split(':')[1].split('_')[0]; // vd: accountStatus
+        const valueUpdate = dataUpdate.typeUpdate.split(':')[1].split('_')[1]; // vd: ACTIVE
+
+        const update = {};
+        update[keyUpdate] = valueUpdate;
+
+        return await this.accountGuestModel.updateMany(
+          { _id: { $in: dataUpdate.ids } },
+          update,
+        );
+      }
+    }
+    return null;
   }
 
   async verifyEmail(token: string): Promise<AccountGuest> {

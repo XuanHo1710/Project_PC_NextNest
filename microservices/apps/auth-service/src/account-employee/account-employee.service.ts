@@ -47,6 +47,10 @@ export class AccountEmployeeService {
   }
 
   async findAll(filter: any) {
+    const page = Number(filter.page) || 1;
+    const limit = Number(filter.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const sortAccount = {};
 
     const filterAccount = {
@@ -56,28 +60,51 @@ export class AccountEmployeeService {
     if (filter.search) {
       const keyword = filter.search;
       filterAccount['$or'] = [
-        { IDEmp: { $regex: keyword, $options: 'i' } }, // tìm trong email
+        { IDEmp: { $regex: keyword, $options: 'i' } },
+        { name: { $regex: keyword, $options: 'i' } },
+        { email: { $regex: keyword, $options: 'i' } },
       ];
     }
 
     if (filter.sort) {
       const keySort = filter.sort.split('_')[0];
       const valueSort = filter.sort.split('_')[1];
-      sortAccount[keySort] = valueSort;
+      sortAccount[keySort] = valueSort === 'asc' ? 1 : -1;
+    } else {
+      // Default sort
+      sortAccount['createdAt'] = -1;
     }
 
     if (filter.filter) {
-      const keySort = filter.filter.split('_')[0];
-      const valueSort = filter.filter.split('_')[1];
-      filterAccount[keySort] = valueSort;
+      const keyFilter = filter.filter.split('_')[0];
+      const valueFilter = filter.filter.split('_')[1];
+      if (keyFilter === 'roleId') {
+        filterAccount[keyFilter] = new Types.ObjectId(valueFilter);
+      } else {
+        filterAccount[keyFilter] = valueFilter;
+      }
     }
 
-    const accounts = await this.accountEmployeeModel
-      .find(filterAccount, { password: 0 })
-      .sort(sortAccount)
-      .populate('roleId', 'name');
+    const [data, total] = await Promise.all([
+      this.accountEmployeeModel
+        .find(filterAccount, { password: 0 })
+        .populate('roleId', 'name')
+        .sort(sortAccount)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.accountEmployeeModel.countDocuments(filterAccount),
+    ]);
 
-    return accounts;
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   async findAccountByIDEmp(IDEmp: string): Promise<AccountEmployee | null> {
