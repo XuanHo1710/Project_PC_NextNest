@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { ProductAttribute } from 'src/product/entities/product-attribute';
 export type ProductAttributeValueDocument =
   HydratedDocument<ProductAttributeValue>;
 
@@ -15,7 +14,7 @@ export class ProductAttributeValue {
   label: string; // Màu xanh, đỏ, tím, Size S, Size M, ...
 
   //   Lấy thuộc tính nếu cần thì populate
-  @Prop({ type: Types.ObjectId, ref: ProductAttribute.name })
+  @Prop({ type: Types.ObjectId, ref: 'ProductAttribute' })
   attribute: Types.ObjectId; // ID của ProductAttribute
 
   @Prop({ type: String, default: '' })

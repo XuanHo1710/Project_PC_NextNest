@@ -2,13 +2,17 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { ProductVariant } from 'src/product/entities/product-variant';
 export type ProductDocument = HydratedDocument<Product>;
-
+const slugMongo = require('mongoose-slug-generator');
+mongoose.plugin(slugMongo);
 @Schema({ timestamps: true })
 export class Product {
   _id: Types.ObjectId;
 
   @Prop()
   name: string;
+
+  @Prop({ slugMongo: 'name', unique: true })
+  slug: string;
 
   @Prop()
   description: string;
@@ -34,7 +38,7 @@ export class Product {
   })
   status: string;
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: ProductVariant.name })
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'ProductVariant' })
   defaultProductVariantId: Types.ObjectId;
 
   @Prop()

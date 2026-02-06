@@ -13,7 +13,7 @@ export class ProductVariant {
   @Prop({ type: String, default: '' })
   subDescription: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Product.name })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Product' })
   product: Types.ObjectId;
 
   @Prop()
@@ -22,10 +22,8 @@ export class ProductVariant {
   @Prop({ default: 0 })
   discount: number; // 0 -> 100%
 
-  @Prop()
-  combination: {
-    [key: string]: string;
-  }; // { color: 'red', size: 'M' }
+  @Prop({ type: Map, of: String })
+  combination: Map<string, string>; // { color: 'red', size: 'M' }
 
   @Prop({ type: [String], default: [] })
   images: string[]; // Danh sách ảnh đại diện cho biến thể sản phẩm
