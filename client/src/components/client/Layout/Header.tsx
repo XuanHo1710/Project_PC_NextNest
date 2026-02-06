@@ -14,14 +14,15 @@ import { MdOutlineSearch } from "react-icons/md";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ICategory } from "@/types/modal.d";
+import { ICategory } from "@/types/category";
 import { categoryClientService, productClientService } from "@/services/client";
-import { IProductCard } from "@/types/model.client";
+import { IProductCard } from "@/types/product";
 import useCartStore from "@/hooks/useCart";
+import { getProductImage } from "@/utils/productHelpers";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
 import { Dropdown, Avatar } from "antd";
 import type { MenuProps } from 'antd';
-import { UserOutlined, LogoutOutlined, PicRightOutlined, CloudSyncOutlined, CarFilled } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, PicRightOutlined, CloudSyncOutlined, CarFilled, ShopOutlined } from '@ant-design/icons';
 import useAuthUser from "@/hooks/useAuthUser";
 
 
@@ -235,7 +236,7 @@ export default function HeaderClient() {
                                                 >
                                                     <div className="flex max-w-max justify-center flex-1 flex-col">
                                                         <Image
-                                                            src={p.images?.[0] || undefined}
+                                                            src={p.defaultVariant.images?.[0] || undefined}
                                                             alt={p.name}
                                                             width={80}
                                                             height={80}
@@ -252,11 +253,11 @@ export default function HeaderClient() {
                                                         </div>
                                                         <div className="flex justify-between">
                                                             <div className="flex gap-5">
-                                                                <p className="text-blue-600 font-bold">{p.newPrice.toLocaleString()}đ</p>
-                                                                <p className="text-stone-300 line-through">{p.oldPrice.toLocaleString()}đ</p>
+                                                                <p className="text-blue-600 font-bold">{(p.defaultVariant.price * (1 - p.defaultVariant.discount / 100)).toLocaleString()}đ</p>
+                                                                <p className="text-stone-300 line-through">{p.defaultVariant.price.toLocaleString()}đ</p>
                                                             </div>
                                                             <Badge
-                                                                count={`${p.discount}% OFF`}
+                                                                count={`${p.defaultVariant.discount}% OFF`}
                                                                 style={{
                                                                     backgroundColor: "#f5222d",
                                                                     color: "#fff",
@@ -316,7 +317,7 @@ export default function HeaderClient() {
                                             {cart && cart.cartItems.map((c, index) => (
                                                 <div key={index} className='flex items-center border-b border-gray-100 py-3 px-3'>
                                                     <div className='w-16 h-16 flex-shrink-0'>
-                                                        <Image alt={c.product?.name} src={c.product?.images[0]} />
+                                                        <Image alt={c.product?.name} src={getProductImage(c.product)} />
                                                     </div>
                                                     <div className='flex-grow ml-3'>
                                                         <div className='flex justify-between'>
@@ -434,6 +435,15 @@ function AuthSection({
                 <Link href="/profile/order" className="flex items-center gap-2">
                     <PicRightOutlined />
                     <span>Đơn hàng của tôi</span>
+                </Link>
+            ),
+        },
+        {
+            key: 'create-product',
+            label: (
+                <Link href="/create-product" className="flex items-center gap-2">
+                    <ShopOutlined />
+                    <span>Đăng bán sản phẩm</span>
                 </Link>
             ),
         },

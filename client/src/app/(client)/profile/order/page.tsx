@@ -8,11 +8,16 @@ import {
     OrderPageSkeleton,
     ProfilePageSkeleton
 } from "@/components/Skeletons";
-import { IOrderData } from '@/types/model.client';
+import { IOrderData } from '@/types/order';
 import { useQuery } from '@tanstack/react-query';
 import useAuthUser from '@/hooks/useAuthUser';
 import { orderClientService } from '@/services/client/order.client.service';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import {
+    getProductDisplayPrice,
+    getProductOriginalPrice,
+    getProductImage,
+} from "@/utils/productHelpers";
 
 interface IOrderItem {
     id: string,
@@ -45,9 +50,9 @@ export default function OrderPage() {
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
-                    price: item.product.newPrice || 0,
-                    originalPrice: item.product.oldPrice || 0,
-                    image: item.product.images[0] || '/laptop.png',
+                    price: getProductDisplayPrice(item.product) || 0,
+                    originalPrice: getProductOriginalPrice(item.product) || 0,
+                    image: getProductImage(item.product) || '/laptop.png',
                     slug: item.product.slug || '',
                     status: 'pending'
                 }) as IOrderItem);
@@ -59,9 +64,9 @@ export default function OrderPage() {
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
-                    price: item.product.newPrice || 0,
-                    originalPrice: item.product.oldPrice || 0,
-                    image: item.product.images[0] || '/laptop.png',
+                    price: getProductDisplayPrice(item.product) || 0,
+                    originalPrice: getProductOriginalPrice(item.product) || 0,
+                    image: getProductImage(item.product) || '/laptop.png',
                     slug: item.product.slug || '',
                     status: 'shipping'
                 }) as IOrderItem);
@@ -73,9 +78,9 @@ export default function OrderPage() {
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
-                    price: item.product.newPrice || 0,
-                    originalPrice: item.product.oldPrice || 0,
-                    image: item.product.images[0] || '/laptop.png',
+                    price: getProductDisplayPrice(item.product) || 0,
+                    originalPrice: getProductOriginalPrice(item.product) || 0,
+                    image: getProductImage(item.product) || '/laptop.png',
                     slug: item.product.slug || '',
                     status: 'delivery'
                 }) as IOrderItem);
@@ -87,9 +92,9 @@ export default function OrderPage() {
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
-                    price: item.product.newPrice || 0,
-                    originalPrice: item.product.oldPrice || 0,
-                    image: item.product.images[0] || '/laptop.png',
+                    price: getProductDisplayPrice(item.product) || 0,
+                    originalPrice: getProductOriginalPrice(item.product) || 0,
+                    image: getProductImage(item.product) || '/laptop.png',
                     slug: item.product.slug || '',
                     status: 'completed'
                 }) as IOrderItem);
@@ -101,9 +106,9 @@ export default function OrderPage() {
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
-                    price: item.product.newPrice || 0,
-                    originalPrice: item.product.oldPrice || 0,
-                    image: item.product.images[0] || '/laptop.png',
+                    price: getProductDisplayPrice(item.product) || 0,
+                    originalPrice: getProductOriginalPrice(item.product) || 0,
+                    image: getProductImage(item.product) || '/laptop.png',
                     slug: item.product.slug || '',
                     status: 'cancelled'
                 }) as IOrderItem);
@@ -115,9 +120,9 @@ export default function OrderPage() {
                     id: order._id,
                     productName: item.product.name,
                     quantity: item.quantity || 1,
-                    price: item.product.newPrice || 0,
-                    originalPrice: item.product.oldPrice || 0,
-                    image: item.product.images[0] || '/laptop.png',
+                    price: getProductDisplayPrice(item.product) || 0,
+                    originalPrice: getProductOriginalPrice(item.product) || 0,
+                    image: getProductImage(item.product) || '/laptop.png',
                     slug: item.product.slug || '',
                     status: 'refund'
                 }) as IOrderItem);

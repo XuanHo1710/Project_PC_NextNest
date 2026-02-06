@@ -1,11 +1,11 @@
 // services/category.service.ts
-import type { ICategory } from "@/types/modal.d"
-import { BaseService } from "./base.service"
+import type { ICategory } from "@/types/category";
+import { BaseService } from "./base.service";
 
 class CategoryService extends BaseService<ICategory> {
   constructor() {
-    super("category")
+    super("category");
   }
 }
 
-export const categoryService = new CategoryService()
+export const categoryService = new CategoryService();

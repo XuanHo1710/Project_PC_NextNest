@@ -1,166 +1,141 @@
-import axiosClient from '@/config/axiosClient';
+import axiosClient from "@/config/axiosClient";
 import {
-    ILoginDto,
-    IRegisterDto,
-    ILoginResponse,
-    IRegisterResponse,
-    IUpdateProfileDto,
-    IUpdateAccountSettingsDto,
-    IChangePasswordDto,
-    IGuest,
-    IAccountGuest
-} from '@/types/account';
+  IAccountGuest,
+  IAddress,
+  IUpdateProfileDto,
+  IChangePasswordDto,
+} from "@/types";
 
-class AccountService {
-    private baseURL = '/client/auth';
+class AccountGuestService {
+  private baseURL = "/client/account-guest";
 
-    // Authentication APIs
-    async login(loginData: ILoginDto): Promise<ILoginResponse> {
-        const response = await axiosClient.post(`${this.baseURL}/login`, loginData);
-        return response.data;
-    }
+  // ============== Profile APIs ==============
 
-    async register(registerData: IRegisterDto): Promise<IRegisterResponse> {
-        const response = await axiosClient.post(`${this.baseURL}/register`, registerData);
-        return response.data;
-    }
+  async getProfile(): Promise<IAccountGuest> {
+    const response = await axiosClient.get(`${this.baseURL}/profile`);
+    return response as unknown as IAccountGuest;
+  }
 
-    async googleLogin(): Promise<void> {
-        // Redirect to Google OAuth
-        window.location.href = `${process.env.NEXT_PUBLIC_API_URL}${this.baseURL}/google`;
-    }
+  async updateProfile(data: IUpdateProfileDto): Promise<IAccountGuest> {
+    const response = await axiosClient.patch(`${this.baseURL}/profile`, data);
+    return response as unknown as IAccountGuest;
+  }
 
-    async logout(): Promise<void> {
-        await axiosClient.post(`${this.baseURL}/logout`);
-    }
+  async uploadAvatar(file: File): Promise<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append("avatar", file);
 
-    async refreshToken(): Promise<{ access_token: string }> {
-        const response = await axiosClient.post(`${this.baseURL}/refresh`);
-        return response.data;
-    }
+    const response = await axiosClient.post(
+      `${this.baseURL}/upload-avatar`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+    return response as unknown as { avatarUrl: string };
+  }
 
-    async getCurrentUser(): Promise<ILoginResponse> {
-        const response = await axiosClient.get(`${this.baseURL}/profile`);
-        return response.data;
-    }
+  // ============== Password Management ==============
 
-    // Email verification
-    async verifyEmail(token: string): Promise<void> {
-        await axiosClient.post(`${this.baseURL}/verify-email`, { token });
-    }
+  async changePassword(data: IChangePasswordDto): Promise<void> {
+    await axiosClient.post(`${this.baseURL}/change-password`, data);
+  }
 
-    async resendVerificationEmail(): Promise<void> {
-        await axiosClient.post(`${this.baseURL}/resend-verification`);
-    }
+  // ============== Address Management ==============
 
-    // Password management
-    async changePassword(passwordData: IChangePasswordDto): Promise<void> {
-        await axiosClient.post(`${this.baseURL}/change-password`, passwordData);
-    }
+  async getAddresses(): Promise<IAddress[]> {
+    const response = await axiosClient.get(`${this.baseURL}/addresses`);
+    return response as unknown as IAddress[];
+  }
 
-    async forgotPassword(email: string): Promise<void> {
-        await axiosClient.post(`${this.baseURL}/forgot-password`, { email });
-    }
+  async addAddress(address: Omit<IAddress, "_id">): Promise<IAddress> {
+    const response = await axiosClient.post(
+      `${this.baseURL}/addresses`,
+      address,
+    );
+    return response as unknown as IAddress;
+  }
 
-    async resetPassword(token: string, newPassword: string): Promise<void> {
-        await axiosClient.post(`${this.baseURL}/reset-password`, {
-            token,
-            newPassword
-        });
-    }
+  async updateAddress(
+    addressId: string,
+    address: Partial<IAddress>,
+  ): Promise<IAddress> {
+    const response = await axiosClient.patch(
+      `${this.baseURL}/addresses/${addressId}`,
+      address,
+    );
+    return response as unknown as IAddress;
+  }
 
-    // Profile management
-    async updateProfile(profileData: IUpdateProfileDto): Promise<IGuest> {
-        const response = await axiosClient.patch(`${this.baseURL}/profile`, profileData);
-        return response.data;
-    }
+  async deleteAddress(addressId: string): Promise<void> {
+    await axiosClient.delete(`${this.baseURL}/addresses/${addressId}`);
+  }
 
-    async updateAccountSettings(settingsData: IUpdateAccountSettingsDto): Promise<IAccountGuest> {
-        const response = await axiosClient.patch(`${this.baseURL}/account-settings`, settingsData);
-        return response.data;
-    }
+  async setDefaultAddress(addressId: string): Promise<void> {
+    await axiosClient.patch(
+      `${this.baseURL}/addresses/${addressId}/set-default`,
+    );
+  }
 
-    async uploadAvatar(file: File): Promise<{ avatarUrl: string }> {
-        const formData = new FormData();
-        formData.append('avatar', file);
+  // ============== Favorites ==============
 
-        const response = await axiosClient.post(`${this.baseURL}/upload-avatar`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-        return response.data;
-    }
+  async getFavorites(): Promise<string[]> {
+    const response = await axiosClient.get(`${this.baseURL}/favorites`);
+    return response as unknown as string[];
+  }
 
-    // Address management
-    async getAddresses(): Promise<IGuest['addresses']> {
-        const response = await axiosClient.get(`${this.baseURL}/addresses`);
-        return response.data;
-    }
+  async addToFavorites(productId: string): Promise<void> {
+    await axiosClient.post(`${this.baseURL}/favorites/${productId}`);
+  }
 
-    async addAddress(address: Omit<IGuest['addresses'][0], 'id'>): Promise<IGuest['addresses'][0]> {
-        const response = await axiosClient.post(`${this.baseURL}/addresses`, address);
-        return response.data;
-    }
+  async removeFromFavorites(productId: string): Promise<void> {
+    await axiosClient.delete(`${this.baseURL}/favorites/${productId}`);
+  }
 
-    async updateAddress(addressId: string, address: Partial<IGuest['addresses'][0]>): Promise<IGuest['addresses'][0]> {
-        const response = await axiosClient.patch(`${this.baseURL}/addresses/${addressId}`, address);
-        return response.data;
-    }
+  // ============== Recently Viewed ==============
 
-    async deleteAddress(addressId: string): Promise<void> {
-        await axiosClient.delete(`${this.baseURL}/addresses/${addressId}`);
-    }
+  async getRecentlyViewed(): Promise<
+    Array<{ productId: string; viewedAt: string }>
+  > {
+    const response = await axiosClient.get(`${this.baseURL}/recently-viewed`);
+    return response as unknown as Array<{
+      productId: string;
+      viewedAt: string;
+    }>;
+  }
 
-    async setDefaultAddress(addressId: string): Promise<void> {
-        await axiosClient.patch(`${this.baseURL}/addresses/${addressId}/set-default`);
-    }
+  // ============== Statistics ==============
 
-    // Account statistics (for user dashboard)
-    async getAccountStats(): Promise<{
-        totalOrders: number;
-        totalSpent: number;
-        loyaltyPoints: number;
-        totalReviews: number;
-    }> {
-        const response = await axiosClient.get(`${this.baseURL}/stats`);
-        return response.data;
-    }
+  async getStats(): Promise<{
+    totalOrders: number;
+    totalSpent: number;
+    loyaltyPoints: number;
+    totalReviews: number;
+  }> {
+    const response = await axiosClient.get(`${this.baseURL}/stats`);
+    return response as unknown as {
+      totalOrders: number;
+      totalSpent: number;
+      loyaltyPoints: number;
+      totalReviews: number;
+    };
+  }
 
-    // Recent activity
-    async getRecentActivity(): Promise<Array<{
-        id: string;
-        type: string;
-        description: string;
-        createdAt: string;
-    }>> {
-        const response = await axiosClient.get(`${this.baseURL}/recent-activity`);
-        return response.data;
-    }
+  // ============== Account Settings ==============
 
-    // Two-factor authentication
-    async enableTwoFactor(): Promise<{ qrCode: string; secret: string }> {
-        const response = await axiosClient.post(`${this.baseURL}/2fa/enable`);
-        return response.data;
-    }
-
-    async verifyTwoFactor(token: string): Promise<{ backupCodes: string[] }> {
-        const response = await axiosClient.post(`${this.baseURL}/2fa/verify`, { token });
-        return response.data;
-    }
-
-    async disableTwoFactor(token: string): Promise<void> {
-        await axiosClient.post(`${this.baseURL}/2fa/disable`, { token });
-    }
-
-    // Account deletion
-    async requestAccountDeletion(): Promise<void> {
-        await axiosClient.post(`${this.baseURL}/request-deletion`);
-    }
-
-    async cancelAccountDeletion(): Promise<void> {
-        await axiosClient.post(`${this.baseURL}/cancel-deletion`);
-    }
+  async updateAccountSettings(settings: {
+    emailNotifications: boolean;
+    smsNotifications: boolean;
+    marketingEmails: boolean;
+    twoFactorEnabled: boolean;
+  }): Promise<void> {
+    await axiosClient.patch(`${this.baseURL}/settings`, settings);
+  }
 }
 
-export const accountService = new AccountService();
+export const accountGuestService = new AccountGuestService();
+
+// Legacy export for backward compatibility
+export const accountService = accountGuestService;

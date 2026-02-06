@@ -6,7 +6,7 @@ import TextArea from 'antd/es/input/TextArea';
 import { DatePicker } from 'antd';
 import { useState } from 'react';
 import dayjs from 'dayjs';
-import { IDiscount } from '@/types/modal.d';
+import { IDiscount } from '@/types/discount';
 import { useCreateDiscount } from '@/hooks/admin';
 
 

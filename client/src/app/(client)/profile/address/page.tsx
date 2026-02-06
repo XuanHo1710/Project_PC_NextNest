@@ -8,9 +8,9 @@ import {
     AddressPageSkeleton,
     ProfilePageSkeleton
 } from "@/components/Skeletons";
-import { guestClientService } from "@/services/client/guest.client.service";
+import { accountGuestService } from "@/services/client/account.client.service";
 import useAuthUser from "@/hooks/useAuthUser";
-import { IAddress } from "@/types/account";
+import { IAddress } from "@/types/account-guest";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 interface Province {
@@ -66,7 +66,7 @@ export default function ProfileAddress() {
         if (!user?.id) return;
 
         try {
-            const profile = await guestClientService.getProfile(user.id);
+            const profile = await accountGuestService.getProfile(user.id);
             setAddresses(profile.addresses || []);
         } catch (error) {
             console.error('Error fetching addresses:', error);
@@ -211,11 +211,11 @@ export default function ProfileAddress() {
 
             if (editingAddress) {
                 // Update existing address
-                await guestClientService.updateAddress(user.id, editingAddress._id!, addressData);
+                await accountGuestService.updateAddress(user.id, editingAddress._id!, addressData);
                 message.success('Cập nhật địa chỉ thành công!');
             } else {
                 // Add new address
-                await guestClientService.addAddress(user.id, addressData);
+                await accountGuestService.addAddress(user.id, addressData);
                 message.success('Thêm địa chỉ mới thành công!');
             }
 
@@ -243,7 +243,7 @@ export default function ProfileAddress() {
         }
 
         try {
-            await guestClientService.deleteAddress(user.id, addressId);
+            await accountGuestService.deleteAddress(user.id, addressId);
             message.success('Xóa địa chỉ thành công!');
             await fetchUserAddresses();
         } catch (error) {
@@ -259,7 +259,7 @@ export default function ProfileAddress() {
         }
 
         try {
-            await guestClientService.setDefaultAddress(user.id, addressId);
+            await accountGuestService.setDefaultAddress(user.id, addressId);
             message.success('Đã đặt làm địa chỉ mặc định!');
             await fetchUserAddresses();
         } catch (error) {

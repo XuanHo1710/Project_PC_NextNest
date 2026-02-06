@@ -1,25 +1,10 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Select } from "antd"
+import { Card, Select, Typography } from "antd"
 import { useState } from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, Tooltip, Legend, ResponsiveContainer } from "recharts"
 
-const chartConfig = {
-    visitors: {
-        label: "Visitors",
-    },
-    desktop: {
-        label: "Desktop",
-        color: "rgb(26, 142, 255)",
-    },
-    mobile: {
-        label: "Mobile",
-        color: "rgb(26, 142, 255)",
-    },
-} satisfies ChartConfig
-
+const { Title, Text } = Typography
 
 const chartData = [
     { date: "2024-04-01", desktop: 222, mobile: 150 },
@@ -115,9 +100,9 @@ const chartData = [
     { date: "2024-06-30", desktop: 446, mobile: 400 },
 ]
 
-
 export const AreaChartStatisticWeek = () => {
-    const [timeRange, setTimeRange] = useState("90d");
+    const [timeRange, setTimeRange] = useState("90d")
+
     const filteredData = chartData.filter((item) => {
         const date = new Date(item.date)
         const referenceDate = new Date("2024-06-30")
@@ -133,107 +118,66 @@ export const AreaChartStatisticWeek = () => {
     })
 
     return (
-        <>
-            <Card>
-                <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-                    <div className="grid flex-1 gap-1 text-center sm:text-left">
-                        <CardTitle>Unique Visitor</CardTitle>
-                        <CardDescription>
-                            Showing total visitors for the last 3 months
-                        </CardDescription>
-                    </div>
-                    <Select value={timeRange} onChange={setTimeRange}>
-                        <Select.Option value="90d" className="rounded-lg">
-                            Last 3 months
-                        </Select.Option>
-                        <Select.Option value="30d" className="rounded-lg">
-                            Last 30 days
-                        </Select.Option>
-                        <Select.Option value="7d" className="rounded-lg">
-                            Last 7 days
-                        </Select.Option>
-                    </Select>
-                </CardHeader>
-                <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-                    <ChartContainer
-                        config={chartConfig}
-                        className="aspect-auto h-[250px] w-full"
-                    >
-                        <AreaChart data={filteredData}>
-                            <defs>
-                                <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                                    <stop
-                                        offset="5%"
-                                        stopColor="var(--color-desktop)"
-                                        stopOpacity={0.8}
-                                    />
-                                    <stop
-                                        offset="95%"
-                                        stopColor="var(--color-desktop)"
-                                        stopOpacity={0.1}
-                                    />
-                                </linearGradient>
-                                <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
-                                    <stop
-                                        offset="5%"
-                                        stopColor="var(--color-mobile)"
-                                        stopOpacity={0.8}
-                                    />
-                                    <stop
-                                        offset="95%"
-                                        stopColor="var(--color-mobile)"
-                                        stopOpacity={0.1}
-                                    />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid vertical={false} />
-                            <XAxis
-                                dataKey="date"
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                                minTickGap={32}
-                                tickFormatter={(value) => {
-                                    const date = new Date(value)
-                                    return date.toLocaleDateString("en-US", {
-                                        month: "short",
-                                        day: "numeric",
-                                    })
-                                }}
-                            />
-                            <ChartTooltip
-                                cursor={false}
-                                content={
-                                    <ChartTooltipContent
-                                        labelFormatter={(value) => {
-                                            return new Date(value).toLocaleDateString("en-US", {
-                                                month: "short",
-                                                day: "numeric",
-                                            })
-                                        }}
-                                        indicator="dot"
-                                    />
-                                }
-                            />
-                            <Area
-                                dataKey="mobile"
-                                type="natural"
-                                fill="url(#fillMobile)"
-                                stroke="var(--color-mobile)"
-                                stackId="a"
-                            />
-                            <Area
-                                dataKey="desktop"
-                                type="natural"
-                                fill="url(#fillDesktop)"
-                                stroke="var(--color-desktop)"
-                                stackId="a"
-                            />
-                            <ChartLegend content={<ChartLegendContent />} />
-                        </AreaChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
-        </>
+        <Card>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f0f0f0', paddingBottom: 20, marginBottom: 20 }}>
+                <div>
+                    <Title level={5} style={{ margin: 0 }}>Unique Visitor</Title>
+                    <Text type="secondary">Showing total visitors for the last 3 months</Text>
+                </div>
+                <Select value={timeRange} onChange={setTimeRange} style={{ width: 140 }}>
+                    <Select.Option value="90d">Last 3 months</Select.Option>
+                    <Select.Option value="30d">Last 30 days</Select.Option>
+                    <Select.Option value="7d">Last 7 days</Select.Option>
+                </Select>
+            </div>
+            <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={filteredData}>
+                    <defs>
+                        <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="rgb(26, 142, 255)" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="rgb(26, 142, 255)" stopOpacity={0.1} />
+                        </linearGradient>
+                        <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#52c41a" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#52c41a" stopOpacity={0.1} />
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        minTickGap={32}
+                        tickFormatter={(value) => {
+                            const date = new Date(value)
+                            return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                        }}
+                    />
+                    <Tooltip
+                        labelFormatter={(value) => {
+                            return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                        }}
+                    />
+                    <Legend />
+                    <Area
+                        dataKey="mobile"
+                        type="natural"
+                        fill="url(#fillMobile)"
+                        stroke="#52c41a"
+                        stackId="a"
+                        name="Mobile"
+                    />
+                    <Area
+                        dataKey="desktop"
+                        type="natural"
+                        fill="url(#fillDesktop)"
+                        stroke="rgb(26, 142, 255)"
+                        stackId="a"
+                        name="Desktop"
+                    />
+                </AreaChart>
+            </ResponsiveContainer>
+        </Card>
     )
 }

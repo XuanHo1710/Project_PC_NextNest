@@ -1,5 +1,5 @@
 'use client'
-import { IRole } from "@/types/modal.d";
+import { IRole } from "@/types/role";
 import { Button, Collapse, Switch } from "antd";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";

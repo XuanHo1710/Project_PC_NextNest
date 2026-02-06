@@ -7,13 +7,14 @@ import EditSortProduct from "@/components/EditSort/product/EditSortProduct";
 import TableContent from "@/components/TableContent/TableContent";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { ICategory, IProduct } from "@/types/modal.d";
+import { ICategory } from "@/types/category";
+import { IProduct } from "@/types/product";
 import { DataType, SelectedContextType } from "@/types/table.d";
-import { Image, Modal, Popconfirm, Spin, Tag } from "antd";
+import { Modal, Spin, Tag, Input, Descriptions, Divider } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
 import { createContext, useContext, useState } from "react";
-import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { useProducts, useDeleteProduct } from "@/hooks/admin";
+import { FaPen, FaTrashAlt, FaEye } from "react-icons/fa";
+import { useProducts, useUpdateProduct } from "@/hooks/admin";
 
 
 const SelectedProductContext = createContext<SelectedContextType | undefined>(undefined);
@@ -25,18 +26,29 @@ export default function ContentProduct() {
     const [dataClick, setDataClick] = useState<null | DataType<IProduct>>(null);
     const { queryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
+
+    // Soft-delete modal state
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+    const [deleteReason, setDeleteReason] = useState('');
+    const [deleteLoading, setDeleteLoading] = useState(false);
+
+    // Detail modal state
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
+    const [detailData, setDetailData] = useState<DataType<IProduct> | null>(null);
+
     const [fields, setFields] = useState<Array<string>>([
         "name",
         "images",
         "category",
-        "oldPrice",
+        "maxPrice",
         "stock",
         "soldCount",
         "status",
         "position",
         "feature",
         "discount",
-        "newPrice"
+        "minPrice"
     ]);
 
     // Use TanStack Query hooks
@@ -45,15 +57,35 @@ export default function ContentProduct() {
         isLoading: loading
     } = useProducts(queryParams.toString());
 
-    const deleteProduct = useDeleteProduct();
+    const updateProduct = useUpdateProduct();
 
-    const handleDelete = async (id: string) => {
+    const handleSoftDelete = async () => {
+        if (!deleteTarget || !deleteReason.trim()) return;
+        setDeleteLoading(true);
         try {
-            await deleteProduct.mutateAsync(id);
+            await updateProduct.mutateAsync({
+                id: deleteTarget,
+                data: { isDeleted: true, deleteReason: deleteReason.trim() } as Partial<IProduct>,
+            });
         } catch (err) {
-            // Error handling is done in the hook
-            console.error('Delete failed:', err);
+            console.error('Soft delete failed:', err);
+        } finally {
+            setDeleteLoading(false);
+            setDeleteModalOpen(false);
+            setDeleteTarget(null);
+            setDeleteReason('');
         }
+    }
+
+    const openDeleteModal = (id: string) => {
+        setDeleteTarget(id);
+        setDeleteReason('');
+        setDeleteModalOpen(true);
+    }
+
+    const openDetailModal = (record: DataType<IProduct>) => {
+        setDetailData(record);
+        setDetailModalOpen(true);
     }
 
 
@@ -67,56 +99,7 @@ export default function ContentProduct() {
                 width: 3600,
             };
 
-            // Thêm render tùy chỉnh cho các trường cụ thể
-            if (field === "images") {
-                columnConfig.render = (_: unknown, { name, images }: { name: string, images: Array<string> }) => (
-                    <div className="flex items-center gap-4">
-                        <Image src={images.length > 0 ? images[0] : ""} alt={name} />
-                    </div>
-                );
-            } else if (field === "discount") {
-                columnConfig.render = (_: unknown, { discount }: { discount: number }) => (
-                    <Tag color="cyan">{discount * 100} %</Tag>
-                );
-            } else if (field === "oldPrice") {
-                columnConfig.render = (_: unknown, { oldPrice }: { oldPrice: number }) => (
-                    <Tag color="blue">{oldPrice.toLocaleString()} VND</Tag>
-                );
-            } else if (field === "position") {
-                columnConfig.render = (_: unknown, { position }: { position: number }) => (
-                    <Tag color="blue">{position}</Tag>
-                );
-            }
-            else if (field === "feature") {
-                columnConfig.render = (_: unknown, { feature }: { feature: boolean }) => (
-                    <Tag color="gold">{feature ? "Có" : "Không"}</Tag>
-                );
-            } else if (field === "newPrice") {
-                columnConfig.render = (_: unknown, record: DataType<IProduct>) => (
-                    <Tag color="blue">{record.newPrice !== undefined ? record.newPrice.toLocaleString() + " VND" : "N/A"}</Tag>
-                );
-            } else if (field === "category") {
-                columnConfig.render = (_: unknown, { category }: { category: ICategory }) => (
-                    <div>{category.name}</div>
-                );
-            } else if (field === "status") {
-                columnConfig.render = (_: unknown, { status }: { status: string }) => {
-                    if (status === "ACTIVE")
-                        return <Tag color="green">Hoạt động</Tag>
-                    else if (status === "INACTIVE")
-                        return <Tag color="red">Dừng hoạt động</Tag>
-                    else if (status === "STOPSOLD")
-                        return <Tag color="cyan">Ngưng bán</Tag>
-                };
-            } else if (field === "stock") {
-                columnConfig.render = (_: unknown, { stock }: { stock: number }) => (
-                    <Tag color="geekblue">{stock}</Tag>
-                );
-            } else if (field === "soldCount") {
-                columnConfig.render = (_: unknown, record: DataType<IProduct>) => (
-                    <Tag color="geekblue">{record.soldCount}</Tag>
-                );
-            }
+
 
 
             return columnConfig;
@@ -127,6 +110,11 @@ export default function ContentProduct() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
+                    <FaEye
+                        onClick={() => openDetailModal(record)}
+                        className='hover:text-blue-500 cursor-pointer'
+                        title="Xem chi tiết"
+                    />
                     {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "PATCH" && p.path === "/api/v1/admin/product/:id"
                     ) &&
@@ -136,20 +124,17 @@ export default function ContentProduct() {
                                 setDataClick(record);
                             }}
                             className='hover:text-blue-500 cursor-pointer'
+                            title="Chỉnh sửa"
                         />
                     }
                     {accountLogin && accountLogin.role && accountLogin.role.permission.some(
                         (p) => p.method === "DELETE" && p.path === "/api/v1/admin/product/:id"
                     ) &&
-                        <Popconfirm
-                            title="Xóa dòng của bạn"
-                            description="Bạn có chắc chắn muốn xóa dòng này ?"
-                            onConfirm={() => handleDelete(record._id as string)}
-                            okText="Xóa"
-                            cancelText="Không"
-                        >
-                            <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                        </Popconfirm>
+                        <FaTrashAlt
+                            onClick={() => openDeleteModal(record._id as string)}
+                            className='hover:text-red-500 cursor-pointer'
+                            title="Xóa (soft delete)"
+                        />
                     }
                 </div>
             ),
@@ -161,27 +146,7 @@ export default function ContentProduct() {
     if (!loading && products.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
         (p) => p.method === "GET" && p.path === "/api/v1/admin/product"
     )) {
-        dataTable = products.map((item: IProduct, index: number) => {
-            const row = {
-                key: index.toString(),
-                _id: item._id,
-                otherString: item.other.map((o: { key: string; value: string }, index: number) => {
-                    if (item.other.length - 1 === index) {
-                        return o.key + ":" + o.value;
-                    }
-                    return o.key + ":" + o.value + ";"
-                }).join(""),
-                description: item.description,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ...fields.reduce((acc: any, field: any) => {
-                    if (item.hasOwnProperty(field)) {
-                        acc[field] = item[field as keyof IProduct];
-                    }
-                    return acc;
-                }, {}),
-            };
-            return row as DataType<IProduct>;
-        });
+
     }
 
     return (
@@ -193,6 +158,83 @@ export default function ContentProduct() {
                     <UpdateModalProduct setOpen={setOpen} dataProduct={dataClick} />
                 }
             </Modal>
+
+            {/* Soft Delete Modal */}
+            <Modal
+                title="Xóa sản phẩm"
+                open={deleteModalOpen}
+                onCancel={() => { setDeleteModalOpen(false); setDeleteTarget(null); setDeleteReason(''); }}
+                onOk={handleSoftDelete}
+                okText="Xác nhận xóa"
+                cancelText="Hủy"
+                okButtonProps={{ danger: true, loading: deleteLoading, disabled: !deleteReason.trim() }}
+                destroyOnClose
+            >
+                <p className="mb-2 text-gray-600">
+                    Sản phẩm sẽ được đánh dấu là đã xóa (soft delete). Vui lòng nhập lý do:
+                </p>
+                <Input.TextArea
+                    rows={3}
+                    placeholder="Nhập lý do xóa sản phẩm..."
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    maxLength={500}
+                    showCount
+                />
+            </Modal>
+
+            {/* Detail Modal */}
+            <Modal
+                title="Chi tiết sản phẩm"
+                open={detailModalOpen}
+                onCancel={() => { setDetailModalOpen(false); setDetailData(null); }}
+                footer={null}
+                width={800}
+                destroyOnClose
+            >
+                {detailData && (
+                    <div>
+
+                        <Descriptions bordered column={2} size="small">
+                            <Descriptions.Item label="Tên sản phẩm" span={2}>{(detailData as DataType<IProduct> & { name: string }).name}</Descriptions.Item>
+                            <Descriptions.Item label="Danh mục">{(detailData as DataType<IProduct> & { category?: ICategory }).category?.name || '-'}</Descriptions.Item>
+                            <Descriptions.Item label="Trạng thái">
+                                <Tag color={(detailData as DataType<IProduct> & { status: string }).status === 'ACTIVE' ? 'green' : 'red'}>
+                                    {(detailData as DataType<IProduct> & { status: string }).status === 'ACTIVE' ? 'Hoạt động' : 'Dừng hoạt động'}
+                                </Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Giá gốc">
+                                <Tag color="blue">{((detailData as DataType<IProduct> & { oldPrice: number }).oldPrice || 0).toLocaleString()} VND</Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Giảm giá">
+                                <Tag color="cyan">{((detailData as DataType<IProduct> & { discount: number }).discount || 0) * 100}%</Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Tồn kho">
+                                <Tag color="geekblue">{(detailData as DataType<IProduct> & { stock: number }).stock || 0}</Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Đã bán">
+                                <Tag color="geekblue">{(detailData as DataType<IProduct> & { soldCount: number }).soldCount || 0}</Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Nổi bật">
+                                <Tag color="gold">{(detailData as DataType<IProduct> & { feature?: boolean }).feature ? 'Có' : 'Không'}</Tag>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Vị trí">
+                                <Tag color="blue">{(detailData as DataType<IProduct> & { position?: number }).position ?? '-'}</Tag>
+                            </Descriptions.Item>
+                        </Descriptions>
+                        {detailData.description && (
+                            <>
+                                <Divider />
+                                <div>
+                                    <h4 className="font-semibold mb-2">Mô tả</h4>
+                                    <p className="text-gray-600 whitespace-pre-wrap">{(detailData as DataType<IProduct> & { description: string }).description}</p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+            </Modal>
+
             <SelectedProductContext.Provider value={{ selectedRows, setSelectedRows }} >
                 <ActionProduct ConfigFields={{ fields, setFields }} Filter={<FilterProduct />} EditSort={<EditSortProduct />} ContentModal={<ContentModalProduct />} />
                 <Spin size="large" spinning={loading}>

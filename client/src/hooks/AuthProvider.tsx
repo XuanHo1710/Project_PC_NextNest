@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
-import { IAccountLogin } from '@/types/modal.d';
+import { IAccountLogin } from '@/types/account-employee';
 import { pathAdminRoutes } from '@/config/route';
 import { useRouter } from 'next/navigation';
 import { roleService } from '@/services/admin/role.service';
@@ -10,7 +10,7 @@ import { roleService } from '@/services/admin/role.service';
 
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { setAccountLogin, setAccessToken, resetAuth } = useAuthEmployee();
+    const { setAccountLogin, resetAuth } = useAuthEmployee();
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
@@ -26,12 +26,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                         employeeId: res.data.data.employeeId,
                         roleId: res.data.data.roleId,
                         role,
-                        accessToken: res.data.data.access_token,
                     } as IAccountLogin);
-                    setAccessToken(res.data.data.access_token);
                 } else {
                     resetAuth();
-                    // window.location.href = pathAdminRoutes.login;
                     router.replace(pathAdminRoutes.login);
                 }
             } catch (err) {
@@ -39,11 +36,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 resetAuth();
                 router.replace(pathAdminRoutes.login);
             } finally {
-                setLoading(false); // 👈 hết loading mới cho render children
+                setLoading(false);
             }
         };
         fetchAccount();
-    }, [setAccountLogin, setAccessToken, resetAuth, router]);
+    }, [setAccountLogin, resetAuth, router]);
 
     if (loading) {
         return (

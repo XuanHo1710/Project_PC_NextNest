@@ -8,7 +8,7 @@ import {
     PasswordPageSkeleton,
     ProfilePageSkeleton
 } from "@/components/Skeletons";
-import { guestClientService } from "@/services/client/guest.client.service";
+import { accountGuestService } from "@/services/client/account.client.service";
 import useAuthUser from "@/hooks/useAuthUser";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
@@ -44,7 +44,7 @@ export default function ProfilePassword() {
 
         setLoading(true);
         try {
-            await guestClientService.changePassword(
+            await accountGuestService.changePassword(
                 user.id,
                 values.currentPassword,
                 values.newPassword

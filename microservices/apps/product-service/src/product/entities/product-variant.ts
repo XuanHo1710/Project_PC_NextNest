@@ -20,6 +20,9 @@ export class ProductVariant {
   price: number;
 
   @Prop({ default: 0 })
+  stock: number;
+
+  @Prop({ default: 0 })
   discount: number; // 0 -> 100%
 
   @Prop({ type: Map, of: String })

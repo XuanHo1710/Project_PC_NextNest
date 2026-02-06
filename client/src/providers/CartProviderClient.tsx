@@ -4,7 +4,7 @@ import React, { useEffect, ReactNode } from 'react';
 import useCartStore from '@/hooks/useCart';
 import { cartClientService } from '@/services/client/cart.client.service';
 import useAuthUser from '@/hooks/useAuthUser';
-import { ICart } from '@/types/model.client';
+import { ICart } from '@/types/order';
 import { debounce } from '@/utils/debounce';
 
 // type User = ILoginResponse['user'];

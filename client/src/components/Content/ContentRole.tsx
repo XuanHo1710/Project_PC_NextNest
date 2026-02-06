@@ -13,7 +13,7 @@ import EditSortRole from "@/components/EditSort/role/EditSortRole";
 import ContentModalRole from "@/components/ContentModal/role/ContentModalRole";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { DataType, SelectedContextType } from "@/types/table.d";
-import { IRole } from "@/types/modal.d";
+import { IRole } from "@/types/role";
 import { useRoles, useDeleteRole } from "@/hooks/admin";
 
 

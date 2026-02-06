@@ -11,6 +11,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
 import { CategoryModule } from 'admin/category/category.module';
 import { BrandModule } from 'admin/brand/brand.module';
+import { ProductModule } from 'admin/product/product.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BrandModule } from 'admin/brand/brand.module';
     AuthModule,
     CategoryModule,
     BrandModule,
+    ProductModule,
     JwtModule.register({}),
     ClientsModule.register([
       {

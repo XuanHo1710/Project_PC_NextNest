@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Descriptions, Tag, Button, Modal, Form, Switch, message, Avatar, Divider } from 'antd';
 import { UserOutlined, SafetyCertificateOutlined, SettingOutlined, EditOutlined } from '@ant-design/icons';
 import { accountService } from '@/services/client/account.client.service';
-import { IUpdateAccountSettingsDto } from '@/types/account';
+import { IUpdateAccountSettingsDto } from '@/types/auth';
 import useAuthUser from '@/hooks/useAuthUser';
 
 interface AccountInfoProps {

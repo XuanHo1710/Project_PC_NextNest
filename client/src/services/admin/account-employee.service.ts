@@ -1,10 +1,10 @@
-import type { IAccountEmployee } from "@/types/modal.d"
-import { BaseService } from "./base.service"
+import type { IAccountEmployee } from "@/types/account-employee";
+import { BaseService } from "./base.service";
 
 class AccountEmployeeService extends BaseService<IAccountEmployee> {
   constructor() {
-    super("account-employee")
+    super("account-employee");
   }
 }
 
-export const accountEmployeeService = new AccountEmployeeService()
+export const accountEmployeeService = new AccountEmployeeService();

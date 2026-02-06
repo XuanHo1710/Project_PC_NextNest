@@ -1,5 +1,6 @@
 'use client'
-import { ICategory, IProduct } from '@/types/modal.d';
+import { ICategory } from '@/types/category';
+import { IProduct } from '@/types/product';
 import { buildCategoryTree } from '@/utils/buildTree';
 import { UploadImages } from '@/utils/uploadImage';
 import '@ant-design/v5-patch-for-react-19';

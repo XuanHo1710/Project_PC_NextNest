@@ -7,7 +7,7 @@ import {
   IsObject,
   Min,
   Max,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateProductVariantDto {
   @IsString()
@@ -22,6 +22,10 @@ export class CreateProductVariantDto {
 
   @IsNumber()
   price: number;
+
+  @IsNumber()
+  @Min(0)
+  stock: number;
 
   @IsNumber()
   @Min(0)

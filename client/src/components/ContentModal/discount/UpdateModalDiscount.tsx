@@ -5,7 +5,7 @@ import { Button, DatePicker, Form, Input, InputNumber, Select, Spin, Switch } fr
 import { useEffect, useState } from 'react';
 import TextArea from 'antd/es/input/TextArea';
 import dayjs from 'dayjs';
-import { IDiscount } from '@/types/modal.d';
+import { IDiscount } from '@/types/discount';
 import { useUpdateDiscount } from '@/hooks/admin';
 
 const { RangePicker } = DatePicker;

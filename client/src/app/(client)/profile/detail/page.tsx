@@ -11,9 +11,9 @@ import {
 } from "@/components/Skeletons";
 import dayjs from 'dayjs';
 import useAuthUser from "@/hooks/useAuthUser";
-import { IGuest } from "@/types/account";
+import { IAccountGuest } from "@/types/account-guest";
 import { useQuery } from "@tanstack/react-query";
-import { guestClientService } from "@/services/client";
+import { accountGuestService } from "@/services/client";
 import { UploadImage } from "@/utils/uploadImage";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
@@ -36,9 +36,9 @@ export default function ProfileDetail() {
 
     const { user } = useAuthUser();
 
-    const { data: guest, isLoading } = useQuery<IGuest | null>({
+    const { data: guest, isLoading } = useQuery<IAccountGuest | null>({
         queryKey: ['profile-guest', user?.id], // key để cache
-        queryFn: () => guestClientService.getProfile(user?.id || ''),
+        queryFn: () => accountGuestService.getProfile(user?.id || ''),
         enabled: !!user?.id, // chỉ chạy query khi userId tồn tại
     });
 
@@ -58,7 +58,7 @@ export default function ProfileDetail() {
                     gender: values.gender
                 }
 
-                await guestClientService.updateProfile(user?.id || '', inforGuestUpdate as Partial<IGuest>);
+                await accountGuestService.updateProfile(user?.id || '', inforGuestUpdate as Partial<IAccountGuest>);
             } else {
                 const inforGuestUpdate = {
                     fullname: values.fullname,
@@ -66,7 +66,7 @@ export default function ProfileDetail() {
                     birthday: values.dateOfBirth?.format('YYYY-MM-DD'),
                     gender: values.gender
                 }
-                await guestClientService.updateProfile(user?.id || '', inforGuestUpdate as Partial<IGuest>);
+                await accountGuestService.updateProfile(user?.id || '', inforGuestUpdate as Partial<IAccountGuest>);
 
             }
             // Simulate API call

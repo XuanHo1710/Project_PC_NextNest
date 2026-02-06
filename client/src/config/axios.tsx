@@ -1,4 +1,4 @@
-// axiosConfig.ts
+// axios.tsx - Admin-side axios instance for calling backend directly
 import { pathAdminRoutes } from '@/config/route';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import axios, {
@@ -9,51 +9,41 @@ import axios, {
 } from 'axios';
 import { toast } from 'react-toastify';
 
-const baseURL = 'http://localhost:8080/api/v1/admin/'; // URL backend
+const baseURL = 'http://localhost:8080/api/v1/admin/';
 
-// Tạo instance axios
+// Track refresh state to prevent multiple refresh calls
+let isRefreshing = false;
+let refreshSubscribers: (() => void)[] = [];
+
+function subscribeTokenRefresh(cb: () => void) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshed() {
+  refreshSubscribers.forEach((cb) => cb());
+  refreshSubscribers = [];
+}
+
+// Create admin axios instance
 const instance = axios.create({
   baseURL,
   timeout: 10000,
-  withCredentials: true,
+  withCredentials: true, // Important for cookies (backend reads refresh_token from cookie)
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// ✅ Request interceptor: luôn set accessToken từ store
+// Request interceptor: cookies are sent automatically via withCredentials
 instance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = useAuthEmployee.getState().accessToken;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
+  (config: InternalAxiosRequestConfig) => config,
   (error) => Promise.reject(error)
 );
 
-let isRefreshing = false;
-let failedQueue: {
-  resolve: (value?: unknown) => void;
-  reject: (error: unknown) => void;
-}[] = [];
-
-const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
-// ✅ Response interceptor: handle refresh token + lỗi
+// Response interceptor: Handle errors and token refresh
 instance.interceptors.response.use(
   (response: AxiosResponse) => {
-    return response.data; // luôn trả về data
+    return response.data;
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
@@ -63,90 +53,76 @@ instance.interceptors.response.use(
       const data = error.response.data as {
         message: string;
         statusCode: number;
-        timestamp: Date;
-        data: unknown;
       };
 
-      // 🔄 Nếu accessToken hết hạn → refresh
+      // Handle 401 - Unauthorized (token expired)
       if (status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true; // 👈 quan trọng: đánh dấu để không lặp vô hạn
-
-        if (isRefreshing) {
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-          })
-            .then((token) => {
-              if (originalRequest.headers) {
-                originalRequest.headers['Authorization'] = `Bearer ${token}`;
-              }
-              return instance(originalRequest);
-            })
-            .catch((err) => Promise.reject(err));
+        // Don't retry refresh/login endpoints
+        if (originalRequest.url?.includes('/auth/refresh') ||
+          originalRequest.url?.includes('/auth/login')) {
+          return Promise.reject(error);
         }
 
+        if (isRefreshing) {
+          return new Promise((resolve) => {
+            subscribeTokenRefresh(() => {
+              resolve(instance(originalRequest));
+            });
+          });
+        }
+
+        originalRequest._retry = true;
         isRefreshing = true;
 
         try {
-          const { setAccessToken } = useAuthEmployee.getState();
-
-          // ✅ Gọi API refresh-token (backend tự xử lý bằng cookie refresh_token)
-          const response = await axios.post(
+          // Call backend refresh endpoint — it reads refresh_token from cookie, no Bearer needed
+          await axios.post(
             `${baseURL}auth/refresh-token`,
             {},
             { withCredentials: true }
           );
 
-          if (!response.data?.data?.access_token) {
-            throw new Error('Không nhận được accessToken mới từ server');
-          }
+          // Refresh succeeded — backend renewed the cookie
+          onRefreshed();
 
-          const newAccessToken = response.data.data.access_token;
-
-          // Lưu token mới vào store
-          setAccessToken(newAccessToken);
-
-          // Gửi lại các request đang chờ
-          processQueue(null, newAccessToken);
-
-          if (originalRequest.headers) {
-            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
-          }
-
-          return instance(originalRequest); // 👈 retry lại request ban đầu
-        } catch (err) {
-          processQueue(err, null);
+          // Retry original request (cookie is automatically attached)
+          return instance(originalRequest);
+        } catch {
+          // Refresh failed — clear auth state and redirect to login
           useAuthEmployee.getState().resetAuth();
           toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-          window.location.href = pathAdminRoutes.login;
-          return Promise.reject(err);
+
+          if (typeof window !== 'undefined') {
+            window.location.href = pathAdminRoutes.login;
+          }
+
+          return Promise.reject(error);
         } finally {
           isRefreshing = false;
         }
       }
 
-      // Xử lý các lỗi khác
+      // Handle other errors
       switch (status) {
         case 400:
           toast.error(
-            Array.isArray(data.message) && data.message.length > 0
+            Array.isArray(data.message)
               ? data.message[0]
               : data.message || 'Yêu cầu không hợp lệ (400)'
           );
-          break;
-        case 401:
-          toast.warning('Chưa đăng nhập hoặc phiên đã hết hạn (401)');
           break;
         case 403:
           toast.error('Không có quyền truy cập (403)');
           break;
         case 404:
-          toast.info('Không tìm thấy tài nguyên (404)');
           break;
         case 500:
-          toast.error('Lỗi máy chủ (500). Vui lòng thử lại sau.');
+          toast.error(data.message || 'Lỗi máy chủ (500). Vui lòng thử lại sau.');
           break;
         default:
-          toast.error(data.message || 'Đã xảy ra lỗi không xác định');
+          if (data.message) {
+            toast.error(data.message);
+          }
       }
     } else if (error.request) {
       toast.error('Không thể kết nối đến máy chủ.');

@@ -3,10 +3,18 @@
 import { Button, Empty, Image, message, Popconfirm } from 'antd';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { IProductCard } from '@/types/model.client';
-import { guestClientService, productClientService } from '@/services/client';
+import { IProductCard } from '@/types/product';
+import { accountGuestService, productClientService } from '@/services/client';
 import useAuthUser from '@/hooks/useAuthUser';
 import useCartStore from '@/hooks/useCart';
+import {
+    getProductDisplayPrice,
+    getProductOriginalPrice,
+    getProductDiscount,
+    getProductImage,
+    getProductSoldCount,
+    getProductStock,
+} from '@/utils/productHelpers';
 import { WishlistSkeleton } from '@/components/Skeletons/WishlistSkeleton';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import {
@@ -34,12 +42,13 @@ export default function WishlistPage() {
     console.log('User in avatar:', user?.avatar);
 
     // Fetch wishlist data
-    const { data: wishlistProducts = [], isLoading } = useQuery<IProductCard[]>({
-        queryKey: ['wishlist', user?.id],
-        queryFn: () => guestClientService.getWishlist(user?.id || ''),
-        enabled: !!user?.id,
-    });
+    // const { data: wishlistProducts = [], isLoading } = useQuery<IProductCard[]>({
+    //     queryKey: ['wishlist', user?.id],
+    //     queryFn: () => accountGuestService.getWishlist(user?.id || ''),
+    //     enabled: !!user?.id,
+    // });
 
+    const wishlistProducts = []
 
     // Mutation to remove from wishlist
     const removeFromWishlistMutation = useMutation({
@@ -55,7 +64,7 @@ export default function WishlistPage() {
     });
 
     const handleAddToCart = (product: IProductCard) => {
-        if (product.stock === 0) {
+        if (getProductStock(product) === 0) {
             message.error('Sản phẩm đã hết hàng');
             return;
         }
@@ -67,90 +76,90 @@ export default function WishlistPage() {
         removeFromWishlistMutation.mutate({ productId });
     };
 
-    if (isLoading) {
-        return (
-            <div className='container mx-auto'>
-                {/* Breadcrumb */}
-                <div className='flex items-center mt-3 mx-5 xl:mx-32'>
-                    <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Trang chủ</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <Link href="/profile/detail" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Hồ sơ người dùng</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <h3 className="font-medium text-lg text-blue-400 dark:text-white mr-3">Danh sách yêu thích</h3>
-                </div>
+    // if (isLoading) {
+    //     return (
+    //         <div className='container mx-auto'>
+    //             {/* Breadcrumb */}
+    //             <div className='flex items-center mt-3 mx-5 xl:mx-32'>
+    //                 <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Trang chủ</Link>
+    //                 <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
+    //                 <Link href="/profile/detail" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Hồ sơ người dùng</Link>
+    //                 <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
+    //                 <h3 className="font-medium text-lg text-blue-400 dark:text-white mr-3">Danh sách yêu thích</h3>
+    //             </div>
 
-                <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
-                    {/* Sidebar */}
-                    <div className='col-span-12 lg:col-span-3'>
-                        <div className='flex items-center'>
-                            {user && user.avatar ? (
-                                <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
-                            ) : (
-                                <>
-                                    <i className='fas fa-user-circle text-5xl text-blue-600'></i>
-                                </>
-                            )}
-                            <div className='mx-4'>
-                                <h6 className='text-base font-semibold'>Tài khoản của,</h6>
-                                <h1 className='font-bold text-lg'>{user?.fullname || 'Khách hàng'}</h1>
-                            </div>
-                        </div>
-                        <ul className='pl-0 my-5'>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/detail"}>
-                                <li className='inline-block'>
-                                    <i className="fa-regular fa-user w-9"></i>
-                                    <span className='font-medium'>Thông tin tài khoản</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/order"}>
-                                <li className='inline-block'>
-                                    <i className="far fa-list-alt w-9"></i>
-                                    <span className='font-medium'>Tra cứu đơn hàng</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 bg-blue-400 text-white px-5 rounded-lg' href={"/profile/wishlist"}>
-                                <li className='inline-block'>
-                                    <i className="fa-solid fa-heart w-9"></i>
-                                    <span className='font-medium'>Danh sách yêu thích</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/address"}>
-                                <li className='inline-block'>
-                                    <i className="fa-solid fa-location-dot w-9"></i>
-                                    <span className='font-medium'>Quản lý địa chỉ</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/password"}>
-                                <li className='inline-block'>
-                                    <i className="fas fa-lock w-9"></i>
-                                    <span className='font-medium'>Thay đổi mật khẩu</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/home"}>
-                                <li className='inline-block'>
-                                    <i className="fas fa-sign-out-alt w-9"></i>
-                                    <span className='font-medium'>Đăng xuất</span>
-                                </li>
-                            </Link>
-                        </ul>
-                    </div>
+    //             <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
+    //                 {/* Sidebar */}
+    //                 <div className='col-span-12 lg:col-span-3'>
+    //                     <div className='flex items-center'>
+    //                         {user && user.avatar ? (
+    //                             <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
+    //                         ) : (
+    //                             <>
+    //                                 <i className='fas fa-user-circle text-5xl text-blue-600'></i>
+    //                             </>
+    //                         )}
+    //                         <div className='mx-4'>
+    //                             <h6 className='text-base font-semibold'>Tài khoản của,</h6>
+    //                             <h1 className='font-bold text-lg'>{user?.fullname || 'Khách hàng'}</h1>
+    //                         </div>
+    //                     </div>
+    //                     <ul className='pl-0 my-5'>
+    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/detail"}>
+    //                             <li className='inline-block'>
+    //                                 <i className="fa-regular fa-user w-9"></i>
+    //                                 <span className='font-medium'>Thông tin tài khoản</span>
+    //                             </li>
+    //                         </Link>
+    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/order"}>
+    //                             <li className='inline-block'>
+    //                                 <i className="far fa-list-alt w-9"></i>
+    //                                 <span className='font-medium'>Tra cứu đơn hàng</span>
+    //                             </li>
+    //                         </Link>
+    //                         <Link className='font-medium block my-3 py-3 bg-blue-400 text-white px-5 rounded-lg' href={"/profile/wishlist"}>
+    //                             <li className='inline-block'>
+    //                                 <i className="fa-solid fa-heart w-9"></i>
+    //                                 <span className='font-medium'>Danh sách yêu thích</span>
+    //                             </li>
+    //                         </Link>
+    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/address"}>
+    //                             <li className='inline-block'>
+    //                                 <i className="fa-solid fa-location-dot w-9"></i>
+    //                                 <span className='font-medium'>Quản lý địa chỉ</span>
+    //                             </li>
+    //                         </Link>
+    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/password"}>
+    //                             <li className='inline-block'>
+    //                                 <i className="fas fa-lock w-9"></i>
+    //                                 <span className='font-medium'>Thay đổi mật khẩu</span>
+    //                             </li>
+    //                         </Link>
+    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/home"}>
+    //                             <li className='inline-block'>
+    //                                 <i className="fas fa-sign-out-alt w-9"></i>
+    //                                 <span className='font-medium'>Đăng xuất</span>
+    //                             </li>
+    //                         </Link>
+    //                     </ul>
+    //                 </div>
 
-                    {/* Main Content with Skeleton */}
-                    <div className='col-span-12 lg:col-span-9'>
-                        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-md p-6'>
-                            <div className='flex items-center justify-between mb-6'>
-                                <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center'>
-                                    <HeartFilled className='text-red-500 mr-3' />
-                                    Danh sách yêu thích
-                                </h2>
-                            </div>
-                            <WishlistSkeleton />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    //                 {/* Main Content with Skeleton */}
+    //                 <div className='col-span-12 lg:col-span-9'>
+    //                     <div className='bg-white dark:bg-gray-800 rounded-lg shadow-md p-6'>
+    //                         <div className='flex items-center justify-between mb-6'>
+    //                             <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center'>
+    //                                 <HeartFilled className='text-red-500 mr-3' />
+    //                                 Danh sách yêu thích
+    //                             </h2>
+    //                         </div>
+    //                         <WishlistSkeleton />
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     return (
         <>
@@ -265,14 +274,14 @@ export default function WishlistPage() {
                                             {/* Product Image */}
                                             <div className='relative h-48 overflow-hidden'>
                                                 <Image
-                                                    src={product.images[0] || '/laptop.png'}
+                                                    src={getProductImage(product) || '/laptop.png'}
                                                     alt={product.name}
 
                                                     className='object-cover group-hover:scale-110 transition-transform duration-500'
                                                 />
-                                                {product.discount > 0 && (
+                                                {getProductDiscount(product) > 0 && (
                                                     <div className='absolute top-2 left-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg'>
-                                                        -{product.discount}%
+                                                        -{getProductDiscount(product)}%
                                                     </div>
                                                 )}
                                                 {/* Remove from wishlist button */}
@@ -312,11 +321,11 @@ export default function WishlistPage() {
                                                 <div className='mb-4'>
                                                     <div className='flex items-center space-x-2'>
                                                         <span className='text-xl font-bold text-red-600 dark:text-red-400'>
-                                                            {formatCurrency(product.newPrice)}
+                                                            {formatCurrency(getProductDisplayPrice(product))}
                                                         </span>
-                                                        {product.discount > 0 && (
+                                                        {getProductDiscount(product) > 0 && (
                                                             <span className='text-sm text-gray-500 dark:text-gray-400 line-through'>
-                                                                {formatCurrency(product.oldPrice)}
+                                                                {formatCurrency(getProductOriginalPrice(product))}
                                                             </span>
                                                         )}
                                                     </div>
@@ -324,10 +333,10 @@ export default function WishlistPage() {
 
                                                 {/* Stock Status */}
                                                 <div className='mb-4'>
-                                                    {product.stock > 0 ? (
+                                                    {getProductStock(product) > 0 ? (
                                                         <div className='flex items-center text-green-600 dark:text-green-400 text-sm'>
                                                             <div className='w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse'></div>
-                                                            Còn hàng ({product.stock} sản phẩm)
+                                                            Còn hàng ({getProductStock(product)} sản phẩm)
                                                         </div>
                                                     ) : (
                                                         <div className='flex items-center text-red-600 dark:text-red-400 text-sm'>
@@ -340,7 +349,7 @@ export default function WishlistPage() {
                                                 {/* Sold Count */}
 
                                                 <div className='mb-4 text-xs text-gray-500 dark:text-gray-400'>
-                                                    Đã bán: {product.soldCount || 0} sản phẩm
+                                                    Đã bán: {getProductSoldCount(product) || 0} sản phẩm
                                                 </div>
 
 
@@ -359,7 +368,7 @@ export default function WishlistPage() {
                                                     <Button
                                                         type="default"
                                                         icon={<ShoppingCartOutlined />}
-                                                        disabled={product.stock === 0}
+                                                        disabled={getProductStock(product) === 0}
                                                         onClick={() => handleAddToCart(product)}
                                                         className='hover:border-green-500 hover:text-green-500'
                                                     >

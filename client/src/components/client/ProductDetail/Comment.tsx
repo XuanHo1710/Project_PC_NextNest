@@ -6,12 +6,12 @@ import { CommentOutlined, SendOutlined, StarFilled } from '@ant-design/icons';
 import TextArea from 'antd/es/input/TextArea';
 import { CommentsSkeleton } from '@/components/Skeletons/CommentsSkeleton';
 import { cleanupImageUrls, handleImageFiles, ImagePreview, PreviewImage } from '@/utils/imagePreview';
-import { ICreateProductInteraction, IReplyComment } from '@/types/modal';
+import { ICreateProductInteraction, IReplyComment } from '@/types/interaction';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import useAuthUser from '@/hooks/useAuthUser';
 import { productClientService } from '@/services/client';
 import { formatDateTime } from '@/utils/formatDateTime';
-import { IProductCard } from '@/types/model.client';
+import { IProductCard } from '@/types/product';
 import HandleLike from '@/components/client/ProductDetail/HandleLike';
 
 export default function CommentProduct({ product }: { product: IProductCard }) {

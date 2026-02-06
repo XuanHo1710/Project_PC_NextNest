@@ -1,6 +1,7 @@
 'use client';
 
-import { IProductCard } from "@/types/model.client";
+import { IProductCard } from "@/types/product";
+import { getProductImage } from "@/utils/productHelpers";
 import { Image } from "antd";
 
 export default function DescriptionProduct({ product }: { product: IProductCard }) {
@@ -18,7 +19,7 @@ export default function DescriptionProduct({ product }: { product: IProductCard 
 
                 <div className="my-6 text-center">
                     <Image
-                        src={product.images[0]}
+                        src={getProductImage(product)}
                         alt={product.name}
                         className="rounded-lg inline-block shadow-md"
                     />

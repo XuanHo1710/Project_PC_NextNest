@@ -1,7 +1,7 @@
 'use client'
 import { useSelectedRowsProduct } from '@/components/Content/ContentProduct';
 import TableContent from '@/components/TableContent/TableContent';
-import { IProduct } from '@/types/modal.d';
+import { IProduct } from '@/types/product';
 import { DataType } from '@/types/table.d';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';

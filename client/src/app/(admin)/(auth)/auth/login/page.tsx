@@ -4,37 +4,34 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useRouter } from 'next/navigation';
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
-import { IAccountLogin } from "@/types/modal.d";
+import { IAccountLogin } from "@/types/account-employee";
 import { roleService } from "@/services/admin/role.service";
 
 
 export default function AuthLogin() {
   const router = useRouter();
-  const { setAccessToken, setAccountLogin } = useAuthEmployee();
+  const { setAccountLogin } = useAuthEmployee();
   const handleSubmit = async (payload: { IDEmp: string, password: string }) => {
-    await axios.post("http://localhost:8080/api/v1/admin/auth/login", payload, {
-      withCredentials: true
-    }).catch(error => {
-      const { data } = error.response.data;
-      toast.error(data.message);
-    }).then(async (response) => {
+    try {
+      // Call Next.js API route which sets admin_access_token httpOnly cookie
+      const response = await axios.post("/api/admin/auth/login", payload);
+
       const { data } = response?.data;
-      setAccessToken(data.access_token || "");
-      // const res = await axios.post('/api/admin/auth/token', {
-      //   access_token: response?.data.access_token,
-      //   refresh_token: response?.data.refresh_token
-      // });
+      const role = await roleService.getById(data.payload.roleId);
+
       setAccountLogin(
         {
           IDEmp: data.payload.IDEmp,
           username: data.payload.username,
           roleId: data.payload.roleId,
-          role: await roleService.getById(data.payload.roleId),
-          accessToken: data.access_token
+          role,
         } as IAccountLogin
       );
-      router.push("/admin/dashboard"); // 👈 Đường dẫn muốn chuyển
-    })
+      router.push("/admin/dashboard");
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosError.response?.data?.message || 'Đăng nhập thất bại');
+    }
   }
 
   const layout = {

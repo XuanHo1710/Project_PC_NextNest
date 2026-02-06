@@ -9,7 +9,7 @@ import TableImportProductCSV from '@/components/ContentModal/product/CSVModalPro
 import ConfigModalProduct from '@/components/ContentModal/product/ConfigModalProduct';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { DataType } from '@/types/table.d';
-import { IProduct } from '@/types/modal.d';
+import { IProduct } from '@/types/product';
 import { useCreateProduct, useProducts } from '@/hooks/admin';
 
 type ConfigFieldsType = {
@@ -118,14 +118,7 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
                 return {
                     name: product.name,
                     description: product.description,
-                    stock: product.stock,
-                    discount: product.discount,
-                    oldPrice: product.oldPrice,
-                    other: JSON.stringify(product.other), // Convert object/array to string
                     status: product.status,
-                    feature: product.feature,
-                    position: product.position,
-                    images: JSON.stringify(product.images), // Convert array to string
                 }
             });
 

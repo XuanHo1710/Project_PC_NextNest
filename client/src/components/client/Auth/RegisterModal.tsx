@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button, Divider, Form, Image, Input, Modal } from 'antd';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { IRegisterDto } from '@/types/account';
+import { IRegisterDto } from '@/types/auth';
 import useAuthUser from '@/hooks/useAuthUser';
 
 interface RegisterModalProps {

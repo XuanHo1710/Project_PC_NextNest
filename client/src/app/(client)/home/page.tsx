@@ -1,8 +1,10 @@
 'use client';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { categoryClientService, productClientService } from "@/services/client";
-import { ICategory, IProduct } from "@/types/modal.d";
-import { ICategoryPreview, IProductCard } from "@/types/model.client";
+import { ICategory } from "@/types/category";
+import { IProduct } from "@/types/product";
+import { ICategoryPreview } from "@/types/category";
+import { IProductCard } from "@/types/product";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Image, Spin } from "antd";
 import Link from "next/link";

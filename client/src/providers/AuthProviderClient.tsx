@@ -1,48 +1,93 @@
 'use client';
 
-import React, { useEffect, ReactNode } from 'react';
-// import { ILoginResponse } from '../types/account';
+import React, { useEffect, ReactNode, useState, createContext, useContext } from 'react';
 import useAuthUser from '@/hooks/useAuthUser';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
+import { IClientUser } from '@/types/auth';
 
-// type User = ILoginResponse['user'];
+interface AuthContextType {
+    user: IClientUser | null;
+    loading: boolean;
+    isAuthenticated: boolean;
+    login: (email: string, password: string) => Promise<boolean>;
+    logout: () => Promise<void>;
+    loginWithGoogle: () => void;
+}
 
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function useAuth(): AuthContextType {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        const store = useAuthUser();
+        return {
+            user: store.user,
+            loading: store.loading,
+            isAuthenticated: store.isAuthenticated,
+            login: store.login,
+            logout: store.logout,
+            loginWithGoogle: store.loginWithGoogle,
+        };
+    }
+    return context;
+}
 
 interface AuthProviderProps {
     children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    const { setAccountLogin, setAccessToken, refreshAuth } = useAuthUser();
-    const router = useRouter();
-    useEffect(() => {
-        const fetchAccount = async () => {
-            try {
-                const res = await axios.post('/api/client/auth/token', {});
-                if (res.data !== null && res.data.data) {
-                    setAccountLogin({
-                        id: res.data.data?.guestId,
-                        email: res.data.data.email,
-                        fullname: res.data.data.fullname,
-                        avatar: res.data.data.avatar,
-                        authProvider: res.data.data.authProvider,
-                        accountStatus: res.data.data.avatar,
-                        isEmailVerified: res.data.data.guestId,
-                    });
+    const { setUser, resetAuth, user, loading, isAuthenticated, login, logout, loginWithGoogle } = useAuthUser();
+    const [isLoading, setIsLoading] = useState(true);
 
-                    setAccessToken(res.data.data.access_token);
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                // Next.js server reads client_access_token from httpOnly cookie
+                const res = await axios.post('/api/client/auth/profile', {});
+
+                if (res.data.success && res.data.data) {
+                    const { user: userData } = res.data.data;
+                    setUser({
+                        _id: userData._id,
+                        email: userData.email,
+                        fullname: userData.fullname,
+                        avatar: userData.avatar,
+                        authProvider: userData.authProvider,
+                        accountStatus: userData.accountStatus,
+                        isEmailVerified: userData.isEmailVerified,
+                        phone: userData.phone,
+                        gender: userData.gender,
+                    });
                 } else {
-                    refreshAuth();
-                    // window.location.href = pathAdminRoutes.login;
-                    router.replace("/home");
+                    resetAuth();
                 }
             } catch {
-                refreshAuth();
+                resetAuth();
+            } finally {
+                setIsLoading(false);
             }
         };
-        fetchAccount();
-    }, [setAccountLogin, setAccessToken, refreshAuth, router]);
 
-    return <>{children}</>;
+        fetchProfile();
+    }, [setUser, resetAuth]);
+
+    const contextValue: AuthContextType = {
+        user,
+        loading: loading || isLoading,
+        isAuthenticated,
+        login,
+        logout,
+        loginWithGoogle,
+    };
+
+    if (isLoading) {
+        return null;
+    }
+
+    return (
+        <AuthContext.Provider value={contextValue}>
+            {children}
+        </AuthContext.Provider>
+    );
 }

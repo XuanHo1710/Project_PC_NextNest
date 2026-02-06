@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
-import { IProductCard, IProductWithPagination } from "@/types/model.client";
+import { IProductCard, IProductWithPagination } from "@/types/product";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Carousel, Rate, Tag, Tabs, message } from "antd";
 import Link from "next/link";
@@ -24,6 +24,14 @@ import DescriptionProduct from '@/components/client/ProductDetail/Description';
 import SpecificationsProduct from '@/components/client/ProductDetail/Specifications';
 import ProductImageGallery from '@/components/client/ProductDetail/ProductImageGallery';
 import useCartStore from '@/hooks/useCart';
+import {
+    getProductDisplayPrice,
+    getProductOriginalPrice,
+    getProductDiscount,
+    getProductImage,
+    getProductImages,
+    getProductSoldCount,
+} from '@/utils/productHelpers';
 import Swal from "sweetalert2";
 import useAuthUser from '@/hooks/useAuthUser';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
@@ -148,12 +156,12 @@ export default function ProductDetailClient() {
             {product && product._id && (
                 <>
                     <DynamicMetadata
-                        title={`${product.name} - Giá ${product.newPrice.toLocaleString()}đ | PC Store`}
-                        description={`Mua ${product.name} chính hãng giá ${product.newPrice.toLocaleString()}đ (Giảm ${product.discount.toFixed(0)}% từ ${product.oldPrice.toLocaleString()}đ). ${product.description || 'Bảo hành chính hãng, giao hàng nhanh, trả góp 0%.'} ⭐ Đánh giá ${product.ratingAvg?.toFixed(1)}/5 (${product.totalRatings} đánh giá). Đã bán ${product.soldCount}+ sản phẩm.`}
+                        title={`${product.name} - Giá ${getProductDisplayPrice(product).toLocaleString()}đ | PC Store`}
+                        description={`Mua ${product.name} chính hãng giá ${getProductDisplayPrice(product).toLocaleString()}đ (Giảm ${getProductDiscount(product).toFixed(0)}% từ ${getProductOriginalPrice(product).toLocaleString()}đ). ${product.description || 'Bảo hành chính hãng, giao hàng nhanh, trả góp 0%.'} ⭐ Đánh giá ${product.ratingAvg?.toFixed(1)}/5 (${product.totalRatings} đánh giá). Đã bán ${getProductSoldCount(product)}+ sản phẩm.`}
                         keywords={`${product.name}, mua ${product.name}, ${product.name} giá rẻ, ${product.name} chính hãng, ${product.category?.name || 'pc gaming'}, linh kiện máy tính`}
-                        ogTitle={`${product.name} - Sale ${product.discount.toFixed(0)}% còn ${product.newPrice.toLocaleString()}đ`}
-                        ogDescription={`⭐ ${product.ratingAvg?.toFixed(1)}/5 (${product.totalRatings} đánh giá) | Đã bán ${product.soldCount}+ | ${product.description || 'Bảo hành chính hãng, giao hàng nhanh'}`}
-                        ogImage={product.images[0] || '/laptop.png'}
+                        ogTitle={`${product.name} - Sale ${getProductDiscount(product).toFixed(0)}% còn ${getProductDisplayPrice(product).toLocaleString()}đ`}
+                        ogDescription={`⭐ ${product.ratingAvg?.toFixed(1)}/5 (${product.totalRatings} đánh giá) | Đã bán ${getProductSoldCount(product)}+ | ${product.description || 'Bảo hành chính hãng, giao hàng nhanh'}`}
+                        ogImage={getProductImage(product) || '/laptop.png'}
                     />
                     <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 dark:text-white">
                         {/* Breadcrumb */}
@@ -169,7 +177,7 @@ export default function ProductDetailClient() {
                         <div className='rounded-lg mx-5 xl:mx-32 content-body my-5 p-4 md:p-6 bg-white dark:bg-gray-800 dark:text-white shadow-lg'>
                             <h1 className='font-bold text-xl text-blue-600 dark:text-white lg:text-3xl line-clamp-2 py-3 border-solid border-b-2 border-blue-200 flex items-center'>
                                 {product.name}
-                                {product.discount > 10 && (
+                                {getProductDiscount(product) > 10 && (
                                     <span className="ml-3 bg-red-100 text-red-600 px-2 py-1 rounded-md text-sm font-medium flex items-center">
                                         <FireFilled className="mr-1" /> Hot
                                     </span>
@@ -180,7 +188,7 @@ export default function ProductDetailClient() {
                                 {/* Hình ảnh sản phẩm */}
                                 <div className='lg:col-span-5 xl:col-span-4'>
                                     <ProductImageGallery
-                                        images={product.images}
+                                        images={getProductImages(product)}
                                         productName={product.name}
                                     />
 
@@ -194,7 +202,7 @@ export default function ProductDetailClient() {
                                         <div className="h-12 w-px bg-gray-300 dark:bg-gray-600 mx-4"></div>
                                         <div className="flex flex-col">
                                             <span className="text-green-600 dark:text-green-400 font-bold flex items-center mb-1">
-                                                <CheckCircleFilled className="mr-1" /> Đã bán: {product.soldCount}+
+                                                <CheckCircleFilled className="mr-1" /> Đã bán: {getProductSoldCount(product)}+
                                             </span>
                                             <span className="text-blue-600 dark:text-blue-400 text-sm flex items-center">
                                                 <SafetyCertificateFilled className="mr-1" /> Hàng chính hãng
@@ -225,16 +233,6 @@ export default function ProductDetailClient() {
                                             <span className="icon-[material-symbols--settings] mr-2 text-blue-500"></span>
                                             Thông số sản phẩm
                                         </h3>
-                                        <ul className='text-stone-800 dark:text-white break-words grid grid-cols-1 md:grid-cols-2 gap-y-2'>
-                                            {product.other?.map((o, index) => (
-                                                <li key={index} className='break-words flex items-start'>
-                                                    <span className="icon-[material-symbols--check-small-rounded] mt-1 text-green-500 mr-2"></span>
-                                                    <div>
-                                                        <span className="uppercase font-semibold">{o.key}</span>: {o.value}
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
                                         <hr className="my-4 border-gray-200 dark:border-gray-600" />
                                         {/* <p className="text-gray-600 dark:text-gray-300 italic text-sm">{product.description}</p> */}
                                     </div>
@@ -243,14 +241,14 @@ export default function ProductDetailClient() {
                                     <div className='px-4 py-4 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-750 rounded-xl shadow-sm'>
                                         <div className='md:flex items-end'>
                                             <p className='text-blue-600 dark:text-red-400 inline-block md:block font-bold text-xl md:text-2xl xl:text-4xl'>
-                                                {(product.newPrice).toLocaleString()} đ
+                                                {(getProductDisplayPrice(product)).toLocaleString()} đ
                                             </p>
                                             <div className="flex items-center">
                                                 <p className='mb-3 md:mb-0 mx-4 line-through inline-block md:block text-stone-500 text-lg md:text-xl xl:text-2xl font-bold'>
-                                                    {product.oldPrice.toLocaleString()} đ
+                                                    {getProductOriginalPrice(product).toLocaleString()} đ
                                                 </p>
                                                 <Tag className='text-sm font-medium' color="red">
-                                                    Tiết kiệm {(product?.discount).toFixed(0)}%
+                                                    Tiết kiệm {(getProductDiscount(product)).toFixed(0)}%
                                                 </Tag>
                                             </div>
                                         </div>
@@ -451,8 +449,8 @@ export default function ProductDetailClient() {
                                 autoplaySpeed={2000}
                                 responsive={responsiveSettings}
                             >
-                                {dataProduct && dataProduct.products.length > 0 &&
-                                    dataProduct.products.map(item => (
+                                {dataProduct && dataProduct.items.length > 0 &&
+                                    dataProduct.items.map(item => (
                                         <div key={item._id} className='px-1.5 dark:text-white'>
                                             <CardProduct css="hover:shadow-lg transition-all duration-300" product={item} />
                                         </div>

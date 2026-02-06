@@ -7,7 +7,7 @@ import { paymentClientService } from '@/services/client/payment.client.service';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { pathClientRoutes } from '@/config/route';
-import { IOrderData } from '@/types/model.client';
+import { IOrderData } from '@/types/order';
 import { useMutation } from '@tanstack/react-query';
 import { orderClientService } from '@/services/client/order.client.service';
 import useCartStore from '@/hooks/useCart';

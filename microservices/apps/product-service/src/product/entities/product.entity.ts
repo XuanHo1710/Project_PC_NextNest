@@ -25,15 +25,15 @@ export class Product {
 
   // Mapping variants attributes
 
-  @Prop()
+  @Prop({ default: 0 })
   minPrice: number;
 
-  @Prop()
+  @Prop({ default: 0 })
   maxPrice: number;
 
   @Prop({
     type: String,
-    enum: ['ACTIVE', 'INACTIVE'],
+    enum: ['ACTIVE', 'INACTIVE', 'STOPSOLD'],
     default: 'ACTIVE',
   })
   status: string;

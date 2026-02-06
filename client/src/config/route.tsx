@@ -1,6 +1,8 @@
 export const pathAdminRoutes = {
     dashboard: "/admin/dashboard",
     products: "/admin/products",
+    productAttribute: "/admin/product-attribute",
+    productAttributeValue: "/admin/product-attribute-value",
     accountEmployee: "/admin/account-employee",
     accountGuest: "/admin/account-guest",
     category: "/admin/category",
@@ -21,6 +23,7 @@ export const pathClientRoutes = {
     payment: "/payment",
     orderSuccess: "/order-success",
     profile: "/profile",
+    createProduct: "/create-product",
     auth: {
         login: "/auth/login",
         register: "/auth/register",

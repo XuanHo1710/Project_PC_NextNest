@@ -8,12 +8,12 @@ import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 import { CartPageSkeleton } from "@/components/Skeletons";
 import useAuthUser from "@/hooks/useAuthUser";
-import { IGuest } from "@/types/account";
+import { IAccountGuest } from "@/types/account-guest";
 import { useQuery } from "@tanstack/react-query";
-import { guestClientService } from "@/services/client";
 import { useRouter } from "next/navigation";
-import { IOrderData } from "@/types/model.client";
+import { IOrderData } from "@/types/order";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import { accountGuestService } from "@/services/client";
 
 
 
@@ -68,11 +68,11 @@ export default function CartClient() {
     const {
         data: profile,
         isLoading: isLoadingProfile
-    } = useQuery<IGuest | null>({
+    } = useQuery<IAccountGuest | null>({
         queryKey: ['user-profile', user?.id],
         queryFn: async () => {
             if (!user?.id) return null;
-            return await guestClientService.getProfile(user.id);
+            return await accountGuestService.getProfile();
         },
         enabled: !!user?.id,
         staleTime: 5 * 60 * 1000, // 5 phút

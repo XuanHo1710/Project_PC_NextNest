@@ -1,11 +1,11 @@
 // services/discount.service.ts
-import type { IDiscount } from "@/types/modal.d"
-import { BaseService } from "./base.service"
+import type { IDiscount } from "@/types/discount";
+import { BaseService } from "./base.service";
 
 class DiscountService extends BaseService<IDiscount> {
   constructor() {
-    super("discount")
+    super("discount");
   }
 }
 
-export const discountService = new DiscountService()
+export const discountService = new DiscountService();

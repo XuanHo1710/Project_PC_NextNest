@@ -1,22 +1,20 @@
 'use client';
 
 import { productClientService } from "@/services/client";
-import { ILoginResponse } from "@/types/account";
-import { IComment } from "@/types/modal";
-import { IProductCard } from "@/types/model.client";
+import { IAccountGuest } from "@/types/auth";
+import { IComment } from "@/types/interaction";
+import { IProductCard } from "@/types/product";
 import { DislikeOutlined, LikeOutlined } from "@ant-design/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { message } from "antd";
 import { useState } from "react";
 
-type User = ILoginResponse['user'];
-
-export default function HandleLike({ user, product, comment }: { user: User | null, product: IProductCard, comment: IComment }) {
+export default function HandleLike({ user, product, comment }: { user: IAccountGuest | null, product: IProductCard, comment: IComment }) {
     const [isLiked, setIsLiked] = useState<boolean>(
-        comment.replies.filter(r => !r.isReply && r.isLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#")
+        comment.replies.filter(r => !r.isReply && r.isLiked).map(r => r.guestIdInteractedBy._id).includes(user?._id || "#")
     );
     const [isDisliked, setIsDisliked] = useState<boolean>(
-        comment.replies.filter(r => !r.isReply && r.isDisLiked).map(r => r.guestIdInteractedBy._id).includes(user?.id || "#")
+        comment.replies.filter(r => !r.isReply && r.isDisLiked).map(r => r.guestIdInteractedBy._id).includes(user?._id || "#")
     );
 
     const [totalLikes, setTotalLikes] = useState<number>(comment.likes);
@@ -53,7 +51,7 @@ export default function HandleLike({ user, product, comment }: { user: User | nu
         setIsLiked(!isLiked);
         const dataInteract = {
             commentId: commentId,
-            guestIdInteractedBy: user?.id || "",
+            guestIdInteractedBy: user?._id || "",
             isLike: true
         }
         interactMutation.mutate(dataInteract);
@@ -76,7 +74,7 @@ export default function HandleLike({ user, product, comment }: { user: User | nu
         setIsDisliked(!isDisliked);
         const dataInteract = {
             commentId: commentId,
-            guestIdInteractedBy: user?.id || "",
+            guestIdInteractedBy: user?._id || "",
             isLike: false
         }
         interactMutation.mutate(dataInteract);

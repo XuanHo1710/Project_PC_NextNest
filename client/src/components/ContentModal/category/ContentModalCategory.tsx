@@ -1,5 +1,5 @@
 'use client'
-import { ICategory } from '@/types/modal.d';
+import { ICategory } from '@/types/category';
 import '@ant-design/v5-patch-for-react-19';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';

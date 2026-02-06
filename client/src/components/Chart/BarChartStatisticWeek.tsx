@@ -1,20 +1,8 @@
 'use client'
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import {
-    ChartConfig,
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-} from "@/components/ui/chart"
+import { Card, Typography } from "antd"
+import { Bar, BarChart, CartesianGrid, XAxis, Tooltip, ResponsiveContainer } from "recharts"
 
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
-
+const { Title, Text } = Typography
 
 const chartDataBar = [
     { month: "Mo", desktop: 2 },
@@ -26,42 +14,27 @@ const chartDataBar = [
     { month: "Su", desktop: 150 },
 ]
 
-const chartConfigBar = {
-    desktop: {
-        label: "Desktop",
-        color: "rgb(26, 142, 255)",
-    },
-} satisfies ChartConfig
-
 export const BarChartStatisticWeek = () => {
     return (
-        <>
-            <Card>
-                <CardHeader>
-                    <CardTitle>This Week Statistics</CardTitle>
-                    <CardDescription className="text-2xl">$7,650</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer config={chartConfigBar}>
-                        <BarChart accessibilityLayer data={chartDataBar}>
-                            <CartesianGrid vertical={false} />
-                            <XAxis
-                                dataKey="month"
-                                tickLine={false}
-                                tickMargin={10}
-                                axisLine={false}
-                                tickFormatter={(value) => value.slice(0, 3)}
-                            />
-                            <ChartTooltip
-                                cursor={false}
-                                content={<ChartTooltipContent hideLabel />}
-                            />
-                            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8} />
-                        </BarChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
-        </>
+        <Card>
+            <div style={{ marginBottom: 16 }}>
+                <Title level={5} style={{ margin: 0 }}>This Week Statistics</Title>
+                <Text style={{ fontSize: 24, fontWeight: 600 }}>$7,650</Text>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={chartDataBar}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis
+                        dataKey="month"
+                        tickLine={false}
+                        tickMargin={10}
+                        axisLine={false}
+                        tickFormatter={(value) => value.slice(0, 3)}
+                    />
+                    <Tooltip cursor={false} />
+                    <Bar dataKey="desktop" fill="rgb(26, 142, 255)" radius={8} />
+                </BarChart>
+            </ResponsiveContainer>
+        </Card>
     )
 }
-

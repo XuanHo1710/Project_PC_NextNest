@@ -11,6 +11,7 @@ import { BiCategory } from 'react-icons/bi';
 import { SiAdguard } from 'react-icons/si';
 import { FaPeopleGroup } from 'react-icons/fa6';
 import { GoLaw } from 'react-icons/go';
+import { AiOutlineTags, AiOutlineAppstore } from 'react-icons/ai';
 import Link from 'next/link';
 import { MoneyCollectOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
@@ -38,9 +39,26 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                 accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/product"
                 ) ? {
-                    key: 'products',
-                    label: <Link href={pathAdminRoutes.products}>Sản phẩm</Link>,
-                    icon: <GiLaptop />
+                    key: 'products-group',
+                    label: 'Sản phẩm',
+                    icon: <GiLaptop />,
+                    children: [
+                        {
+                            key: 'products',
+                            label: <Link href={pathAdminRoutes.products}>Danh sách SP</Link>,
+                            icon: <GiLaptop />,
+                        },
+                        {
+                            key: 'product-attribute',
+                            label: <Link href={pathAdminRoutes.productAttribute}>Thuộc tính SP</Link>,
+                            icon: <AiOutlineTags />,
+                        },
+                        {
+                            key: 'product-attribute-value',
+                            label: <Link href={pathAdminRoutes.productAttributeValue}>Giá trị thuộc tính</Link>,
+                            icon: <AiOutlineAppstore />,
+                        },
+                    ],
                 } : null,
                 accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
@@ -73,26 +91,6 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
             label: 'SECURITY',
             type: 'group',
             children: [
-                {
-                    key: 'user',
-                    label: 'Người dùng',
-                    icon: <FaUserFriends />,
-                    children: [
-                        accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                            (p) => p.method === "GET" && p.path === "/api/v1/admin/employee"
-                        ) ? {
-                            key: 'employee',
-                            label: <Link href={pathAdminRoutes.employee}>Thông tin nhân viên</Link>,
-                            icon: <IoIosPeople />
-                        } : null,
-                        {
-                            key: 'customer',
-                            label: <Link href={pathAdminRoutes.guest}>Thông tin khách hàng</Link>,
-                            icon: <FaPeopleGroup />
-
-                        },
-                    ],
-                },
                 {
                     key: 'account',
                     label: 'Tài khoản',

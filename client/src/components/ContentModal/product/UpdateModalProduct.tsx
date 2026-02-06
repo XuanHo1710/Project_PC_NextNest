@@ -5,7 +5,8 @@ import { Button, Form, Image, Input, InputNumber, Select, Spin, Switch } from 'a
 import TextArea from 'antd/es/input/TextArea';
 import { JSX, useEffect, useState } from 'react';
 import { UploadImages } from '@/utils/uploadImage';
-import { ICategory, IProduct } from '@/types/modal.d';
+import { ICategory } from '@/types/category';
+import { IProduct } from '@/types/product';
 import { toast } from 'react-toastify';
 import { useUpdateProduct, useCategories } from '@/hooks/admin';
 

@@ -1,4 +1,10 @@
-import { ICartItem, IProductCard } from "@/types/model.client";
+import { ICartItem } from "@/types/order";
+import { IProductCard } from "@/types/product";
+import {
+    getProductDisplayPrice,
+    getProductOriginalPrice,
+    getProductImage,
+} from "@/utils/productHelpers";
 import { Button, Image } from "antd"
 import Link from "next/link";
 
@@ -18,7 +24,7 @@ const CartProduct = ({ cartItem, handle }: CartProductProps) => {
             {cartItem &&
                 <div className='cart-product-item flex gap-3 p-3 border-solid border-2 dark:bg-gray-800 dark:border-stone-800 border-stone-100'>
                     <div className='basis-1/6'>
-                        <Image alt="Product" width={100} src={cartItem.product.images[0]} />
+                        <Image alt="Product" width={100} src={getProductImage(cartItem.product)} />
                     </div>
                     <div className='basis-5/6'>
                         <div className='flex items-center pb-3 justify-between'>
@@ -32,8 +38,8 @@ const CartProduct = ({ cartItem, handle }: CartProductProps) => {
                         </div>
                         <div className='flex items-center justify-between mt-2'>
                             <div className='text-stone-500'>
-                                <p className='font-bold text-xs md:text-lg line-through'>{cartItem.product.oldPrice.toLocaleString()} đ</p>
-                                <p className='font-bold text-xs md:text-xl text-blue-500'>{cartItem?.product?.newPrice.toLocaleString()} đ</p>
+                                <p className='font-bold text-xs md:text-lg line-through'>{getProductOriginalPrice(cartItem.product).toLocaleString()} đ</p>
+                                <p className='font-bold text-xs md:text-xl text-blue-500'>{getProductDisplayPrice(cartItem.product).toLocaleString()} đ</p>
                             </div>
                             <div className='text-stone-600 flex flex-col items-end'>
                                 <div className='flex items-center text-sm md:text-xl'>

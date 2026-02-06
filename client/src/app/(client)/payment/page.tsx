@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, Divider } from 'antd';
 import PaymentMethods from '@/components/client/PaymentMethods';
 import Link from 'next/link';
-import { IOrderData } from '@/types/model.client';
+import { IOrderData } from '@/types/order';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 const PaymentPage = () => {

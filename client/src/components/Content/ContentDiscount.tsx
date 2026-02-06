@@ -12,7 +12,7 @@ import EditSortDiscount from "@/components/EditSort/discount/EditSortDiscount";
 import ContentModalDiscount from "@/components/ContentModal/discount/ContentModalDiscount";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { DataType, SelectedContextType } from "@/types/table.d";
-import { IDiscount } from "@/types/modal.d";
+import { IDiscount } from "@/types/discount";
 import { useDiscounts, useDeleteDiscount } from "@/hooks/admin";
 
 

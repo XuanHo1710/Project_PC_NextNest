@@ -7,7 +7,7 @@ import EditSortAccountEmployee from "@/components/EditSort/account-employee/Edit
 import TableContent from "@/components/TableContent/TableContent";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
-import { IAccountEmployee, IEmployee } from "@/types/modal.d";
+import { IAccountEmployee } from "@/types";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
@@ -70,10 +70,7 @@ export default function ContentAccountEmployee() {
                 columnConfig.render = (_: unknown, { status }: { status: string }) => (
                     <Tag color={status === "ACTIVE" ? "green-inverse" : "volcano-inverse"}>{status === "ACTIVE" ? "Hoạt động" : "Dừng hoạt động"}</Tag>
                 );
-            } else if (field === "employee") {
-                columnConfig.render = (_: unknown, { employee }: { employee: IEmployee }) => (
-                    <h2>{employee.name}</h2>
-                );
+
             } else if (field === "role") {
                 columnConfig.render = (_: unknown, record: DataType<IAccountEmployee>) => (
                     <h2>{record.role?.name ? record.role.name : ""}</h2>

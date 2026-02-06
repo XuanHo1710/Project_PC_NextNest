@@ -12,7 +12,7 @@ import ContentModalCategory from "@/components/ContentModal/category/ContentModa
 import UpdateModalCategory from "@/components/ContentModal/category/UpdateModalCategory";
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { DataType, SelectedContextType } from "@/types/table.d";
-import { ICategory } from "@/types/modal.d";
+import { ICategory } from "@/types/category";
 import { useCategories, useDeleteCategory } from "@/hooks/admin/useCategory";
 
 const SelectedContextCategory = createContext<SelectedContextType | undefined>(undefined);
@@ -55,14 +55,14 @@ export default function ContentCategory() {
             dataIndex: 'name',
             key: 'name',
         },
-        {
-            title: 'Parent',
-            dataIndex: 'parent',
-            key: 'parent',
-            render: (_, { parent }) => {
-                return <>{parent !== null && parent.name}</>
-            }
-        },
+        // {
+        //     title: 'Parent',
+        //     dataIndex: 'parent',
+        //     key: 'parent',
+        //     render: (_, { parent }) => {
+        //         return <>{parent !== null && parent.name}</>
+        //     }
+        // },
         {
             title: 'Action',
             key: 'action',
@@ -99,19 +99,19 @@ export default function ContentCategory() {
     ];
 
     let dataTable: DataType<ICategory>[] = [];
-    if (!loading && categorys.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
-        (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
-    )) {
-        dataTable = categorys.map((item: ICategory, index: number) => {
-            const row: DataType<ICategory> = {
-                key: index.toString(),
-                _id: item._id,
-                name: item.name,
-                parent: item.parent // assign the full parent object or undefined
-            };
-            return row;
-        });
-    }
+    // if (!loading && categorys.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
+    //     (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
+    // )) {
+    //     dataTable = categorys.map((item: ICategory, index: number) => {
+    //         const row: DataType<ICategory> = {
+    //             key: index.toString(),
+    //             _id: item._id,
+    //             name: item.name,
+    //             parent: item.parent // assign the full parent object or undefined
+    //         };
+    //         return row;
+    //     });
+    // }
 
     return (
         <>

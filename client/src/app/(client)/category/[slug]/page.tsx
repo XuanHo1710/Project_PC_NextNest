@@ -2,7 +2,7 @@
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import useCartStore from "@/hooks/useCart";
 import { categoryClientService, productClientService } from "@/services/client";
-import { IProductWithPagination } from "@/types/model.client";
+import { IProductWithPagination } from "@/types/product";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Carousel, Checkbox, Drawer, Image, Pagination } from "antd";
 import Link from "next/link";
@@ -10,10 +10,16 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { CategoryPageSkeleton } from "@/components/Skeletons";
-import { ICategory } from "@/types/modal";
+import { ICategory } from "@/types/category";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 import { FiShoppingCart } from "react-icons/fi";
+import {
+    getProductDisplayPrice,
+    getProductOriginalPrice,
+    getProductDiscount,
+    getProductImage,
+} from "@/utils/productHelpers";
 
 
 export default function CategoryClient() {
@@ -214,9 +220,9 @@ export default function CategoryClient() {
             {dataCategory && (
                 <DynamicMetadata
                     title={`${dataCategory.name} - PC Store | Mua ${dataCategory.name} chính hãng giá tốt`}
-                    description={`Mua ${dataCategory.name} chính hãng với giá tốt nhất tại PC Store. Đa dạng sản phẩm, bảo hành uy tín, giao hàng nhanh, hỗ trợ trả góp 0%. Tổng ${dataProduct?.pagination.totalItems || 0} sản phẩm.`}
+                    description={`Mua ${dataCategory.name} chính hãng với giá tốt nhất tại PC Store. Đa dạng sản phẩm, bảo hành uy tín, giao hàng nhanh, hỗ trợ trả góp 0%. Tổng ${dataProduct?.totalItems || 0} sản phẩm.`}
                     keywords={`${dataCategory.name}, mua ${dataCategory.name}, ${dataCategory.name} giá rẻ, ${dataCategory.name} chính hãng, ${dataCategory.name} uy tín`}
-                    ogTitle={`${dataCategory.name} - Hơn ${dataProduct?.pagination.totalItems || 0} sản phẩm chính hãng`}
+                    ogTitle={`${dataCategory.name} - Hơn ${dataProduct?.totalItems || 0} sản phẩm chính hãng`}
                     ogDescription={`Khám phá bộ sưu tập ${dataCategory.name} đa dạng tại PC Store. Giá tốt, chất lượng cao, bảo hành chính hãng.`}
                 />
             )}
@@ -265,7 +271,7 @@ export default function CategoryClient() {
                 </div>
                 <h1 className='mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3 font-bold text-xl lg:text-3xl uppercase text-blue-500'>
                     {dataCategory && dataCategory.name}
-                    <span className='ml-2 text-sm border-none text-stone-400 lowercase font-medium'>(Tổng {dataProduct && dataProduct.pagination.totalItems} sản phẩm)</span>
+                    <span className='ml-2 text-sm border-none text-stone-400 lowercase font-medium'>(Tổng {dataProduct && dataProduct.totalItems} sản phẩm)</span>
                 </h1>
                 <div className='mx-5 xl:mx-32 mt-5 content-body grid grid-flow-row grid-cols-12 lg:gap-12 '>
                     <div className='hidden lg:block lg:col-span-3 p-5 rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-h-max'>
@@ -364,14 +370,14 @@ export default function CategoryClient() {
                             </div>
                             {isDisplayRow ?
                                 <div className='content-list-product-row mt-6 '>
-                                    {dataProduct && dataProduct.products.length > 0 ?
-                                        dataProduct.products.map(product => (
+                                    {dataProduct && dataProduct.items.length > 0 ?
+                                        dataProduct.items.map(product => (
                                             <div key={product._id} className='my-2 p-3.5 border-solid border-2 border-stone-100 dark:border-stone-800'>
                                                 <div className='card rounded-lg dark:bg-gray-800 bg-white flex' >
                                                     <div className='card-img w-1/3 md:w-1/5 hover:-translate-y-2 transition-all'>
                                                         <Image
                                                             preview={false}
-                                                            src={product.images[0]}
+                                                            src={getProductImage(product)}
                                                             alt={product.name}
                                                         />
                                                     </div>
@@ -383,11 +389,11 @@ export default function CategoryClient() {
                                                         </Link>
                                                         <div className='absolute bottom-1/3 left-0 right-0'>
                                                             <h2 className='font-bold cursor-default text-lg md:text-xl my-1 text-blue-500'>
-                                                                {(product.newPrice).toLocaleString()} đ
+                                                                {(getProductDisplayPrice(product)).toLocaleString()} đ
                                                             </h2>
                                                             <div className='font-medium cursor-default text-xs md:text-lg my-1 '>
-                                                                <span className='line-through text-slate-400 mr-2'>{product.oldPrice.toLocaleString()} đ</span>
-                                                                <span className='text-red-500'>(Tiết kiệm {(product?.discount).toFixed(0)}%)</span>
+                                                                <span className='line-through text-slate-400 mr-2'>{getProductOriginalPrice(product).toLocaleString()} đ</span>
+                                                                <span className='text-red-500'>(Tiết kiệm {(getProductDiscount(product)).toFixed(0)}%)</span>
                                                             </div>
                                                         </div>
                                                         <div className='card-footer absolute bottom-0 left-0 right-0 flex item-center justify-between'>
@@ -438,8 +444,8 @@ export default function CategoryClient() {
                                 </div>
                                 :
                                 <div className='content-list-product-col grid grid-flow-row grid-cols-12 gap-0.5 md:gap-2 mt-6 '>
-                                    {dataProduct && dataProduct.products.length > 0 ?
-                                        dataProduct.products.map(product => (
+                                    {dataProduct && dataProduct.items.length > 0 ?
+                                        dataProduct.items.map(product => (
                                             <div key={product._id} className=' col-span-6 lg:col-span-3 p-1 border-solid border-2 dark:border-stone-900 border-stone-100'>
                                                 <CardProduct css="" product={product} />
                                             </div>
@@ -456,9 +462,9 @@ export default function CategoryClient() {
                             {dataProduct &&
                                 <div className='pagination mt-4 flex gap-2 items-center justify-end'>
                                     <Pagination
-                                        current={dataProduct.pagination.currentPage}
-                                        total={dataProduct.pagination.totalItems}
-                                        pageSize={dataProduct.pagination.limit}
+                                        current={dataProduct.currentPage}
+                                        total={dataProduct.totalItems}
+                                        pageSize={dataProduct.limit}
                                         onChange={(page) => handlePagination(page)}
                                         showSizeChanger={false} // ẩn chọn số item/trang
                                         className="mt-5 text-center"
