@@ -1,38 +1,28 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { Card, Button, Steps, Result, Form, message, Spin } from 'antd';
 import {
-    Card, Button, Form, Input, Select, InputNumber, Table, Tag,
-    Space, Divider, Alert, Badge, Tooltip, Steps, Empty, Switch, message, Result,
-} from 'antd';
-import {
-    PlusOutlined, ThunderboltOutlined, ShoppingOutlined,
-    TagsOutlined, AppstoreOutlined, ArrowLeftOutlined,
-    DeleteOutlined, CheckCircleOutlined, InfoCircleOutlined,
+    ShoppingOutlined, TagsOutlined, AppstoreOutlined,
+    ArrowLeftOutlined, CheckCircleOutlined, HomeOutlined,
+    PlusCircleOutlined,
 } from '@ant-design/icons';
 import {
     useClientProductAttributes,
     useClientProductAttributeValues,
     useClientCreateProduct,
     useClientCategories,
+    useClientBrands,
 } from '@/hooks/client/useProductManage';
 import { productManageClientService } from '@/services/client/product-manage.client.service';
 import type { IProductAttribute, IProductAttributeValue } from '@/types';
-import type { ColumnsType } from 'antd/es/table';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProviderClient';
 
-// ============= TYPES =============
-interface VariantRow {
-    key: string;
-    combination: Record<string, string>;
-    combinationIds: Record<string, string>;
-    sku: string;
-    price: number;
-    discount: number;
-    enabled: boolean;
-}
+// Step components
+import { ProductInfoStep, SelectAttributesStep, ConfigureVariantsStep, ReviewStep } from './steps';
+import type { VariantRow } from './steps';
 
 // ============= MAIN COMPONENT =============
 export default function ClientCreateProduct() {
@@ -49,263 +39,61 @@ export default function ClientCreateProduct() {
     const [variants, setVariants] = useState<VariantRow[]>([]);
     const [variantsGenerated, setVariantsGenerated] = useState(false);
 
-    // Batch pricing
-    const [batchPrice, setBatchPrice] = useState<number>(0);
-    const [batchDiscount, setBatchDiscount] = useState<number>(0);
+    // Submit state
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [createdProductName, setCreatedProductName] = useState('');
 
-    // Queries (client-side)
-    const { data: attributes = [] } = useClientProductAttributes();
-    const { data: attributeValues = [] } = useClientProductAttributeValues();
-    const { data: categories = [] } = useClientCategories();
+    // Queries
+    const { data: attributes = [], isLoading: loadingAttrs } = useClientProductAttributes();
+    const { data: attributeValues = [], isLoading: loadingValues } = useClientProductAttributeValues();
+    const { data: categories = [], isLoading: loadingCats } = useClientCategories();
+    const { data: brands = [], isLoading: loadingBrands } = useClientBrands();
     const createProductMutation = useClientCreateProduct();
 
-    // Saving state
-    const [isSaving, setIsSaving] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
-
-    // ============= COMPUTED =============
+    // Cast data
     const attributeList = attributes as IProductAttribute[];
     const valueList = attributeValues as IProductAttributeValue[];
+    const categoryList = categories as { _id: string; name: string; slug: string }[];
+    const brandList = brands as { _id: string; name: string }[];
 
-    const getValuesForAttribute = useCallback((attributeId: string) => {
-        return valueList.filter((v) => {
-            const attrId = typeof v.attribute === 'string' ? v.attribute : v.attribute?._id;
-            return attrId === attributeId;
-        });
-    }, [valueList]);
-
-    const getAttributeById = useCallback((id: string) => {
-        return attributeList.find(a => a._id === id);
-    }, [attributeList]);
-
-    const getValueById = useCallback((id: string) => {
-        return valueList.find(v => v._id === id);
-    }, [valueList]);
-
-    // ============= VARIANT GENERATION =============
-    const generateVariants = useCallback(() => {
-        const attributeArrays: { attributeId: string; code: string; values: IProductAttributeValue[] }[] = [];
-
-        for (const attrId of selectedAttributes) {
-            const attr = getAttributeById(attrId);
-            const valIds = selectedValues[attrId] || [];
-            if (valIds.length === 0) continue;
-
-            const vals = valIds.map(id => getValueById(id)).filter(Boolean) as IProductAttributeValue[];
-            if (vals.length > 0 && attr) {
-                attributeArrays.push({
-                    attributeId: attrId,
-                    code: attr.code,
-                    values: vals,
-                });
-            }
-        }
-
-        if (attributeArrays.length === 0) {
-            message.warning('Vui lòng chọn ít nhất 1 thuộc tính và giá trị');
-            return;
-        }
-
-        // Cartesian product
-        const cartesian = (arrays: IProductAttributeValue[][]): IProductAttributeValue[][] => {
-            if (arrays.length === 0) return [[]];
-            const [first, ...rest] = arrays;
-            const restCombinations = cartesian(rest);
-            return first.flatMap(val => restCombinations.map(combo => [val, ...combo]));
-        };
-
-        const allCombinations = cartesian(attributeArrays.map(a => a.values));
-
-        const newVariants: VariantRow[] = allCombinations.map((combo, idx) => {
-            const combination: Record<string, string> = {};
-            const combinationIds: Record<string, string> = {};
-
-            combo.forEach((val, i) => {
-                const attr = attributeArrays[i];
-                combination[attr.code] = val.label;
-                combinationIds[attr.code] = val._id;
-            });
-
-            const skuParts = combo.map(v => v.value.toUpperCase().replace(/\s+/g, ''));
-            const sku = `SKU-${skuParts.join('-')}-${String(idx + 1).padStart(3, '0')}`;
-
-            return {
-                key: `variant-${idx}`,
-                combination,
-                combinationIds,
-                sku,
-                price: batchPrice || 0,
-                discount: batchDiscount || 0,
-                enabled: true,
-            };
-        });
-
-        setVariants(newVariants);
-        setVariantsGenerated(true);
-        message.success(`Đã sinh ${newVariants.length} biến thể sản phẩm!`);
-    }, [selectedAttributes, selectedValues, getAttributeById, getValueById, batchPrice, batchDiscount]);
-
-    // Total variants count preview
-    const totalVariantsPreview = useMemo(() => {
-        let total = 1;
-        let hasAny = false;
-        for (const attrId of selectedAttributes) {
-            const count = (selectedValues[attrId] || []).length;
-            if (count > 0) {
-                total *= count;
-                hasAny = true;
-            }
-        }
-        return hasAny ? total : 0;
-    }, [selectedAttributes, selectedValues]);
-
-    // ============= VARIANT TABLE COLUMNS =============
-    const variantColumns: ColumnsType<VariantRow> = [
-        {
-            title: 'STT',
-            key: 'index',
-            width: 60,
-            render: (_, __, idx) => <span className="text-gray-500">{idx + 1}</span>,
-        },
-        ...selectedAttributes.map(attrId => {
-            const attr = getAttributeById(attrId);
-            return {
-                title: attr?.name || attrId,
-                key: attr?.code || attrId,
-                render: (_: unknown, record: VariantRow) => {
-                    const label = record.combination[attr?.code || ''];
-                    return <Tag color="blue">{label}</Tag>;
-                },
-            };
-        }),
-        {
-            title: 'SKU',
-            dataIndex: 'sku',
-            key: 'sku',
-            width: 200,
-            render: (sku: string, _record: VariantRow, idx: number) => (
-                <Input
-                    value={sku}
-                    onChange={(e) => {
-                        const updated = [...variants];
-                        updated[idx] = { ...updated[idx], sku: e.target.value };
-                        setVariants(updated);
-                    }}
-                    size="small"
-                />
-            ),
-        },
-        {
-            title: 'Giá (VND)',
-            dataIndex: 'price',
-            key: 'price',
-            width: 160,
-            render: (price: number, _record: VariantRow, idx: number) => (
-                <InputNumber
-                    value={price}
-                    onChange={(val) => {
-                        const updated = [...variants];
-                        updated[idx] = { ...updated[idx], price: val || 0 };
-                        setVariants(updated);
-                    }}
-                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => Number(value?.replace(/,/g, '') || 0)}
-                    min={0}
-                    className="w-full"
-                    size="small"
-                />
-            ),
-        },
-        {
-            title: 'Giảm giá (%)',
-            dataIndex: 'discount',
-            key: 'discount',
-            width: 110,
-            render: (discount: number, _record: VariantRow, idx: number) => (
-                <InputNumber
-                    value={discount}
-                    onChange={(val) => {
-                        const updated = [...variants];
-                        updated[idx] = { ...updated[idx], discount: val || 0 };
-                        setVariants(updated);
-                    }}
-                    min={0}
-                    max={100}
-                    addonAfter="%"
-                    size="small"
-                />
-            ),
-        },
-        {
-            title: 'Bật/Tắt',
-            key: 'enabled',
-            width: 80,
-            render: (_: unknown, record: VariantRow, idx: number) => (
-                <Switch
-                    checked={record.enabled}
-                    onChange={(checked) => {
-                        const updated = [...variants];
-                        updated[idx] = { ...updated[idx], enabled: checked };
-                        setVariants(updated);
-                    }}
-                    size="small"
-                />
-            ),
-        },
-        {
-            title: '',
-            key: 'delete',
-            width: 50,
-            render: (_: unknown, __: VariantRow, idx: number) => (
-                <Tooltip title="Xóa biến thể">
-                    <Button
-                        type="text"
-                        danger
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        onClick={() => {
-                            const updated = variants.filter((_, i) => i !== idx);
-                            setVariants(updated);
-                        }}
-                    />
-                </Tooltip>
-            ),
-        },
-    ];
+    const isLoadingData = loadingAttrs || loadingValues || loadingCats || loadingBrands;
 
     // ============= HANDLERS =============
-    const handleAttributeChange = (attrIds: string[]) => {
+    const handleAttributeChange = useCallback((attrIds: string[]) => {
         setSelectedAttributes(attrIds);
-        const cleanedValues = { ...selectedValues };
-        Object.keys(cleanedValues).forEach(key => {
-            if (!attrIds.includes(key)) {
-                delete cleanedValues[key];
-            }
+        setSelectedValues(prev => {
+            const cleaned = { ...prev };
+            Object.keys(cleaned).forEach(key => {
+                if (!attrIds.includes(key)) {
+                    delete cleaned[key];
+                }
+            });
+            return cleaned;
         });
-        setSelectedValues(cleanedValues);
         setVariantsGenerated(false);
-    };
+        setVariants([]);
+    }, []);
 
-    const handleValueChange = (attributeId: string, valueIds: string[]) => {
+    const handleValueChange = useCallback((attributeId: string, valueIds: string[]) => {
         setSelectedValues(prev => ({ ...prev, [attributeId]: valueIds }));
         setVariantsGenerated(false);
-    };
+        setVariants([]);
+    }, []);
 
-    const applyBatchPrice = () => {
-        if (batchPrice <= 0) return;
-        setVariants(prev => prev.map(v => ({ ...v, price: batchPrice })));
-        message.success(`Đã áp dụng giá ${batchPrice.toLocaleString()} VND cho tất cả biến thể`);
-    };
+    // Step navigation
+    const handleStepNext = useCallback(() => {
+        setCurrentStep(prev => Math.min(prev + 1, 3));
+    }, []);
 
-    const applyBatchDiscount = () => {
-        setVariants(prev => prev.map(v => ({ ...v, discount: batchDiscount })));
-        message.success(`Đã áp dụng giảm giá ${batchDiscount}% cho tất cả biến thể`);
-    };
+    const handleStepBack = useCallback(() => {
+        setCurrentStep(prev => Math.max(prev - 1, 0));
+    }, []);
 
     // ============= SUBMIT =============
-    const handleSubmit = async () => {
+    const handleSubmit = useCallback(async () => {
         try {
-            const productValues = await form.validateFields();
+            const productValues = form.getFieldsValue();
             const enabledVariants = variants.filter(v => v.enabled);
 
             if (enabledVariants.length === 0) {
@@ -313,21 +101,23 @@ export default function ClientCreateProduct() {
                 return;
             }
 
-            setIsSaving(true);
+            setIsSubmitting(true);
 
             // 1. Create product
             const prices = enabledVariants.map(v => v.price * (1 - v.discount / 100));
             const productData = {
                 name: productValues.name,
-                description: productValues.description,
+                description: productValues.description || undefined,
                 category: productValues.category,
+                brand: productValues.brand || undefined,
                 status: 'ACTIVE' as const,
                 minPrice: Math.min(...prices),
                 maxPrice: Math.max(...prices),
             };
 
             const productResult = await createProductMutation.mutateAsync(productData);
-            const productId = (productResult as { data: { _id: string } }).data?._id;
+            // Handle both possible response shapes
+            const productId = (productResult as any)?._id || (productResult as any)?.data?._id;
 
             if (!productId) {
                 throw new Error('Không thể tạo sản phẩm');
@@ -339,27 +129,79 @@ export default function ClientCreateProduct() {
                 await productManageClientService.bulkCreateAllowValues(productId, allValueIds);
             }
 
-            // 3. Create variants
-            for (const variant of enabledVariants) {
-                await productManageClientService.createVariant({
+            // 3. Create variants sequentially
+            let firstVariantId: string | null = null;
+            for (let i = 0; i < enabledVariants.length; i++) {
+                const variant = enabledVariants[i];
+                const result = await productManageClientService.createVariant({
                     sku: variant.sku,
                     product: productId,
                     price: variant.price,
                     discount: variant.discount,
+                    stock: variant.stock,
                     combination: variant.combinationIds,
-                    images: [],
+                    images: variant.images,
+                });
+                if (i === 0 && result?._id) {
+                    firstVariantId = result._id;
+                }
+            }
+
+            // 4. Set default variant
+            if (firstVariantId) {
+                await productManageClientService.updateProduct(productId, {
+                    defaultProductVariantId: firstVariantId,
                 });
             }
 
+            setCreatedProductName(productValues.name);
             setIsSuccess(true);
-            toast.success(`Tạo sản phẩm thành công với ${enabledVariants.length} biến thể!`);
-        } catch (err) {
+            toast.success(
+                `Tạo sản phẩm "${productValues.name}" thành công với ${enabledVariants.length} biến thể!`
+            );
+        } catch (err: any) {
             console.error('Error creating product:', err);
-            toast.error('Tạo sản phẩm thất bại!');
+            toast.error(err?.message || 'Tạo sản phẩm thất bại!');
         } finally {
-            setIsSaving(false);
+            setIsSubmitting(false);
         }
-    };
+    }, [form, variants, selectedValues, createProductMutation]);
+
+    // Reset wizard
+    const handleReset = useCallback(() => {
+        setIsSuccess(false);
+        setCurrentStep(0);
+        setVariants([]);
+        setVariantsGenerated(false);
+        setSelectedAttributes([]);
+        setSelectedValues({});
+        setCreatedProductName('');
+        form.resetFields();
+    }, [form]);
+
+    // ============= COMPUTED for review step =============
+    const productInfo = useMemo(() => {
+        const vals = form.getFieldsValue();
+        return {
+            name: vals.name || '',
+            description: vals.description || '',
+            category: vals.category || '',
+            brand: vals.brand || '',
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStep, form]);
+
+    const categoryName = useMemo(() => {
+        const catId = form.getFieldValue('category');
+        return categoryList.find(c => c._id === catId)?.name;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStep, categoryList]);
+
+    const brandName = useMemo(() => {
+        const bId = form.getFieldValue('brand');
+        return brandList.find(b => b._id === bId)?.name;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStep, brandList]);
 
     // ============= AUTH CHECK =============
     if (!isAuthenticated) {
@@ -370,7 +212,11 @@ export default function ClientCreateProduct() {
                     title="Bạn cần đăng nhập"
                     subTitle="Vui lòng đăng nhập để tạo sản phẩm bán hàng."
                     extra={
-                        <Button type="primary" onClick={() => router.push('/auth/login')}>
+                        <Button
+                            type="primary"
+                            size="large"
+                            onClick={() => router.push('/auth/login')}
+                        >
                             Đăng nhập ngay
                         </Button>
                     }
@@ -382,377 +228,176 @@ export default function ClientCreateProduct() {
     // ============= SUCCESS STATE =============
     if (isSuccess) {
         return (
-            <div className="max-w-2xl mx-auto py-20 px-4">
-                <Result
-                    status="success"
-                    title="Tạo sản phẩm thành công!"
-                    subTitle="Sản phẩm của bạn đã được tạo và đang chờ duyệt."
-                    extra={[
-                        <Button
-                            type="primary"
-                            key="create-more"
-                            onClick={() => {
-                                setIsSuccess(false);
-                                setCurrentStep(0);
-                                setVariants([]);
-                                setVariantsGenerated(false);
-                                setSelectedAttributes([]);
-                                setSelectedValues({});
-                                form.resetFields();
-                            }}
-                        >
-                            Tạo sản phẩm khác
-                        </Button>,
-                        <Button key="home" onClick={() => router.push('/')}>
-                            Về trang chủ
-                        </Button>,
-                    ]}
-                />
+            <div className="max-w-2xl mx-auto py-16 px-4">
+                <Card className="shadow-2xl border-0 overflow-hidden">
+                    <Result
+                        status="success"
+                        title={
+                            <span className="text-2xl">
+                                Tạo sản phẩm thành công! 🎉
+                            </span>
+                        }
+                        subTitle={
+                            <div className="space-y-2 mt-2">
+                                <p className="text-gray-600 text-base">
+                                    Sản phẩm{' '}
+                                    <strong className="text-blue-600">
+                                        &quot;{createdProductName}&quot;
+                                    </strong>{' '}
+                                    đã được tạo với{' '}
+                                    <strong>
+                                        {variants.filter(v => v.enabled).length} biến thể
+                                    </strong>
+                                    .
+                                </p>
+                                <p className="text-gray-400 text-sm">
+                                    Sản phẩm sẽ hiển thị trên cửa hàng sau khi được duyệt.
+                                </p>
+                            </div>
+                        }
+                        extra={[
+                            <Button
+                                type="primary"
+                                key="create-more"
+                                size="large"
+                                icon={<PlusCircleOutlined />}
+                                onClick={handleReset}
+                                className="h-12 px-8 rounded-lg font-semibold shadow-lg shadow-blue-500/20"
+                            >
+                                Tạo sản phẩm khác
+                            </Button>,
+                            <Button
+                                key="home"
+                                size="large"
+                                icon={<HomeOutlined />}
+                                onClick={() => router.push('/')}
+                                className="h-12 px-8 rounded-lg font-medium"
+                            >
+                                Về trang chủ
+                            </Button>,
+                        ]}
+                    />
+                </Card>
             </div>
         );
     }
 
-    // ============= STEPS =============
-    const steps = [
-        { title: 'Thông tin SP', icon: <ShoppingOutlined /> },
-        { title: 'Chọn thuộc tính', icon: <TagsOutlined /> },
-        { title: 'Sinh biến thể', icon: <AppstoreOutlined /> },
+    // ============= LOADING STATE =============
+    if (isLoadingData) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Spin size="large" />
+                <p className="text-gray-400 text-sm">Đang tải dữ liệu...</p>
+            </div>
+        );
+    }
+
+    // ============= STEPS CONFIG =============
+    const stepsConfig = [
+        { title: 'Thông tin', icon: <ShoppingOutlined /> },
+        { title: 'Thuộc tính', icon: <TagsOutlined /> },
+        { title: 'Biến thể', icon: <AppstoreOutlined /> },
+        { title: 'Xem lại', icon: <CheckCircleOutlined /> },
     ];
 
     // ============= RENDER =============
     return (
-        <div className="p-4 max-w-[1400px] mx-auto">
+        <div className="pb-8">
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
                 <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => router.back()}
+                    className="rounded-lg"
                 >
                     Quay lại
                 </Button>
                 <div>
-                    <h1 className="text-2xl font-bold m-0">Đăng bán sản phẩm</h1>
-                    <p className="text-gray-500 text-sm m-0">
-                        Xin chào <strong>{user?.fullname || user?.email}</strong>, hãy tạo sản phẩm với nhiều biến thể tự động
+                    <h1 className="text-2xl font-bold m-0 text-gray-900">
+                        Đăng bán sản phẩm
+                    </h1>
+                    <p className="text-gray-500 text-sm m-0 mt-0.5">
+                        Xin chào{' '}
+                        <strong className="text-blue-600">
+                            {user?.fullname || user?.email}
+                        </strong>
+                        , tạo sản phẩm với nhiều biến thể tự động
                     </p>
                 </div>
             </div>
 
-            {/* Steps */}
-            <Card className="shadow-sm mb-6">
+            {/* Steps Progress */}
+            <Card className="shadow-md border-0 mb-6 rounded-xl">
                 <Steps
                     current={currentStep}
-                    items={steps}
-                    className="mb-0"
+                    items={stepsConfig}
+                    className="px-2"
+                    responsive
                     onChange={(step) => {
-                        if (step === 0 || (step === 1 && currentStep >= 0) || (step === 2 && totalVariantsPreview > 0)) {
+                        // Allow going backwards only
+                        if (step < currentStep) {
                             setCurrentStep(step);
                         }
                     }}
                 />
             </Card>
 
-            {/* Step 1: Product Info */}
-            {currentStep === 0 && (
-                <Card title="Thông tin sản phẩm" className="shadow-sm mb-6">
-                    <Form form={form} layout="vertical" className="max-w-2xl">
-                        <Form.Item
-                            name="name"
-                            label="Tên sản phẩm"
-                            rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}
-                        >
-                            <Input placeholder="Ví dụ: Laptop ASUS ROG Strix G16" size="large" />
-                        </Form.Item>
-
-                        <Form.Item name="description" label="Mô tả">
-                            <Input.TextArea rows={4} placeholder="Mô tả chi tiết sản phẩm..." />
-                        </Form.Item>
-
-                        <Form.Item
-                            name="category"
-                            label="Danh mục"
-                            rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
-                        >
-                            <Select
-                                placeholder="Chọn danh mục"
-                                showSearch
-                                optionFilterProp="label"
-                                size="large"
-                                options={categories.map((c: { _id: string; name: string }) => ({
-                                    label: c.name,
-                                    value: c._id,
-                                }))}
-                            />
-                        </Form.Item>
-
-                        <div className="flex justify-end mt-4">
-                            <Button type="primary" size="large" onClick={() => {
-                                form.validateFields(['name', 'category']).then(() => {
-                                    setCurrentStep(1);
-                                });
-                            }}>
-                                Tiếp theo: Chọn thuộc tính
-                            </Button>
-                        </div>
-                    </Form>
-                </Card>
-            )}
-
-            {/* Step 2: Select Attributes & Values */}
-            {currentStep === 1 && (
-                <Card className="shadow-sm mb-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold m-0">Chọn thuộc tính & giá trị</h3>
-                        {totalVariantsPreview > 0 && (
-                            <Badge count={totalVariantsPreview} overflowCount={9999}>
-                                <Tag color="blue" className="text-sm py-1 px-3">
-                                    Dự kiến: {totalVariantsPreview} biến thể
-                                </Tag>
-                            </Badge>
-                        )}
-                    </div>
-
-                    <Alert
-                        message="Hướng dẫn"
-                        description="Chọn các thuộc tính (ví dụ: Màu sắc, RAM) rồi chọn các giá trị cụ thể. Hệ thống sẽ tự động sinh tổ hợp biến thể cho sản phẩm."
-                        type="info"
-                        showIcon
-                        icon={<InfoCircleOutlined />}
-                        className="mb-6"
+            {/* Step Content */}
+            <div className="step-content">
+                {currentStep === 0 && (
+                    <ProductInfoStep
+                        form={form}
+                        categories={categoryList}
+                        brands={brandList}
+                        onNext={handleStepNext}
                     />
+                )}
 
-                    {/* Select Attributes */}
-                    <Form.Item label="Chọn thuộc tính sản phẩm">
-                        <Select
-                            mode="multiple"
-                            placeholder="Tìm và chọn thuộc tính..."
-                            value={selectedAttributes}
-                            onChange={handleAttributeChange}
-                            showSearch
-                            optionFilterProp="label"
-                            className="w-full"
-                            size="large"
-                            options={attributeList.map(attr => ({
-                                label: `${attr.name} (${attr.code})`,
-                                value: attr._id,
-                            }))}
-                        />
-                    </Form.Item>
+                {currentStep === 1 && (
+                    <SelectAttributesStep
+                        attributes={attributeList}
+                        attributeValues={valueList}
+                        selectedAttributes={selectedAttributes}
+                        selectedValues={selectedValues}
+                        onAttributeChange={handleAttributeChange}
+                        onValueChange={handleValueChange}
+                        onBack={handleStepBack}
+                        onNext={handleStepNext}
+                    />
+                )}
 
-                    <Divider />
+                {currentStep === 2 && (
+                    <ConfigureVariantsStep
+                        attributes={attributeList}
+                        attributeValues={valueList}
+                        selectedAttributes={selectedAttributes}
+                        selectedValues={selectedValues}
+                        variants={variants}
+                        setVariants={setVariants}
+                        variantsGenerated={variantsGenerated}
+                        setVariantsGenerated={setVariantsGenerated}
+                        onBack={handleStepBack}
+                        onSubmit={async () => setCurrentStep(3)}
+                        isSubmitting={false}
+                    />
+                )}
 
-                    {selectedAttributes.length === 0 ? (
-                        <Empty description="Chưa chọn thuộc tính nào" className="py-8" />
-                    ) : (
-                        <div className="space-y-6">
-                            {selectedAttributes.map(attrId => {
-                                const attr = getAttributeById(attrId);
-                                const availableValues = getValuesForAttribute(attrId);
-                                const selectedValIds = selectedValues[attrId] || [];
-
-                                return (
-                                    <Card
-                                        key={attrId}
-                                        size="small"
-                                        title={
-                                            <div className="flex items-center gap-2">
-                                                <TagsOutlined />
-                                                <span className="font-medium">{attr?.name}</span>
-                                                <Tag color="blue">{attr?.code}</Tag>
-                                                <Tag>{selectedValIds.length} / {availableValues.length} đã chọn</Tag>
-                                            </div>
-                                        }
-                                        extra={
-                                            <Space>
-                                                <Button
-                                                    size="small"
-                                                    onClick={() => handleValueChange(attrId, availableValues.map(v => v._id))}
-                                                >
-                                                    Chọn tất cả
-                                                </Button>
-                                                <Button
-                                                    size="small"
-                                                    onClick={() => handleValueChange(attrId, [])}
-                                                >
-                                                    Bỏ chọn
-                                                </Button>
-                                            </Space>
-                                        }
-                                        className="bg-gray-50"
-                                    >
-                                        {availableValues.length === 0 ? (
-                                            <Empty
-                                                description={`Chưa có giá trị nào cho thuộc tính "${attr?.name}"`}
-                                                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                            />
-                                        ) : (
-                                            <Select
-                                                mode="multiple"
-                                                placeholder={`Chọn giá trị cho ${attr?.name}...`}
-                                                value={selectedValIds}
-                                                onChange={(ids) => handleValueChange(attrId, ids)}
-                                                showSearch
-                                                optionFilterProp="label"
-                                                className="w-full"
-                                                options={availableValues.map(val => ({
-                                                    label: val.label,
-                                                    value: val._id,
-                                                }))}
-                                                tagRender={({ label, closable, onClose }) => (
-                                                    <Tag
-                                                        color="blue"
-                                                        closable={closable}
-                                                        onClose={onClose}
-                                                        className="mr-1"
-                                                    >
-                                                        {label}
-                                                    </Tag>
-                                                )}
-                                            />
-                                        )}
-                                    </Card>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    <Divider />
-
-                    <div className="flex justify-between">
-                        <Button size="large" onClick={() => setCurrentStep(0)}>
-                            Quay lại
-                        </Button>
-                        <Button
-                            type="primary"
-                            size="large"
-                            disabled={totalVariantsPreview === 0}
-                            onClick={() => setCurrentStep(2)}
-                        >
-                            Tiếp theo: Sinh biến thể ({totalVariantsPreview})
-                        </Button>
-                    </div>
-                </Card>
-            )}
-
-            {/* Step 3: Generate & Edit Variants */}
-            {currentStep === 2 && (
-                <div className="space-y-6">
-                    {/* Generate Button */}
-                    <Card className="shadow-sm">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                            <div>
-                                <h3 className="text-lg font-semibold m-0 flex items-center gap-2">
-                                    <ThunderboltOutlined className="text-yellow-500" />
-                                    Sinh tổ hợp biến thể
-                                </h3>
-                                <p className="text-gray-500 text-sm m-0 mt-1">
-                                    Dựa trên {selectedAttributes.length} thuộc tính đã chọn, sẽ sinh ra{' '}
-                                    <strong className="text-blue-600">{totalVariantsPreview}</strong> biến thể
-                                </p>
-                            </div>
-                            <Button
-                                type="primary"
-                                size="large"
-                                icon={<ThunderboltOutlined />}
-                                onClick={generateVariants}
-                            >
-                                {variantsGenerated ? 'Sinh lại biến thể' : 'Sinh tổ hợp biến thể'}
-                            </Button>
-                        </div>
-
-                        {/* Batch Pricing */}
-                        {variantsGenerated && variants.length > 0 && (
-                            <>
-                                <Divider />
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="flex gap-2 items-end">
-                                        <div className="flex-1">
-                                            <label className="text-sm text-gray-600 mb-1 block">Giá đồng loạt (VND)</label>
-                                            <InputNumber
-                                                value={batchPrice}
-                                                onChange={(val) => setBatchPrice(val || 0)}
-                                                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                                parser={(value) => Number(value?.replace(/,/g, '') || 0)}
-                                                min={0}
-                                                className="w-full"
-                                            />
-                                        </div>
-                                        <Button onClick={applyBatchPrice} type="dashed">
-                                            Áp dụng
-                                        </Button>
-                                    </div>
-                                    <div className="flex gap-2 items-end">
-                                        <div className="flex-1">
-                                            <label className="text-sm text-gray-600 mb-1 block">Giảm giá đồng loạt (%)</label>
-                                            <InputNumber
-                                                value={batchDiscount}
-                                                onChange={(val) => setBatchDiscount(val || 0)}
-                                                min={0}
-                                                max={100}
-                                                addonAfter="%"
-                                                className="w-full"
-                                            />
-                                        </div>
-                                        <Button onClick={applyBatchDiscount} type="dashed">
-                                            Áp dụng
-                                        </Button>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </Card>
-
-                    {/* Variants Table */}
-                    {variantsGenerated && variants.length > 0 && (
-                        <Card
-                            className="shadow-sm"
-                            title={
-                                <div className="flex items-center gap-3">
-                                    <AppstoreOutlined />
-                                    <span>Danh sách biến thể</span>
-                                    <Badge
-                                        count={variants.filter(v => v.enabled).length}
-                                        style={{ backgroundColor: '#52c41a' }}
-                                    />
-                                    <span className="text-gray-400 text-sm font-normal">
-                                        / {variants.length} biến thể
-                                    </span>
-                                </div>
-                            }
-                        >
-                            <Table
-                                columns={variantColumns}
-                                dataSource={variants}
-                                rowKey="key"
-                                pagination={variants.length > 20 ? { pageSize: 20, showTotal: (t) => `Tổng ${t}` } : false}
-                                bordered
-                                size="small"
-                                scroll={{ x: 'max-content' }}
-                                rowClassName={(record) => record.enabled ? '' : 'opacity-40'}
-                            />
-                        </Card>
-                    )}
-
-                    {/* Actions */}
-                    <Card className="shadow-sm">
-                        <div className="flex justify-between">
-                            <Button size="large" onClick={() => setCurrentStep(1)}>
-                                Quay lại
-                            </Button>
-                            <Button
-                                type="primary"
-                                size="large"
-                                icon={<CheckCircleOutlined />}
-                                onClick={handleSubmit}
-                                loading={isSaving}
-                                disabled={!variantsGenerated || variants.filter(v => v.enabled).length === 0}
-                            >
-                                Đăng bán sản phẩm ({variants.filter(v => v.enabled).length} biến thể)
-                            </Button>
-                        </div>
-                    </Card>
-                </div>
-            )}
+                {currentStep === 3 && (
+                    <ReviewStep
+                        productInfo={productInfo}
+                        categoryName={categoryName}
+                        brandName={brandName}
+                        attributes={attributeList}
+                        attributeValues={valueList}
+                        selectedAttributes={selectedAttributes}
+                        selectedValues={selectedValues}
+                        variants={variants}
+                        onBack={handleStepBack}
+                        onSubmit={handleSubmit}
+                        isSubmitting={isSubmitting}
+                    />
+                )}
+            </div>
         </div>
     );
 }

@@ -9,7 +9,7 @@ export const AdminBodyLayout = ({ children }: { children: React.ReactNode }) => 
     const [collapsed, setCollapsed] = useState(false);
     return (
         <>
-            <Header collapsed={collapsed} setCollapsed={setCollapsed} />
+            {/* <Header collapsed={collapsed} setCollapsed={setCollapsed} />
             <div className="pt-20 flex overflow-y-hidden h-screen">
                 <Sidebar collapsed={collapsed} ></Sidebar>
                 <div className="overflow-y-scroll grow bg-slate-50" style={{ scrollbarWidth: "none" }}>
@@ -18,7 +18,24 @@ export const AdminBodyLayout = ({ children }: { children: React.ReactNode }) => 
                     </div>
                     <Footer></Footer>
                 </div>
+            </div> */}
+            <div className="h-screen flex flex-col">
+                {/* Header */}
+                <Header collapsed={collapsed} setCollapsed={setCollapsed} />
+
+                {/* Body */}
+                <div className="flex pt-20  flex-1  overflow-y-hidden h-screen">
+                    <Sidebar collapsed={collapsed} />
+
+                    <div className="overflow-y-scroll grow bg-slate-50" style={{ scrollbarWidth: "none" }}>
+                        <div className="px-5 py-4">
+                            {children}
+                        </div>
+                        <Footer />
+                    </div>
+                </div>
             </div>
+
         </>
     )
 

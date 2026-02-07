@@ -13,7 +13,7 @@ interface IHistoryLog {
     description: string;
     createdAt: string;
     action?: string;
-    module?: string;
+    body?: Object;
 }
 
 const getMethodColor = (method: string) => {
@@ -72,11 +72,22 @@ export default function EmployeeHistoryLog({ employeeId }: { employeeId: string 
             width: 120,
         },
         {
-            title: 'Chức năng',
-            dataIndex: 'module',
-            key: 'module',
+            title: 'Nội dung',
+            dataIndex: 'body',
+            key: 'body',
             width: 150,
-            render: (val) => val ? <Tag>{val}</Tag> : '-'
+            render: (val, { body }) => (
+                <pre
+                    style={{
+                        margin: 0,
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        maxWidth: 600,
+                    }}
+                >
+                    {JSON.stringify(body, null, 2)}
+                </pre>
+            )
         },
         {
             title: 'Mô tả',

@@ -33,6 +33,11 @@ export class HistoryLogInterceptor implements NestInterceptor {
 
                 const adminName = user.username || user.name || 'Quản trị viên';
 
+                // Kiểm tra body có chứa key là password không. Nếu có thì che đi bằng ****
+                if (body && body.password) {
+                    body.password = '****';
+                }
+
                 this.historyService.createLog({
                     adminId: user._id || user.id || user.IDEmp || user.sub,
                     adminName,

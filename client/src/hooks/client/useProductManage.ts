@@ -11,6 +11,7 @@ export const clientProductKeys = {
   attributes: ["client-product-attributes"] as const,
   attributeValues: ["client-product-attribute-values"] as const,
   categories: ["client-categories"] as const,
+  brands: ["client-brands"] as const,
 };
 
 // ============== HOOKS ==============
@@ -42,6 +43,15 @@ export const useClientCategories = () => {
   });
 };
 
+/** Fetch brands for product creation */
+export const useClientBrands = () => {
+  return useQuery({
+    queryKey: clientProductKeys.brands,
+    queryFn: () => productManageClientService.getBrands(),
+    staleTime: 10 * 60 * 1000,
+  });
+};
+
 /** Create a new product */
 export const useClientCreateProduct = () => {
   const queryClient = useQueryClient();
@@ -50,7 +60,6 @@ export const useClientCreateProduct = () => {
       productManageClientService.createProduct(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientProductKeys.myProducts });
-      toast.success("Tạo sản phẩm thành công!");
     },
     onError: (error: Error) => {
       toast.error(`Tạo sản phẩm thất bại: ${error.message}`);

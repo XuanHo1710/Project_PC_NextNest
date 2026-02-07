@@ -46,9 +46,13 @@ export default function ProfilePage() {
     if (!accountLogin) return <div className="p-6">Đang tải thông tin...</div>;
 
     return (
-        <div className="p-6 bg-white rounded-lg shadow-sm m-4 h-[calc(100vh-100px)] overflow-y-auto">
-            <h1 className="text-2xl font-bold mb-6 text-gray-800">Hồ sơ quản trị viên</h1>
-            <Tabs defaultActiveKey="1" items={items} size="large" destroyOnHidden />
+        <div className="py-2 w-full overflow-x-hidden">
+            <h2 className="text-center text-2xl font-bold">Hồ sơ quản trị viên</h2>
+            <Tabs defaultActiveKey="1" items={items} size="large" className='overflow-hidden' />
         </div>
+        // <div className="p-5 bg-white rounded-lg shadow-sm m-4 w-full">
+        //     <h1 className="text-2xl font-bold mb-6 text-gray-800">Hồ sơ quản trị viên</h1>
+        //     <Tabs defaultActiveKey="1" items={items} size="large" className='overflow-hidden' />
+        // </div>
     );
 }

@@ -29,5 +29,7 @@ export * from "./brand/create-brand.dto";
 export * from "./brand/update-brand.dto";
 export * from "./brand/search-brand.dto";
 
+export * from "./history/create-history.dto";
 
-export * from './history/create-history.dto'
+export * from "./cart/create-cart.dto";
+export * from "./cart/update-cart.dto";

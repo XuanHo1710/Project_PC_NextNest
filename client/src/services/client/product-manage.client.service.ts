@@ -6,38 +6,28 @@ import type {
   IProductVariant,
   IProductAttribute,
   IProductAttributeValue,
+  IProductAttributeAllowValue,
+  IBrand,
 } from "@/types";
-
-export interface IProductAttributeAllowValue {
-  _id: string;
-  product: string;
-  attributeValue: string;
-  isDeleted?: boolean;
-}
 
 class ProductManageClientService {
   // ============== PRODUCT ==============
 
   /** Create a new product */
-  async createProduct(
-    data: Partial<IProduct>,
-  ): Promise<{ data: IProduct; status: number }> {
-    const response = await axiosClient.post("/products", data);
-    return { data: response as unknown as IProduct, status: 200 };
+  async createProduct(data: Partial<IProduct>): Promise<IProduct> {
+    const response = await axiosClient.post("/product", data);
+    return response as unknown as IProduct;
   }
 
   /** Update own product */
-  async updateProduct(
-    id: string,
-    data: Partial<IProduct>,
-  ): Promise<{ data: IProduct; status: number }> {
-    const response = await axiosClient.patch(`/products/${id}`, data);
-    return { data: response as unknown as IProduct, status: 200 };
+  async updateProduct(id: string, data: Partial<IProduct>): Promise<IProduct> {
+    const response = await axiosClient.patch(`/product/${id}`, data);
+    return response as unknown as IProduct;
   }
 
   /** Get own products */
   async getMyProducts(params?: Record<string, string>): Promise<IProduct[]> {
-    const response = await axiosClient.get("/products/my", { params });
+    const response = await axiosClient.get("/product", { params });
     return response as unknown as IProduct[];
   }
 
@@ -45,7 +35,7 @@ class ProductManageClientService {
 
   /** Get all product attributes */
   async getProductAttributes(): Promise<IProductAttribute[]> {
-    const response = await axiosClient.get("/product-attributes");
+    const response = await axiosClient.get("/product-attribute");
     return response as unknown as IProductAttribute[];
   }
 
@@ -53,7 +43,7 @@ class ProductManageClientService {
 
   /** Get all attribute values */
   async getProductAttributeValues(): Promise<IProductAttributeValue[]> {
-    const response = await axiosClient.get("/product-attribute-values");
+    const response = await axiosClient.get("/product-attribute-value");
     return response as unknown as IProductAttributeValue[];
   }
 
@@ -62,7 +52,7 @@ class ProductManageClientService {
     attributeId: string,
   ): Promise<IProductAttributeValue[]> {
     const response = await axiosClient.get(
-      `/product-attribute-values?attributeId=${attributeId}`,
+      `/product-attribute-value/${attributeId}`,
     );
     return response as unknown as IProductAttributeValue[];
   }
@@ -75,7 +65,7 @@ class ProductManageClientService {
     colorHex?: string;
     imageUrl?: string;
   }): Promise<IProductAttributeValue> {
-    const response = await axiosClient.post("/product-attribute-values", data);
+    const response = await axiosClient.post("/product-attribute-value", data);
     return response as unknown as IProductAttributeValue;
   }
 
@@ -85,15 +75,13 @@ class ProductManageClientService {
   async createVariant(
     data: Partial<IProductVariant>,
   ): Promise<IProductVariant> {
-    const response = await axiosClient.post("/product-variants", data);
+    const response = await axiosClient.post("/product-variant", data);
     return response as unknown as IProductVariant;
   }
 
   /** Get variants by product */
   async getVariantsByProduct(productId: string): Promise<IProductVariant[]> {
-    const response = await axiosClient.get(
-      `/product-variants?productId=${productId}`,
-    );
+    const response = await axiosClient.get(`/product-variant/${productId}`);
     return response as unknown as IProductVariant[];
   }
 
@@ -105,7 +93,7 @@ class ProductManageClientService {
     attributeValue: string;
   }): Promise<IProductAttributeAllowValue> {
     const response = await axiosClient.post(
-      "/product-attribute-allow-values",
+      "/product-attribute-allow-value",
       data,
     );
     return response as unknown as IProductAttributeAllowValue;
@@ -133,8 +121,16 @@ class ProductManageClientService {
   async getCategories(): Promise<
     { _id: string; name: string; slug: string }[]
   > {
-    const response = await axiosClient.get("/categories");
+    const response = await axiosClient.get("/category");
     return response as unknown as { _id: string; name: string; slug: string }[];
+  }
+
+  // ============== BRANDS (Read-only) ==============
+
+  /** Get all brands */
+  async getBrands(): Promise<IBrand[]> {
+    const response = await axiosClient.get("/brand");
+    return response as unknown as IBrand[];
   }
 }
 

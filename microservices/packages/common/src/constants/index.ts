@@ -13,6 +13,7 @@ export const MICROSERVICE = {
   PRODUCT_SERVICE: "PRODUCT_SERVICE",
   REDIS_SERVICE: "REDIS_SERVICE",
   HISTORY_LOG_SERVICE: "HISTORY_LOG_SERVICE",
+  CART_SERVICE: "CART_SERVICE",
 } as const;
 
 export type MicroserviceName = (typeof MICROSERVICE)[keyof typeof MICROSERVICE];
@@ -21,6 +22,7 @@ export const MICROSERVICE_PORT = {
   AUTH_SERVICE: 3001,
   PRODUCT_SERVICE: 3002,
   HISTORY_LOG_SERVICE: 3003,
+  CART_SERVICE: 3004,
 } as const;
 
 export type MicroservicePort =

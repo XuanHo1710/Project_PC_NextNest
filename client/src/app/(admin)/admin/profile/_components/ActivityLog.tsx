@@ -11,6 +11,7 @@ interface IHistoryLog {
     method: string;
     path: string;
     description: string;
+    body: Object;
     createdAt: string;
 }
 
@@ -72,10 +73,22 @@ export default function ActivityLog() {
             )
         },
         {
-            title: 'Endpoint',
-            dataIndex: 'path',
-            key: 'path',
+            title: 'Nội dung',
+            dataIndex: 'body',
+            key: 'body',
             ellipsis: true,
+            render: (_, record) => (
+                <pre
+                    style={{
+                        margin: 0,
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        maxWidth: 600,
+                    }}
+                >
+                    {JSON.stringify(record.body, null, 2)}
+                </pre>
+            )
         },
         {
             title: 'Mô tả',
@@ -83,10 +96,16 @@ export default function ActivityLog() {
             key: 'description',
             ellipsis: true,
         },
+        {
+            title: 'Endpoint',
+            dataIndex: 'path',
+            key: 'path',
+            ellipsis: true,
+        },
     ];
 
     return (
-        <div className="w-full py-6">
+        <div className="py-6">
             <Table
                 dataSource={logs}
                 columns={columns}
