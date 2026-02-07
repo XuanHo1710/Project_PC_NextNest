@@ -145,7 +145,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
             children: [
                 {
                     key: 'setting common',
-                    label: 'Cài đặt chung',
+                    label: <Link href={pathAdminRoutes.settings}>Cài đặt chung</Link>,
                     icon: <IoIosSettings />
                 },
                 {

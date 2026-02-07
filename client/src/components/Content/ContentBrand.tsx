@@ -1,7 +1,7 @@
 'use client'
 import { Modal, Popconfirm, Spin, Tag } from "antd";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import EditSortBrand from "@/components/EditSort/brand/EditSortBrand";
@@ -20,16 +20,33 @@ const SelectedContextBrand = createContext<SelectedContextType | undefined>(unde
 export default function ContentBrand() {
     const [isOpen, setOpen] = useState(false);
     const [dataClick, setDataClick] = useState<null | DataType<IBrand>>(null);
-    const { queryParams } = useQueryParams();
+    const { queryParams, setQueryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
+    const [isReady, setIsReady] = useState(false);
 
     const { accountLogin } = useAuthEmployee();
 
-    // Use TanStack Query hooks
+    // Reset pagination to page=1 when component mounts and wait for it to complete
+    useEffect(() => {
+        // Set default pagination params
+        setQueryParams(new URLSearchParams("page=1&limit=10"));
+        // Mark as ready after setting params
+        setIsReady(true);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Use TanStack Query hooks - only enable when ready
     const {
-        data: brands = [],
+        data: result,
         isLoading: loading
-    } = useBrands(queryParams.toString());
+    } = useBrands(isReady ? queryParams.toString() : "page=1&limit=10");
+
+    // Axios interceptor already unwraps response.data, so result = { data: [...], page, limit, total, totalPages }
+    const brands = result?.data || [];
+    const paginationData = {
+        currentPage: result?.page || 1,
+        totalItems: result?.total || 0,
+        itemsPerPage: result?.limit || 10,
+    };
 
     const deleteBrand = useDeleteBrand();
 
@@ -168,7 +185,25 @@ export default function ContentBrand() {
             <SelectedContextBrand.Provider value={{ selectedRows, setSelectedRows }} >
                 <ActionBrand Filter={<FilterBrand />} EditSort={<EditSortBrand />} ContentModal={<ContentModalBrand />} />
                 <Spin size="large" spinning={loading}>
-                    <TableContent<DataType<IBrand>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                    <TableContent<DataType<IBrand>>
+                        selectedRows={selectedRows}
+                        setSelectedRows={setSelectedRows}
+                        columns={columns}
+                        data={dataTable}
+                        pagination={{
+                            current: paginationData.currentPage,
+                            pageSize: paginationData.itemsPerPage,
+                            total: paginationData.totalItems,
+                            onChange: (page: number, pageSize: number) => {
+                                setQueryParams((prev) => {
+                                    const newParams = new URLSearchParams(prev);
+                                    newParams.set('page', page.toString());
+                                    newParams.set('limit', pageSize.toString());
+                                    return newParams;
+                                });
+                            }
+                        }}
+                    ></TableContent>
                 </Spin>
             </SelectedContextBrand.Provider>
         </>

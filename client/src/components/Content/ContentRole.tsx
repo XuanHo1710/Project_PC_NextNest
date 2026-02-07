@@ -2,7 +2,7 @@
 
 import { Modal, Popconfirm, Spin } from "antd";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import { ColumnsType } from "antd/es/table";
@@ -23,14 +23,27 @@ const SelectedContextRole = createContext<SelectedContextType | undefined>(undef
 export default function ContentRole() {
     const [isOpen, setOpen] = useState(false);
     const [dataClick, setDataClick] = useState<null | DataType<IRole>>(null);
-    const { queryParams } = useQueryParams();
+    const { queryParams, setQueryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
+    const [isReady, setIsReady] = useState(false);
 
-    // Use TanStack Query hooks
+    // Reset pagination to page=1 when component mounts and wait for it to complete
+    useEffect(() => {
+        // Set default pagination params
+        setQueryParams(new URLSearchParams("page=1&limit=10"));
+        // Mark as ready after setting params
+        setIsReady(true);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Use TanStack Query hooks - only enable when ready
     const {
-        data: roles = [],
+        data: result,
         isLoading: loading
-    } = useRoles(queryParams.toString());
+    } = useRoles(isReady ? queryParams.toString() : "page=1&limit=10");
+
+    // Axios interceptor already unwraps response.data, so result = { data: [...], pagination: {...} }
+    const roles = (result as any)?.data || [];
+    const pagination = (result as any)?.pagination || { currentPage: 1, totalItems: 0, itemsPerPage: 10 };
 
     const deleteRole = useDeleteRole();
     const { accountLogin } = useAuthEmployee();
@@ -53,7 +66,7 @@ export default function ContentRole() {
             key: '_id',
         },
         {
-            title: 'Name',
+            title: 'Tên vai trò',
             dataIndex: 'name',
             key: 'name',
         },
@@ -66,7 +79,7 @@ export default function ContentRole() {
             }
         },
         {
-            title: 'Action',
+            title: 'Hành động',
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
@@ -126,7 +139,25 @@ export default function ContentRole() {
             <SelectedContextRole.Provider value={{ selectedRows, setSelectedRows }} >
                 <ActionRole Filter={<FilterRole />} EditSort={<EditSortRole />} ContentModal={<ContentModalRole />} />
                 <Spin size="large" spinning={loading}>
-                    <TableContent<DataType<IRole>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                    <TableContent<DataType<IRole>>
+                        selectedRows={selectedRows}
+                        setSelectedRows={setSelectedRows}
+                        columns={columns}
+                        data={dataTable}
+                        pagination={{
+                            current: pagination.currentPage,
+                            pageSize: pagination.itemsPerPage,
+                            total: pagination.totalItems,
+                            onChange: (page: number, pageSize: number) => {
+                                setQueryParams((prev) => {
+                                    const newParams = new URLSearchParams(prev);
+                                    newParams.set('page', page.toString());
+                                    newParams.set('limit', pageSize.toString());
+                                    return newParams;
+                                });
+                            }
+                        }}
+                    ></TableContent>
                 </Spin>
             </SelectedContextRole.Provider>
         </>

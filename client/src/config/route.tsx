@@ -12,6 +12,7 @@ export const pathAdminRoutes = {
     permission: "/admin/permission",
     role: "/admin/role",
     brand: "/admin/brand",
+    settings: "/admin/settings",
 
     login: "/auth/login"
 }

@@ -3,7 +3,7 @@
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { JSX, useEffect } from 'react';
 import { ICategory } from '@/types/category';
-import { useUpdateCategory, useCategories } from '@/hooks/admin';
+import { useUpdateCategory, useCategoriesAll } from '@/hooks/admin';
 
 
 
@@ -11,7 +11,7 @@ import { useUpdateCategory, useCategories } from '@/hooks/admin';
 export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCategory: ICategory | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [form] = Form.useForm();
     const updateCategory = useUpdateCategory();
-    const { data: categories = [] } = useCategories();
+    const { data: categories = [] } = useCategoriesAll();
 
     useEffect(() => {
         if (dataCategory !== null) {
@@ -113,10 +113,16 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
                         {...layout}
                         form={form}
                     >
-                        <Form.Item label="Tên danh mục" name="name" className='font-sans text-lg'>
+                        <Form.Item label="Tên danh mục" name="name" className='font-sans text-lg' rules={[
+                            {
+                                required: true,
+                                message: 'Tên danh mục không được để trống',
+                                whitespace: true
+                            }
+                        ]}>
                             <Input placeholder='Nhập tên danh mục ...' />
                         </Form.Item>
-                        <Form.Item label="Chọn danh mục cha" name="parent" className='font-sans text-lg'>
+                        <Form.Item label="Chọn danh mục cha" name="parentId" className='font-sans text-lg'>
                             <Select placeholder="Chọn danh mục cha (nếu có)">
                                 <Select.Option value="">Không</Select.Option>
                                 {renderCategoryOptions(buildCategoryTree(categories))}

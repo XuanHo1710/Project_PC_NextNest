@@ -16,13 +16,9 @@ interface PaginatedResponse<T> {
 class AccountGuestService {
     protected baseUrl: string = "account-guest";
 
-    async getAll(queryParams: string = ""): Promise<IAccountGuest[]> {
+    async getAll(queryParams: string = ""): Promise<PaginatedResponse<IAccountGuest>> {
         const response = await axiosInstance.get(`${this.baseUrl}${queryParams}`);
-        // Backend returns { data, pagination }
-        if (response.data && response.data.data) {
-            return response.data.data;
-        }
-        return response.data || [];
+        return response.data;
     }
 
     async getById(id: string): Promise<IAccountGuest> {

@@ -1,7 +1,7 @@
 'use client'
 import { Avatar, Popconfirm, Spin, Tag } from "antd";
 import type { ColumnsType, ColumnType } from "antd/es/table";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import TableContent from "@/components/TableContent/TableContent";
 import ActionAccountGuest from "@/components/ActionFilter/account-guest/ActionAccountGuest";
@@ -18,8 +18,9 @@ import { toast } from "react-toastify";
 const SelectedContextAccountGuest = createContext<SelectedContextType | undefined>(undefined);
 
 export default function ContentAccountGuest() {
-    const { queryParams } = useQueryParams();
+    const { queryParams, setQueryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
+    const [isReady, setIsReady] = useState(false);
 
     // Fields theo đúng entity AccountGuest
     const [fields, setFields] = useState<Array<string>>([
@@ -33,11 +34,23 @@ export default function ContentAccountGuest() {
 
     const { accountLogin } = useAuthEmployee();
 
-    // Use TanStack Query hooks
+    // Reset pagination to page=1 when component mounts and wait for it to complete
+    useEffect(() => {
+        // Set default pagination params
+        setQueryParams(new URLSearchParams("page=1&limit=10"));
+        // Mark as ready after setting params
+        setIsReady(true);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Use TanStack Query hooks - only enable when ready
     const {
-        data: accountGuests = [],
+        data: result,
         isLoading: loading
-    } = useAccountGuests(queryParams.toString());
+    } = useAccountGuests(isReady ? queryParams.toString() : "page=1&limit=10");
+
+    // Axios interceptor already unwraps response.data, so result = { data: [...], pagination: {...} }
+    const accountGuests = result?.data || [];
+    const pagination = result?.pagination || { currentPage: 1, totalItems: 0, itemsPerPage: 10 };
 
     const deleteAccountGuest = useDeleteAccountGuest();
     const updateAccountGuest = useUpdateAccountGuest();
@@ -186,7 +199,25 @@ export default function ContentAccountGuest() {
             <SelectedContextAccountGuest.Provider value={{ selectedRows, setSelectedRows }} >
                 <ActionAccountGuest ConfigFields={{ fields, setFields }} Filter={<FilterAccountGuest />} EditSort={<EditSortAccountGuest />} />
                 <Spin size="large" spinning={loading} >
-                    <TableContent<DataType<IAccountGuest>> selectedRows={selectedRows} setSelectedRows={setSelectedRows} columns={columns} data={dataTable}></TableContent>
+                    <TableContent<DataType<IAccountGuest>>
+                        selectedRows={selectedRows}
+                        setSelectedRows={setSelectedRows}
+                        columns={columns}
+                        data={dataTable}
+                        pagination={{
+                            current: pagination.currentPage,
+                            pageSize: pagination.itemsPerPage,
+                            total: pagination.totalItems,
+                            onChange: (page: number, pageSize: number) => {
+                                setQueryParams((prev) => {
+                                    const newParams = new URLSearchParams(prev);
+                                    newParams.set('page', page.toString());
+                                    newParams.set('limit', pageSize.toString());
+                                    return newParams;
+                                });
+                            }
+                        }}
+                    ></TableContent>
                 </Spin>
             </SelectedContextAccountGuest.Provider>
         </>

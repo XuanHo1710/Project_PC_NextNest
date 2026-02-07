@@ -13,14 +13,9 @@ interface PaginatedResponse<T> {
 class BrandService {
     protected baseUrl: string = "brand";
 
-    async getAll(queryParams: string = ""): Promise<IBrand[]> {
+    async getAll(queryParams: string = ""): Promise<PaginatedResponse<IBrand>> {
         const response = await axiosInstance.get(`${this.baseUrl}${queryParams}`);
-        // Backend returns { data, total, page, limit, totalPages }
-        // We need to extract the data array
-        if (response.data && response.data.data) {
-            return response.data.data;
-        }
-        return response.data || [];
+        return response.data;
     }
 
     async getById(id: string): Promise<IBrand> {

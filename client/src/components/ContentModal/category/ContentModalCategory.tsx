@@ -3,14 +3,14 @@ import { ICategory } from '@/types/category';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { JSX } from 'react';
-import { useCreateCategory, useCategories } from '@/hooks/admin';
+import { useCreateCategory, useCategoriesAll } from '@/hooks/admin';
 
 
 
 
 export default function ContentModalCategory() {
     const addCategory = useCreateCategory();
-    const { data: categories = [] } = useCategories();
+    const { data: categories = [] } = useCategoriesAll();
 
     const [form] = Form.useForm();
 
@@ -95,14 +95,20 @@ export default function ContentModalCategory() {
                     {...layout}
                     initialValues={{
                         name: "",
-                        parent: "",
+                        parentId: "",
                     }}
                     form={form}
                 >
-                    <Form.Item label="Tên danh mục" name="name" className='font-sans text-lg'>
+                    <Form.Item label="Tên danh mục" name="name" className='font-sans text-lg' rules={[
+                        {
+                            required: true,
+                            message: 'Tên danh mục không được để trống',
+                            whitespace: true
+                        }
+                    ]}>
                         <Input placeholder='Nhập tên danh mục ...' />
                     </Form.Item>
-                    <Form.Item label="Chọn danh mục cha" name="parent" className='font-sans text-lg'>
+                    <Form.Item label="Chọn danh mục cha" name="parentId" className='font-sans text-lg'>
                         <Select allowClear showSearch placeholder="Chọn danh mục cha (nếu có)">
                             <Select.Option value="">Không</Select.Option>
                             {renderCategoryOptions(buildCategoryTree(categories))}

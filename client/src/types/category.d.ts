@@ -4,7 +4,7 @@
 export interface ICategory {
   _id: string;
   name: string;
-  parentId?: string | null;
+  parentId?: string | { _id: string; name: string } | null; // Can be populated
   slug: string;
   children?: ICategory[];
   createdAt?: string;

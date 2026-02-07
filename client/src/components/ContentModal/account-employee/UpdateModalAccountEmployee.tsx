@@ -19,7 +19,7 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
         if (dataAccountEmployee !== null) {
             form.setFieldsValue({
                 IDEmp: dataAccountEmployee.IDEmp,
-                password: dataAccountEmployee.password,
+                // Không set password vào form - để trống, nếu không nhập thì không cập nhật
                 status: dataAccountEmployee.status,
                 roleId: dataAccountEmployee?.roleId._id ? dataAccountEmployee?.roleId._id : ""
             });
@@ -37,9 +37,14 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
     };
 
     const handleUpdate = async (data: IAccountEmployee) => {
+        // Loại bỏ password nếu không nhập (để không cập nhật password)
+        const updateData = { ...data };
+        if (!updateData.password || updateData.password.trim() === '') {
+            delete updateData.password;
+        }
 
         const account = {
-            ...data,
+            ...updateData,
             _id: dataAccountEmployee?._id,
         }
 
@@ -76,16 +81,10 @@ export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpe
                                 whitespace: true
                             }
                         ]}>
-                            <Input placeholder='Nhập mã số của nhân viên ...' />
+                            <Input placeholder='Nhập mã số của nhân viên ...' disabled />
                         </Form.Item>
-                        <Form.Item label="Mật khẩu" name="password" className='font-sans text-lg' rules={[
-                            {
-                                required: true,
-                                message: 'Mật khẩu không được để trống',
-                                whitespace: true
-                            }
-                        ]}>
-                            <Input.Password placeholder='Nhập mật khẩu ...' />
+                        <Form.Item label="Mật khẩu" name="password" className='font-sans text-lg'>
+                            <Input.Password placeholder='Để trống nếu không muốn đổi mật khẩu' />
                         </Form.Item>
                         <Form.Item label="Vai trò" name="roleId" className='font-sans text-lg'>
                             <Select placeholder="Chọn vai trò">

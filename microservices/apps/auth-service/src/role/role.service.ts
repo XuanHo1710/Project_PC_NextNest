@@ -15,31 +15,53 @@ export class RoleService {
   }
 
   async findAll(filter: any) {
-    const sortRole = {};
+    const page = Number(filter.page) || 1;
+    const limit = Number(filter.limit) || 10;
+    const skip = (page - 1) * limit;
 
+    const sortRole = {};
     const filterRole = {};
 
     if (filter.search) {
       const keyword = filter.search;
       filterRole['$or'] = [
-        { name: { $regex: keyword, $options: 'i' } }, // tìm trong name
+        { name: { $regex: keyword, $options: 'i' } },
       ];
     }
 
     if (filter.sort) {
       const keySort = filter.sort.split('_')[0];
       const valueSort = filter.sort.split('_')[1];
-      sortRole[keySort] = valueSort;
+      sortRole[keySort] = valueSort === 'asc' ? 1 : -1;
+    } else {
+      sortRole['createdAt'] = -1;
     }
 
     if (filter.filter) {
-      const keySort = filter.filter.split('_')[0];
-      const valueSort = filter.filter.split('_')[1];
-      filterRole[keySort] = valueSort;
+      const keyFilter = filter.filter.split('_')[0];
+      const valueFilter = filter.filter.split('_')[1];
+      filterRole[keyFilter] = valueFilter;
     }
 
-    const roles = await this.roleModel.find(filterRole).sort(sortRole);
-    return roles;
+    const [data, total] = await Promise.all([
+      this.roleModel
+        .find(filterRole)
+        .sort(sortRole)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.roleModel.countDocuments(filterRole),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   async findOne(id: string) {

@@ -2,6 +2,17 @@
 import axiosInstance from "@/config/axios"
 import { AxiosRequestConfig } from "axios"
 
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  }
+}
+
 export class BaseService<T> {
   protected baseUrl: string
 
@@ -9,7 +20,7 @@ export class BaseService<T> {
     this.baseUrl = baseUrl
   }
 
-  async getAll(queryParams = ""): Promise<T[]> {
+  async getAll(queryParams = ""): Promise<PaginatedResponse<T>> {
     const response = await axiosInstance.get(`${this.baseUrl}${queryParams}`)
     return response.data
   }

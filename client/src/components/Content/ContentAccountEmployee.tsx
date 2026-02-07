@@ -12,7 +12,7 @@ import { IAccountEmployee } from "@/types";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { Avatar, Modal, Popconfirm, Spin, Tag } from "antd";
 import { ColumnsType, ColumnType } from "antd/es/table";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { FaPen, FaTrashAlt, FaEye } from "react-icons/fa";
 import { useAccountEmployees, useDeleteAccountEmployee } from "@/hooks/admin";
 
@@ -26,6 +26,7 @@ export default function ContentAccountEmployee() {
     const [dataDetail, setDataDetail] = useState<null | DataType<IAccountEmployee>>(null);
     const { queryParams, setQueryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
+    const [isReady, setIsReady] = useState(false);
     const [fields, setFields] = useState<Array<string>>([
         "IDEmp",
         "avatar",
@@ -37,11 +38,21 @@ export default function ContentAccountEmployee() {
         "gender"
     ]);
 
+    // Reset pagination to page=1 when component mounts and wait for it to complete
+    useEffect(() => {
+        // Set default pagination params
+        setQueryParams(new URLSearchParams("page=1&limit=10"));
+        // Mark as ready after setting params
+        setIsReady(true);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Use TanStack Query hooks - only enable when ready
     const {
         data: result,
         isLoading: loading
-    } = useAccountEmployees(queryParams.toString());
+    } = useAccountEmployees(isReady ? queryParams.toString() : "page=1&limit=10");
 
+    // Axios interceptor already unwraps response.data, so result = { data: [...], pagination: {...} }
     const accountEmployees = (result as any)?.data || [];
     const pagination = (result as any)?.pagination || { currentPage: 1, totalItems: 0, itemsPerPage: 10 };
 

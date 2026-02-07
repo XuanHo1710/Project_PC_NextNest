@@ -9,7 +9,7 @@ import mongoose, { Model, Types } from 'mongoose';
 export class CategoryService {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<Category>,
-  ) {}
+  ) { }
 
   async create(createCategoryDto: CreateCategoryDto) {
     const parentCategory = (await this.categoryModel.findOne({
@@ -18,7 +18,7 @@ export class CategoryService {
 
     const categoryCreated = {
       name: createCategoryDto.name,
-      parent:
+      parentId:
         parentCategory === null
           ? null
           : new Types.ObjectId(parentCategory?._id),
@@ -29,30 +29,52 @@ export class CategoryService {
   }
 
   async findAll(filter: any) {
-    let sortCategory = {};
+    const page = Number(filter.page) || 1;
+    const limit = Number(filter.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    let filterCategory = {
-      parent: null,
+    const sortCategory = {};
+
+    const filterCategory = {
+      isDeleted: { $ne: true },
     };
 
     if (filter.search) {
       const keyword = filter.search;
       filterCategory['$or'] = [
-        { name: { $regex: keyword, $options: 'i' } }, // tìm trong tên
+        { name: { $regex: keyword, $options: 'i' } },
       ];
     }
 
     if (filter.sort) {
       const keySort = filter.sort.split('_')[0];
       const valueSort = filter.sort.split('_')[1];
-      sortCategory[keySort] = valueSort;
+      sortCategory[keySort] = valueSort === 'asc' ? 1 : -1;
+    } else {
+      // Default sort by createdAt descending
+      sortCategory['createdAt'] = -1;
     }
 
-    const categories = await this.categoryModel
-      .find(filterCategory)
-      .sort(sortCategory);
+    const [data, total] = await Promise.all([
+      this.categoryModel
+        .find(filterCategory)
+        .populate('parentId', 'name') // Populate parent with name
+        .sort(sortCategory)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.categoryModel.countDocuments(filterCategory),
+    ]);
 
-    return categories;
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   async findOne(id: string) {

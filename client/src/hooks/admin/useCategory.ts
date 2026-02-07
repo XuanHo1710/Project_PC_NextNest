@@ -14,11 +14,25 @@ export const categoryKeys = {
   detail: (id: string) => [...categoryKeys.details(), id] as const,
 };
 
-// Hooks for Categories
+// Hooks for Categories (with pagination)
 export const useCategories = (queryParams: string = "") => {
   return useQuery({
     queryKey: categoryKeys.list(queryParams),
     queryFn: () => categoryService.getAll(queryParams ? `?${queryParams}` : ""),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+// Hook to get ALL categories (no pagination) - for dropdown/select
+// Uses a reasonable limit for dropdown purposes
+export const useCategoriesAll = () => {
+  return useQuery({
+    queryKey: [...categoryKeys.all, "dropdown"],
+    queryFn: async () => {
+      const response = await categoryService.getAll("?limit=100");
+      // Extract data array from paginated response
+      return (response as any)?.data || [];
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
@@ -37,7 +51,7 @@ export const useCreateCategory = () => {
   return useMutation({
     mutationFn: (data: Omit<ICategory, "_id">) => categoryService.create(data),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       toast.success("Thêm danh mục thành công!");
       return response;
     },
@@ -55,7 +69,7 @@ export const useUpdateCategory = () => {
     mutationFn: ({ id, data }: { id: string; data: Partial<ICategory> }) =>
       categoryService.update(id, data),
     onSuccess: (response, { id }) => {
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       queryClient.invalidateQueries({ queryKey: categoryKeys.detail(id) });
       toast.success("Cập nhật danh mục thành công!");
       return response;
@@ -73,7 +87,7 @@ export const useDeleteCategory = () => {
   return useMutation({
     mutationFn: (id: string) => categoryService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       toast.success("Xóa danh mục thành công!");
     },
     onError: (error: Error) => {
