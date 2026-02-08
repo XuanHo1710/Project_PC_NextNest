@@ -102,6 +102,42 @@ export class ProductService {
     return product;
   }
 
+  async findBySlug(slug: string) {
+    const product = await this.productModel
+      .findOne({ slug, isDeleted: false })
+      .populate('brand')
+      .populate('category')
+      .exec();
+    if (!product) {
+      throw new NotFoundException(`Product with slug "${slug}" not found`);
+    }
+    // Populate default variant
+    const productObj = product.toObject();
+    if (productObj.defaultProductVariantId) {
+      const defaultVariant = await this.productVariantModel
+        .findOne({ _id: productObj.defaultProductVariantId, isDeleted: false })
+        .exec();
+      if (defaultVariant) {
+        productObj['defaultVariant'] = defaultVariant.toObject();
+      }
+    }
+    // Fetch all variants for this product
+    const variants = await this.productVariantModel
+      .find({ product: product._id, isDeleted: false })
+      .exec();
+    productObj['variants'] = variants;
+    // Fetch allow values with populated attribute values
+    const allowValues = await this.productAttributeAllowValueModel
+      .find({ product: product._id, isDeleted: false })
+      .populate({
+        path: 'attributeValue',
+        populate: { path: 'attribute' },
+      })
+      .exec();
+    productObj['allowValues'] = allowValues;
+    return productObj;
+  }
+
   async updateProduct(id: string, updateProductDto: UpdateProductDto) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException(`Invalid product ID: ${id}`);
@@ -239,9 +275,23 @@ export class ProductService {
     return await attribute.save();
   }
 
-  async findAllProductAttributes(page = 1, limit = 100) {
+  async findAllProductAttributes(
+    page = 1,
+    limit = 100,
+    createdBy?: string,
+    search?: string,
+  ) {
     const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
+    if (createdBy && Types.ObjectId.isValid(createdBy)) {
+      query.createdBy = createdBy;
+    }
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { code: { $regex: search, $options: 'i' } },
+      ];
+    }
     const [data, total] = await Promise.all([
       this.productAttributeModel.find(query).skip(skip).limit(limit).exec(),
       this.productAttributeModel.countDocuments(query).exec(),
@@ -273,38 +323,47 @@ export class ProductService {
   async updateProductAttribute(
     id: string,
     updateProductAttributeDto: UpdateProductAttributeDto,
+    createdBy?: string,
   ) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException(`Invalid product attribute ID: ${id}`);
     }
+    const query: any = { _id: id, isDeleted: false };
+    if (createdBy) query.createdBy = createdBy;
     const attribute = await this.productAttributeModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        query,
         { $set: updateProductAttributeDto },
         { new: true },
       )
       .exec();
 
     if (!attribute) {
-      throw new NotFoundException(`Product attribute with ID ${id} not found`);
+      throw new NotFoundException(
+        `Product attribute with ID ${id} not found or you don't have permission`,
+      );
     }
     return attribute;
   }
 
-  async removeProductAttribute(id: string) {
+  async removeProductAttribute(id: string, createdBy?: string) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException(`Invalid product attribute ID: ${id}`);
     }
+    const query: any = { _id: id, isDeleted: false };
+    if (createdBy) query.createdBy = createdBy;
     const attribute = await this.productAttributeModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        query,
         { $set: { isDeleted: true, deletedAt: new Date() } },
         { new: true },
       )
       .exec();
 
     if (!attribute) {
-      throw new NotFoundException(`Product attribute with ID ${id} not found`);
+      throw new NotFoundException(
+        `Product attribute with ID ${id} not found or you don't have permission`,
+      );
     }
     return {
       message: 'Product attribute deleted successfully',
@@ -326,11 +385,22 @@ export class ProductService {
     attributeId?: string,
     page = 1,
     limit = 100,
+    createdBy?: string,
+    search?: string,
   ) {
     const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
     if (attributeId && Types.ObjectId.isValid(attributeId)) {
       query.attribute = attributeId;
+    }
+    if (createdBy && Types.ObjectId.isValid(createdBy)) {
+      query.createdBy = createdBy;
+    }
+    if (search) {
+      query.$or = [
+        { value: { $regex: search, $options: 'i' } },
+        { label: { $regex: search, $options: 'i' } },
+      ];
     }
     const [data, total] = await Promise.all([
       this.productAttributeValueModel

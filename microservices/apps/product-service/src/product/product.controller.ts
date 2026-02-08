@@ -52,6 +52,11 @@ export class ProductController {
     return this.productService.findAllProducts(data.searchDto);
   }
 
+  @MessagePattern('product.findBySlug')
+  findBySlug(@Payload() data: { slug: string }) {
+    return this.productService.findBySlug(data.slug);
+  }
+
   // ============= PRODUCT VARIANT ENDPOINTS =============
   @MessagePattern('product.variant.create')
   createProductVariant(
@@ -109,11 +114,19 @@ export class ProductController {
 
   @MessagePattern('product.attribute.findAll')
   findAllProductAttributes(
-    @Payload() data?: { page?: number; limit?: number },
+    @Payload()
+    data?: {
+      page?: number;
+      limit?: number;
+      createdBy?: string;
+      search?: string;
+    },
   ) {
     return this.productService.findAllProductAttributes(
       data?.page,
       data?.limit,
+      data?.createdBy,
+      data?.search,
     );
   }
 
@@ -128,17 +141,19 @@ export class ProductController {
     data: {
       id: string;
       updateProductAttributeDto: UpdateProductAttributeDto;
+      createdBy?: string;
     },
   ) {
     return this.productService.updateProductAttribute(
       data.id,
       data.updateProductAttributeDto,
+      data.createdBy,
     );
   }
 
   @MessagePattern('product.attribute.remove')
-  removeProductAttribute(@Payload() data: { id: string }) {
-    return this.productService.removeProductAttribute(data.id);
+  removeProductAttribute(@Payload() data: { id: string; createdBy?: string }) {
+    return this.productService.removeProductAttribute(data.id, data.createdBy);
   }
 
   // ============= PRODUCT ATTRIBUTE VALUE ENDPOINTS =============
@@ -156,12 +171,21 @@ export class ProductController {
 
   @MessagePattern('product.attributeValue.findAll')
   findAllProductAttributeValues(
-    @Payload() data?: { attributeId?: string; page?: number; limit?: number },
+    @Payload()
+    data?: {
+      attributeId?: string;
+      page?: number;
+      limit?: number;
+      createdBy?: string;
+      search?: string;
+    },
   ) {
     return this.productService.findAllProductAttributeValues(
       data?.attributeId,
       data?.page,
       data?.limit,
+      data?.createdBy,
+      data?.search,
     );
   }
 

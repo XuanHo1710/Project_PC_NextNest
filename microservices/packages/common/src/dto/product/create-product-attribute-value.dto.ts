@@ -1,4 +1,4 @@
-import { IsString, IsMongoId, IsOptional } from 'class-validator';
+import { IsString, IsMongoId, IsOptional } from "class-validator";
 
 export class CreateProductAttributeValueDto {
   @IsString()
@@ -17,4 +17,8 @@ export class CreateProductAttributeValueDto {
   @IsString()
   @IsOptional()
   imageUrl?: string;
+
+  @IsMongoId()
+  @IsOptional()
+  createdBy?: string;
 }

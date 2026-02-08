@@ -52,9 +52,10 @@ class ProductClientService {
 
   /**
    * Get single product by slug with all relations populated
+   * Uses microservice gateway route: /client/product/slug/:slug
    */
   async getProductBySlug(slug: string): Promise<IProductPopulated> {
-    const response = await axiosClient.get(`${this.baseURL}/slug/${slug}`);
+    const response = await axiosClient.get(`/product/slug/${slug}`);
     return response as unknown as IProductPopulated;
   }
 
@@ -132,10 +133,10 @@ class ProductClientService {
 
   /**
    * Get product by slug (alias for getProductBySlug)
-   * Used by product detail page
+   * Used by product detail page — routes to microservice gateway
    */
   async getProductsBySlug(slug: string): Promise<IProductCard> {
-    const response = await axiosClient.get(`${this.baseURL}/slug/${slug}`);
+    const response = await axiosClient.get(`/product/slug/${slug}`);
     return response as unknown as IProductCard;
   }
 

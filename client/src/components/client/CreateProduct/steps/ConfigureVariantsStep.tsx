@@ -3,22 +3,20 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
     Card, Button, Table, Tag, InputNumber, Input, Switch, Divider,
-    message, Badge, Tooltip, Upload, Image, Popconfirm, Space
+    message, Badge, Tooltip, Popconfirm, Space
 } from 'antd';
 import {
     ThunderboltOutlined,
     AppstoreOutlined,
     ArrowLeftOutlined,
     DeleteOutlined,
-    PlusOutlined,
     PictureOutlined,
     CopyOutlined,
-    EditOutlined,
     FileTextOutlined,
 } from '@ant-design/icons';
 import type { IProductAttribute, IProductAttributeValue } from '@/types';
 import type { ColumnsType } from 'antd/es/table';
-import type { UploadFile } from 'antd';
+import CloudinaryUpload from '@/components/common/CloudinaryUpload';
 
 // Types
 export interface VariantRow {
@@ -342,35 +340,6 @@ export default function ConfigureVariantsStep({
         .filter(v => v.enabled)
         .reduce((sum, v) => sum + v.price * (1 - v.discount / 100) * v.stock, 0);
 
-    // Image URL input state
-    const [imageInputs, setImageInputs] = useState<Record<string, string>>({});
-
-    // Add image URL to a variant
-    const addImageToVariant = (idx: number) => {
-        const url = imageInputs[`variant-${idx}`]?.trim();
-        if (!url) {
-            message.warning('Vui lòng nhập URL ảnh');
-            return;
-        }
-        setVariants(prev => {
-            const updated = [...prev];
-            updated[idx] = { ...updated[idx], images: [...updated[idx].images, url] };
-            return updated;
-        });
-        setImageInputs(prev => ({ ...prev, [`variant-${idx}`]: '' }));
-    };
-
-    // Remove image from a variant
-    const removeImageFromVariant = (variantIdx: number, imageIdx: number) => {
-        setVariants(prev => {
-            const updated = [...prev];
-            const images = [...updated[variantIdx].images];
-            images.splice(imageIdx, 1);
-            updated[variantIdx] = { ...updated[variantIdx], images };
-            return updated;
-        });
-    };
-
     // Expandable row render — images + subdescription per variant
     const expandedRowRender = (record: VariantRow, idx: number) => {
         const variantIdx = variants.findIndex(v => v.key === record.key);
@@ -378,56 +347,20 @@ export default function ConfigureVariantsStep({
 
         return (
             <div className="p-4 bg-blue-50/30 space-y-4">
-                {/* Images section */}
+                {/* Images section — Cloudinary Upload */}
                 <div>
                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
                         <PictureOutlined className="text-blue-500" />
                         Ảnh biến thể
                     </label>
-                    {/* Image preview grid */}
-                    {record.images.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            {record.images.map((img, imgIdx) => (
-                                <div key={imgIdx} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
-                                    <Image
-                                        src={img}
-                                        alt={`Variant image ${imgIdx + 1}`}
-                                        width={80}
-                                        height={80}
-                                        className="object-cover"
-                                        fallback="/placeholder-product.png"
-                                    />
-                                    <button
-                                        onClick={() => removeImageFromVariant(variantIdx, imgIdx)}
-                                        className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    {/* Add image URL input */}
-                    <div className="flex gap-2 max-w-lg">
-                        <Input
-                            placeholder="Nhập URL ảnh..."
-                            value={imageInputs[`variant-${variantIdx}`] || ''}
-                            onChange={e => setImageInputs(prev => ({ ...prev, [`variant-${variantIdx}`]: e.target.value }))}
-                            onPressEnter={() => addImageToVariant(variantIdx)}
-                            size="small"
-                            prefix={<PictureOutlined className="text-gray-400" />}
-                        />
-                        <Button
-                            size="small"
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => addImageToVariant(variantIdx)}
-                        >
-                            Thêm
-                        </Button>
-                    </div>
+                    <CloudinaryUpload
+                        value={record.images}
+                        onChange={(urls) => updateVariant(variantIdx, 'images', urls)}
+                        maxCount={8}
+                        placeholder="Tải ảnh"
+                    />
                     <p className="text-xs text-gray-400 mt-1">
-                        Thêm URL ảnh cho biến thể này. Ảnh đầu tiên sẽ là ảnh đại diện.
+                        Tải ảnh từ máy tính lên Cloudinary. Ảnh đầu tiên sẽ là ảnh đại diện.
                     </p>
                 </div>
 

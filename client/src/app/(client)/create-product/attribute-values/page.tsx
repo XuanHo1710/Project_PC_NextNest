@@ -2,20 +2,20 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-    Card, Table, Button, Modal, Form, Input, Select, Tag,
-    Space, Empty, ColorPicker, Upload,
+    Card, Button, Modal, Form, Input, Tag, Empty,
+    ColorPicker, Spin, List, Badge,
 } from 'antd';
 import {
-    PlusOutlined, AppstoreOutlined, UploadOutlined,
+    PlusOutlined, AppstoreOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import InfiniteSelect from '@/components/common/InfiniteSelect';
+import CloudinaryUpload from '@/components/common/CloudinaryUpload';
 import {
     useClientAttributeValuesMap,
     useClientProductAttributes,
 } from '@/hooks/client/useProductManage';
 import { productManageClientService } from '@/services/client/product-manage.client.service';
 import type { IProductAttribute, IProductAttributeValue } from '@/types';
-import type { ColumnsType } from 'antd/es/table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { clientProductKeys } from '@/hooks/client/useProductManage';
@@ -23,6 +23,7 @@ import { clientProductKeys } from '@/hooks/client/useProductManage';
 export default function AttributeValuesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filterAttribute, setFilterAttribute] = useState<string | null>(null);
+    const [searchText, setSearchText] = useState('');
     const [form] = Form.useForm();
     const queryClient = useQueryClient();
 
@@ -32,37 +33,42 @@ export default function AttributeValuesPage() {
     const attributeList = attributes?.data ?? [];
     const valueList = allValues as IProductAttributeValue[];
 
-    // Watch selected attribute in form to show/hide conditional fields
     const selectedAttributeId = Form.useWatch('attribute', form);
     const selectedAttribute = attributeList.find(a => a._id === selectedAttributeId);
 
-    // Filter values by selected attribute
+    // Filter + search
     const filteredValues = useMemo(() => {
-        if (!filterAttribute) return valueList;
-        return valueList.filter((v) => {
-            const attrId = typeof v.attribute === 'string' ? v.attribute : v.attribute?._id;
-            return attrId === filterAttribute;
-        });
-    }, [valueList, filterAttribute]);
+        let result = valueList;
+        if (filterAttribute) {
+            result = result.filter((v) => {
+                const attrId = typeof v.attribute === 'string' ? v.attribute : v.attribute?._id;
+                return attrId === filterAttribute;
+            });
+        }
+        if (searchText) {
+            const lower = searchText.toLowerCase();
+            result = result.filter(
+                (v) =>
+                    v.value.toLowerCase().includes(lower) ||
+                    v.label.toLowerCase().includes(lower),
+            );
+        }
+        return result;
+    }, [valueList, filterAttribute, searchText]);
 
     const getAttributeName = (attr: string | IProductAttribute) => {
         if (typeof attr === 'string') {
-            const found = attributeList.find(a => a._id === attr);
-            return found?.name || attr;
+            return attributeList.find(a => a._id === attr)?.name || attr;
         }
         return attr?.name || '';
     };
 
     const getAttributeDisplayType = (attr: string | IProductAttribute) => {
         if (typeof attr === 'object' && attr?.displayType) return attr.displayType;
-        if (typeof attr === 'string') {
-            const found = attributeList.find(a => a._id === attr);
-            return found?.displayType;
-        }
+        if (typeof attr === 'string') return attributeList.find(a => a._id === attr)?.displayType;
         return undefined;
     };
 
-    // Fetch function for InfiniteSelect
     const fetchAttributes = useCallback(
         (params: { page: number; limit: number; keyword?: string }) =>
             productManageClientService.getAttributes(params),
@@ -78,7 +84,7 @@ export default function AttributeValuesPage() {
                         item.displayType === 'COLOR' ? 'magenta' :
                             item.displayType === 'IMAGE' ? 'green' :
                                 item.displayType === 'BUTTON' ? 'blue' : 'orange'
-                    } className="text-xs">
+                    } className="text-xs !rounded-md">
                         {item.displayType}
                     </Tag>
                 </div>
@@ -89,7 +95,6 @@ export default function AttributeValuesPage() {
         [],
     );
 
-    // Create mutation
     const createMutation = useMutation({
         mutationFn: (data: { value: string; label: string; attribute: string; colorHex?: string; imageUrl?: string }) =>
             productManageClientService.createAttributeValue(data),
@@ -105,93 +110,6 @@ export default function AttributeValuesPage() {
         },
     });
 
-    const columns: ColumnsType<IProductAttributeValue> = [
-        {
-            title: 'STT',
-            key: 'index',
-            width: 60,
-            render: (_, __, idx) => idx + 1,
-        },
-        {
-            title: 'Thuộc tính',
-            key: 'attribute',
-            render: (_, record) => (
-                <Tag color="blue">{getAttributeName(record.attribute)}</Tag>
-            ),
-        },
-        {
-            title: 'Giá trị',
-            dataIndex: 'value',
-            key: 'value',
-            render: (value: string, record) => {
-                const displayType = getAttributeDisplayType(record.attribute);
-                if (displayType === 'COLOR' && record.colorHex) {
-                    return (
-                        <div className="flex items-center gap-2">
-                            <div
-                                className="w-7 h-7 rounded-md border-2 border-gray-200 shadow-sm"
-                                style={{ backgroundColor: record.colorHex }}
-                            />
-                            <span className="font-medium">{value}</span>
-                        </div>
-                    );
-                }
-                if (displayType === 'IMAGE' && record.imageUrl) {
-                    return (
-                        <div className="flex items-center gap-2">
-                            <img
-                                src={record.imageUrl}
-                                alt={value}
-                                className="w-8 h-8 rounded-md object-cover border border-gray-200"
-                            />
-                            <span className="font-medium">{value}</span>
-                        </div>
-                    );
-                }
-                return <span className="font-medium">{value}</span>;
-            },
-        },
-        {
-            title: 'Nhãn hiển thị',
-            dataIndex: 'label',
-            key: 'label',
-        },
-        {
-            title: 'Preview',
-            key: 'preview',
-            width: 120,
-            render: (_, record) => {
-                const displayType = getAttributeDisplayType(record.attribute);
-                if (displayType === 'COLOR' && record.colorHex) {
-                    return (
-                        <div
-                            className="w-8 h-8 rounded-full border-2 border-gray-300 shadow-inner cursor-pointer hover:scale-110 transition-transform"
-                            style={{ backgroundColor: record.colorHex }}
-                            title={record.colorHex}
-                        />
-                    );
-                }
-                if (displayType === 'IMAGE' && record.imageUrl) {
-                    return (
-                        <img
-                            src={record.imageUrl}
-                            alt={record.label}
-                            className="w-10 h-10 rounded-md object-cover border border-gray-200 hover:scale-110 transition-transform cursor-pointer"
-                        />
-                    );
-                }
-                if (displayType === 'BUTTON') {
-                    return (
-                        <Button size="small" className="pointer-events-none">
-                            {record.label}
-                        </Button>
-                    );
-                }
-                return <span className="text-gray-400">—</span>;
-            },
-        },
-    ];
-
     const handleCreate = () => {
         form.resetFields();
         setIsModalOpen(true);
@@ -200,15 +118,12 @@ export default function AttributeValuesPage() {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-
-            // Extract colorHex from ColorPicker object
             let colorHex = '';
             if (selectedAttribute?.displayType === 'COLOR' && values.colorHex) {
                 colorHex = typeof values.colorHex === 'object'
                     ? values.colorHex.toHexString()
                     : values.colorHex;
             }
-
             const payload = {
                 value: values.value,
                 label: values.label,
@@ -219,171 +134,233 @@ export default function AttributeValuesPage() {
             await createMutation.mutateAsync(payload);
             setIsModalOpen(false);
             form.resetFields();
-        } catch {
-            // validation failed
+        } catch { /* validation */ }
+    };
+
+    const renderValuePreview = (record: IProductAttributeValue) => {
+        const displayType = getAttributeDisplayType(record.attribute);
+        if (displayType === 'COLOR' && record.colorHex) {
+            return (
+                <div
+                    className="w-8 h-8 rounded-lg border-2 border-gray-200 shadow-sm shrink-0"
+                    style={{ backgroundColor: record.colorHex }}
+                    title={record.colorHex}
+                />
+            );
         }
+        if (displayType === 'IMAGE' && record.imageUrl) {
+            return (
+                <img
+                    src={record.imageUrl}
+                    alt={record.label}
+                    className="w-8 h-8 rounded-lg object-cover border border-gray-200 shrink-0"
+                />
+            );
+        }
+        if (displayType === 'BUTTON') {
+            return (
+                <div className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-medium border border-blue-200 shrink-0">
+                    {record.label}
+                </div>
+            );
+        }
+        return <div className="w-8 h-8 rounded-lg bg-gray-100 shrink-0" />;
     };
 
     return (
-        <>
-            <Card
-                title={
-                    <div className="flex items-center gap-2">
-                        <AppstoreOutlined />
-                        <span>Giá trị thuộc tính</span>
-                        <Tag color="green">{filteredValues.length}</Tag>
+        <div className="space-y-5">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl p-6 text-white">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white/15 backdrop-blur rounded-xl flex items-center justify-center">
+                            <AppstoreOutlined className="text-xl" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-bold m-0">Giá trị thuộc tính</h1>
+                            <p className="text-purple-100 text-sm m-0 mt-0.5">
+                                Quản lý giá trị cho từng thuộc tính
+                                <Badge count={filteredValues.length} className="ml-2" style={{ backgroundColor: 'rgba(255,255,255,0.25)' }} />
+                            </p>
+                        </div>
                     </div>
-                }
-                extra={
-                    <Space>
-                        <Select
-                            placeholder="Lọc theo thuộc tính"
-                            allowClear
-                            style={{ width: 200 }}
-                            value={filterAttribute}
-                            onChange={setFilterAttribute}
-                            options={[
-                                ...attributeList.map(a => ({ label: `${a.name} (${a.code})`, value: a._id })),
-                            ]}
-                        />
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                            Thêm giá trị
-                        </Button>
-                    </Space>
-                }
-                className="shadow-sm"
-            >
-                {filteredValues.length === 0 && !isLoading ? (
-                    <Empty description="Chưa có giá trị nào" />
+                    <Button
+                        icon={<PlusOutlined />}
+                        onClick={handleCreate}
+                        size="large"
+                        className="!bg-white !text-purple-600 !border-0 !font-medium !rounded-xl hover:!bg-purple-50 !shadow-sm"
+                    >
+                        Thêm giá trị
+                    </Button>
+                </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                    placeholder="Tìm kiếm giá trị theo tên..."
+                    prefix={<SearchOutlined className="text-gray-400" />}
+                    size="large"
+                    className="!rounded-xl !border-blue-200 flex-1"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    allowClear
+                />
+                <InfiniteSelect
+                    fetchFn={fetchAttributes}
+                    mapOption={mapAttribute}
+                    queryKeyPrefix="filterAttrSelect"
+                    pageSize={15}
+                    placeholder="Lọc theo thuộc tính..."
+                    size="large"
+                    allowClear
+                    className="!rounded-xl sm:!w-[280px]"
+                    value={filterAttribute}
+                    onChange={(val: any) => setFilterAttribute(val || null)}
+                />
+            </div>
+
+            {/* List */}
+            <Card className="border-0 shadow-sm rounded-xl overflow-hidden">
+                {isLoading ? (
+                    <div className="flex justify-center py-12"><Spin size="large" /></div>
+                ) : filteredValues.length === 0 ? (
+                    <Empty
+                        description={searchText || filterAttribute ? 'Không tìm thấy giá trị phù hợp' : 'Chưa có giá trị nào. Hãy thêm giá trị đầu tiên!'}
+                        className="py-12"
+                    />
                 ) : (
-                    <Table
-                        columns={columns}
+                    <List
                         dataSource={filteredValues}
-                        rowKey="_id"
-                        loading={isLoading}
-                        pagination={filteredValues.length > 15 ? { pageSize: 15 } : false}
-                        size="middle"
+                        renderItem={(item, index) => (
+                            <List.Item className="!px-5 hover:bg-purple-50/20 transition-colors">
+                                <div className="flex items-center gap-4 w-full">
+                                    <div className="w-8 h-8 flex items-center justify-center bg-purple-50 rounded-lg text-purple-500 font-bold text-xs shrink-0">
+                                        {index + 1}
+                                    </div>
+                                    {renderValuePreview(item)}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-semibold text-gray-800">{item.label}</span>
+                                            <Tag className="!m-0 !bg-gray-100 !text-gray-500 !border-0 !rounded-md text-xs">{item.value}</Tag>
+                                        </div>
+                                        <Tag color="blue" className="!mt-1 !rounded-md text-xs">{getAttributeName(item.attribute)}</Tag>
+                                    </div>
+                                    {item.colorHex && (
+                                        <Tag className="!m-0 !rounded-md text-xs !bg-gray-50">{item.colorHex}</Tag>
+                                    )}
+                                </div>
+                            </List.Item>
+                        )}
                     />
                 )}
             </Card>
 
+            {/* Modal */}
             <Modal
-                title="Thêm giá trị thuộc tính mới"
+                title={
+                    <div className="flex items-center gap-2 text-gray-800">
+                        <AppstoreOutlined className="text-purple-500" />
+                        Thêm giá trị thuộc tính mới
+                    </div>
+                }
                 open={isModalOpen}
-                onOk={handleSubmit}
-                onCancel={() => {
-                    setIsModalOpen(false);
-                    form.resetFields();
-                }}
-                okText="Tạo mới"
-                cancelText="Hủy"
-                confirmLoading={createMutation.isPending}
+                onCancel={() => { setIsModalOpen(false); form.resetFields(); }}
+                footer={null}
                 destroyOnClose
+                className="[&_.ant-modal-content]:!rounded-xl"
+                width={520}
             >
-                <Form form={form} layout="vertical" className="mt-4">
+                <Form form={form} layout="vertical" className="mt-4" onFinish={handleSubmit}>
                     <Form.Item
                         name="attribute"
-                        label="Thuộc tính"
+                        label={<span className="font-medium text-gray-700">Thuộc tính <span className="text-red-500">*</span></span>}
                         rules={[{ required: true, message: 'Vui lòng chọn thuộc tính' }]}
                     >
                         <InfiniteSelect
                             fetchFn={fetchAttributes}
                             mapOption={mapAttribute}
-                            queryKeyPrefix="attributeSelect"
+                            queryKeyPrefix="attrModalSelect"
                             pageSize={15}
                             placeholder="Tìm kiếm thuộc tính..."
+                            size="large"
+                            className="!rounded-lg"
                         />
                     </Form.Item>
 
-                    <Form.Item
-                        name="value"
-                        label="Giá trị (value)"
-                        rules={[{ required: true, message: 'Vui lòng nhập giá trị' }]}
-                    >
-                        <Input placeholder="Ví dụ: S, M, L, Red, Blue..." />
-                    </Form.Item>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Form.Item
+                            name="value"
+                            label={<span className="font-medium text-gray-700">Giá trị (value) <span className="text-red-500">*</span></span>}
+                            rules={[{ required: true, message: 'Vui lòng nhập giá trị' }]}
+                        >
+                            <Input placeholder="Ví dụ: red, 8gb, s..." size="large" className="!rounded-lg" />
+                        </Form.Item>
 
-                    <Form.Item
-                        name="label"
-                        label="Nhãn hiển thị (label)"
-                        rules={[{ required: true, message: 'Vui lòng nhập nhãn' }]}
-                    >
-                        <Input placeholder="Ví dụ: Đỏ, Xanh dương, Size S..." />
-                    </Form.Item>
+                        <Form.Item
+                            name="label"
+                            label={<span className="font-medium text-gray-700">Nhãn hiển thị (label) <span className="text-red-500">*</span></span>}
+                            rules={[{ required: true, message: 'Vui lòng nhập nhãn' }]}
+                        >
+                            <Input placeholder="Ví dụ: Đỏ, Xanh dương, Size S..." size="large" className="!rounded-lg" />
+                        </Form.Item>
+                    </div>
 
-                    {/* COLOR: Show color picker */}
+                    {/* COLOR: Color picker */}
                     {selectedAttribute?.displayType === 'COLOR' && (
                         <Form.Item
                             name="colorHex"
-                            label="Chọn màu sắc"
+                            label={<span className="font-medium text-gray-700">Chọn màu sắc <span className="text-red-500">*</span></span>}
                             rules={[{ required: true, message: 'Vui lòng chọn màu' }]}
                         >
                             <ColorPicker
                                 showText
                                 format="hex"
                                 size="large"
-                                presets={[
-                                    {
-                                        label: 'Phổ biến',
-                                        colors: [
-                                            '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
-                                            '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
-                                            '#FFC0CB', '#A52A2A', '#808080', '#C0C0C0', '#FFD700',
-                                        ],
-                                    },
-                                ]}
+                                presets={[{
+                                    label: 'Phổ biến',
+                                    colors: [
+                                        '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
+                                        '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
+                                        '#FFC0CB', '#A52A2A', '#808080', '#C0C0C0', '#FFD700',
+                                    ],
+                                }]}
                             />
                         </Form.Item>
                     )}
 
-                    {/* IMAGE: Show image URL input + preview */}
+                    {/* IMAGE: Cloudinary upload */}
                     {selectedAttribute?.displayType === 'IMAGE' && (
                         <Form.Item
                             name="imageUrl"
-                            label="URL hình ảnh"
-                            rules={[
-                                { required: true, message: 'Vui lòng nhập URL hình ảnh' },
-                                { type: 'url', message: 'URL không hợp lệ' },
-                            ]}
+                            label={<span className="font-medium text-gray-700">Hình ảnh <span className="text-red-500">*</span></span>}
+                            rules={[{ required: true, message: 'Vui lòng tải ảnh lên' }]}
+                            getValueFromEvent={(urls: string[]) => urls?.[0] || ''}
+                            getValueProps={(value: string) => ({ value: value ? [value] : [] })}
                         >
-                            <Input
-                                placeholder="https://example.com/image.png"
-                                suffix={<UploadOutlined className="text-gray-400" />}
-                            />
+                            <CloudinaryUpload single maxCount={1} placeholder="Tải ảnh" />
                         </Form.Item>
                     )}
 
-                    {/* IMAGE: Preview */}
-                    {selectedAttribute?.displayType === 'IMAGE' && (
-                        <Form.Item noStyle shouldUpdate={(prev, cur) => prev.imageUrl !== cur.imageUrl}>
-                            {() => {
-                                const url = form.getFieldValue('imageUrl');
-                                if (!url) return null;
-                                return (
-                                    <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                        <p className="text-xs text-gray-500 mb-2">Xem trước:</p>
-                                        <img
-                                            src={url}
-                                            alt="Preview"
-                                            className="max-w-[120px] max-h-[120px] rounded-md border border-gray-200 object-cover"
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).style.display = 'none';
-                                            }}
-                                        />
-                                    </div>
-                                );
-                            }}
-                        </Form.Item>
-                    )}
-
-                    {/* BUTTON/RADIO: No extra fields needed — just value + label */}
+                    {/* BUTTON/RADIO: Info */}
                     {(selectedAttribute?.displayType === 'BUTTON' || selectedAttribute?.displayType === 'RADIO') && (
-                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-sm text-blue-700">
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-sm text-blue-700 mb-4">
                             Kiểu hiển thị: <strong>{selectedAttribute.displayType === 'BUTTON' ? 'Nút bấm' : 'Radio'}</strong> — Chỉ cần nhập giá trị và nhãn hiển thị.
                         </div>
                     )}
+
+                    {/* Submit inside form */}
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button onClick={() => { setIsModalOpen(false); form.resetFields(); }} size="large" className="!rounded-lg">
+                            Hủy
+                        </Button>
+                        <Button type="primary" htmlType="submit" size="large" loading={createMutation.isPending}
+                            className="!rounded-lg !bg-purple-500 hover:!bg-purple-600 !shadow-sm">
+                            Tạo mới
+                        </Button>
+                    </div>
                 </Form>
             </Modal>
-        </>
+        </div>
     );
 }

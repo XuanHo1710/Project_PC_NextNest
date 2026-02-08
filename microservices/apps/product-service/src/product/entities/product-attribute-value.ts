@@ -23,6 +23,9 @@ export class ProductAttributeValue {
   @Prop({ type: String, default: '' })
   imageUrl: string; // Dùng nếu attribute có hình ảnh đại diện
 
+  @Prop({ type: Types.ObjectId, ref: 'AccountGuest', index: true })
+  createdBy: Types.ObjectId; // Owner of this value (per-user isolation)
+
   @Prop()
   createdAt: Date;
 

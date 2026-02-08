@@ -20,6 +20,9 @@ export class ProductAttribute {
   })
   displayType: string; // Cách hiển thị khi tạo giá trị cho thuộc tính
 
+  @Prop({ type: Types.ObjectId, ref: 'AccountGuest', index: true })
+  createdBy: Types.ObjectId; // Owner of this attribute (per-user isolation)
+
   @Prop()
   createdAt: Date;
 

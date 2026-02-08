@@ -16,6 +16,7 @@ import {
   SearchProductDto,
   UpdateProductDto,
 } from '@project-pc/common';
+import { Public } from '../../decorators/customize';
 
 @Controller('/client/product')
 export class ProductController {
@@ -31,11 +32,19 @@ export class ProductController {
   }
 
   @Get()
+  @Public()
   findAllProducts(@Query() searchDto?: SearchProductDto) {
     return this.productService.send('product.findAll', { searchDto });
   }
 
+  @Get('slug/:slug')
+  @Public()
+  findBySlug(@Param('slug') slug: string) {
+    return this.productService.send('product.findBySlug', { slug });
+  }
+
   @Get(':id')
+  @Public()
   findOneProduct(@Param('id') id: string) {
     return this.productService.send('product.findOne', { id });
   }
@@ -54,6 +63,7 @@ export class ProductController {
   }
 
   @Get('search')
+  @Public()
   searchProducts(@Query() searchDto?: SearchProductDto) {
     return this.productService.send('product.search', { searchDto });
   }
