@@ -1,7 +1,7 @@
 'use client';
 
 import { productClientService } from "@/services/client";
-import { IAccountGuest } from "@/types/auth";
+import { IAccountGuest, IClientUser } from "@/types/auth";
 import { IComment } from "@/types/interaction";
 import { IProductCard } from "@/types/product";
 import { DislikeOutlined, LikeOutlined } from "@ant-design/icons";
@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { message } from "antd";
 import { useState } from "react";
 
-export default function HandleLike({ user, product, comment }: { user: IAccountGuest | null, product: IProductCard, comment: IComment }) {
+export default function HandleLike({ user, product, comment }: { user: IClientUser | null, product: IProductCard, comment: IComment }) {
     const [isLiked, setIsLiked] = useState<boolean>(
         comment.replies.filter(r => !r.isReply && r.isLiked).map(r => r.guestIdInteractedBy._id).includes(user?._id || "#")
     );

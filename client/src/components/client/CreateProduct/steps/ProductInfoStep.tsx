@@ -7,20 +7,21 @@ import {
     ArrowRightOutlined
 } from '@ant-design/icons';
 import InfiniteSelect from '@/components/common/InfiniteSelect';
+import RichTextEditor from '@/components/common/RichTextEditor';
 import { productManageClientService } from '@/services/client/product-manage.client.service';
 
 interface ProductInfoStepProps {
     form: any;
-    categories: { _id: string; name: string }[];
-    brands: { _id: string; name: string }[];
     onNext: () => void;
+    onCategoryNameChange?: (name: string) => void;
+    onBrandNameChange?: (name: string) => void;
 }
 
 export default function ProductInfoStep({
     form,
-    categories,
-    brands,
-    onNext
+    onNext,
+    onCategoryNameChange,
+    onBrandNameChange,
 }: ProductInfoStepProps) {
 
     const handleNext = async () => {
@@ -62,14 +63,14 @@ export default function ProductInfoStep({
                 className="shadow-lg border-0 overflow-hidden"
                 styles={{ body: { padding: 0 } }}
             >
-                <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-8 text-white">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
                     <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
+                        <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center">
                             <ShoppingOutlined className="text-2xl" />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold m-0">Thông tin sản phẩm</h2>
-                            <p className="text-white/80 m-0 text-sm mt-1">
+                            <p className="text-blue-100 m-0 text-sm mt-1">
                                 Nhập thông tin cơ bản về sản phẩm của bạn
                             </p>
                         </div>
@@ -101,17 +102,21 @@ export default function ProductInfoStep({
                             />
                         </Form.Item>
 
-                        {/* Mô tả */}
+                        {/* Mô tả — Rich Text Editor */}
                         <Form.Item
                             name="description"
-                            label={<span className="text-gray-700 font-medium">Mô tả chi tiết</span>}
+                            label={
+                                <span className="text-gray-700 font-medium">
+                                    Mô tả chi tiết
+                                    <span className="text-gray-400 font-normal ml-2 text-xs">
+                                        (Hỗ trợ copy &amp; paste từ trang web khác giữ nguyên định dạng)
+                                    </span>
+                                </span>
+                            }
                         >
-                            <Input.TextArea
-                                rows={4}
-                                placeholder="Mô tả chi tiết về sản phẩm, tính năng nổi bật, thông số kỹ thuật..."
-                                className="rounded-lg"
-                                maxLength={2000}
-                                showCount
+                            <RichTextEditor
+                                placeholder="Mô tả chi tiết về sản phẩm, tính năng nổi bật, thông số kỹ thuật... Bạn có thể copy nội dung từ web khác và dán vào đây."
+                                minHeight={180}
                             />
                         </Form.Item>
 
@@ -135,6 +140,9 @@ export default function ProductInfoStep({
                                     className="rounded-lg"
                                     pageSize={20}
                                     emptyText="Không tìm thấy danh mục"
+                                    onSelect={(_value: string, option: any) => {
+                                        onCategoryNameChange?.(option?.raw?.name || option?.label || '');
+                                    }}
                                 />
                             </Form.Item>
 
@@ -152,6 +160,12 @@ export default function ProductInfoStep({
                                     className="rounded-lg"
                                     pageSize={20}
                                     emptyText="Không tìm thấy thương hiệu"
+                                    onSelect={(_value: string, option: any) => {
+                                        onBrandNameChange?.(option?.raw?.name || option?.label || '');
+                                    }}
+                                    onClear={() => {
+                                        onBrandNameChange?.('');
+                                    }}
                                 />
                             </Form.Item>
                         </div>

@@ -8,16 +8,14 @@ import {
     PlusCircleOutlined,
 } from '@ant-design/icons';
 import {
-    useClientProductAttributes,
     useClientCreateProduct,
-    useClientCategories,
-    useClientBrands,
     useClientAttributeValuesMap,
 } from '@/hooks/client/useProductManage';
 import { productManageClientService } from '@/services/client/product-manage.client.service';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProviderClient';
+import type { IProductAttribute } from '@/types';
 
 // Step components
 import { ProductInfoStep, SelectAttributesStep, ConfigureVariantsStep, ReviewStep } from './steps';
@@ -34,6 +32,13 @@ export default function ClientCreateProduct() {
     const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
     const [selectedValues, setSelectedValues] = useState<Record<string, string[]>>({});
 
+    // Attribute object cache — populated when user selects attributes via InfiniteSelect
+    const [attributeObjectCache, setAttributeObjectCache] = useState<Record<string, IProductAttribute>>({});
+
+    // Category & brand names — set by ProductInfoStep via onSelect callbacks
+    const [resolvedCategoryName, setResolvedCategoryName] = useState<string>('');
+    const [resolvedBrandName, setResolvedBrandName] = useState<string>('');
+
     // Generated variants
     const [variants, setVariants] = useState<VariantRow[]>([]);
     const [variantsGenerated, setVariantsGenerated] = useState(false);
@@ -43,25 +48,32 @@ export default function ClientCreateProduct() {
     const [isSuccess, setIsSuccess] = useState(false);
     const [createdProductName, setCreatedProductName] = useState('');
 
-    // Queries
-    const { data: attributes, isLoading: loadingAttrs } = useClientProductAttributes();
+    // Queries — only attribute values need coordinated loading
     const { allValues: attributeValues = [], isLoading: loadingValues } = useClientAttributeValuesMap(selectedAttributes);
-    const { data: categories, isLoading: loadingCats } = useClientCategories();
-    const { data: brands, isLoading: loadingBrands } = useClientBrands();
     const createProductMutation = useClientCreateProduct();
 
-    // Extract data arrays from PaginatedResponse
-    const attributeList = attributes?.data ?? [];
+    // Derive selected attribute objects from cache
+    const selectedAttributeObjects = useMemo(() =>
+        selectedAttributes.map(id => attributeObjectCache[id]).filter(Boolean) as IProductAttribute[],
+        [selectedAttributes, attributeObjectCache]
+    );
     const valueList = attributeValues;
-    const categoryList = categories?.data ?? [];
-    const brandList = brands?.data ?? [];
-
-    const isLoadingData = loadingAttrs || loadingValues || loadingCats || loadingBrands;
 
     // ============= HANDLERS =============
     const handleAttributeChange = useCallback((attrIds: string[]) => {
         setSelectedAttributes(attrIds);
+        // Clean up values for deselected attributes
         setSelectedValues(prev => {
+            const cleaned = { ...prev };
+            Object.keys(cleaned).forEach(key => {
+                if (!attrIds.includes(key)) {
+                    delete cleaned[key];
+                }
+            });
+            return cleaned;
+        });
+        // Clean up cache for deselected attributes
+        setAttributeObjectCache(prev => {
             const cleaned = { ...prev };
             Object.keys(cleaned).forEach(key => {
                 if (!attrIds.includes(key)) {
@@ -72,6 +84,10 @@ export default function ClientCreateProduct() {
         });
         setVariantsGenerated(false);
         setVariants([]);
+    }, []);
+
+    const handleAttributeSelect = useCallback((attrId: string, attrObject: IProductAttribute) => {
+        setAttributeObjectCache(prev => ({ ...prev, [attrId]: attrObject }));
     }, []);
 
     const handleValueChange = useCallback((attributeId: string, valueIds: string[]) => {
@@ -139,6 +155,7 @@ export default function ClientCreateProduct() {
                     stock: variant.stock,
                     combination: variant.combinationIds,
                     images: variant.images,
+                    subDescription: variant.subDescription || undefined,
                 });
                 if (i === 0 && result?._id) {
                     firstVariantId = result._id;
@@ -173,6 +190,9 @@ export default function ClientCreateProduct() {
         setVariantsGenerated(false);
         setSelectedAttributes([]);
         setSelectedValues({});
+        setAttributeObjectCache({});
+        setResolvedCategoryName('');
+        setResolvedBrandName('');
         setCreatedProductName('');
         form.resetFields();
     }, [form]);
@@ -186,18 +206,10 @@ export default function ClientCreateProduct() {
             category: vals.category || '',
             brand: vals.brand || '',
         };
-
     }, [currentStep, form]);
 
-    const categoryName = useMemo(() => {
-        const catId = form.getFieldValue('category');
-        return categoryList.find((c: any) => c._id === catId)?.name;
-    }, [currentStep, categoryList]);
-
-    const brandName = useMemo(() => {
-        const bId = form.getFieldValue('brand');
-        return brandList.find((b: any) => b._id === bId)?.name;
-    }, [currentStep, brandList]);
+    const categoryName = resolvedCategoryName;
+    const brandName = resolvedBrandName;
 
     // ============= AUTH CHECK =============
     if (!isAuthenticated) {
@@ -278,16 +290,6 @@ export default function ClientCreateProduct() {
         );
     }
 
-    // ============= LOADING STATE =============
-    if (isLoadingData) {
-        return (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <Spin size="large" />
-                <p className="text-gray-400 text-sm">Đang tải dữ liệu...</p>
-            </div>
-        );
-    }
-
     // ============= STEPS CONFIG =============
     const stepsConfig = [
         { title: 'Thông tin', icon: <ShoppingOutlined /> },
@@ -343,19 +345,20 @@ export default function ClientCreateProduct() {
                 <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>
                     <ProductInfoStep
                         form={form}
-                        categories={categoryList}
-                        brands={brandList}
                         onNext={handleStepNext}
+                        onCategoryNameChange={setResolvedCategoryName}
+                        onBrandNameChange={setResolvedBrandName}
                     />
                 </div>
 
                 {currentStep === 1 && (
                     <SelectAttributesStep
-                        attributes={attributeList}
+                        attributes={selectedAttributeObjects}
                         attributeValues={valueList}
                         selectedAttributes={selectedAttributes}
                         selectedValues={selectedValues}
                         onAttributeChange={handleAttributeChange}
+                        onAttributeSelect={handleAttributeSelect}
                         onValueChange={handleValueChange}
                         onBack={handleStepBack}
                         onNext={handleStepNext}
@@ -364,7 +367,7 @@ export default function ClientCreateProduct() {
 
                 {currentStep === 2 && (
                     <ConfigureVariantsStep
-                        attributes={attributeList}
+                        attributes={selectedAttributeObjects}
                         attributeValues={valueList}
                         selectedAttributes={selectedAttributes}
                         selectedValues={selectedValues}
@@ -383,7 +386,7 @@ export default function ClientCreateProduct() {
                         productInfo={productInfo}
                         categoryName={categoryName}
                         brandName={brandName}
-                        attributes={attributeList}
+                        attributes={selectedAttributeObjects}
                         attributeValues={valueList}
                         selectedAttributes={selectedAttributes}
                         selectedValues={selectedValues}

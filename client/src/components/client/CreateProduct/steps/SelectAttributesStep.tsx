@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
-    Card, Select, Tag, Badge, Space, Button, Alert, Empty, Divider, Tooltip
+    Card, Tag, Badge, Space, Button, Alert, Empty, Divider, Tooltip
 } from 'antd';
 import {
     TagsOutlined,
@@ -12,6 +12,8 @@ import {
     CheckOutlined,
     CloseOutlined
 } from '@ant-design/icons';
+import InfiniteSelect from '@/components/common/InfiniteSelect';
+import { productManageClientService } from '@/services/client/product-manage.client.service';
 import type { IProductAttribute, IProductAttributeValue } from '@/types';
 
 interface SelectAttributesStepProps {
@@ -20,6 +22,7 @@ interface SelectAttributesStepProps {
     selectedAttributes: string[];
     selectedValues: Record<string, string[]>;
     onAttributeChange: (attrIds: string[]) => void;
+    onAttributeSelect: (attrId: string, attrObject: IProductAttribute) => void;
     onValueChange: (attributeId: string, valueIds: string[]) => void;
     onBack: () => void;
     onNext: () => void;
@@ -31,6 +34,7 @@ export default function SelectAttributesStep({
     selectedAttributes,
     selectedValues,
     onAttributeChange,
+    onAttributeSelect,
     onValueChange,
     onBack,
     onNext
@@ -62,21 +66,21 @@ export default function SelectAttributesStep({
         return hasAny ? total : 0;
     }, [selectedAttributes, selectedValues]);
 
-    // Render color swatch for COLOR type attributes
-    const renderValueOption = (value: IProductAttributeValue, attr: IProductAttribute | undefined) => {
-        if (attr?.displayType === 'COLOR' && value.colorHex) {
-            return (
-                <div className="flex items-center gap-2">
-                    <span
-                        className="w-4 h-4 rounded-full border border-gray-300 shrink-0"
-                        style={{ backgroundColor: value.colorHex }}
-                    />
-                    <span>{value.label}</span>
-                </div>
-            );
-        }
-        return value.label;
-    };
+    // InfiniteSelect fetch and map functions
+    const fetchAttributes = useCallback(
+        (params: { page: number; limit: number; keyword?: string }) =>
+            productManageClientService.getAttributes(params),
+        [],
+    );
+
+    const mapAttribute = useCallback(
+        (item: IProductAttribute) => ({
+            label: `${item.name}${item.code ? ` (${item.code})` : ''}`,
+            value: item._id,
+            raw: item,
+        }),
+        [],
+    );
 
     return (
         <div className="space-y-6">
@@ -85,15 +89,15 @@ export default function SelectAttributesStep({
                 className="shadow-lg border-0 overflow-hidden"
                 styles={{ body: { padding: 0 } }}
             >
-                <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 px-6 py-8 text-white">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
+                            <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center">
                                 <TagsOutlined className="text-2xl" />
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold m-0">Chọn thuộc tính sản phẩm</h2>
-                                <p className="text-white/80 m-0 text-sm mt-1">
+                                <p className="text-blue-100 m-0 text-sm mt-1">
                                     Cấu hình các biến thể cho sản phẩm của bạn
                                 </p>
                             </div>
@@ -102,7 +106,7 @@ export default function SelectAttributesStep({
                         {totalVariantsPreview > 0 && (
                             <div className="text-right">
                                 <div className="text-3xl font-bold">{totalVariantsPreview}</div>
-                                <div className="text-white/80 text-sm">biến thể</div>
+                                <div className="text-blue-200 text-sm">biến thể</div>
                             </div>
                         )}
                     </div>
@@ -124,30 +128,29 @@ export default function SelectAttributesStep({
                         className="mb-6 rounded-lg"
                     />
 
-                    {/* Select Attributes */}
+                    {/* Select Attributes — InfiniteSelect with mode="multiple" */}
                     <div className="mb-6">
                         <label className="text-gray-700 font-medium block mb-2">
                             Chọn thuộc tính
                         </label>
-                        <Select
+                        <InfiniteSelect
                             mode="multiple"
+                            fetchFn={fetchAttributes}
+                            mapOption={mapAttribute}
+                            queryKeyPrefix="attr-step-select"
                             placeholder="Tìm và chọn thuộc tính sản phẩm..."
                             value={selectedAttributes}
                             onChange={onAttributeChange}
-                            showSearch
-                            optionFilterProp="label"
-                            className="w-full"
+                            onSelect={(value: string, option: any) => {
+                                if (option?.raw) {
+                                    onAttributeSelect(value, option.raw);
+                                }
+                            }}
                             size="large"
                             maxTagCount={5}
-                            options={attributes.map(attr => ({
-                                label: (
-                                    <div className="flex items-center justify-between w-full">
-                                        <span>{attr.name}</span>
-                                        <Tag color="blue" className="ml-2">{attr.code}</Tag>
-                                    </div>
-                                ),
-                                value: attr._id,
-                            }))}
+                            className="w-full"
+                            pageSize={20}
+                            emptyText="Không tìm thấy thuộc tính"
                         />
                     </div>
 
@@ -176,12 +179,12 @@ export default function SelectAttributesStep({
                                             <div className="flex items-center gap-3">
                                                 <span className="font-semibold text-gray-800">{attr?.name}</span>
                                                 <Tag color="blue">{attr?.displayType}</Tag>
-                                                {attr?.displayType === 'COLOR' && (
-                                                    <Tag color="magenta">Màu sắc</Tag>
+                                                {attr?.code && (
+                                                    <Tag color="geekblue">{attr.code}</Tag>
                                                 )}
                                                 <Badge
                                                     count={selectedValIds.length}
-                                                    style={{ backgroundColor: selectedValIds.length > 0 ? '#52c41a' : '#d9d9d9' }}
+                                                    style={{ backgroundColor: selectedValIds.length > 0 ? '#2563eb' : '#d9d9d9' }}
                                                 />
                                             </div>
                                         }
@@ -268,15 +271,15 @@ export default function SelectAttributesStep({
 
             {/* Variants Preview Summary */}
             {totalVariantsPreview > 0 && (
-                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 shadow-lg">
+                <Card className="bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200 shadow-lg">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
                                 {totalVariantsPreview}
                             </div>
                             <div>
-                                <div className="font-semibold text-green-800">Tổng số biến thể sẽ được tạo</div>
-                                <div className="text-sm text-green-600">
+                                <div className="font-semibold text-blue-800">Tổng số biến thể sẽ được tạo</div>
+                                <div className="text-sm text-blue-600">
                                     {selectedAttributes.map(id => getAttributeById(id)?.name).join(' × ')}
                                 </div>
                             </div>

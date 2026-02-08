@@ -14,6 +14,7 @@ import {
     PictureOutlined,
     CopyOutlined,
     EditOutlined,
+    FileTextOutlined,
 } from '@ant-design/icons';
 import type { IProductAttribute, IProductAttributeValue } from '@/types';
 import type { ColumnsType } from 'antd/es/table';
@@ -29,6 +30,7 @@ export interface VariantRow {
     discount: number;
     stock: number;
     images: string[];
+    subDescription: string;
     enabled: boolean;
 }
 
@@ -145,6 +147,7 @@ export default function ConfigureVariantsStep({
                 discount: batchDiscount || 0,
                 stock: batchStock || 0,
                 images: [],
+                subDescription: '',
                 enabled: true,
             };
         });
@@ -339,6 +342,115 @@ export default function ConfigureVariantsStep({
         .filter(v => v.enabled)
         .reduce((sum, v) => sum + v.price * (1 - v.discount / 100) * v.stock, 0);
 
+    // Image URL input state
+    const [imageInputs, setImageInputs] = useState<Record<string, string>>({});
+
+    // Add image URL to a variant
+    const addImageToVariant = (idx: number) => {
+        const url = imageInputs[`variant-${idx}`]?.trim();
+        if (!url) {
+            message.warning('Vui lòng nhập URL ảnh');
+            return;
+        }
+        setVariants(prev => {
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], images: [...updated[idx].images, url] };
+            return updated;
+        });
+        setImageInputs(prev => ({ ...prev, [`variant-${idx}`]: '' }));
+    };
+
+    // Remove image from a variant
+    const removeImageFromVariant = (variantIdx: number, imageIdx: number) => {
+        setVariants(prev => {
+            const updated = [...prev];
+            const images = [...updated[variantIdx].images];
+            images.splice(imageIdx, 1);
+            updated[variantIdx] = { ...updated[variantIdx], images };
+            return updated;
+        });
+    };
+
+    // Expandable row render — images + subdescription per variant
+    const expandedRowRender = (record: VariantRow, idx: number) => {
+        const variantIdx = variants.findIndex(v => v.key === record.key);
+        if (variantIdx === -1) return null;
+
+        return (
+            <div className="p-4 bg-blue-50/30 space-y-4">
+                {/* Images section */}
+                <div>
+                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <PictureOutlined className="text-blue-500" />
+                        Ảnh biến thể
+                    </label>
+                    {/* Image preview grid */}
+                    {record.images.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {record.images.map((img, imgIdx) => (
+                                <div key={imgIdx} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                                    <Image
+                                        src={img}
+                                        alt={`Variant image ${imgIdx + 1}`}
+                                        width={80}
+                                        height={80}
+                                        className="object-cover"
+                                        fallback="/placeholder-product.png"
+                                    />
+                                    <button
+                                        onClick={() => removeImageFromVariant(variantIdx, imgIdx)}
+                                        className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {/* Add image URL input */}
+                    <div className="flex gap-2 max-w-lg">
+                        <Input
+                            placeholder="Nhập URL ảnh..."
+                            value={imageInputs[`variant-${variantIdx}`] || ''}
+                            onChange={e => setImageInputs(prev => ({ ...prev, [`variant-${variantIdx}`]: e.target.value }))}
+                            onPressEnter={() => addImageToVariant(variantIdx)}
+                            size="small"
+                            prefix={<PictureOutlined className="text-gray-400" />}
+                        />
+                        <Button
+                            size="small"
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => addImageToVariant(variantIdx)}
+                        >
+                            Thêm
+                        </Button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                        Thêm URL ảnh cho biến thể này. Ảnh đầu tiên sẽ là ảnh đại diện.
+                    </p>
+                </div>
+
+                {/* Sub-description section */}
+                <div>
+                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
+                        <FileTextOutlined className="text-blue-500" />
+                        Mô tả phụ biến thể
+                    </label>
+                    <Input.TextArea
+                        value={record.subDescription}
+                        onChange={e => updateVariant(variantIdx, 'subDescription', e.target.value)}
+                        placeholder="Mô tả thêm cho biến thể này (tuỳ chọn)..."
+                        rows={2}
+                        maxLength={500}
+                        showCount
+                        className="max-w-lg"
+                    />
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="space-y-6">
             {/* Generate Card */}
@@ -346,15 +458,15 @@ export default function ConfigureVariantsStep({
                 className="shadow-lg border-0 overflow-hidden"
                 styles={{ body: { padding: 0 } }}
             >
-                <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 px-6 py-8 text-white">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
+                            <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center">
                                 <ThunderboltOutlined className="text-2xl" />
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold m-0">Sinh biến thể sản phẩm</h2>
-                                <p className="text-white/80 m-0 text-sm mt-1">
+                                <p className="text-blue-100 m-0 text-sm mt-1">
                                     {totalVariantsPreview} tổ hợp từ {selectedAttributes.length} thuộc tính
                                 </p>
                             </div>
@@ -363,7 +475,7 @@ export default function ConfigureVariantsStep({
                             size="large"
                             icon={<ThunderboltOutlined />}
                             onClick={generateVariants}
-                            className="h-12 px-6 rounded-xl font-semibold bg-white text-orange-600 border-0 hover:bg-orange-50 shadow-lg"
+                            className="h-12 px-6 rounded-xl font-semibold bg-white text-blue-600 border-0 hover:bg-blue-50 shadow-lg"
                         >
                             {variantsGenerated ? 'Sinh lại' : 'Sinh biến thể'}
                         </Button>
@@ -487,6 +599,12 @@ export default function ConfigureVariantsStep({
                         bordered
                         size="small"
                         scroll={{ x: 'max-content' }}
+                        expandable={{
+                            expandedRowRender,
+                            expandRowByClick: false,
+                            columnTitle: <Tooltip title="Ảnh & mô tả"><PictureOutlined /></Tooltip>,
+                            columnWidth: 50,
+                        }}
                         rowClassName={(record) =>
                             record.enabled
                                 ? 'hover:bg-blue-50 transition-colors'
@@ -523,7 +641,7 @@ export default function ConfigureVariantsStep({
                             onClick={onSubmit}
                             loading={isSubmitting}
                             disabled={!variantsGenerated || enabledCount === 0}
-                            className="h-12 px-8 rounded-lg font-semibold bg-gradient-to-r from-blue-500 to-indigo-600 border-0 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
+                            className="h-12 px-8 rounded-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 border-0 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
                         >
                             Tiếp theo: Xem lại & Đăng bán
                         </Button>

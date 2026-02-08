@@ -194,15 +194,15 @@ export default function ReviewStep({
                 className="shadow-lg border-0 overflow-hidden"
                 styles={{ body: { padding: 0 } }}
             >
-                <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 px-6 py-8 text-white">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center">
+                            <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center">
                                 <CheckCircleOutlined className="text-2xl" />
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold m-0">Xem lại & Đăng bán</h2>
-                                <p className="text-white/80 m-0 text-sm mt-1">
+                                <p className="text-blue-100 m-0 text-sm mt-1">
                                     Kiểm tra toàn bộ thông tin trước khi đăng sản phẩm
                                 </p>
                             </div>
@@ -280,9 +280,10 @@ export default function ReviewStep({
                     </Descriptions.Item>
                     {productInfo.description && (
                         <Descriptions.Item label="Mô tả" span={2}>
-                            <p className="text-sm text-gray-600 m-0 whitespace-pre-line line-clamp-3">
-                                {productInfo.description}
-                            </p>
+                            <div
+                                className="text-sm text-gray-600 m-0 max-h-40 overflow-y-auto prose prose-sm"
+                                dangerouslySetInnerHTML={{ __html: productInfo.description }}
+                            />
                         </Descriptions.Item>
                     )}
                 </Descriptions>
@@ -293,9 +294,9 @@ export default function ReviewStep({
                 className="shadow-lg border-0"
                 title={
                     <div className="flex items-center gap-2">
-                        <TagsOutlined className="text-purple-500" />
+                        <TagsOutlined className="text-blue-500" />
                         <span className="font-semibold">Thuộc tính đã chọn</span>
-                        <Badge count={selectedAttributes.length} style={{ backgroundColor: '#8b5cf6' }} />
+                        <Badge count={selectedAttributes.length} style={{ backgroundColor: '#2563eb' }} />
                     </div>
                 }
             >
@@ -347,34 +348,34 @@ export default function ReviewStep({
                         prefix={<AppstoreOutlined />}
                     />
                 </Card>
-                <Card className="shadow-md border-0 bg-gradient-to-br from-green-50 to-emerald-100">
+                <Card className="shadow-md border-0 bg-gradient-to-br from-sky-50 to-blue-100">
                     <Statistic
-                        title={<span className="text-green-600 text-xs font-medium">Khoảng giá bán</span>}
+                        title={<span className="text-blue-600 text-xs font-medium">Khoảng giá bán</span>}
                         value={stats.minPrice.toLocaleString()}
                         suffix={
                             stats.minPrice !== stats.maxPrice
                                 ? <span className="text-sm"> — {stats.maxPrice.toLocaleString()}đ</span>
                                 : <span className="text-sm">đ</span>
                         }
-                        valueStyle={{ color: '#16a34a', fontWeight: 700, fontSize: 20 }}
+                        valueStyle={{ color: '#1d4ed8', fontWeight: 700, fontSize: 20 }}
                         prefix={<DollarOutlined />}
                     />
                 </Card>
-                <Card className="shadow-md border-0 bg-gradient-to-br from-orange-50 to-amber-100">
+                <Card className="shadow-md border-0 bg-gradient-to-br from-indigo-50 to-blue-100">
                     <Statistic
-                        title={<span className="text-orange-600 text-xs font-medium">Tổng tồn kho</span>}
+                        title={<span className="text-indigo-600 text-xs font-medium">Tổng tồn kho</span>}
                         value={stats.totalStock}
                         suffix="sản phẩm"
-                        valueStyle={{ color: '#ea580c', fontWeight: 700, fontSize: 28 }}
+                        valueStyle={{ color: '#4338ca', fontWeight: 700, fontSize: 28 }}
                         prefix={<InboxOutlined />}
                     />
                 </Card>
-                <Card className="shadow-md border-0 bg-gradient-to-br from-purple-50 to-violet-100">
+                <Card className="shadow-md border-0 bg-gradient-to-br from-blue-50 to-indigo-100">
                     <Statistic
-                        title={<span className="text-purple-600 text-xs font-medium">Tổng giá trị kho</span>}
+                        title={<span className="text-blue-700 text-xs font-medium">Tổng giá trị kho</span>}
                         value={stats.totalRevenue.toLocaleString()}
                         suffix="đ"
-                        valueStyle={{ color: '#7c3aed', fontWeight: 700, fontSize: 20 }}
+                        valueStyle={{ color: '#1e40af', fontWeight: 700, fontSize: 20 }}
                         prefix={<DollarOutlined />}
                     />
                 </Card>
@@ -385,7 +386,7 @@ export default function ReviewStep({
                 className="shadow-lg border-0"
                 title={
                     <div className="flex items-center gap-2">
-                        <AppstoreOutlined className="text-orange-500" />
+                        <AppstoreOutlined className="text-blue-500" />
                         <span className="font-semibold">Danh sách biến thể</span>
                         <Badge count={stats.enabledCount} style={{ backgroundColor: '#52c41a' }} />
                     </div>
@@ -410,12 +411,12 @@ export default function ReviewStep({
             {/* Submit Section */}
             <Card className="shadow-lg border-0 overflow-hidden" styles={{ body: { padding: 0 } }}>
                 {isReady ? (
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6">
+                    <div className="bg-gradient-to-r from-blue-50 to-sky-50 p-6">
                         <div className="flex items-center gap-3 mb-4">
-                            <CheckCircleOutlined className="text-green-500 text-xl" />
+                            <CheckCircleOutlined className="text-blue-600 text-xl" />
                             <div>
-                                <h4 className="font-semibold text-green-800 m-0">Sẵn sàng đăng bán!</h4>
-                                <p className="text-sm text-green-600 m-0">
+                                <h4 className="font-semibold text-blue-800 m-0">Sẵn sàng đăng bán!</h4>
+                                <p className="text-sm text-blue-600 m-0">
                                     Tất cả thông tin đã hoàn thiện. Nhấn nút bên dưới để đăng sản phẩm.
                                 </p>
                             </div>
@@ -460,7 +461,7 @@ export default function ReviewStep({
                                 onClick={onSubmit}
                                 loading={isSubmitting}
                                 disabled={!isReady}
-                                className="h-14 px-10 rounded-xl font-bold text-base bg-gradient-to-r from-green-500 to-emerald-600 border-0 shadow-xl shadow-green-500/30 hover:shadow-green-500/50 transition-all disabled:opacity-50 disabled:shadow-none"
+                                className="h-14 px-10 rounded-xl font-bold text-base bg-gradient-to-r from-blue-600 to-blue-700 border-0 shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:shadow-none"
                             >
                                 Đăng bán sản phẩm
                             </Button>
