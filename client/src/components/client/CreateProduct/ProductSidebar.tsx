@@ -43,10 +43,10 @@ export default function ProductSidebar() {
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-blue-100/60 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-4">
-                <h3 className="text-base font-semibold text-white m-0">Quản lý sản phẩm</h3>
-                <p className="text-xs text-blue-100 m-0 mt-1">Đăng bán & quản lý thuộc tính</p>
+        <div className="bg-white rounded-lg border overflow-hidden">
+            <div className="px-4 py-3 border-b">
+                <h3 className="text-base font-bold m-0">Quản lý sản phẩm</h3>
+                <p className="text-xs text-gray-500 m-0 mt-1">Đăng bán & quản lý thuộc tính</p>
             </div>
             <Menu
                 mode="inline"

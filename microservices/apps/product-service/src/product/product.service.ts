@@ -50,8 +50,8 @@ export class ProductService {
   async createProduct(createProductDto: CreateProductDto) {
     const payload = {
       ...createProductDto,
-      brand: createProductDto.brandId,
-      category: createProductDto.categoryId,
+      brand: new Types.ObjectId(createProductDto.brandId),
+      category: new Types.ObjectId(createProductDto.categoryId),
     };
     const product = new this.productModel(payload);
     return await product.save();
@@ -94,7 +94,7 @@ export class ProductService {
       throw new NotFoundException(`Invalid product ID: ${id}`);
     }
     const product = await this.productModel
-      .findOne({ _id: id, isDeleted: false })
+      .findOne({ _id: new Types.ObjectId(id), isDeleted: false })
       .exec();
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -103,39 +103,44 @@ export class ProductService {
   }
 
   async findBySlug(slug: string) {
+    console.log('slug', slug);
     const product = await this.productModel
       .findOne({ slug, isDeleted: false })
       .populate('brand')
       .populate('category')
+      .lean()
       .exec();
     if (!product) {
       throw new NotFoundException(`Product with slug "${slug}" not found`);
     }
     // Populate default variant
-    const productObj = product.toObject();
-    if (productObj.defaultProductVariantId) {
+    if (product.defaultProductVariantId) {
       const defaultVariant = await this.productVariantModel
-        .findOne({ _id: productObj.defaultProductVariantId, isDeleted: false })
+        .findOne({
+          _id: new Types.ObjectId(product.defaultProductVariantId),
+          isDeleted: false,
+        })
         .exec();
       if (defaultVariant) {
-        productObj['defaultVariant'] = defaultVariant.toObject();
+        product['defaultVariant'] = defaultVariant.toObject();
       }
     }
     // Fetch all variants for this product
     const variants = await this.productVariantModel
-      .find({ product: product._id, isDeleted: false })
+      .find({ product: new Types.ObjectId(product._id), isDeleted: false })
       .exec();
-    productObj['variants'] = variants;
+    product['variants'] = variants;
     // Fetch allow values with populated attribute values
     const allowValues = await this.productAttributeAllowValueModel
-      .find({ product: product._id, isDeleted: false })
+      .find({ product: new Types.ObjectId(product._id), isDeleted: false })
       .populate({
         path: 'attributeValue',
         populate: { path: 'attribute' },
       })
       .exec();
-    productObj['allowValues'] = allowValues;
-    return productObj;
+    product['allowValues'] = allowValues;
+    console.log('product', product);
+    return product;
   }
 
   async updateProduct(id: string, updateProductDto: UpdateProductDto) {
@@ -151,7 +156,7 @@ export class ProductService {
     }
     const product = await this.productModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        { _id: new Types.ObjectId(id), isDeleted: false },
         { $set: updateProductDto },
         { new: true },
       )
@@ -169,7 +174,7 @@ export class ProductService {
     }
     const product = await this.productModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        { _id: new Types.ObjectId(id), isDeleted: false },
         { $set: { isDeleted: true, deletedAt: new Date() } },
         { new: true },
       )
@@ -183,7 +188,11 @@ export class ProductService {
 
   // ============= PRODUCT VARIANT CRUD =============
   async createProductVariant(createProductVariantDto: CreateProductVariantDto) {
-    const variant = new this.productVariantModel(createProductVariantDto);
+    const payload = {
+      ...createProductVariantDto,
+      product: new Types.ObjectId(createProductVariantDto.product),
+    };
+    const variant = new this.productVariantModel(payload);
     return await variant.save();
   }
 
@@ -191,7 +200,7 @@ export class ProductService {
     const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
     if (productId && Types.ObjectId.isValid(productId)) {
-      query.product = productId;
+      query.product = new Types.ObjectId(productId);
     }
     const [data, total] = await Promise.all([
       this.productVariantModel
@@ -218,7 +227,7 @@ export class ProductService {
       throw new NotFoundException(`Invalid product variant ID: ${id}`);
     }
     const variant = await this.productVariantModel
-      .findOne({ _id: id, isDeleted: false })
+      .findOne({ _id: new Types.ObjectId(id), isDeleted: false })
       .populate('product')
       .exec();
     if (!variant) {
@@ -236,7 +245,7 @@ export class ProductService {
     }
     const variant = await this.productVariantModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        { _id: new Types.ObjectId(id), isDeleted: false },
         { $set: updateProductVariantDto },
         { new: true },
       )
@@ -255,7 +264,7 @@ export class ProductService {
     }
     const variant = await this.productVariantModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        { _id: new Types.ObjectId(id), isDeleted: false },
         { $set: { isDeleted: true, deletedAt: new Date() } },
         { new: true },
       )
@@ -271,7 +280,11 @@ export class ProductService {
   async createProductAttribute(
     createProductAttributeDto: CreateProductAttributeDto,
   ) {
-    const attribute = new this.productAttributeModel(createProductAttributeDto);
+    const payload = {
+      ...createProductAttributeDto,
+      createdBy: new Types.ObjectId(createProductAttributeDto.createdBy),
+    };
+    const attribute = new this.productAttributeModel(payload);
     return await attribute.save();
   }
 
@@ -284,7 +297,7 @@ export class ProductService {
     const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
     if (createdBy && Types.ObjectId.isValid(createdBy)) {
-      query.createdBy = createdBy;
+      query.createdBy = new Types.ObjectId(createdBy);
     }
     if (search) {
       query.$or = [
@@ -312,7 +325,7 @@ export class ProductService {
       throw new NotFoundException(`Invalid product attribute ID: ${id}`);
     }
     const attribute = await this.productAttributeModel
-      .findOne({ _id: id, isDeleted: false })
+      .findOne({ _id: new Types.ObjectId(id), isDeleted: false })
       .exec();
     if (!attribute) {
       throw new NotFoundException(`Product attribute with ID ${id} not found`);
@@ -329,7 +342,7 @@ export class ProductService {
       throw new NotFoundException(`Invalid product attribute ID: ${id}`);
     }
     const query: any = { _id: id, isDeleted: false };
-    if (createdBy) query.createdBy = createdBy;
+    if (createdBy) query.createdBy = new Types.ObjectId(createdBy);
     const attribute = await this.productAttributeModel
       .findOneAndUpdate(
         query,
@@ -350,8 +363,8 @@ export class ProductService {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException(`Invalid product attribute ID: ${id}`);
     }
-    const query: any = { _id: id, isDeleted: false };
-    if (createdBy) query.createdBy = createdBy;
+    const query: any = { _id: new Types.ObjectId(id), isDeleted: false };
+    if (createdBy) query.createdBy = new Types.ObjectId(createdBy);
     const attribute = await this.productAttributeModel
       .findOneAndUpdate(
         query,
@@ -375,9 +388,11 @@ export class ProductService {
   async createProductAttributeValue(
     createProductAttributeValueDto: CreateProductAttributeValueDto,
   ) {
-    const attributeValue = new this.productAttributeValueModel(
-      createProductAttributeValueDto,
-    );
+    const payload = {
+      ...createProductAttributeValueDto,
+      attribute: new Types.ObjectId(createProductAttributeValueDto.attribute),
+    };
+    const attributeValue = new this.productAttributeValueModel(payload);
     return await attributeValue.save();
   }
 
@@ -391,10 +406,10 @@ export class ProductService {
     const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
     if (attributeId && Types.ObjectId.isValid(attributeId)) {
-      query.attribute = attributeId;
+      query.attribute = new Types.ObjectId(attributeId);
     }
     if (createdBy && Types.ObjectId.isValid(createdBy)) {
-      query.createdBy = createdBy;
+      query.createdBy = new Types.ObjectId(createdBy);
     }
     if (search) {
       query.$or = [
@@ -427,7 +442,7 @@ export class ProductService {
       throw new NotFoundException(`Invalid product attribute value ID: ${id}`);
     }
     const attributeValue = await this.productAttributeValueModel
-      .findOne({ _id: id, isDeleted: false })
+      .findOne({ _id: new Types.ObjectId(id), isDeleted: false })
       .populate('attribute')
       .exec();
     if (!attributeValue) {
@@ -447,7 +462,7 @@ export class ProductService {
     }
     const attributeValue = await this.productAttributeValueModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        { _id: new Types.ObjectId(id), isDeleted: false },
         { $set: updateProductAttributeValueDto },
         { new: true },
       )
@@ -468,7 +483,7 @@ export class ProductService {
     }
     const attributeValue = await this.productAttributeValueModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        { _id: new Types.ObjectId(id), isDeleted: false },
         { $set: { isDeleted: true, deletedAt: new Date() } },
         { new: true },
       )
@@ -489,9 +504,14 @@ export class ProductService {
   async createProductAttributeAllowValue(
     createProductAttributeAllowValueDto: CreateProductAttributeAllowValueDto,
   ) {
-    const allowValue = new this.productAttributeAllowValueModel(
-      createProductAttributeAllowValueDto,
-    );
+    const payload = {
+      ...createProductAttributeAllowValueDto,
+      product: new Types.ObjectId(createProductAttributeAllowValueDto.product),
+      attributeValue: new Types.ObjectId(
+        createProductAttributeAllowValueDto.attributeValue,
+      ),
+    };
+    const allowValue = new this.productAttributeAllowValueModel(payload);
     return await allowValue.save();
   }
 
@@ -503,7 +523,7 @@ export class ProductService {
     const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
     if (productId && Types.ObjectId.isValid(productId)) {
-      query.product = productId;
+      query.product = new Types.ObjectId(productId);
     }
     const [data, total] = await Promise.all([
       this.productAttributeAllowValueModel
@@ -533,7 +553,7 @@ export class ProductService {
       );
     }
     const allowValue = await this.productAttributeAllowValueModel
-      .findOne({ _id: id, isDeleted: false })
+      .findOne({ _id: new Types.ObjectId(id), isDeleted: false })
       .populate('product')
       .populate('attributeValue')
       .exec();
@@ -556,7 +576,7 @@ export class ProductService {
     }
     const allowValue = await this.productAttributeAllowValueModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        { _id: new Types.ObjectId(id), isDeleted: false },
         { $set: updateProductAttributeAllowValueDto },
         { new: true },
       )
@@ -580,7 +600,7 @@ export class ProductService {
     }
     const allowValue = await this.productAttributeAllowValueModel
       .findOneAndUpdate(
-        { _id: id, isDeleted: false },
+        { _id: new Types.ObjectId(id), isDeleted: false },
         { $set: { isDeleted: true, deletedAt: new Date() } },
         { new: true },
       )

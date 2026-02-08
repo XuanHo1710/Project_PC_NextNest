@@ -7,12 +7,12 @@ import {
 } from "@/types";
 
 class AccountGuestService {
-  private baseURL = "/client/account-guest";
+  private baseURL = "/account-guest";
 
   // ============== Profile APIs ==============
 
   async getProfile(): Promise<IAccountGuest> {
-    const response = await axiosClient.get(`${this.baseURL}/profile`);
+    const response = await axiosClient.get(`${this.baseURL}/profile-detail`);
     return response as unknown as IAccountGuest;
   }
 

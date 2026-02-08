@@ -36,7 +36,7 @@ export class Product {
   })
   status: string;
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'ProductVariant' })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'ProductVariant' })
   defaultProductVariantId: Types.ObjectId;
 
   @Prop()
@@ -53,8 +53,6 @@ export class Product {
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
-
-
 
 ProductSchema.pre('save', async function () {
   if (!this.isModified('name')) return;

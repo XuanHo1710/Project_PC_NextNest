@@ -2,20 +2,19 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-    Card, Button, Modal, Form, Input, Tag, Empty,
-    ColorPicker, Spin, List, Badge,
+    Button, Modal, Form, Input, Tag, Table, Select, ColorPicker,
 } from 'antd';
-import {
-    PlusOutlined, AppstoreOutlined, SearchOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import InfiniteSelect from '@/components/common/InfiniteSelect';
 import CloudinaryUpload from '@/components/common/CloudinaryUpload';
 import {
+    useClientAllAttributeValues,
     useClientAttributeValuesMap,
     useClientProductAttributes,
 } from '@/hooks/client/useProductManage';
 import { productManageClientService } from '@/services/client/product-manage.client.service';
 import type { IProductAttribute, IProductAttributeValue } from '@/types';
+import type { ColumnsType } from 'antd/es/table';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 import { clientProductKeys } from '@/hooks/client/useProductManage';
@@ -24,46 +23,70 @@ export default function AttributeValuesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filterAttribute, setFilterAttribute] = useState<string | null>(null);
     const [searchText, setSearchText] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [form] = Form.useForm();
     const queryClient = useQueryClient();
 
     const { data: attributes } = useClientProductAttributes();
-    const { allValues = [], isLoading } = useClientAttributeValuesMap(filterAttribute ? [filterAttribute] : []);
-
     const attributeList = attributes?.data ?? [];
-    const valueList = allValues as IProductAttributeValue[];
+
+    // Fetch ALL values when no filter, or values for specific attribute when filtered
+    const {
+        data: allData,
+        isLoading: isLoadingAll,
+    } = useClientAllAttributeValues(currentPage, pageSize, searchText || undefined);
+
+    const {
+        allValues: filteredByAttrValues = [],
+        isLoading: isLoadingFiltered,
+    } = useClientAttributeValuesMap(filterAttribute ? [filterAttribute] : []);
+
+    // Determine data source: if filtering by attribute, use per-attribute hook; otherwise use all-values hook
+    const isFiltering = !!filterAttribute;
+    const isLoading = isFiltering ? isLoadingFiltered : isLoadingAll;
+
+    const valueList = useMemo(() => {
+        if (isFiltering) {
+            let result = filteredByAttrValues as IProductAttributeValue[];
+            if (searchText) {
+                const lower = searchText.toLowerCase();
+                result = result.filter(
+                    v => v.value.toLowerCase().includes(lower) || v.label.toLowerCase().includes(lower),
+                );
+            }
+            return result;
+        }
+        return (allData?.data ?? []) as IProductAttributeValue[];
+    }, [isFiltering, filteredByAttrValues, allData, searchText]);
+
+    const totalItems = isFiltering
+        ? valueList.length
+        : (allData?.pagination?.totalItems ?? 0);
 
     const selectedAttributeId = Form.useWatch('attribute', form);
     const selectedAttribute = attributeList.find(a => a._id === selectedAttributeId);
 
-    // Filter + search
-    const filteredValues = useMemo(() => {
-        let result = valueList;
-        if (filterAttribute) {
-            result = result.filter((v) => {
-                const attrId = typeof v.attribute === 'string' ? v.attribute : v.attribute?._id;
-                return attrId === filterAttribute;
-            });
+    // Determine which displayTypes are present in the current data
+    const displayTypesInData = useMemo(() => {
+        if (isFiltering && filterAttribute) {
+            const attr = attributeList.find(a => a._id === filterAttribute);
+            return attr ? new Set([attr.displayType]) : new Set<string>();
         }
-        if (searchText) {
-            const lower = searchText.toLowerCase();
-            result = result.filter(
-                (v) =>
-                    v.value.toLowerCase().includes(lower) ||
-                    v.label.toLowerCase().includes(lower),
-            );
+        const types = new Set<string>();
+        for (const v of valueList) {
+            const dt = typeof v.attribute === 'object' ? v.attribute?.displayType : attributeList.find(a => a._id === v.attribute)?.displayType;
+            if (dt) types.add(dt);
         }
-        return result;
-    }, [valueList, filterAttribute, searchText]);
+        return types;
+    }, [valueList, isFiltering, filterAttribute, attributeList]);
 
     const getAttributeName = (attr: string | IProductAttribute) => {
-        if (typeof attr === 'string') {
-            return attributeList.find(a => a._id === attr)?.name || attr;
-        }
+        if (typeof attr === 'string') return attributeList.find(a => a._id === attr)?.name || attr;
         return attr?.name || '';
     };
 
-    const getAttributeDisplayType = (attr: string | IProductAttribute) => {
+    const getAttributeDisplayType = (attr: string | IProductAttribute): string | undefined => {
         if (typeof attr === 'object' && attr?.displayType) return attr.displayType;
         if (typeof attr === 'string') return attributeList.find(a => a._id === attr)?.displayType;
         return undefined;
@@ -77,18 +100,7 @@ export default function AttributeValuesPage() {
 
     const mapAttribute = useCallback(
         (item: IProductAttribute) => ({
-            label: (
-                <div className="flex items-center justify-between w-full">
-                    <span>{item.name} ({item.code})</span>
-                    <Tag color={
-                        item.displayType === 'COLOR' ? 'magenta' :
-                            item.displayType === 'IMAGE' ? 'green' :
-                                item.displayType === 'BUTTON' ? 'blue' : 'orange'
-                    } className="text-xs !rounded-md">
-                        {item.displayType}
-                    </Tag>
-                </div>
-            ),
+            label: `${item.name} (${item.code}) — ${item.displayType}`,
             value: item._id,
             raw: item,
         }),
@@ -99,6 +111,7 @@ export default function AttributeValuesPage() {
         mutationFn: (data: { value: string; label: string; attribute: string; colorHex?: string; imageUrl?: string }) =>
             productManageClientService.createAttributeValue(data),
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['client-all-attribute-values'] });
             queryClient.invalidateQueries({ queryKey: clientProductKeys.attributeValues('') });
             if (filterAttribute) {
                 queryClient.invalidateQueries({ queryKey: clientProductKeys.attributeValues(filterAttribute) });
@@ -137,62 +150,105 @@ export default function AttributeValuesPage() {
         } catch { /* validation */ }
     };
 
-    const renderValuePreview = (record: IProductAttributeValue) => {
-        const displayType = getAttributeDisplayType(record.attribute);
-        if (displayType === 'COLOR' && record.colorHex) {
-            return (
-                <div
-                    className="w-8 h-8 rounded-lg border-2 border-gray-200 shadow-sm shrink-0"
-                    style={{ backgroundColor: record.colorHex }}
-                    title={record.colorHex}
-                />
-            );
+    const attributeFilterOptions = attributeList.map(a => ({
+        label: `${a.name} (${a.code})`,
+        value: a._id,
+    }));
+
+    // Build columns dynamically
+    const columns = useMemo(() => {
+        const cols: ColumnsType<IProductAttributeValue> = [
+            {
+                title: '#',
+                key: 'index',
+                width: 50,
+                render: (_, __, idx) => {
+                    const base = isFiltering ? 0 : (currentPage - 1) * pageSize;
+                    return <span className="text-gray-500">{base + idx + 1}</span>;
+                },
+            },
+            {
+                title: 'Nhãn (label)',
+                dataIndex: 'label',
+                key: 'label',
+                render: (label: string) => <span className="font-medium">{label}</span>,
+            },
+            {
+                title: 'Giá trị (value)',
+                dataIndex: 'value',
+                key: 'value',
+                render: (value: string) => <Tag>{value}</Tag>,
+            },
+            {
+                title: 'Thuộc tính',
+                key: 'attribute',
+                width: 150,
+                render: (_, record) => (
+                    <Tag color="blue">{getAttributeName(record.attribute)}</Tag>
+                ),
+            },
+        ];
+
+        // Show colorHex column only if COLOR type values are present
+        if (displayTypesInData.has('COLOR')) {
+            cols.push({
+                title: 'Mã màu',
+                key: 'colorHex',
+                width: 120,
+                render: (_, record) => {
+                    if (!record.colorHex) return <span className="text-gray-300">—</span>;
+                    return (
+                        <div className="flex items-center gap-2">
+                            <div
+                                className="w-5 h-5 rounded border border-gray-300"
+                                style={{ backgroundColor: record.colorHex }}
+                            />
+                            <span className="text-xs text-gray-500">{record.colorHex}</span>
+                        </div>
+                    );
+                },
+            });
         }
-        if (displayType === 'IMAGE' && record.imageUrl) {
-            return (
-                <img
-                    src={record.imageUrl}
-                    alt={record.label}
-                    className="w-8 h-8 rounded-lg object-cover border border-gray-200 shrink-0"
-                />
-            );
+
+        // Show image column only if IMAGE type values are present
+        if (displayTypesInData.has('IMAGE')) {
+            cols.push({
+                title: 'Hình ảnh',
+                key: 'imageUrl',
+                width: 100,
+                render: (_, record) => {
+                    if (!record.imageUrl) return <span className="text-gray-300">—</span>;
+                    return (
+                        <img
+                            src={record.imageUrl}
+                            alt={record.label}
+                            className="w-8 h-8 rounded object-cover border border-gray-200"
+                        />
+                    );
+                },
+            });
         }
-        if (displayType === 'BUTTON') {
-            return (
-                <div className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-md text-xs font-medium border border-blue-200 shrink-0">
-                    {record.label}
-                </div>
-            );
-        }
-        return <div className="w-8 h-8 rounded-lg bg-gray-100 shrink-0" />;
-    };
+
+        return cols;
+    }, [displayTypesInData, currentPage, pageSize, isFiltering, attributeList]);
 
     return (
-        <div className="space-y-5">
+        <div className="space-y-4">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl p-6 text-white">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white/15 backdrop-blur rounded-xl flex items-center justify-center">
-                            <AppstoreOutlined className="text-xl" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold m-0">Giá trị thuộc tính</h1>
-                            <p className="text-purple-100 text-sm m-0 mt-0.5">
-                                Quản lý giá trị cho từng thuộc tính
-                                <Badge count={filteredValues.length} className="ml-2" style={{ backgroundColor: 'rgba(255,255,255,0.25)' }} />
-                            </p>
-                        </div>
-                    </div>
-                    <Button
-                        icon={<PlusOutlined />}
-                        onClick={handleCreate}
-                        size="large"
-                        className="!bg-white !text-purple-600 !border-0 !font-medium !rounded-xl hover:!bg-purple-50 !shadow-sm"
-                    >
-                        Thêm giá trị
-                    </Button>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-bold m-0">Giá trị thuộc tính</h1>
+                    <p className="text-gray-500 text-sm m-0 mt-1">
+                        Quản lý giá trị cho từng thuộc tính ({totalItems} giá trị)
+                    </p>
                 </div>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleCreate}
+                >
+                    Thêm giá trị
+                </Button>
             </div>
 
             {/* Filters */}
@@ -200,81 +256,80 @@ export default function AttributeValuesPage() {
                 <Input
                     placeholder="Tìm kiếm giá trị theo tên..."
                     prefix={<SearchOutlined className="text-gray-400" />}
-                    size="large"
-                    className="!rounded-xl !border-blue-200 flex-1"
                     value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
+                    onChange={(e) => {
+                        setSearchText(e.target.value);
+                        setCurrentPage(1);
+                    }}
                     allowClear
+                    style={{ maxWidth: 300 }}
                 />
-                <InfiniteSelect
-                    fetchFn={fetchAttributes}
-                    mapOption={mapAttribute}
-                    queryKeyPrefix="filterAttrSelect"
-                    pageSize={15}
+                <Select
                     placeholder="Lọc theo thuộc tính..."
-                    size="large"
+                    options={attributeFilterOptions}
                     allowClear
-                    className="!rounded-xl sm:!w-[280px]"
                     value={filterAttribute}
-                    onChange={(val: any) => setFilterAttribute(val || null)}
+                    onChange={(val) => {
+                        setFilterAttribute(val || null);
+                        setCurrentPage(1);
+                    }}
+                    style={{ minWidth: 250 }}
                 />
             </div>
 
-            {/* List */}
-            <Card className="border-0 shadow-sm rounded-xl overflow-hidden">
-                {isLoading ? (
-                    <div className="flex justify-center py-12"><Spin size="large" /></div>
-                ) : filteredValues.length === 0 ? (
-                    <Empty
-                        description={searchText || filterAttribute ? 'Không tìm thấy giá trị phù hợp' : 'Chưa có giá trị nào. Hãy thêm giá trị đầu tiên!'}
-                        className="py-12"
-                    />
-                ) : (
-                    <List
-                        dataSource={filteredValues}
-                        renderItem={(item, index) => (
-                            <List.Item className="!px-5 hover:bg-purple-50/20 transition-colors">
-                                <div className="flex items-center gap-4 w-full">
-                                    <div className="w-8 h-8 flex items-center justify-center bg-purple-50 rounded-lg text-purple-500 font-bold text-xs shrink-0">
-                                        {index + 1}
-                                    </div>
-                                    {renderValuePreview(item)}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="font-semibold text-gray-800">{item.label}</span>
-                                            <Tag className="!m-0 !bg-gray-100 !text-gray-500 !border-0 !rounded-md text-xs">{item.value}</Tag>
-                                        </div>
-                                        <Tag color="blue" className="!mt-1 !rounded-md text-xs">{getAttributeName(item.attribute)}</Tag>
-                                    </div>
-                                    {item.colorHex && (
-                                        <Tag className="!m-0 !rounded-md text-xs !bg-gray-50">{item.colorHex}</Tag>
-                                    )}
-                                </div>
-                            </List.Item>
-                        )}
-                    />
-                )}
-            </Card>
+            {/* Table */}
+            <Table
+                columns={columns}
+                dataSource={valueList}
+                rowKey="_id"
+                loading={isLoading}
+                pagination={
+                    isFiltering
+                        ? {
+                            current: currentPage,
+                            pageSize,
+                            total: totalItems,
+                            showTotal: (total) => `Tổng ${total} giá trị`,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['10', '20', '50'],
+                            onChange: (p, s) => {
+                                setCurrentPage(p);
+                                setPageSize(s);
+                            },
+                        }
+                        : {
+                            current: currentPage,
+                            pageSize,
+                            total: totalItems,
+                            showTotal: (total) => `Tổng ${total} giá trị`,
+                            showSizeChanger: true,
+                            pageSizeOptions: ['10', '20', '50'],
+                            onChange: (p, s) => {
+                                setCurrentPage(p);
+                                setPageSize(s);
+                            },
+                        }
+                }
+                bordered
+                size="middle"
+            />
 
             {/* Modal */}
             <Modal
-                title={
-                    <div className="flex items-center gap-2 text-gray-800">
-                        <AppstoreOutlined className="text-purple-500" />
-                        Thêm giá trị thuộc tính mới
-                    </div>
-                }
+                title="Thêm giá trị thuộc tính mới"
                 open={isModalOpen}
                 onCancel={() => { setIsModalOpen(false); form.resetFields(); }}
-                footer={null}
+                onOk={handleSubmit}
+                confirmLoading={createMutation.isPending}
+                okText="Tạo mới"
+                cancelText="Hủy"
                 destroyOnClose
-                className="[&_.ant-modal-content]:!rounded-xl"
                 width={520}
             >
-                <Form form={form} layout="vertical" className="mt-4" onFinish={handleSubmit}>
+                <Form form={form} layout="vertical" className="mt-4">
                     <Form.Item
                         name="attribute"
-                        label={<span className="font-medium text-gray-700">Thuộc tính <span className="text-red-500">*</span></span>}
+                        label="Thuộc tính"
                         rules={[{ required: true, message: 'Vui lòng chọn thuộc tính' }]}
                     >
                         <InfiniteSelect
@@ -283,26 +338,23 @@ export default function AttributeValuesPage() {
                             queryKeyPrefix="attrModalSelect"
                             pageSize={15}
                             placeholder="Tìm kiếm thuộc tính..."
-                            size="large"
-                            className="!rounded-lg"
                         />
                     </Form.Item>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Form.Item
                             name="value"
-                            label={<span className="font-medium text-gray-700">Giá trị (value) <span className="text-red-500">*</span></span>}
+                            label="Giá trị (value)"
                             rules={[{ required: true, message: 'Vui lòng nhập giá trị' }]}
                         >
-                            <Input placeholder="Ví dụ: red, 8gb, s..." size="large" className="!rounded-lg" />
+                            <Input placeholder="Ví dụ: red, 8gb, s..." />
                         </Form.Item>
-
                         <Form.Item
                             name="label"
-                            label={<span className="font-medium text-gray-700">Nhãn hiển thị (label) <span className="text-red-500">*</span></span>}
+                            label="Nhãn hiển thị (label)"
                             rules={[{ required: true, message: 'Vui lòng nhập nhãn' }]}
                         >
-                            <Input placeholder="Ví dụ: Đỏ, Xanh dương, Size S..." size="large" className="!rounded-lg" />
+                            <Input placeholder="Ví dụ: Đỏ, 8GB, Size S..." />
                         </Form.Item>
                     </div>
 
@@ -310,13 +362,12 @@ export default function AttributeValuesPage() {
                     {selectedAttribute?.displayType === 'COLOR' && (
                         <Form.Item
                             name="colorHex"
-                            label={<span className="font-medium text-gray-700">Chọn màu sắc <span className="text-red-500">*</span></span>}
+                            label="Chọn màu sắc"
                             rules={[{ required: true, message: 'Vui lòng chọn màu' }]}
                         >
                             <ColorPicker
                                 showText
                                 format="hex"
-                                size="large"
                                 presets={[{
                                     label: 'Phổ biến',
                                     colors: [
@@ -333,7 +384,7 @@ export default function AttributeValuesPage() {
                     {selectedAttribute?.displayType === 'IMAGE' && (
                         <Form.Item
                             name="imageUrl"
-                            label={<span className="font-medium text-gray-700">Hình ảnh <span className="text-red-500">*</span></span>}
+                            label="Hình ảnh"
                             rules={[{ required: true, message: 'Vui lòng tải ảnh lên' }]}
                             getValueFromEvent={(urls: string[]) => urls?.[0] || ''}
                             getValueProps={(value: string) => ({ value: value ? [value] : [] })}
@@ -344,21 +395,10 @@ export default function AttributeValuesPage() {
 
                     {/* BUTTON/RADIO: Info */}
                     {(selectedAttribute?.displayType === 'BUTTON' || selectedAttribute?.displayType === 'RADIO') && (
-                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-sm text-blue-700 mb-4">
+                        <div className="p-3 bg-gray-50 rounded border border-gray-200 text-sm text-gray-600 mb-4">
                             Kiểu hiển thị: <strong>{selectedAttribute.displayType === 'BUTTON' ? 'Nút bấm' : 'Radio'}</strong> — Chỉ cần nhập giá trị và nhãn hiển thị.
                         </div>
                     )}
-
-                    {/* Submit inside form */}
-                    <div className="flex justify-end gap-3 pt-2">
-                        <Button onClick={() => { setIsModalOpen(false); form.resetFields(); }} size="large" className="!rounded-lg">
-                            Hủy
-                        </Button>
-                        <Button type="primary" htmlType="submit" size="large" loading={createMutation.isPending}
-                            className="!rounded-lg !bg-purple-500 hover:!bg-purple-600 !shadow-sm">
-                            Tạo mới
-                        </Button>
-                    </div>
                 </Form>
             </Modal>
         </div>

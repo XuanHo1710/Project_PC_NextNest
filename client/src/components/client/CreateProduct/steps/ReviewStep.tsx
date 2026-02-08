@@ -2,19 +2,12 @@
 
 import React, { useMemo } from 'react';
 import {
-    Card, Button, Tag, Divider, Alert, Space, Badge, Descriptions, Table,
-    Statistic, Tooltip, Progress,
+    Card, Button, Tag, Alert, Descriptions, Table,
+    Statistic, Tooltip,
 } from 'antd';
 import {
-    CheckCircleOutlined,
     ArrowLeftOutlined,
     RocketOutlined,
-    ShoppingOutlined,
-    TagsOutlined,
-    AppstoreOutlined,
-    DollarOutlined,
-    InboxOutlined,
-    InfoCircleOutlined,
 } from '@ant-design/icons';
 import type { IProductAttribute, IProductAttributeValue } from '@/types';
 import type { VariantRow } from './ConfigureVariantsStep';
@@ -190,69 +183,41 @@ export default function ReviewStep({
     return (
         <div className="space-y-6">
             {/* Header Card */}
-            <Card
-                className="shadow-lg border-0 overflow-hidden"
-                styles={{ body: { padding: 0 } }}
-            >
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center">
-                                <CheckCircleOutlined className="text-2xl" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold m-0">Xem lại & Đăng bán</h2>
-                                <p className="text-blue-100 m-0 text-sm mt-1">
-                                    Kiểm tra toàn bộ thông tin trước khi đăng sản phẩm
-                                </p>
-                            </div>
-                        </div>
-                        <div className="text-right hidden md:block">
-                            <div className="text-sm text-white/70 mb-1">Hoàn thiện</div>
-                            <Progress
-                                type="circle"
-                                percent={completeness}
-                                size={56}
-                                strokeColor={completeness === 100 ? '#52c41a' : '#faad14'}
-                                trailColor="rgba(255,255,255,0.2)"
-                                format={(pct) => (
-                                    <span className="text-white text-sm font-bold">{pct}%</span>
-                                )}
-                            />
-                        </div>
+            <Card className="border shadow-sm">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg font-bold m-0">Xem lại & Đăng bán</h2>
+                        <p className="text-gray-500 text-sm m-0 mt-1">
+                            Kiểm tra toàn bộ thông tin trước khi đăng sản phẩm
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <span className="text-sm text-gray-500">Hoàn thiện: </span>
+                        <span className={`font-bold ${completeness === 100 ? 'text-green-600' : 'text-yellow-600'}`}>{completeness}%</span>
                     </div>
                 </div>
 
-                {/* Issues Alert */}
                 {!isReady && (
-                    <div className="px-6 pt-4">
-                        <Alert
-                            type="warning"
-                            showIcon
-                            icon={<InfoCircleOutlined />}
-                            message="Cần bổ sung thêm"
-                            description={
-                                <ul className="m-0 pl-4 space-y-1">
-                                    {issues.map((issue, i) => (
-                                        <li key={i} className="text-sm">{issue}</li>
-                                    ))}
-                                </ul>
-                            }
-                            className="rounded-lg"
-                        />
-                    </div>
+                    <Alert
+                        type="warning"
+                        showIcon
+                        message="Cần bổ sung thêm"
+                        description={
+                            <ul className="m-0 pl-4 space-y-1">
+                                {issues.map((issue, i) => (
+                                    <li key={i} className="text-sm">{issue}</li>
+                                ))}
+                            </ul>
+                        }
+                        className="mt-4"
+                    />
                 )}
             </Card>
 
             {/* Product Info Summary */}
             <Card
-                className="shadow-lg border-0"
-                title={
-                    <div className="flex items-center gap-2">
-                        <ShoppingOutlined className="text-blue-500" />
-                        <span className="font-semibold">Thông tin sản phẩm</span>
-                    </div>
-                }
+                className="border shadow-sm"
+                title="Thông tin sản phẩm"
             >
                 <Descriptions
                     column={{ xs: 1, sm: 2 }}
@@ -291,14 +256,8 @@ export default function ReviewStep({
 
             {/* Attributes Summary */}
             <Card
-                className="shadow-lg border-0"
-                title={
-                    <div className="flex items-center gap-2">
-                        <TagsOutlined className="text-blue-500" />
-                        <span className="font-semibold">Thuộc tính đã chọn</span>
-                        <Badge count={selectedAttributes.length} style={{ backgroundColor: '#2563eb' }} />
-                    </div>
-                }
+                className="border shadow-sm"
+                title={`Thuộc tính đã chọn (${selectedAttributes.length})`}
             >
                 <div className="space-y-3">
                     {selectedAttributes.map(attrId => {
@@ -339,58 +298,48 @@ export default function ReviewStep({
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="shadow-md border-0 bg-gradient-to-br from-blue-50 to-blue-100">
+                <Card className="border shadow-sm">
                     <Statistic
-                        title={<span className="text-blue-600 text-xs font-medium">Biến thể hoạt động</span>}
+                        title={<span className="text-gray-500 text-xs">Biến thể hoạt động</span>}
                         value={stats.enabledCount}
                         suffix={<span className="text-sm text-gray-400">/ {stats.totalCount}</span>}
-                        valueStyle={{ color: '#2563eb', fontWeight: 700, fontSize: 28 }}
-                        prefix={<AppstoreOutlined />}
+                        valueStyle={{ fontWeight: 700, fontSize: 28 }}
                     />
                 </Card>
-                <Card className="shadow-md border-0 bg-gradient-to-br from-sky-50 to-blue-100">
+                <Card className="border shadow-sm">
                     <Statistic
-                        title={<span className="text-blue-600 text-xs font-medium">Khoảng giá bán</span>}
+                        title={<span className="text-gray-500 text-xs">Khoảng giá bán</span>}
                         value={stats.minPrice.toLocaleString()}
                         suffix={
                             stats.minPrice !== stats.maxPrice
                                 ? <span className="text-sm"> — {stats.maxPrice.toLocaleString()}đ</span>
                                 : <span className="text-sm">đ</span>
                         }
-                        valueStyle={{ color: '#1d4ed8', fontWeight: 700, fontSize: 20 }}
-                        prefix={<DollarOutlined />}
+                        valueStyle={{ fontWeight: 700, fontSize: 20 }}
                     />
                 </Card>
-                <Card className="shadow-md border-0 bg-gradient-to-br from-indigo-50 to-blue-100">
+                <Card className="border shadow-sm">
                     <Statistic
-                        title={<span className="text-indigo-600 text-xs font-medium">Tổng tồn kho</span>}
+                        title={<span className="text-gray-500 text-xs">Tổng tồn kho</span>}
                         value={stats.totalStock}
                         suffix="sản phẩm"
-                        valueStyle={{ color: '#4338ca', fontWeight: 700, fontSize: 28 }}
-                        prefix={<InboxOutlined />}
+                        valueStyle={{ fontWeight: 700, fontSize: 28 }}
                     />
                 </Card>
-                <Card className="shadow-md border-0 bg-gradient-to-br from-blue-50 to-indigo-100">
+                <Card className="border shadow-sm">
                     <Statistic
-                        title={<span className="text-blue-700 text-xs font-medium">Tổng giá trị kho</span>}
+                        title={<span className="text-gray-500 text-xs">Tổng giá trị kho</span>}
                         value={stats.totalRevenue.toLocaleString()}
                         suffix="đ"
-                        valueStyle={{ color: '#1e40af', fontWeight: 700, fontSize: 20 }}
-                        prefix={<DollarOutlined />}
+                        valueStyle={{ fontWeight: 700, fontSize: 20 }}
                     />
                 </Card>
             </div>
 
             {/* Variants Preview Table */}
             <Card
-                className="shadow-lg border-0"
-                title={
-                    <div className="flex items-center gap-2">
-                        <AppstoreOutlined className="text-blue-500" />
-                        <span className="font-semibold">Danh sách biến thể</span>
-                        <Badge count={stats.enabledCount} style={{ backgroundColor: '#52c41a' }} />
-                    </div>
-                }
+                className="border shadow-sm"
+                title={`Danh sách biến thể (${stats.enabledCount})`}
             >
                 <Table
                     columns={previewColumns}
@@ -409,64 +358,46 @@ export default function ReviewStep({
             </Card>
 
             {/* Submit Section */}
-            <Card className="shadow-lg border-0 overflow-hidden" styles={{ body: { padding: 0 } }}>
+            <Card className="border shadow-sm">
                 {isReady ? (
-                    <div className="bg-gradient-to-r from-blue-50 to-sky-50 p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <CheckCircleOutlined className="text-blue-600 text-xl" />
-                            <div>
-                                <h4 className="font-semibold text-blue-800 m-0">Sẵn sàng đăng bán!</h4>
-                                <p className="text-sm text-blue-600 m-0">
-                                    Tất cả thông tin đã hoàn thiện. Nhấn nút bên dưới để đăng sản phẩm.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <Alert
+                        type="success"
+                        showIcon
+                        message="Sẵn sàng đăng bán!"
+                        description="Tất cả thông tin đã hoàn thiện. Nhấn nút bên dưới để đăng sản phẩm."
+                        className="mb-4"
+                    />
                 ) : (
-                    <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <InfoCircleOutlined className="text-amber-500 text-xl" />
-                            <div>
-                                <h4 className="font-semibold text-amber-800 m-0">Chưa hoàn thiện</h4>
-                                <p className="text-sm text-amber-600 m-0">
-                                    Vui lòng quay lại và bổ sung các thông tin thiếu.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <Alert
+                        type="warning"
+                        showIcon
+                        message="Chưa hoàn thiện"
+                        description="Vui lòng quay lại và bổ sung các thông tin thiếu."
+                        className="mb-4"
+                    />
                 )}
 
-                <div className="p-6 flex justify-between items-center border-t border-gray-100">
+                <div className="flex justify-between items-center pt-4 border-t">
                     <Button
                         size="large"
                         icon={<ArrowLeftOutlined />}
                         onClick={onBack}
-                        className="h-12 px-6 rounded-lg font-medium"
                     >
                         Quay lại chỉnh sửa
                     </Button>
 
-                    <Space>
-                        <div className="text-right hidden md:block mr-4">
-                            <div className="text-xs text-gray-500">Đăng bán</div>
-                            <div className="text-lg font-bold text-blue-600">
-                                {stats.enabledCount} biến thể
-                            </div>
-                        </div>
-                        <Tooltip title={!isReady ? 'Vui lòng bổ sung đầy đủ thông tin' : ''}>
-                            <Button
-                                type="primary"
-                                size="large"
-                                icon={<RocketOutlined />}
-                                onClick={onSubmit}
-                                loading={isSubmitting}
-                                disabled={!isReady}
-                                className="h-14 px-10 rounded-xl font-bold text-base bg-gradient-to-r from-blue-600 to-blue-700 border-0 shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-all disabled:opacity-50 disabled:shadow-none"
-                            >
-                                Đăng bán sản phẩm
-                            </Button>
-                        </Tooltip>
-                    </Space>
+                    <Tooltip title={!isReady ? 'Vui lòng bổ sung đầy đủ thông tin' : ''}>
+                        <Button
+                            type="primary"
+                            size="large"
+                            icon={<RocketOutlined />}
+                            onClick={onSubmit}
+                            loading={isSubmitting}
+                            disabled={!isReady}
+                        >
+                            Đăng bán sản phẩm ({stats.enabledCount} biến thể)
+                        </Button>
+                    </Tooltip>
                 </div>
             </Card>
         </div>

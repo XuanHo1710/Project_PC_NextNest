@@ -58,26 +58,11 @@ export default function ProductInfoStep({
 
     return (
         <div className="space-y-6">
-            {/* Header Card */}
-            <Card
-                className="shadow-lg border-0 overflow-hidden"
-                styles={{ body: { padding: 0 } }}
-            >
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center">
-                            <ShoppingOutlined className="text-2xl" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold m-0">Thông tin sản phẩm</h2>
-                            <p className="text-blue-100 m-0 text-sm mt-1">
-                                Nhập thông tin cơ bản về sản phẩm của bạn
-                            </p>
-                        </div>
-                    </div>
-                </div>
+            <Card className="border shadow-sm">
+                <h2 className="text-lg font-bold m-0 mb-1">Thông tin sản phẩm</h2>
+                <p className="text-gray-500 text-sm m-0 mb-6">Nhập thông tin cơ bản về sản phẩm của bạn</p>
 
-                <div className="p-6">
+                <div>
                     <Form form={form} layout="vertical" requiredMark="optional">
                         {/* Tên sản phẩm */}
                         <Form.Item
@@ -181,7 +166,6 @@ export default function ProductInfoStep({
                     icon={<ArrowRightOutlined />}
                     iconPosition="end"
                     onClick={handleNext}
-                    className="h-12 px-8 rounded-lg font-medium shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
                 >
                     Tiếp theo: Chọn thuộc tính
                 </Button>

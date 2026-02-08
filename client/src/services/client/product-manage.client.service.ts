@@ -97,6 +97,23 @@ class ProductManageClientService {
   }
   // ============== PRODUCT ATTRIBUTE VALUES ==============
 
+  /** Fetch ALL attribute values (optionally filtered by search) */
+  async getAllAttributeValues(params?: {
+    page?: number;
+    limit?: number;
+    keyword?: string;
+  }): Promise<PaginatedResponse<IProductAttributeValue>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.keyword) query.set("search", params.keyword);
+    const qs = query.toString();
+    const response = await axiosClient.get(
+      `/product-attribute-value${qs ? `?${qs}` : ""}`,
+    );
+    return response.data;
+  }
+
   async getAttributeValuesByAttribute(
     attributeId: string,
   ): Promise<PaginatedResponse<IProductAttributeValue>> {

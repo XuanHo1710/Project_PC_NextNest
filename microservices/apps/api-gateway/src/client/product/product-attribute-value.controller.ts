@@ -37,6 +37,21 @@ export class ProductAttributeValueController {
     });
   }
 
+  @Get()
+  findAllValues(
+    @Guest() guest: any,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+  ) {
+    return this.productService.send('product.attributeValue.findAll', {
+      createdBy: guest._id,
+      page: page ? +page : undefined,
+      limit: limit ? +limit : undefined,
+      search,
+    });
+  }
+
   @Get(':attributeId')
   findAllProductAttributeValues(
     @Param('attributeId') attributeId?: string,

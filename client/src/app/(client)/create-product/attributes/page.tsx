@@ -2,14 +2,13 @@
 
 import { useState } from 'react';
 import {
-    Card, Button, Modal, Form, Input, Select, Tag,
-    Empty, Popconfirm, Spin, List, Badge,
+    Button, Modal, Form, Input, Select, Tag, Table, Popconfirm, Space,
 } from 'antd';
 import {
-    PlusOutlined, EditOutlined, DeleteOutlined, TagsOutlined,
-    SearchOutlined,
+    PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import type { IProductAttribute } from '@/types';
+import type { ColumnsType } from 'antd/es/table';
 import {
     useClientProductAttributes,
     useClientCreateProductAttribute,
@@ -18,10 +17,10 @@ import {
 } from '@/hooks/client/useProductManage';
 
 const DISPLAY_TYPE_OPTIONS = [
-    { label: '🎨 Màu sắc (Color)', value: 'COLOR' },
-    { label: '🖼️ Hình ảnh (Image)', value: 'IMAGE' },
-    { label: '🔘 Nút bấm (Button)', value: 'BUTTON' },
-    { label: '⭕ Radio', value: 'RADIO' },
+    { label: 'Màu sắc (Color)', value: 'COLOR' },
+    { label: 'Hình ảnh (Image)', value: 'IMAGE' },
+    { label: 'Nút bấm (Button)', value: 'BUTTON' },
+    { label: 'Radio', value: 'RADIO' },
 ];
 
 const DISPLAY_TYPE_CONFIG: Record<string, { color: string; label: string }> = {
@@ -78,150 +77,136 @@ export default function AttributesPage() {
         } catch { /* validation failed */ }
     };
 
-    return (
-        <div className="space-y-5">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl p-6 text-white">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white/15 backdrop-blur rounded-xl flex items-center justify-center">
-                            <TagsOutlined className="text-xl" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold m-0">Thuộc tính sản phẩm</h1>
-                            <p className="text-blue-100 text-sm m-0 mt-0.5">
-                                Quản lý các thuộc tính riêng của bạn
-                                <Badge count={dataList.length} className="ml-2" style={{ backgroundColor: 'rgba(255,255,255,0.25)' }} />
-                            </p>
-                        </div>
-                    </div>
+    const columns: ColumnsType<IProductAttribute> = [
+        {
+            title: '#',
+            key: 'index',
+            width: 60,
+            render: (_, __, idx) => <span className="text-gray-500">{idx + 1}</span>,
+        },
+        {
+            title: 'Tên thuộc tính',
+            dataIndex: 'name',
+            key: 'name',
+            render: (name: string) => <span className="font-medium">{name}</span>,
+        },
+        {
+            title: 'Mã (code)',
+            dataIndex: 'code',
+            key: 'code',
+            render: (code: string) => code ? <Tag>{code}</Tag> : '—',
+        },
+        {
+            title: 'Kiểu hiển thị',
+            dataIndex: 'displayType',
+            key: 'displayType',
+            width: 150,
+            render: (type: string) => {
+                const config = DISPLAY_TYPE_CONFIG[type] || DISPLAY_TYPE_CONFIG.BUTTON;
+                return <Tag color={config.color}>{config.label}</Tag>;
+            },
+        },
+        {
+            title: 'Hành động',
+            key: 'actions',
+            width: 180,
+            render: (_, record) => (
+                <Space>
                     <Button
-                        icon={<PlusOutlined />}
-                        onClick={handleCreate}
-                        size="large"
-                        className="!bg-white !text-blue-600 !border-0 !font-medium !rounded-xl hover:!bg-blue-50 !shadow-sm"
+                        type="link"
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEdit(record)}
                     >
-                        Thêm thuộc tính
+                        Sửa
                     </Button>
+                    <Popconfirm
+                        title="Xác nhận xóa thuộc tính này?"
+                        description="Các giá trị liên quan sẽ không còn sử dụng được."
+                        onConfirm={() => deleteMutation.mutate(record._id)}
+                        okButtonProps={{ danger: true }}
+                    >
+                        <Button type="link" danger size="small" icon={<DeleteOutlined />}>
+                            Xóa
+                        </Button>
+                    </Popconfirm>
+                </Space>
+            ),
+        },
+    ];
+
+    return (
+        <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-bold m-0">Thuộc tính sản phẩm</h1>
+                    <p className="text-gray-500 text-sm m-0 mt-1">
+                        Quản lý các thuộc tính riêng của bạn ({dataList.length} thuộc tính)
+                    </p>
                 </div>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleCreate}
+                >
+                    Thêm thuộc tính
+                </Button>
             </div>
 
             {/* Search */}
             <Input
-                placeholder="Tìm kiếm thuộc tính theo tên hoặc mã..."
+                placeholder="Tìm kiếm theo tên hoặc mã..."
                 prefix={<SearchOutlined className="text-gray-400" />}
-                size="large"
-                className="!rounded-xl !border-blue-200 focus:!border-blue-400"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 allowClear
+                style={{ maxWidth: 400 }}
             />
 
-            {/* List */}
-            <Card className="border-0 shadow-sm rounded-xl overflow-hidden">
-                {isLoading ? (
-                    <div className="flex justify-center py-12"><Spin size="large" /></div>
-                ) : filteredList.length === 0 ? (
-                    <Empty
-                        description={searchText ? 'Không tìm thấy thuộc tính phù hợp' : 'Chưa có thuộc tính nào. Hãy tạo thuộc tính đầu tiên!'}
-                        className="py-12"
-                    />
-                ) : (
-                    <List
-                        dataSource={filteredList}
-                        renderItem={(item, index) => {
-                            const config = DISPLAY_TYPE_CONFIG[item.displayType] || DISPLAY_TYPE_CONFIG.BUTTON;
-                            return (
-                                <List.Item
-                                    className="!px-5 hover:bg-blue-50/30 transition-colors"
-                                    actions={[
-                                        <Button
-                                            key="edit"
-                                            type="text"
-                                            icon={<EditOutlined />}
-                                            onClick={() => handleEdit(item)}
-                                            className="!text-blue-500 hover:!text-blue-600 hover:!bg-blue-50"
-                                        >
-                                            Sửa
-                                        </Button>,
-                                        <Popconfirm
-                                            key="delete"
-                                            title="Xác nhận xóa thuộc tính này?"
-                                            description="Các giá trị liên quan sẽ không còn sử dụng được."
-                                            onConfirm={() => deleteMutation.mutate(item._id)}
-                                            okButtonProps={{ danger: true }}
-                                        >
-                                            <Button type="text" danger icon={<DeleteOutlined />} className="hover:!bg-red-50">Xóa</Button>
-                                        </Popconfirm>,
-                                    ]}
-                                >
-                                    <List.Item.Meta
-                                        avatar={
-                                            <div className="w-10 h-10 flex items-center justify-center bg-blue-50 rounded-lg text-blue-500 font-bold text-sm">
-                                                {index + 1}
-                                            </div>
-                                        }
-                                        title={
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-gray-800">{item.name}</span>
-                                                {item.code && (
-                                                    <Tag className="!m-0 !bg-gray-100 !text-gray-500 !border-0 !rounded-md text-xs">{item.code}</Tag>
-                                                )}
-                                            </div>
-                                        }
-                                        description={
-                                            <Tag color={config.color} className="!rounded-md !text-xs !mt-1">
-                                                {config.label} ({item.displayType})
-                                            </Tag>
-                                        }
-                                    />
-                                </List.Item>
-                            );
-                        }}
-                    />
-                )}
-            </Card>
+            {/* Table */}
+            <Table
+                columns={columns}
+                dataSource={filteredList}
+                rowKey="_id"
+                loading={isLoading}
+                pagination={{
+                    pageSize: 10,
+                    showTotal: (total) => `Tổng ${total} thuộc tính`,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50'],
+                }}
+                bordered
+                size="middle"
+            />
 
             {/* Modal */}
             <Modal
-                title={
-                    <div className="flex items-center gap-2 text-gray-800">
-                        <TagsOutlined className="text-blue-500" />
-                        {editingItem ? 'Sửa thuộc tính' : 'Thêm thuộc tính mới'}
-                    </div>
-                }
+                title={editingItem ? 'Sửa thuộc tính' : 'Thêm thuộc tính mới'}
                 open={isModalOpen}
                 onCancel={() => { setIsModalOpen(false); setEditingItem(null); form.resetFields(); }}
-                footer={null}
+                onOk={handleSubmit}
+                confirmLoading={createMutation.isPending || updateMutation.isPending}
+                okText={editingItem ? 'Cập nhật' : 'Tạo mới'}
+                cancelText="Hủy"
                 destroyOnClose
-                className="[&_.ant-modal-content]:!rounded-xl"
             >
-                <Form form={form} layout="vertical" className="mt-4" onFinish={handleSubmit}>
+                <Form form={form} layout="vertical" className="mt-4">
                     <Form.Item
                         name="name"
-                        label={<span className="font-medium text-gray-700">Tên thuộc tính</span>}
+                        label="Tên thuộc tính"
                         rules={[{ required: true, message: 'Vui lòng nhập tên' }]}
                     >
-                        <Input placeholder="Ví dụ: Màu sắc, RAM, Dung lượng..." size="large" className="!rounded-lg" />
+                        <Input placeholder="Ví dụ: Màu sắc, RAM, Dung lượng..." />
                     </Form.Item>
 
                     <Form.Item
                         name="displayType"
-                        label={<span className="font-medium text-gray-700">Kiểu hiển thị</span>}
+                        label="Kiểu hiển thị"
                         rules={[{ required: true, message: 'Vui lòng chọn kiểu hiển thị' }]}
                     >
-                        <Select placeholder="Chọn kiểu hiển thị" options={DISPLAY_TYPE_OPTIONS} size="large" className="!rounded-lg" />
+                        <Select placeholder="Chọn kiểu hiển thị" options={DISPLAY_TYPE_OPTIONS} />
                     </Form.Item>
-
-                    <div className="flex justify-end gap-3 pt-2">
-                        <Button onClick={() => { setIsModalOpen(false); setEditingItem(null); form.resetFields(); }} size="large" className="!rounded-lg">
-                            Hủy
-                        </Button>
-                        <Button type="primary" htmlType="submit" size="large" loading={createMutation.isPending || updateMutation.isPending}
-                            className="!rounded-lg !bg-blue-500 hover:!bg-blue-600 !shadow-sm">
-                            {editingItem ? 'Cập nhật' : 'Tạo mới'}
-                        </Button>
-                    </div>
                 </Form>
             </Modal>
         </div>

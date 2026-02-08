@@ -37,9 +37,9 @@ export default function ProfileDetail() {
     const { user } = useAuthUser();
 
     const { data: guest, isLoading } = useQuery<IAccountGuest | null>({
-        queryKey: ['profile-guest', user?.id], // key để cache
-        queryFn: () => accountGuestService.getProfile(user?.id || ''),
-        enabled: !!user?.id, // chỉ chạy query khi userId tồn tại
+        queryKey: ['profile-guest', user?.id],
+        queryFn: () => accountGuestService.getProfile(),
+        enabled: !!user?.id,
     });
 
 
@@ -58,7 +58,7 @@ export default function ProfileDetail() {
                     gender: values.gender
                 }
 
-                await accountGuestService.updateProfile(user?.id || '', inforGuestUpdate as Partial<IAccountGuest>);
+                await accountGuestService.updateProfile(inforGuestUpdate as Partial<IAccountGuest>);
             } else {
                 const inforGuestUpdate = {
                     fullname: values.fullname,
@@ -66,7 +66,7 @@ export default function ProfileDetail() {
                     birthday: values.dateOfBirth?.format('YYYY-MM-DD'),
                     gender: values.gender
                 }
-                await accountGuestService.updateProfile(user?.id || '', inforGuestUpdate as Partial<IAccountGuest>);
+                await accountGuestService.updateProfile(inforGuestUpdate as Partial<IAccountGuest>);
 
             }
             // Simulate API call

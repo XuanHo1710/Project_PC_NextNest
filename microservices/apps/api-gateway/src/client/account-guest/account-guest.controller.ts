@@ -26,6 +26,21 @@ export class AccountGuestController {
     private readonly accountGuestService: ClientProxy,
   ) {}
 
+  @Get('profile-detail')
+  getProfileDetail(@Guest() guest: any) {
+    return this.accountGuestService.send('account_guest.findOne', {
+      id: guest._id,
+    });
+  }
+
+  @Patch('profile')
+  updateProfile(@Guest() guest: any, @Body() body: any) {
+    return this.accountGuestService.send('account_guest.update', {
+      id: guest._id,
+      updateAccountGuestDto: body,
+    });
+  }
+
   @Post()
   create(@Body() createAccountGuestDto: CreateAccountGuestDto) {
     return this.accountGuestService.send(

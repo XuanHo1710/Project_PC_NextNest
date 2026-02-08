@@ -27,14 +27,12 @@ export class AuthController {
     @Inject(MICROSERVICE.AUTH_SERVICE)
     private readonly authService: ClientProxy,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('/login')
-  async login(
-    @Req() req: Request,
-  ) {
+  async login(@Req() req: Request) {
     const dataLogin = await firstValueFrom(
       this.authService.send('auth.loginAdmin', { accountAdmin: req.user }),
     );
@@ -70,6 +68,13 @@ export class AuthController {
   @Get('profile')
   getProfile(@Employee() employee: any) {
     return employee;
+  }
+
+  @Get('profile-detail')
+  getProfileDetail(@Employee() employee: any) {
+    return this.authService.send('account_employee.findOne', {
+      id: employee._id,
+    });
   }
 
   @Patch('profile')

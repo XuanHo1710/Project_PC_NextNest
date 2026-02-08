@@ -99,10 +99,12 @@ export default function ClientCreateProduct() {
     // Step navigation
     const handleStepNext = useCallback(() => {
         setCurrentStep(prev => Math.min(prev + 1, 3));
+        window.scrollTo(0, 0);
     }, []);
 
     const handleStepBack = useCallback(() => {
         setCurrentStep(prev => Math.max(prev - 1, 0));
+        window.scrollTo(0, 0);
     }, []);
 
     // ============= SUBMIT =============
@@ -237,7 +239,7 @@ export default function ClientCreateProduct() {
     if (isSuccess) {
         return (
             <div className="max-w-2xl mx-auto py-16 px-4">
-                <Card className="shadow-2xl border-0 overflow-hidden">
+                <Card className="border shadow-sm">
                     <Result
                         status="success"
                         title={
@@ -270,7 +272,7 @@ export default function ClientCreateProduct() {
                                 size="large"
                                 icon={<PlusCircleOutlined />}
                                 onClick={handleReset}
-                                className="h-12 px-8 rounded-lg font-semibold shadow-lg shadow-blue-500/20"
+                                className="h-12 px-8 rounded-lg font-semibold"
                             >
                                 Tạo sản phẩm khác
                             </Button>,
@@ -325,7 +327,7 @@ export default function ClientCreateProduct() {
             </div>
 
             {/* Steps Progress */}
-            <Card className="shadow-md border-0 mb-6 rounded-xl">
+            <Card className="border shadow-sm mb-6">
                 <Steps
                     current={currentStep}
                     items={stepsConfig}
@@ -335,6 +337,7 @@ export default function ClientCreateProduct() {
                         // Allow going backwards only
                         if (step < currentStep) {
                             setCurrentStep(step);
+                            window.scrollTo(0, 0);
                         }
                     }}
                 />

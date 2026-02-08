@@ -346,11 +346,11 @@ export default function ConfigureVariantsStep({
         if (variantIdx === -1) return null;
 
         return (
-            <div className="p-4 bg-blue-50/30 space-y-4">
+            <div className="p-4 bg-gray-50 space-y-4">
                 {/* Images section — Cloudinary Upload */}
                 <div>
                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
-                        <PictureOutlined className="text-blue-500" />
+                        <PictureOutlined className="text-gray-500" />
                         Ảnh biến thể
                     </label>
                     <CloudinaryUpload
@@ -367,7 +367,7 @@ export default function ConfigureVariantsStep({
                 {/* Sub-description section */}
                 <div>
                     <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
-                        <FileTextOutlined className="text-blue-500" />
+                        <FileTextOutlined className="text-gray-500" />
                         Mô tả phụ biến thể
                     </label>
                     <Input.TextArea
@@ -387,37 +387,27 @@ export default function ConfigureVariantsStep({
     return (
         <div className="space-y-6">
             {/* Generate Card */}
-            <Card
-                className="shadow-lg border-0 overflow-hidden"
-                styles={{ body: { padding: 0 } }}
-            >
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-8 text-white">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-white/15 backdrop-blur rounded-2xl flex items-center justify-center">
-                                <ThunderboltOutlined className="text-2xl" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold m-0">Sinh biến thể sản phẩm</h2>
-                                <p className="text-blue-100 m-0 text-sm mt-1">
-                                    {totalVariantsPreview} tổ hợp từ {selectedAttributes.length} thuộc tính
-                                </p>
-                            </div>
-                        </div>
-                        <Button
-                            size="large"
-                            icon={<ThunderboltOutlined />}
-                            onClick={generateVariants}
-                            className="h-12 px-6 rounded-xl font-semibold bg-white text-blue-600 border-0 hover:bg-blue-50 shadow-lg"
-                        >
-                            {variantsGenerated ? 'Sinh lại' : 'Sinh biến thể'}
-                        </Button>
+            <Card className="border shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 className="text-lg font-bold m-0">Sinh biến thể sản phẩm</h2>
+                        <p className="text-gray-500 text-sm m-0 mt-1">
+                            {totalVariantsPreview} tổ hợp từ {selectedAttributes.length} thuộc tính
+                        </p>
                     </div>
+                    <Button
+                        type="primary"
+                        size="large"
+                        icon={<ThunderboltOutlined />}
+                        onClick={generateVariants}
+                    >
+                        {variantsGenerated ? 'Sinh lại' : 'Sinh biến thể'}
+                    </Button>
                 </div>
 
                 {/* Batch Settings */}
                 {variantsGenerated && variants.length > 0 && (
-                    <div className="p-6 bg-gray-50">
+                    <div className="border-t pt-4">
                         <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
                             Cài đặt hàng loạt
                         </h4>
@@ -496,10 +486,10 @@ export default function ConfigureVariantsStep({
             {/* Variants Table */}
             {variantsGenerated && variants.length > 0 && (
                 <Card
-                    className="shadow-lg border-0"
+                    className="border shadow-sm"
                     title={
                         <div className="flex items-center gap-3">
-                            <AppstoreOutlined className="text-blue-500" />
+                            <AppstoreOutlined className="text-gray-500" />
                             <span className="font-semibold">Danh sách biến thể</span>
                             <Badge
                                 count={enabledCount}
@@ -548,13 +538,12 @@ export default function ConfigureVariantsStep({
             )}
 
             {/* Navigation */}
-            <Card className="shadow-lg border-0">
+            <Card className="border shadow-sm">
                 <div className="flex justify-between items-center">
                     <Button
                         size="large"
                         icon={<ArrowLeftOutlined />}
                         onClick={onBack}
-                        className="h-12 px-6 rounded-lg font-medium"
                     >
                         Quay lại
                     </Button>
@@ -574,7 +563,6 @@ export default function ConfigureVariantsStep({
                             onClick={onSubmit}
                             loading={isSubmitting}
                             disabled={!variantsGenerated || enabledCount === 0}
-                            className="h-12 px-8 rounded-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 border-0 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
                         >
                             Tiếp theo: Xem lại & Đăng bán
                         </Button>

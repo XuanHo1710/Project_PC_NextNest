@@ -19,6 +19,8 @@ import { toast } from "react-toastify";
 export const clientProductKeys = {
   myProducts: ["client-my-products"] as const,
   attributes: ["client-product-attributes"] as const,
+  allAttributeValues: (page: number, limit: number, search?: string) =>
+    ["client-all-attribute-values", page, limit, search] as const,
   attributeValues: (attributeId: string) =>
     ["client-attribute-values", attributeId] as const,
   categories: ["client-categories"] as const,
@@ -33,6 +35,24 @@ export const useClientProductAttributes = () => {
     queryKey: clientProductKeys.attributes,
     queryFn: () => productManageClientService.getProductAttributes(),
     staleTime: 10 * 60 * 1000,
+  });
+};
+
+/** Fetch ALL attribute values with pagination (no attribute filter) */
+export const useClientAllAttributeValues = (
+  page = 1,
+  limit = 20,
+  search?: string,
+) => {
+  return useQuery({
+    queryKey: clientProductKeys.allAttributeValues(page, limit, search),
+    queryFn: () =>
+      productManageClientService.getAllAttributeValues({
+        page,
+        limit,
+        keyword: search || undefined,
+      }),
+    staleTime: 5 * 60 * 1000,
   });
 };
 

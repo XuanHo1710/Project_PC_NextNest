@@ -8,6 +8,7 @@ import type { IProductCard } from "@/types/product";
 
 /** Get the final price after discount */
 export function getProductDisplayPrice(product: IProductCard): number {
+  if (!product) return 0;
   if (product.defaultVariant) {
     const { price, discount } = product.defaultVariant;
     return Math.round(price * (1 - discount / 100));
@@ -17,6 +18,7 @@ export function getProductDisplayPrice(product: IProductCard): number {
 
 /** Get the original price (before discount) */
 export function getProductOriginalPrice(product: IProductCard): number {
+  if (!product) return 0;
   if (product.defaultVariant) {
     return product.defaultVariant.price;
   }
@@ -25,6 +27,7 @@ export function getProductOriginalPrice(product: IProductCard): number {
 
 /** Get the discount percentage (0-100) */
 export function getProductDiscount(product: IProductCard): number {
+  if (!product) return 0;
   if (product.defaultVariant) {
     return product.defaultVariant.discount;
   }
@@ -33,6 +36,7 @@ export function getProductDiscount(product: IProductCard): number {
 
 /** Get the primary display image */
 export function getProductImage(product: IProductCard): string {
+  if (!product) return "/placeholder-product.png";
   if (product.defaultVariant?.images?.length) {
     return product.defaultVariant.images[0];
   }
@@ -41,6 +45,7 @@ export function getProductImage(product: IProductCard): string {
 
 /** Get all product images */
 export function getProductImages(product: IProductCard): string[] {
+  if (!product) return [];
   if (product.defaultVariant?.images?.length) {
     return product.defaultVariant.images;
   }
