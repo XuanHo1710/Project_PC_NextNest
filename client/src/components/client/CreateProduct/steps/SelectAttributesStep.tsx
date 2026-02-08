@@ -175,7 +175,7 @@ export default function SelectAttributesStep({
                                         title={
                                             <div className="flex items-center gap-3">
                                                 <span className="font-semibold text-gray-800">{attr?.name}</span>
-                                                <Tag color="blue">{attr?.code}</Tag>
+                                                <Tag color="blue">{attr?.displayType}</Tag>
                                                 {attr?.displayType === 'COLOR' && (
                                                     <Tag color="magenta">Màu sắc</Tag>
                                                 )}

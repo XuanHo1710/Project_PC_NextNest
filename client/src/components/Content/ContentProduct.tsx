@@ -53,9 +53,11 @@ export default function ContentProduct() {
 
     // Use TanStack Query hooks
     const {
-        data: products = [],
+        data: productsResponse,
         isLoading: loading
     } = useProducts(queryParams.toString());
+
+    const products = productsResponse?.data ?? [];
 
     const updateProduct = useUpdateProduct();
 

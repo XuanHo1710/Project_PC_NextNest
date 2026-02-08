@@ -2,6 +2,7 @@
 import type { IProductAttributeValue } from "@/types";
 import { BaseService } from "./base.service";
 import axiosInstance from "@/config/axios";
+import { PaginatedResponse } from "@/types/common";
 
 class ProductAttributeValueService extends BaseService<IProductAttributeValue> {
   constructor() {
@@ -11,7 +12,7 @@ class ProductAttributeValueService extends BaseService<IProductAttributeValue> {
   /** Get all values filtered by attribute ID */
   async getByAttributeId(
     attributeId: string,
-  ): Promise<IProductAttributeValue[]> {
+  ): Promise<PaginatedResponse<IProductAttributeValue>> {
     const response = await axiosInstance.get(
       `${this.baseUrl}?attributeId=${attributeId}`,
     );

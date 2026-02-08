@@ -90,7 +90,7 @@ export default function ConfigureVariantsStep({
 
     // Generate variants function
     const generateVariants = useCallback(() => {
-        const attributeArrays: { attributeId: string; code: string; values: IProductAttributeValue[] }[] = [];
+        const attributeArrays: { attributeId: string; name: string; code: string; values: IProductAttributeValue[] }[] = [];
 
         for (const attrId of selectedAttributes) {
             const attr = getAttributeById(attrId);
@@ -101,7 +101,8 @@ export default function ConfigureVariantsStep({
             if (vals.length > 0 && attr) {
                 attributeArrays.push({
                     attributeId: attrId,
-                    code: attr.code,
+                    name: attr.name,
+                    code: attr.code || attr.name,
                     values: vals,
                 });
             }

@@ -1,9 +1,9 @@
-import { IsMongoId } from 'class-validator';
+import { IsNotEmpty } from "class-validator";
 
 export class CreateProductAttributeAllowValueDto {
-  @IsMongoId()
+  @IsNotEmpty()
   product: string;
 
-  @IsMongoId()
+  @IsNotEmpty()
   attributeValue: string;
 }

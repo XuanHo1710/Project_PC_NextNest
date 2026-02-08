@@ -63,8 +63,14 @@ export class ProductController {
   }
 
   @MessagePattern('product.variant.findAll')
-  findAllProductVariants(@Payload() data?: { productId?: string }) {
-    return this.productService.findAllProductVariants(data?.productId);
+  findAllProductVariants(
+    @Payload() data?: { productId?: string; page?: number; limit?: number },
+  ) {
+    return this.productService.findAllProductVariants(
+      data?.productId,
+      data?.page,
+      data?.limit,
+    );
   }
 
   @MessagePattern('product.variant.findOne')
@@ -102,8 +108,13 @@ export class ProductController {
   }
 
   @MessagePattern('product.attribute.findAll')
-  findAllProductAttributes() {
-    return this.productService.findAllProductAttributes();
+  findAllProductAttributes(
+    @Payload() data?: { page?: number; limit?: number },
+  ) {
+    return this.productService.findAllProductAttributes(
+      data?.page,
+      data?.limit,
+    );
   }
 
   @MessagePattern('product.attribute.findOne')
@@ -144,8 +155,14 @@ export class ProductController {
   }
 
   @MessagePattern('product.attributeValue.findAll')
-  findAllProductAttributeValues(@Payload() data?: { attributeId?: string }) {
-    return this.productService.findAllProductAttributeValues(data?.attributeId);
+  findAllProductAttributeValues(
+    @Payload() data?: { attributeId?: string; page?: number; limit?: number },
+  ) {
+    return this.productService.findAllProductAttributeValues(
+      data?.attributeId,
+      data?.page,
+      data?.limit,
+    );
   }
 
   @MessagePattern('product.attributeValue.findOne')
@@ -186,9 +203,18 @@ export class ProductController {
   }
 
   @MessagePattern('product.attributeAllowValue.findAll')
-  findAllProductAttributeAllowValues(@Payload() data?: { productId?: string }) {
+  findAllProductAttributeAllowValues(
+    @Payload()
+    data?: {
+      productId?: string;
+      page?: number;
+      limit?: number;
+    },
+  ) {
     return this.productService.findAllProductAttributeAllowValues(
       data?.productId,
+      data?.page,
+      data?.limit,
     );
   }
 

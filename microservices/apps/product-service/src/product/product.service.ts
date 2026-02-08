@@ -80,10 +80,12 @@ export class ProductService {
 
     return {
       data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
     };
   }
 
@@ -149,15 +151,30 @@ export class ProductService {
     return await variant.save();
   }
 
-  async findAllProductVariants(productId?: string) {
+  async findAllProductVariants(productId?: string, page = 1, limit = 100) {
+    const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
     if (productId && Types.ObjectId.isValid(productId)) {
       query.product = productId;
     }
-    return await this.productVariantModel
-      .find(query)
-      .populate('product')
-      .exec();
+    const [data, total] = await Promise.all([
+      this.productVariantModel
+        .find(query)
+        .populate('product')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.productVariantModel.countDocuments(query).exec(),
+    ]);
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   async findOneProductVariant(id: string) {
@@ -222,8 +239,22 @@ export class ProductService {
     return await attribute.save();
   }
 
-  async findAllProductAttributes() {
-    return await this.productAttributeModel.find({ isDeleted: false }).exec();
+  async findAllProductAttributes(page = 1, limit = 100) {
+    const skip = (page - 1) * limit;
+    const query: any = { isDeleted: false };
+    const [data, total] = await Promise.all([
+      this.productAttributeModel.find(query).skip(skip).limit(limit).exec(),
+      this.productAttributeModel.countDocuments(query).exec(),
+    ]);
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   async findOneProductAttribute(id: string) {
@@ -291,15 +322,34 @@ export class ProductService {
     return await attributeValue.save();
   }
 
-  async findAllProductAttributeValues(attributeId?: string) {
+  async findAllProductAttributeValues(
+    attributeId?: string,
+    page = 1,
+    limit = 100,
+  ) {
+    const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
     if (attributeId && Types.ObjectId.isValid(attributeId)) {
       query.attribute = attributeId;
     }
-    return await this.productAttributeValueModel
-      .find(query)
-      .populate('attribute')
-      .exec();
+    const [data, total] = await Promise.all([
+      this.productAttributeValueModel
+        .find(query)
+        .populate('attribute')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.productAttributeValueModel.countDocuments(query).exec(),
+    ]);
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   async findOneProductAttributeValue(id: string) {
@@ -375,16 +425,35 @@ export class ProductService {
     return await allowValue.save();
   }
 
-  async findAllProductAttributeAllowValues(productId?: string) {
+  async findAllProductAttributeAllowValues(
+    productId?: string,
+    page = 1,
+    limit = 100,
+  ) {
+    const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
     if (productId && Types.ObjectId.isValid(productId)) {
       query.product = productId;
     }
-    return await this.productAttributeAllowValueModel
-      .find(query)
-      .populate('product')
-      .populate('attributeValue')
-      .exec();
+    const [data, total] = await Promise.all([
+      this.productAttributeAllowValueModel
+        .find(query)
+        .populate('product')
+        .populate('attributeValue')
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.productAttributeAllowValueModel.countDocuments(query).exec(),
+    ]);
+    return {
+      data,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   async findOneProductAttributeAllowValue(id: string) {

@@ -8,7 +8,7 @@ import type { ICategory } from "./category";
 export interface IProductAttribute {
   _id: string;
   name: string;
-  code: string;
+  code?: string;
   displayType: "COLOR" | "IMAGE" | "BUTTON" | "RADIO";
   createdAt?: string;
   updatedAt?: string;
@@ -74,6 +74,10 @@ export interface IProduct {
   updatedAt?: string;
   isDeleted?: boolean;
   deletedAt?: string;
+
+  // For created product response
+  brandId?: string;
+  categoryId?: string;
 }
 
 // ============== PRODUCT POPULATED ==============

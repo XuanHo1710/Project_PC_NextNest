@@ -9,13 +9,12 @@ import {
 } from '@ant-design/icons';
 import {
     useClientProductAttributes,
-    useClientProductAttributeValues,
     useClientCreateProduct,
     useClientCategories,
     useClientBrands,
+    useClientAttributeValuesMap,
 } from '@/hooks/client/useProductManage';
 import { productManageClientService } from '@/services/client/product-manage.client.service';
-import type { IProductAttribute, IProductAttributeValue } from '@/types';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProviderClient';
@@ -45,17 +44,17 @@ export default function ClientCreateProduct() {
     const [createdProductName, setCreatedProductName] = useState('');
 
     // Queries
-    const { data: attributes = [], isLoading: loadingAttrs } = useClientProductAttributes();
-    const { data: attributeValues = [], isLoading: loadingValues } = useClientProductAttributeValues();
-    const { data: categories = [], isLoading: loadingCats } = useClientCategories();
-    const { data: brands = [], isLoading: loadingBrands } = useClientBrands();
+    const { data: attributes, isLoading: loadingAttrs } = useClientProductAttributes();
+    const { allValues: attributeValues = [], isLoading: loadingValues } = useClientAttributeValuesMap(selectedAttributes);
+    const { data: categories, isLoading: loadingCats } = useClientCategories();
+    const { data: brands, isLoading: loadingBrands } = useClientBrands();
     const createProductMutation = useClientCreateProduct();
 
-    // Cast data
-    const attributeList = attributes as IProductAttribute[];
-    const valueList = attributeValues as IProductAttributeValue[];
-    const categoryList = categories as { _id: string; name: string; slug: string }[];
-    const brandList = brands as { _id: string; name: string }[];
+    // Extract data arrays from PaginatedResponse
+    const attributeList = attributes?.data ?? [];
+    const valueList = attributeValues;
+    const categoryList = categories?.data ?? [];
+    const brandList = brands?.data ?? [];
 
     const isLoadingData = loadingAttrs || loadingValues || loadingCats || loadingBrands;
 
@@ -108,16 +107,15 @@ export default function ClientCreateProduct() {
             const productData = {
                 name: productValues.name,
                 description: productValues.description || undefined,
-                category: productValues.category,
-                brand: productValues.brand || undefined,
+                categoryId: productValues.category,
+                brandId: productValues.brand || undefined,
                 status: 'ACTIVE' as const,
                 minPrice: Math.min(...prices),
                 maxPrice: Math.max(...prices),
             };
 
             const productResult = await createProductMutation.mutateAsync(productData);
-            // Handle both possible response shapes
-            const productId = (productResult as any)?._id || (productResult as any)?.data?._id;
+            const productId = productResult?._id;
 
             if (!productId) {
                 throw new Error('Không thể tạo sản phẩm');
@@ -188,19 +186,17 @@ export default function ClientCreateProduct() {
             category: vals.category || '',
             brand: vals.brand || '',
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [currentStep, form]);
 
     const categoryName = useMemo(() => {
         const catId = form.getFieldValue('category');
-        return categoryList.find(c => c._id === catId)?.name;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        return categoryList.find((c: any) => c._id === catId)?.name;
     }, [currentStep, categoryList]);
 
     const brandName = useMemo(() => {
         const bId = form.getFieldValue('brand');
-        return brandList.find(b => b._id === bId)?.name;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        return brandList.find((b: any) => b._id === bId)?.name;
     }, [currentStep, brandList]);
 
     // ============= AUTH CHECK =============
@@ -342,16 +338,16 @@ export default function ClientCreateProduct() {
                 />
             </Card>
 
-            {/* Step Content */}
+            {/* Step Content — ProductInfoStep always rendered to keep <Form form={form}> connected */}
             <div className="step-content">
-                {currentStep === 0 && (
+                <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>
                     <ProductInfoStep
                         form={form}
                         categories={categoryList}
                         brands={brandList}
                         onNext={handleStepNext}
                     />
-                )}
+                </div>
 
                 {currentStep === 1 && (
                     <SelectAttributesStep

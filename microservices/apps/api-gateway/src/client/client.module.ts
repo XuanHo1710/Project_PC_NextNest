@@ -9,6 +9,7 @@ import { ClientJwtAuthGuard } from 'guards/client-jwt-auth.guard';
 import { AccountGuestModule } from 'client/account-guest/account-guest.module';
 import { BrandModule } from 'client/brand/brand.module';
 import { CategoryModule } from 'client/category/category.module';
+import { CartModule } from 'client/cart/cart.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CategoryModule } from 'client/category/category.module';
     AuthModule,
     ProductModule,
     BrandModule,
+    CartModule,
     CategoryModule,
     JwtModule.register({}),
   ],
@@ -28,4 +30,4 @@ import { CategoryModule } from 'client/category/category.module';
     ClientJwtStrategy,
   ],
 })
-export class ClientModule { }
+export class ClientModule {}

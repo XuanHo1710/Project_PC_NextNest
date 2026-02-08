@@ -32,15 +32,15 @@ export default function ContentProductAttribute() {
     const [editingRecord, setEditingRecord] = useState<IProductAttribute | null>(null);
     const [form] = Form.useForm();
 
-    const { data: attributes = [], isLoading } = useProductAttributes();
+    const { data: attributesResponse, isLoading } = useProductAttributes();
+    const attributes = attributesResponse?.data ?? [];
     const createMutation = useCreateProductAttribute();
     const updateMutation = useUpdateProductAttribute();
     const deleteMutation = useDeleteProductAttribute();
 
     // Filter by search
-    const filteredData = (attributes as IProductAttribute[]).filter((item) =>
-        item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.code?.toLowerCase().includes(searchText.toLowerCase())
+    const filteredData = attributes.filter((item) =>
+        item.name?.toLowerCase().includes(searchText.toLowerCase())
     );
 
     const handleOpenCreate = () => {
@@ -53,7 +53,6 @@ export default function ContentProductAttribute() {
         setEditingRecord(record);
         form.setFieldsValue({
             name: record.name,
-            code: record.code,
             displayType: record.displayType,
         });
         setIsModalOpen(true);
@@ -83,7 +82,7 @@ export default function ContentProductAttribute() {
             render: (name: string) => <span className="font-medium">{name}</span>,
         },
         {
-            title: 'Mã (Code)',
+            title: 'Mã thuộc tính',
             dataIndex: 'code',
             key: 'code',
             render: (code: string) => <Tag>{code}</Tag>,
@@ -198,15 +197,6 @@ export default function ContentProductAttribute() {
                         rules={[{ required: true, message: 'Vui lòng nhập tên thuộc tính' }]}
                     >
                         <Input placeholder="Ví dụ: Màu sắc, RAM, CPU..." />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="code"
-                        label="Mã thuộc tính (code)"
-                        rules={[{ required: true, message: 'Vui lòng nhập mã thuộc tính' }]}
-                        tooltip="Mã duy nhất dùng trong hệ thống, ví dụ: color, ram, cpu"
-                    >
-                        <Input placeholder="Ví dụ: color, ram, cpu..." />
                     </Form.Item>
 
                     <Form.Item

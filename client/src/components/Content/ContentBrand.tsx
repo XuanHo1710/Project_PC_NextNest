@@ -40,12 +40,12 @@ export default function ContentBrand() {
         isLoading: loading
     } = useBrands(isReady ? queryParams.toString() : "page=1&limit=10");
 
-    // Axios interceptor already unwraps response.data, so result = { data: [...], page, limit, total, totalPages }
+    // Axios interceptor already unwraps response.data, so result = { data: [...], pagination: { currentPage, totalPages, totalItems, itemsPerPage } }
     const brands = result?.data || [];
     const paginationData = {
-        currentPage: result?.page || 1,
-        totalItems: result?.total || 0,
-        itemsPerPage: result?.limit || 10,
+        currentPage: result?.pagination?.currentPage || 1,
+        totalItems: result?.pagination?.totalItems || 0,
+        itemsPerPage: result?.pagination?.itemsPerPage || 10,
     };
 
     const deleteBrand = useDeleteBrand();

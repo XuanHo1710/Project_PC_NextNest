@@ -4,13 +4,14 @@ import {
   IsEnum,
   IsOptional,
   IsMongoId,
+  IsNotEmpty,
 } from "class-validator";
 
 export class CreateProductDto {
-  @IsMongoId()
+  @IsNotEmpty()
   categoryId: string;
 
-  @IsMongoId()
+  @IsOptional()
   brandId: string;
 
   @IsString()

@@ -2,6 +2,7 @@
 import { IProductVariant } from "@/types";
 import { BaseService } from "./base.service";
 import axiosInstance from "@/config/axios";
+import { PaginatedResponse } from "@/types/common";
 
 class ProductVariantService extends BaseService<IProductVariant> {
   constructor() {
@@ -9,7 +10,9 @@ class ProductVariantService extends BaseService<IProductVariant> {
   }
 
   /** Get all variants filtered by product ID */
-  async getByProductId(productId: string): Promise<IProductVariant[]> {
+  async getByProductId(
+    productId: string,
+  ): Promise<PaginatedResponse<IProductVariant>> {
     const response = await axiosInstance.get(
       `${this.baseUrl}?productId=${productId}`,
     );

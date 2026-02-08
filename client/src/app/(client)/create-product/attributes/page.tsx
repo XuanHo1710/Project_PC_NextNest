@@ -1,21 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Card, Table, Button, Modal, Form, Input, Select, Tag,
-    Space, Popconfirm, Empty, message,
+    Space, Popconfirm, Empty,
 } from 'antd';
 import {
     PlusOutlined, EditOutlined, DeleteOutlined, TagsOutlined,
 } from '@ant-design/icons';
-import {
-    useProductAttributes,
-    useCreateProductAttribute,
-    useUpdateProductAttribute,
-    useDeleteProductAttribute,
-} from '@/hooks/admin/useProductAttribute';
+
 import type { IProductAttribute } from '@/types';
 import type { ColumnsType } from 'antd/es/table';
+import {
+    useClientProductAttributes,
+    useClientCreateProductAttribute,
+    useClientUpdateProductAttribute,
+    useClientDeleteProductAttribute,
+} from '@/hooks/client/useProductManage';
 
 const DISPLAY_TYPE_OPTIONS = [
     { label: 'Nút bấm (Button)', value: 'BUTTON' },
@@ -36,10 +37,10 @@ export default function AttributesPage() {
     const [editingItem, setEditingItem] = useState<IProductAttribute | null>(null);
     const [form] = Form.useForm();
 
-    const { data: attributes = [], isLoading } = useProductAttributes();
-    const createMutation = useCreateProductAttribute();
-    const updateMutation = useUpdateProductAttribute();
-    const deleteMutation = useDeleteProductAttribute();
+    const { data: attributes, isLoading } = useClientProductAttributes();
+    const createMutation = useClientCreateProductAttribute();
+    const updateMutation = useClientUpdateProductAttribute();
+    const deleteMutation = useClientDeleteProductAttribute();
 
     const columns: ColumnsType<IProductAttribute> = [
         {
@@ -55,10 +56,10 @@ export default function AttributesPage() {
             render: (name: string) => <span className="font-medium">{name}</span>,
         },
         {
-            title: 'Mã (Code)',
+            title: 'Mã (code)',
             dataIndex: 'code',
             key: 'code',
-            render: (code: string) => <Tag>{code}</Tag>,
+            render: (code: string) => <Tag>{code || '—'}</Tag>,
         },
         {
             title: 'Kiểu hiển thị',
@@ -99,7 +100,6 @@ export default function AttributesPage() {
         setEditingItem(item);
         form.setFieldsValue({
             name: item.name,
-            code: item.code,
             displayType: item.displayType,
         });
         setIsModalOpen(true);
@@ -127,7 +127,7 @@ export default function AttributesPage() {
         }
     };
 
-    const dataList = Array.isArray(attributes) ? attributes : [];
+    const dataList = attributes?.data ?? [];
 
     return (
         <>
@@ -180,14 +180,6 @@ export default function AttributesPage() {
                         rules={[{ required: true, message: 'Vui lòng nhập tên' }]}
                     >
                         <Input placeholder="Ví dụ: Màu sắc, RAM, Dung lượng..." />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="code"
-                        label="Mã thuộc tính (code)"
-                        rules={[{ required: true, message: 'Vui lòng nhập mã' }]}
-                    >
-                        <Input placeholder="Ví dụ: color, ram, storage..." />
                     </Form.Item>
 
                     <Form.Item

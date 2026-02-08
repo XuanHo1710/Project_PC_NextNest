@@ -1,5 +1,26 @@
 // services/client/product-manage.client.service.ts
 // Client-side service for managing products (create, edit own products)
+//
+// Data flow:
+//   axiosClient interceptor returns response.data = gateway envelope
+//   { statusCode, message, data: <payload>, timestamp }
+//   → service extracts actual payload via response.data
+//
+// ALL findAll endpoints now return PaginatedResponse<T>:
+//   { data: T[], pagination: { currentPage, totalPages, totalItems, itemsPerPage } }
+//
+// Gateway endpoints (client):
+//   GET  /product-attribute                 → PaginatedResponse<IProductAttribute>
+//   GET  /product-attribute-value/:attrId   → PaginatedResponse<IProductAttributeValue>
+//   POST /product-attribute-value           → IProductAttributeValue
+//   GET  /brand                             → PaginatedResponse<IBrand>
+//   GET  /category                          → PaginatedResponse<ICategory>
+//   POST /product                           → IProduct
+//   PATCH /product/:id                      → IProduct
+//   POST /product-variant                   → IProductVariant
+//   GET  /product-variant/:productId        → PaginatedResponse<IProductVariant>
+//   POST /product-attribute-allow-value     → IProductAttributeAllowValue
+
 import axiosClient from "@/config/axiosClient";
 import type {
   IProduct,
@@ -8,56 +29,83 @@ import type {
   IProductAttributeValue,
   IProductAttributeAllowValue,
   IBrand,
+  ICategory,
 } from "@/types";
+import { PaginatedResponse } from "@/types/common";
 
 class ProductManageClientService {
   // ============== PRODUCT ==============
 
-  /** Create a new product */
   async createProduct(data: Partial<IProduct>): Promise<IProduct> {
     const response = await axiosClient.post("/product", data);
-    return response as unknown as IProduct;
+    return response.data;
   }
 
-  /** Update own product */
   async updateProduct(id: string, data: Partial<IProduct>): Promise<IProduct> {
     const response = await axiosClient.patch(`/product/${id}`, data);
-    return response as unknown as IProduct;
+    return response.data;
   }
 
-  /** Get own products */
-  async getMyProducts(params?: Record<string, string>): Promise<IProduct[]> {
+  async getMyProducts(
+    params?: Record<string, string>,
+  ): Promise<PaginatedResponse<IProduct>> {
     const response = await axiosClient.get("/product", { params });
-    return response as unknown as IProduct[];
+    return response.data;
   }
 
-  // ============== PRODUCT ATTRIBUTES (Read-only) ==============
+  // ============== PRODUCT ATTRIBUTES ==============
 
-  /** Get all product attributes */
-  async getProductAttributes(): Promise<IProductAttribute[]> {
+  async getProductAttributes(): Promise<PaginatedResponse<IProductAttribute>> {
     const response = await axiosClient.get("/product-attribute");
-    return response as unknown as IProductAttribute[];
+    return response.data;
   }
 
-  // ============== PRODUCT ATTRIBUTE VALUES (Read-only) ==============
-
-  /** Get all attribute values */
-  async getProductAttributeValues(): Promise<IProductAttributeValue[]> {
-    const response = await axiosClient.get("/product-attribute-value");
-    return response as unknown as IProductAttributeValue[];
+  async createProductAttribute(
+    data: Partial<IProductAttribute>,
+  ): Promise<IProductAttribute> {
+    const response = await axiosClient.post("/product-attribute", data);
+    return response.data;
   }
 
-  /** Get attribute values by attribute ID */
+  async updateProductAttribute(
+    id: string,
+    data: Partial<IProductAttribute>,
+  ): Promise<IProductAttribute> {
+    const response = await axiosClient.patch(`/product-attribute/${id}`, data);
+    return response.data;
+  }
+
+  async deleteProductAttribute(id: string): Promise<void> {
+    await axiosClient.delete(`/product-attribute/${id}`);
+  }
+  // ============== ATTRIBUTES ==============
+
+  async getAttributes(params?: {
+    page?: number;
+    limit?: number;
+    keyword?: string;
+  }): Promise<PaginatedResponse<IProductAttribute>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.keyword) query.set("search", params.keyword);
+    const qs = query.toString();
+    const response = await axiosClient.get(
+      `/product-attribute${qs ? `?${qs}` : ""}`,
+    );
+    return response.data;
+  }
+  // ============== PRODUCT ATTRIBUTE VALUES ==============
+
   async getAttributeValuesByAttribute(
     attributeId: string,
-  ): Promise<IProductAttributeValue[]> {
+  ): Promise<PaginatedResponse<IProductAttributeValue>> {
     const response = await axiosClient.get(
       `/product-attribute-value/${attributeId}`,
     );
-    return response as unknown as IProductAttributeValue[];
+    return response.data;
   }
 
-  /** Create a new attribute value */
   async createAttributeValue(data: {
     value: string;
     label: string;
@@ -66,28 +114,27 @@ class ProductManageClientService {
     imageUrl?: string;
   }): Promise<IProductAttributeValue> {
     const response = await axiosClient.post("/product-attribute-value", data);
-    return response as unknown as IProductAttributeValue;
+    return response.data;
   }
 
   // ============== PRODUCT VARIANTS ==============
 
-  /** Create a product variant */
   async createVariant(
     data: Partial<IProductVariant>,
   ): Promise<IProductVariant> {
     const response = await axiosClient.post("/product-variant", data);
-    return response as unknown as IProductVariant;
+    return response.data;
   }
 
-  /** Get variants by product */
-  async getVariantsByProduct(productId: string): Promise<IProductVariant[]> {
+  async getVariantsByProduct(
+    productId: string,
+  ): Promise<PaginatedResponse<IProductVariant>> {
     const response = await axiosClient.get(`/product-variant/${productId}`);
-    return response as unknown as IProductVariant[];
+    return response.data;
   }
 
   // ============== PRODUCT ATTRIBUTE ALLOW VALUES ==============
 
-  /** Create allow value */
   async createAllowValue(data: {
     product: string;
     attributeValue: string;
@@ -96,10 +143,9 @@ class ProductManageClientService {
       "/product-attribute-allow-value",
       data,
     );
-    return response as unknown as IProductAttributeAllowValue;
+    return response.data;
   }
 
-  /** Bulk create allow values for a product */
   async bulkCreateAllowValues(
     productId: string,
     attributeValueIds: string[],
@@ -115,22 +161,36 @@ class ProductManageClientService {
     return results;
   }
 
-  // ============== CATEGORIES (Read-only) ==============
+  // ============== CATEGORIES ==============
 
-  /** Get all categories */
-  async getCategories(): Promise<
-    { _id: string; name: string; slug: string }[]
-  > {
-    const response = await axiosClient.get("/category");
-    return response as unknown as { _id: string; name: string; slug: string }[];
+  async getCategories(params?: {
+    page?: number;
+    limit?: number;
+    keyword?: string;
+  }): Promise<PaginatedResponse<ICategory>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.keyword) query.set("search", params.keyword);
+    const qs = query.toString();
+    const response = await axiosClient.get(`/category${qs ? `?${qs}` : ""}`);
+    return response.data;
   }
 
-  // ============== BRANDS (Read-only) ==============
+  // ============== BRANDS ==============
 
-  /** Get all brands */
-  async getBrands(): Promise<IBrand[]> {
-    const response = await axiosClient.get("/brand");
-    return response as unknown as IBrand[];
+  async getBrands(params?: {
+    page?: number;
+    limit?: number;
+    keyword?: string;
+  }): Promise<PaginatedResponse<IBrand>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.keyword) query.set("keyword", params.keyword);
+    const qs = query.toString();
+    const response = await axiosClient.get(`/brand${qs ? `?${qs}` : ""}`);
+    return response.data;
   }
 }
 

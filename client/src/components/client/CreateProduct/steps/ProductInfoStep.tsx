@@ -1,14 +1,13 @@
 'use client';
 
-import React from 'react';
-import { Form, Input, Select, Card, Button, Upload, message } from 'antd';
+import React, { useCallback } from 'react';
+import { Form, Input, Card, Button, message } from 'antd';
 import {
     ShoppingOutlined,
-    PictureOutlined,
-    CloudUploadOutlined,
     ArrowRightOutlined
 } from '@ant-design/icons';
-import type { UploadFile } from 'antd';
+import InfiniteSelect from '@/components/common/InfiniteSelect';
+import { productManageClientService } from '@/services/client/product-manage.client.service';
 
 interface ProductInfoStepProps {
     form: any;
@@ -32,6 +31,29 @@ export default function ProductInfoStep({
             message.warning('Vui lòng điền đầy đủ thông tin bắt buộc');
         }
     };
+
+    // Fetch functions for InfiniteSelect
+    const fetchCategories = useCallback(
+        (params: { page: number; limit: number; keyword?: string }) =>
+            productManageClientService.getCategories(params),
+        [],
+    );
+
+    const fetchBrands = useCallback(
+        (params: { page: number; limit: number; keyword?: string }) =>
+            productManageClientService.getBrands(params),
+        [],
+    );
+
+    const mapCategory = useCallback(
+        (item: any) => ({ label: item.name, value: item._id, raw: item }),
+        [],
+    );
+
+    const mapBrand = useCallback(
+        (item: any) => ({ label: item.name, value: item._id, raw: item }),
+        [],
+    );
 
     return (
         <div className="space-y-6">
@@ -104,16 +126,15 @@ export default function ProductInfoStep({
                                 }
                                 rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
                             >
-                                <Select
-                                    placeholder="Chọn danh mục sản phẩm"
-                                    showSearch
-                                    optionFilterProp="label"
+                                <InfiniteSelect
+                                    fetchFn={fetchCategories}
+                                    mapOption={mapCategory}
+                                    queryKeyPrefix="category-select"
+                                    placeholder="Tìm kiếm danh mục sản phẩm..."
                                     size="large"
                                     className="rounded-lg"
-                                    options={categories.map(c => ({
-                                        label: c.name,
-                                        value: c._id,
-                                    }))}
+                                    pageSize={20}
+                                    emptyText="Không tìm thấy danh mục"
                                 />
                             </Form.Item>
 
@@ -121,17 +142,16 @@ export default function ProductInfoStep({
                                 name="brand"
                                 label={<span className="text-gray-700 font-medium">Thương hiệu</span>}
                             >
-                                <Select
-                                    placeholder="Chọn thương hiệu (tùy chọn)"
-                                    showSearch
-                                    optionFilterProp="label"
+                                <InfiniteSelect
+                                    fetchFn={fetchBrands}
+                                    mapOption={mapBrand}
+                                    queryKeyPrefix="brand-select"
+                                    placeholder="Tìm kiếm thương hiệu..."
                                     size="large"
                                     allowClear
                                     className="rounded-lg"
-                                    options={brands.map(b => ({
-                                        label: b.name,
-                                        value: b._id,
-                                    }))}
+                                    pageSize={20}
+                                    emptyText="Không tìm thấy thương hiệu"
                                 />
                             </Form.Item>
                         </div>

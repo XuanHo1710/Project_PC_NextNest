@@ -12,11 +12,11 @@ import {
 export class BrandService {
   constructor(
     @InjectModel(Brand.name) private brandModel: Model<BrandDocument>,
-  ) { }
+  ) {}
 
   // ============= BRAND CRUD =============
   async createBrand(createBrandDto: CreateBrandDto) {
-    console.log(createBrandDto)
+    console.log(createBrandDto);
     const brand = new this.brandModel(createBrandDto);
     return await brand.save();
   }
@@ -58,16 +58,23 @@ export class BrandService {
 
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
-      this.brandModel.find(query).sort(sortOption).skip(skip).limit(limit).exec(),
+      this.brandModel
+        .find(query)
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
       this.brandModel.countDocuments(query).exec(),
     ]);
 
     return {
       data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
     };
   }
 

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import slugify from 'slugify';
 export type ProductAttributeDocument = HydratedDocument<ProductAttribute>;
 
 @Schema({ timestamps: true })
@@ -9,7 +10,7 @@ export class ProductAttribute {
   @Prop({ type: String, required: true })
   name: string; // Màu sắc, Kích thước, Chất liệu, ...
 
-  @Prop({ type: String, default: '' })
+  @Prop({ index: true })
   code: string; // color, size, material, ...
 
   @Prop({
@@ -34,3 +35,24 @@ export class ProductAttribute {
 
 export const ProductAttributeSchema =
   SchemaFactory.createForClass(ProductAttribute);
+
+ProductAttributeSchema.pre('save', async function () {
+  if (!this.isModified('name')) return;
+
+  const baseSlug = slugify(this.name, {
+    lower: true,
+    strict: true,
+    locale: 'vi',
+  });
+
+  let slug = baseSlug;
+  let count = 1;
+
+  const ProductAttributeModel = this.constructor as any;
+
+  while (await ProductAttributeModel.exists({ code: slug })) {
+    slug = `${baseSlug}-${count++}`;
+  }
+
+  this.code = slug;
+});

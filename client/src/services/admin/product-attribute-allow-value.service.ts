@@ -1,5 +1,6 @@
 // services/product-attribute-allow-value.service.ts
 import axiosInstance from "@/config/axios";
+import { PaginatedResponse } from "@/types/common";
 
 export interface IProductAttributeAllowValue {
   _id: string;
@@ -11,14 +12,14 @@ export interface IProductAttributeAllowValue {
 class ProductAttributeAllowValueService {
   private baseUrl = "product-attribute-allow-value";
 
-  async getAll(): Promise<IProductAttributeAllowValue[]> {
+  async getAll(): Promise<PaginatedResponse<IProductAttributeAllowValue>> {
     const response = await axiosInstance.get(this.baseUrl);
     return response.data;
   }
 
   async getByProductId(
     productId: string,
-  ): Promise<IProductAttributeAllowValue[]> {
+  ): Promise<PaginatedResponse<IProductAttributeAllowValue>> {
     const response = await axiosInstance.get(
       `${this.baseUrl}?productId=${productId}`,
     );

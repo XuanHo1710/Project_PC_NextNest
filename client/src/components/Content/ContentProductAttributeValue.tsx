@@ -20,17 +20,19 @@ export default function ContentProductAttributeValue() {
     const [editingRecord, setEditingRecord] = useState<IProductAttributeValue | null>(null);
     const [form] = Form.useForm();
 
-    const { data: attributes = [] } = useProductAttributes();
-    const { data: allValues = [], isLoading } = useProductAttributeValues();
+    const { data: attributesResponse } = useProductAttributes();
+    const attributes = attributesResponse?.data ?? [];
+    const { data: allValuesResponse, isLoading } = useProductAttributeValues();
+    const allValues = allValuesResponse?.data ?? [];
     const createMutation = useCreateProductAttributeValue();
     const updateMutation = useUpdateProductAttributeValue();
     const deleteMutation = useDeleteProductAttributeValue();
 
     const selectedAttributeId = Form.useWatch('attribute', form);
-    const selectedAttribute = (attributes as IProductAttribute[]).find(a => a._id === selectedAttributeId);
+    const selectedAttribute = attributes.find(a => a._id === selectedAttributeId);
 
     // Filter
-    const filteredData = (allValues as IProductAttributeValue[]).filter((item) => {
+    const filteredData = allValues.filter((item) => {
         const matchSearch =
             item.label?.toLowerCase().includes(searchText.toLowerCase()) ||
             item.value?.toLowerCase().includes(searchText.toLowerCase());
@@ -43,13 +45,13 @@ export default function ContentProductAttributeValue() {
 
     const getAttributeName = (attr: string | IProductAttribute) => {
         if (typeof attr === 'object' && attr?.name) return attr.name;
-        const found = (attributes as IProductAttribute[]).find(a => a._id === attr);
+        const found = attributes.find(a => a._id === attr);
         return found?.name || String(attr);
     };
 
     const getAttributeDisplayType = (attr: string | IProductAttribute) => {
         if (typeof attr === 'object' && attr?.displayType) return attr.displayType;
-        const found = (attributes as IProductAttribute[]).find(a => a._id === attr);
+        const found = attributes.find(a => a._id === attr);
         return found?.displayType;
     };
 
@@ -204,7 +206,7 @@ export default function ContentProductAttributeValue() {
                         className="w-full sm:w-64"
                         allowClear
                         options={[
-                            ...(attributes as IProductAttribute[]).map((attr) => ({
+                            ...attributes.map((attr) => ({
                                 label: attr.name,
                                 value: attr._id,
                             })),
@@ -252,7 +254,7 @@ export default function ContentProductAttributeValue() {
                             placeholder="Chọn thuộc tính"
                             showSearch
                             optionFilterProp="label"
-                            options={(attributes as IProductAttribute[]).map((attr) => ({
+                            options={attributes.map((attr) => ({
                                 label: `${attr.name} (${attr.code})`,
                                 value: attr._id,
                             }))}
@@ -283,11 +285,26 @@ export default function ContentProductAttributeValue() {
                             label={
                                 <span>
                                     <BgColorsOutlined className="mr-1" />
-                                    Mã màu (Hex)
+                                    Chọn màu sắc
                                 </span>
                             }
+                            rules={[{ required: true, message: 'Vui lòng chọn màu' }]}
                         >
-                            <ColorPicker format="hex" showText />
+                            <ColorPicker
+                                format="hex"
+                                showText
+                                size="large"
+                                presets={[
+                                    {
+                                        label: 'Phổ biến',
+                                        colors: [
+                                            '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
+                                            '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
+                                            '#FFC0CB', '#A52A2A', '#808080', '#C0C0C0', '#FFD700',
+                                        ],
+                                    },
+                                ]}
+                            />
                         </Form.Item>
                     )}
 
@@ -295,9 +312,41 @@ export default function ContentProductAttributeValue() {
                         <Form.Item
                             name="imageUrl"
                             label="URL hình ảnh"
+                            rules={[
+                                { required: true, message: 'Vui lòng nhập URL hình ảnh' },
+                                { type: 'url', message: 'URL không hợp lệ' },
+                            ]}
                         >
                             <Input placeholder="https://example.com/image.png" />
                         </Form.Item>
+                    )}
+
+                    {selectedAttribute?.displayType === 'IMAGE' && (
+                        <Form.Item noStyle shouldUpdate={(prev, cur) => prev.imageUrl !== cur.imageUrl}>
+                            {() => {
+                                const url = form.getFieldValue('imageUrl');
+                                if (!url) return null;
+                                return (
+                                    <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                        <p className="text-xs text-gray-500 mb-2">Xem trước:</p>
+                                        <img
+                                            src={url}
+                                            alt="Preview"
+                                            className="max-w-[120px] max-h-[120px] rounded-md border border-gray-200 object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
+                                );
+                            }}
+                        </Form.Item>
+                    )}
+
+                    {(selectedAttribute?.displayType === 'BUTTON' || selectedAttribute?.displayType === 'RADIO') && (
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-sm text-blue-700">
+                            Kiểu hiển thị: <strong>{selectedAttribute.displayType === 'BUTTON' ? 'Nút bấm' : 'Radio'}</strong> — Chỉ cần nhập giá trị và nhãn hiển thị.
+                        </div>
                     )}
                 </Form>
             </Modal>

@@ -27,10 +27,9 @@ export class ProductAttributeValueController {
     @Body()
     createProductAttributeValueDto: CreateProductAttributeValueDto,
   ) {
-    return this.productService.send(
-      'product.attributeValue.create',
+    return this.productService.send('product.attributeValue.create', {
       createProductAttributeValueDto,
-    );
+    });
   }
 
   @Get(':attributeId')
