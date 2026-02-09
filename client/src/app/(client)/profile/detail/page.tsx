@@ -109,6 +109,7 @@ export default function ProfileDetail() {
     // Set form values when guest data is loaded
     useEffect(() => {
         if (guest && !isLoading) {
+            console.log(guest)
             form.setFieldsValue({
                 fullname: guest?.fullname,
                 email: guest?.email,

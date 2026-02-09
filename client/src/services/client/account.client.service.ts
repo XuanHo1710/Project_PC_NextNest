@@ -13,12 +13,12 @@ class AccountGuestService {
 
   async getProfile(): Promise<IAccountGuest> {
     const response = await axiosClient.get(`${this.baseURL}/profile-detail`);
-    return response as unknown as IAccountGuest;
+    return response.data;
   }
 
   async updateProfile(data: IUpdateProfileDto): Promise<IAccountGuest> {
     const response = await axiosClient.patch(`${this.baseURL}/profile`, data);
-    return response as unknown as IAccountGuest;
+    return response.data;
   }
 
   async uploadAvatar(file: File): Promise<{ avatarUrl: string }> {
@@ -34,7 +34,7 @@ class AccountGuestService {
         },
       },
     );
-    return response as unknown as { avatarUrl: string };
+    return response.data;
   }
 
   // ============== Password Management ==============
@@ -47,7 +47,7 @@ class AccountGuestService {
 
   async getAddresses(): Promise<IAddress[]> {
     const response = await axiosClient.get(`${this.baseURL}/addresses`);
-    return response as unknown as IAddress[];
+    return response.data;
   }
 
   async addAddress(address: Omit<IAddress, "_id">): Promise<IAddress> {
@@ -55,7 +55,7 @@ class AccountGuestService {
       `${this.baseURL}/addresses`,
       address,
     );
-    return response as unknown as IAddress;
+    return response.data;
   }
 
   async updateAddress(
@@ -66,7 +66,7 @@ class AccountGuestService {
       `${this.baseURL}/addresses/${addressId}`,
       address,
     );
-    return response as unknown as IAddress;
+    return response.data;
   }
 
   async deleteAddress(addressId: string): Promise<void> {
@@ -83,7 +83,7 @@ class AccountGuestService {
 
   async getFavorites(): Promise<string[]> {
     const response = await axiosClient.get(`${this.baseURL}/favorites`);
-    return response as unknown as string[];
+    return response.data;
   }
 
   async addToFavorites(productId: string): Promise<void> {
@@ -100,10 +100,7 @@ class AccountGuestService {
     Array<{ productId: string; viewedAt: string }>
   > {
     const response = await axiosClient.get(`${this.baseURL}/recently-viewed`);
-    return response as unknown as Array<{
-      productId: string;
-      viewedAt: string;
-    }>;
+    return response.data;
   }
 
   // ============== Statistics ==============
@@ -115,12 +112,7 @@ class AccountGuestService {
     totalReviews: number;
   }> {
     const response = await axiosClient.get(`${this.baseURL}/stats`);
-    return response as unknown as {
-      totalOrders: number;
-      totalSpent: number;
-      loyaltyPoints: number;
-      totalReviews: number;
-    };
+    return response.data;
   }
 
   // ============== Account Settings ==============
