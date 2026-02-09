@@ -75,7 +75,7 @@ export default function EmployeeHistoryLog({ employeeId }: { employeeId: string 
             title: 'Nội dung',
             dataIndex: 'body',
             key: 'body',
-            width: 150,
+            width: 300,
             render: (val, { body }) => (
                 <pre
                     style={{
@@ -93,7 +93,7 @@ export default function EmployeeHistoryLog({ employeeId }: { employeeId: string 
             title: 'Mô tả',
             dataIndex: 'description',
             key: 'description',
-            ellipsis: true,
+            width: 200,
         },
     ];
 

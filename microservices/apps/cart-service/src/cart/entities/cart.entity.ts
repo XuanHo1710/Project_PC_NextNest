@@ -14,7 +14,7 @@ export class Cart {
       {
         product: {
           type: Types.ObjectId,
-          ref: 'Product',
+          ref: 'ProductVariant',
           required: true,
         },
         quantity: { type: Number, default: 1 },

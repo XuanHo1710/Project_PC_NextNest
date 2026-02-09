@@ -32,4 +32,5 @@ export interface IAccountLogin {
   username: string;
   roleId: string;
   role?: IRole;
+  avatar?: string;
 }

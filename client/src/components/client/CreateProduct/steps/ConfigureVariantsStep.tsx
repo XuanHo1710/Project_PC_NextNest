@@ -130,7 +130,7 @@ export default function ConfigureVariantsStep({
             combo.forEach((val, i) => {
                 const attr = attributeArrays[i];
                 combination[attr.code] = val.label;
-                combinationIds[attr.code] = val._id;
+                combinationIds[attr.code] = val.label;
             });
 
             const skuParts = combo.map(v => v.value.toUpperCase().replace(/\s+/g, ''));

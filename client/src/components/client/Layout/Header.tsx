@@ -317,7 +317,7 @@ export default function HeaderClient() {
                                             {cart && cart.cartItems.map((c, index) => (
                                                 <div key={index} className='flex items-center border-b border-gray-100 py-3 px-3'>
                                                     <div className='w-16 h-16 flex-shrink-0'>
-                                                        <Image alt={c.product?.name} src={getProductImage(c.product)} />
+                                                        <Image alt={c.product?.name} src={c.variant?.images?.[0] || getProductImage(c.product)} />
                                                     </div>
                                                     <div className='flex-grow ml-3'>
                                                         <div className='flex justify-between'>
@@ -327,7 +327,7 @@ export default function HeaderClient() {
                                                                 </h2>
                                                             </Link>
                                                             <button
-                                                                onClick={() => removeFromCart(c.product?._id)}
+                                                                onClick={() => removeFromCart(c.variant._id)}
                                                                 className="text-gray-400 hover:text-red-500 cursor-pointer"
                                                             >
                                                                 <i className="fa-solid fa-xmark"></i>
@@ -336,14 +336,14 @@ export default function HeaderClient() {
                                                         <div className='flex justify-between mt-2 items-center'>
                                                             <div className='flex items-center border border-gray-200 rounded'>
                                                                 <Button
-                                                                    onClick={() => updateQuantity(c.product, -1)}
+                                                                    onClick={() => updateQuantity(c.variant._id, -1)}
                                                                     className='border-none px-2'
                                                                 >
                                                                     <i className="fa-solid fa-minus"></i>
                                                                 </Button>
                                                                 <span className='w-8 text-center'>{c.quantity}</span>
                                                                 <Button
-                                                                    onClick={() => updateQuantity(c.product, 1)}
+                                                                    onClick={() => updateQuantity(c.variant._id, 1)}
                                                                     className='border-none px-2'
                                                                 >
                                                                     <i className="fa-solid fa-plus"></i>

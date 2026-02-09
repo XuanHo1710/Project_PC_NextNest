@@ -49,7 +49,7 @@ export default function ClientCreateProduct() {
     const [createdProductName, setCreatedProductName] = useState('');
 
     // Queries — only attribute values need coordinated loading
-    const { allValues: attributeValues = [], isLoading: loadingValues } = useClientAttributeValuesMap(selectedAttributes);
+    const { allValues: attributeValues = [] } = useClientAttributeValuesMap(selectedAttributes);
     const createProductMutation = useClientCreateProduct();
 
     // Derive selected attribute objects from cache

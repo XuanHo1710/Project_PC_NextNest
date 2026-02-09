@@ -17,16 +17,12 @@ import type { Request, Response } from 'express';
 import { Employee, Public } from '../../decorators/customize';
 import { LocalAuthGuard } from 'guards/local-auth.guard';
 import { firstValueFrom } from 'rxjs';
-import { ConfigService } from '@nestjs/config';
-
-const ms = require('ms');
 
 @Controller('/admin/auth')
 export class AuthController {
   constructor(
     @Inject(MICROSERVICE.AUTH_SERVICE)
     private readonly authService: ClientProxy,
-    private readonly configService: ConfigService,
   ) {}
 
   @Public()

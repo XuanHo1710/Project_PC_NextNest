@@ -52,7 +52,31 @@ export function getProductImages(product: IProductCard): string[] {
   return [];
 }
 
+/** Get stock from defaultVariant */
+export function getProductStock(product: IProductCard): number {
+  if (!product) return 0;
+  return product.defaultVariant?.stock ?? 0;
+}
+
 /** Format currency in VND */
 export function formatCurrencyVND(amount: number): string {
   return amount.toLocaleString("vi-VN") + " đ";
+}
+
+/**
+ * Build a cart-compatible variant object from product's defaultVariant.
+ * Used when adding to cart from listing/grid pages without explicit variant selection.
+ */
+export function getDefaultCartVariant(product: IProductCard) {
+  if (!product?.defaultVariant) return null;
+  const dv = product.defaultVariant;
+  return {
+    _id: dv._id,
+    sku: dv.sku || "",
+    price: dv.price,
+    discount: dv.discount,
+    stock: dv.stock ?? 0,
+    images: dv.images || [],
+    combination: dv.combination || {},
+  };
 }

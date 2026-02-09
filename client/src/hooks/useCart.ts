@@ -1,14 +1,27 @@
 import { create } from "zustand";
 import { ICart, ICartItem } from "@/types/order";
 import { IProductCard } from "@/types/product";
-import { getProductDisplayPrice } from "@/utils/productHelpers";
 import { debouncedSync } from "@/providers/CartProviderClient";
+
+interface CartVariant {
+  _id: string;
+  sku: string;
+  price: number;
+  discount: number;
+  stock: number;
+  images: string[];
+  combination: Record<string, string>;
+}
 
 interface CartState {
   cart: ICart | null;
-  addToCart: (product: IProductCard, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (product: IProductCard, quantity: number) => void;
+  addToCart: (
+    product: IProductCard,
+    variant: CartVariant,
+    quantity?: number,
+  ) => void;
+  removeFromCart: (variantId: string) => void;
+  updateQuantity: (variantId: string, delta: number) => void;
   clearCart: () => void;
   setCart: (cart: ICart) => void;
   calculateTotal: () => number;
@@ -22,34 +35,51 @@ const useCartStore = create<CartState>((set, get) => ({
     guestId: "",
   },
 
-  addToCart: (product, quantity = 1) => {
+  addToCart: (product, variant, quantity = 1) => {
     const state = get();
     const existingItem = state.cart?.cartItems.find(
-      (item) => item.product._id === product._id,
+      (item) => item.variant._id === variant._id,
     );
 
     let updatedItems: ICartItem[] = [];
+    const unitPrice = Math.round(variant.price * (1 - variant.discount / 100));
 
     if (existingItem) {
-      updatedItems = state.cart!.cartItems.map((item) =>
-        item.product._id === product._id &&
-        product.defaultVariant.stock <= item.quantity
-          ? {
-              ...item,
-              quantity: item.quantity + quantity,
-              subtotal: (item.quantity + quantity) * item.price,
-            }
-          : item,
-      );
+      updatedItems = state.cart!.cartItems.map((item) => {
+        if (item.variant._id === variant._id) {
+          const newQty = item.quantity + quantity;
+          // Clamp to stock
+          const clampedQty = Math.min(newQty, variant.stock);
+          if (clampedQty <= 0) return item;
+          return {
+            ...item,
+            quantity: clampedQty,
+            subtotal: clampedQty * unitPrice,
+          };
+        }
+        return item;
+      });
     } else {
-      if (product.defaultVariant.stock > 0) {
+      if (variant.stock > 0) {
+        const clampedQty = Math.min(quantity, variant.stock);
         const newItem: ICartItem = {
           product,
-          quantity,
-          price: getProductDisplayPrice(product),
-          subtotal: getProductDisplayPrice(product) * quantity,
+          variant: {
+            _id: variant._id,
+            sku: variant.sku,
+            price: variant.price,
+            discount: variant.discount,
+            stock: variant.stock,
+            images: variant.images,
+            combination: variant.combination,
+          },
+          quantity: clampedQty,
+          price: unitPrice,
+          subtotal: unitPrice * clampedQty,
         };
         updatedItems = [...state.cart!.cartItems, newItem];
+      } else {
+        return; // Out of stock, don't add
       }
     }
 
@@ -57,17 +87,16 @@ const useCartStore = create<CartState>((set, get) => ({
       ...state.cart!,
       cartItems: updatedItems,
       total: updatedItems.reduce((sum, i) => sum + i.subtotal, 0),
-      _id: state.cart!._id || "1", // Default id cho cart khi thêm sp vào (sẽ được server cấp sau)
     };
 
     set({ cart: updatedCart });
-    debouncedSync(updatedCart, state.cart!.guestId); // ⚡ gọi API sau khi user ngừng thao tác 0.5s
+    debouncedSync(updatedCart, state.cart!.guestId);
   },
 
-  removeFromCart: (productId) => {
+  removeFromCart: (variantId) => {
     const state = get();
     const updatedItems = state.cart!.cartItems.filter(
-      (item) => item.product._id !== productId,
+      (item) => item.variant._id !== variantId,
     );
 
     const updatedCart: ICart = {
@@ -77,24 +106,26 @@ const useCartStore = create<CartState>((set, get) => ({
     };
 
     set({ cart: updatedCart });
-    debouncedSync(updatedCart, state.cart!.guestId); // ⚡ gọi API sau khi user ngừng thao tác 0.5s
+    debouncedSync(updatedCart, state.cart!.guestId);
   },
 
-  updateQuantity: (product, qty) => {
+  updateQuantity: (variantId, delta) => {
     const state = get();
     const updatedItems = state
       .cart!.cartItems.map((item) => {
-        if (item.product._id === product._id) {
-          if (item.quantity + qty <= product.defaultVariant.stock)
-            return {
-              ...item,
-              quantity: item.quantity + qty,
-              subtotal: (item.quantity + qty) * item.price,
-            };
+        if (item.variant._id === variantId) {
+          const newQty = item.quantity + delta;
+          if (newQty <= 0) return null; // Mark for removal
+          const clampedQty = Math.min(newQty, item.variant.stock);
+          return {
+            ...item,
+            quantity: clampedQty,
+            subtotal: clampedQty * item.price,
+          };
         }
         return item;
       })
-      .filter((item) => item.quantity > 0);
+      .filter(Boolean) as ICartItem[];
 
     const updatedCart: ICart = {
       ...state.cart!,
@@ -103,13 +134,19 @@ const useCartStore = create<CartState>((set, get) => ({
     };
 
     set({ cart: updatedCart });
-    debouncedSync(updatedCart, state.cart!.guestId); // ⚡ gọi API sau khi user ngừng thao tác 0.5s
+    debouncedSync(updatedCart, state.cart!.guestId);
   },
 
   clearCart: () => {
-    const cleared: ICart = { _id: "", cartItems: [], total: 0, guestId: "" };
+    const state = get();
+    const cleared: ICart = {
+      _id: state.cart?._id || "",
+      cartItems: [],
+      total: 0,
+      guestId: state.cart?.guestId || "",
+    };
     set({ cart: cleared });
-    debouncedSync(cleared, cleared.guestId); // ⚡
+    debouncedSync(cleared, cleared.guestId);
   },
 
   setCart: (cart) => set({ cart }),
@@ -124,8 +161,12 @@ const useCartStore = create<CartState>((set, get) => ({
 if (typeof window !== "undefined") {
   const saved = localStorage.getItem("cart");
   if (saved) {
-    const parsed = JSON.parse(saved);
-    useCartStore.setState({ cart: parsed });
+    try {
+      const parsed = JSON.parse(saved);
+      useCartStore.setState({ cart: parsed });
+    } catch {
+      localStorage.removeItem("cart");
+    }
   }
 }
 

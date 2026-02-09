@@ -24,24 +24,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                     }
                     const { user } = res.data.data;
 
-                    // Try to get role, but don't fail if it doesn't exist
-                    let role = null;
-                    try {
-                        role = await roleService.getById(user.roleId, {
-                            headers: {
-                                Authorization: `Bearer ${res.data.data.access_token}`,
-                            },
-                        });
-                    } catch (roleErr) {
-                        console.warn('Could not fetch role:', roleErr);
-                    }
+
 
                     setAccountLogin({
+                        _id: user._id,
                         IDEmp: user.IDEmp,
                         username: user.username,
                         employeeId: user.employeeId,
                         roleId: user.roleId,
-                        role,
+                        avatar: user.avatar || '',
+                        role: user.role,
                     } as IAccountLogin);
                 } else {
                     resetAuth();

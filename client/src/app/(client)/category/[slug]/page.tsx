@@ -4,7 +4,7 @@ import useCartStore from "@/hooks/useCart";
 import { categoryClientService, productClientService } from "@/services/client";
 import { IProductWithPagination } from "@/types/product";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Carousel, Checkbox, Drawer, Image, Pagination } from "antd";
+import { Button, Carousel, Checkbox, Drawer, Image, Pagination, message } from "antd";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -12,6 +12,7 @@ import Swal from "sweetalert2";
 import { CategoryPageSkeleton } from "@/components/Skeletons";
 import { ICategory } from "@/types/category";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import { getDefaultCartVariant } from "@/utils/productHelpers";
 
 import { FiShoppingCart } from "react-icons/fi";
 import {
@@ -409,20 +410,29 @@ export default function CategoryClient() {
                                                             </div>
                                                             <div
                                                                 onClick={() => {
+                                                                    const variant = getDefaultCartVariant(product);
+                                                                    if (!variant) {
+                                                                        message.warning('Sản phẩm không có phiên bản khả dụng!');
+                                                                        return;
+                                                                    }
+                                                                    if (variant.stock <= 0) {
+                                                                        message.error('Sản phẩm đã hết hàng!');
+                                                                        return;
+                                                                    }
                                                                     Swal.fire({
                                                                         icon: "success",
                                                                         title: "Thêm sản phẩm vào giỏ hàng thành công!",
                                                                         showConfirmButton: false,
                                                                         timer: 2000,
                                                                         background: "#fff",
-                                                                        color: "#000",        // màu chữ
+                                                                        color: "#000",
                                                                         iconColor: "#52c41a",
                                                                         customClass: {
-                                                                            title: "!text-2xl", // chữ nhỏ hơn (Tailwind)
+                                                                            title: "!text-2xl",
                                                                         },
                                                                     });
 
-                                                                    addToCart(product);
+                                                                    addToCart(product, variant);
 
                                                                 }}
                                                                 className='text-base transition-all bg-blue-400 hover:bg-blue-500 rounded-lg py-2 flex  items-center px-6 cursor-pointer text-white'

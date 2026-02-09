@@ -6,9 +6,10 @@ import {
     getProductDisplayPrice,
     getProductOriginalPrice,
     getProductDiscount,
-    getProductImage
+    getProductImage,
+    getDefaultCartVariant
 } from "@/utils/productHelpers";
-import { Image } from "antd";
+import { Image, message } from "antd";
 import Link from "next/link";
 import Swal from "sweetalert2";
 
@@ -26,6 +27,15 @@ const CardProduct = ({ product, css = '' }: CardProductProps) => {
     const productImage = getProductImage(product);
 
     const handleAddToCart = () => {
+        const variant = getDefaultCartVariant(product);
+        if (!variant) {
+            message.warning('Sản phẩm không có phiên bản khả dụng!');
+            return;
+        }
+        if (variant.stock <= 0) {
+            message.error('Sản phẩm đã hết hàng!');
+            return;
+        }
         Swal.fire({
             icon: "success",
             title: "Thêm sản phẩm vào giỏ hàng thành công!",
@@ -39,7 +49,7 @@ const CardProduct = ({ product, css = '' }: CardProductProps) => {
             },
         });
 
-        addToCart(product);
+        addToCart(product, variant);
     };
 
     return (

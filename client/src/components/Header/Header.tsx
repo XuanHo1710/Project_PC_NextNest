@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { BellOutlined, CheckOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
-import { Button } from "antd";
+import { Avatar, Button } from "antd";
 
 import axios from 'axios';
 import { useState } from 'react';
@@ -16,17 +16,12 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
   const { accountLogin, resetAuth } = useAuthEmployee();
   const router = useRouter();
   const handleLogout = async () => {
-    // await axios.post("/api/admin/auth/token/delete", { id: accountLogin?._id })
-    //   .then(() => {
-    //     window.location.href = "/auth/login"
-    //   })
     await axios.post(`/api/admin/auth/logout`, {})
       .then(() => {
         resetAuth();
       }).catch(error => {
         toast.error(error);
       }).finally(() => {
-        // window.location.href = pathAdminRoutes.login;
         router.push(pathAdminRoutes.login);
       })
   }
@@ -82,7 +77,14 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
               </div>
             </div>
             <Link href="/admin/profile" className="flex items-center gap-2 cursor-pointer hover:text-blue-500 text-black">
-              <UserOutlined className='rounded-full border-2 p-1' />
+              {accountLogin?.avatar ? (
+                <Avatar
+                  src={accountLogin.avatar}
+                  alt={`${accountLogin.username ? accountLogin.username : 'User Avatar'}`}
+                />
+              ) : (
+                <UserOutlined className="rounded-full border-2 p-1" />
+              )}
               <h3 className='text-sm font-semibold'>{accountLogin?.username}</h3>
             </Link>
             <Button onClick={handleLogout} variant='outlined' color='red' className="mx-2">Đăng xuất</Button>

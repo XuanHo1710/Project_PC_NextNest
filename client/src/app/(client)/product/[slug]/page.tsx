@@ -86,8 +86,6 @@ export default function ProductDetailClient() {
     });
 
 
-    console.log('Product detail product:', product);
-
 
     // const addToListMutation = useMutation({
     //     mutationFn: ({ guestID, productID, isWishlist }: { guestID: string; productID: string; isWishlist: boolean }) =>
@@ -162,6 +160,35 @@ export default function ProductDetailClient() {
     useEffect(() => {
         if (!isLoadingProduct) window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [isLoadingProduct]);
+
+    // Build cart variant from selectedVariant or defaultVariant
+    const getCartVariant = () => {
+        const v = selectedVariant || (product?.defaultVariant);
+        if (!v) return null;
+        return {
+            _id: v._id,
+            sku: v.sku || '',
+            price: v.price,
+            discount: v.discount,
+            stock: v.stock ?? 0,
+            images: v.images || [],
+            combination: v.combination || {},
+        };
+    };
+
+    const handleAddToCart = () => {
+        if (!product) return;
+        const cartVariant = getCartVariant();
+        if (!cartVariant) {
+            message.warning('Vui lòng chọn phiên bản sản phẩm!');
+            return;
+        }
+        if (cartVariant.stock <= 0) {
+            message.error('Sản phẩm đã hết hàng!');
+            return;
+        }
+        addToCart(product, cartVariant);
+    };
 
     const responsiveSettings = [
         { breakpoint: 1024, settings: { slidesToShow: 4, slidesToScroll: 1 } },
@@ -277,6 +304,11 @@ export default function ProductDetailClient() {
                                         <span className="text-red-500 text-sm font-medium">Tạm hết hàng</span>
                                     </div>
                                 )}
+                                <div className='mt-2 flex flex-col gap-2 items-start justify-center'>
+                                    <p>Mô tả ngắn: </p>
+
+                                    <Tag>{selectedVariant?.subDescription || ""}</Tag>
+                                </div>
                             </div>
 
                             {/* Variant Selection */}
@@ -350,23 +382,25 @@ export default function ProductDetailClient() {
                                 <Button
                                     size="large"
                                     onClick={() => {
+                                        handleAddToCart();
                                         Swal.fire({
                                             icon: "success", title: "Thêm vào giỏ hàng thành công!",
                                             showConfirmButton: false, timer: 1500,
                                         });
-                                        addToCart(product);
                                     }}
                                     icon={<ShoppingCartOutlined />}
                                     className="!bg-amber-500 !text-white !border-amber-500 hover:!bg-amber-600 !h-12 !px-8 !rounded-xl !font-semibold !text-base !shadow-lg !shadow-amber-500/20"
+                                    disabled={displayStock <= 0}
                                 >
                                     Thêm vào giỏ
                                 </Button>
                                 <Button
                                     size="large"
-                                    onClick={() => { addToCart(product); router.push('/cart'); }}
+                                    onClick={() => { handleAddToCart(); router.push('/cart'); }}
                                     icon={<ThunderboltFilled />}
                                     type="primary"
                                     className="!h-12 !px-10 !rounded-xl !font-semibold !text-base !shadow-lg !shadow-blue-500/20"
+                                    disabled={displayStock <= 0}
                                 >
                                     Mua ngay
                                 </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, Input, DatePicker, Select, message, Avatar, Upload, Image } from "antd";
+import { Button, Form, Input, Select, message, Avatar, Upload, Image } from "antd";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { UserOutlined, CameraOutlined } from '@ant-design/icons';
@@ -9,10 +9,9 @@ import {
     DetailPageSkeleton,
     ProfilePageSkeleton
 } from "@/components/Skeletons";
-import dayjs from 'dayjs';
 import useAuthUser from "@/hooks/useAuthUser";
 import { IAccountGuest } from "@/types/account-guest";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { accountGuestService } from "@/services/client";
 import { UploadImage } from "@/utils/uploadImage";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
@@ -21,7 +20,6 @@ interface ProfileFormValues {
     fullname: string;
     email: string;
     phone: string;
-    dateOfBirth?: dayjs.Dayjs;
     gender?: string;
     avatar?: string;
 }
@@ -35,6 +33,7 @@ export default function ProfileDetail() {
     const [fileUrl, setFileUrl] = useState<File | null>(null);
 
     const { user } = useAuthUser();
+    const queryClient = useQueryClient();
 
     const { data: guest, isLoading } = useQuery<IAccountGuest | null>({
         queryKey: ['profile-guest', user?.id],
@@ -47,32 +46,20 @@ export default function ProfileDetail() {
     const handleSubmit = async (values: ProfileFormValues) => {
         setLoading(true);
         try {
+            const inforGuestUpdate: Record<string, any> = {
+                fullname: values.fullname,
+                phone: values.phone,
+                gender: values.gender,
+            };
 
             if (fileUrl) {
                 const avatarUploadedUrl: string = await UploadImage(fileUrl);
-                const inforGuestUpdate = {
-                    fullname: values.fullname,
-                    phone: values.phone,
-                    birthday: values.dateOfBirth?.format('YYYY-MM-DD'),
-                    avatar: avatarUploadedUrl,
-                    gender: values.gender
-                }
-
-                await accountGuestService.updateProfile(inforGuestUpdate as Partial<IAccountGuest>);
-            } else {
-                const inforGuestUpdate = {
-                    fullname: values.fullname,
-                    phone: values.phone,
-                    birthday: values.dateOfBirth?.format('YYYY-MM-DD'),
-                    gender: values.gender
-                }
-                await accountGuestService.updateProfile(inforGuestUpdate as Partial<IAccountGuest>);
-
+                inforGuestUpdate.avatar = avatarUploadedUrl;
             }
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
 
+            await accountGuestService.updateProfile(inforGuestUpdate as Partial<IAccountGuest>);
             message.success('Cập nhật thông tin thành công!');
+            queryClient.invalidateQueries({ queryKey: ['profile-guest'] });
         } catch (error) {
             console.error('Error updating profile:', error);
             message.error('Có lỗi xảy ra khi cập nhật thông tin');
@@ -126,9 +113,11 @@ export default function ProfileDetail() {
                 fullname: guest?.fullname,
                 email: guest?.email,
                 phone: guest?.phone,
-                dateOfBirth: guest?.birthday ? dayjs(guest.birthday) : undefined,
                 gender: guest?.gender,
             });
+            if (guest?.avatar) {
+                setAvatarUrl(guest.avatar);
+            }
         }
     }, [guest, isLoading, form]);
 
@@ -286,18 +275,6 @@ export default function ProfileDetail() {
                                 <Input
                                     className="py-2 dark:bg-gray-700 dark:text-white"
                                     placeholder="Nhập số điện thoại"
-                                />
-                            </Form.Item>
-
-                            <Form.Item
-                                name="dateOfBirth"
-                                label={<span className="dark:text-white font-medium">Ngày sinh</span>}
-                            >
-                                <DatePicker
-                                    className="w-full py-2 dark:bg-gray-700 dark:text-white"
-                                    placeholder="Chọn ngày sinh"
-                                    format="DD/MM/YYYY"
-                                    disabledDate={(current) => current && current > dayjs().subtract(13, 'year')}
                                 />
                             </Form.Item>
 

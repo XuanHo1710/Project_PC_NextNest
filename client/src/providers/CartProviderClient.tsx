@@ -4,10 +4,8 @@ import React, { useEffect, ReactNode } from 'react';
 import useCartStore from '@/hooks/useCart';
 import { cartClientService } from '@/services/client/cart.client.service';
 import useAuthUser from '@/hooks/useAuthUser';
-import { ICart } from '@/types/order';
+import { ICart, ICartItem } from '@/types/order';
 import { debounce } from '@/utils/debounce';
-
-// type User = ILoginResponse['user'];
 
 
 interface CartProviderProps {
@@ -17,69 +15,117 @@ interface CartProviderProps {
 export function CartProvider({ children }: CartProviderProps) {
     const { user } = useAuthUser();
     const { setCart } = useCartStore();
+
     useEffect(() => {
-        const fetchCart = async () => {
+        const initializeCart = async () => {
             if (user === null) return;
-            const cart = await cartClientService.getOne(user?.id || '');
-            const cartFromLocalStorage = localStorage.getItem('cart');
-            if (cartFromLocalStorage) {
-                const localCart: ICart = JSON.parse(cartFromLocalStorage);
-                // Gộp cart từ localStorage với cart hiện tại. Xu ly ca quantity neu trung san pham
-                const mergedItems = cart ? [...cart.cartItems] : [];
-                localCart.cartItems.forEach(localItem => {
-                    const existingItem = mergedItems.find(item => item.product._id === localItem.product._id);
-                    if (existingItem) {
-                        if (existingItem.quantity + localItem.quantity > localItem.product.stock) {
-                            existingItem.quantity = localItem.product.stock; // Giới hạn không vượt quá stock
+
+            const guestId = user.id;
+
+            // 1. Fetch server cart
+            const serverCart = await cartClientService.getOne(guestId);
+
+            // 2. Check for localStorage cart
+            const localStorageCart = localStorage.getItem('cart');
+
+            if (localStorageCart) {
+                try {
+                    const localCart: ICart = JSON.parse(localStorageCart);
+
+                    // Merge server cart items + local cart items
+                    const mergedItems: ICartItem[] = serverCart?.cartItems ? [...serverCart.cartItems] : [];
+
+                    localCart.cartItems.forEach(localItem => {
+                        if (!localItem.variant?._id) return;
+
+                        const existIndex = mergedItems.findIndex(
+                            item => item.variant._id === localItem.variant._id
+                        );
+
+                        if (existIndex >= 0) {
+                            // Item exists: combine quantities (capped at stock)
+                            const existing = mergedItems[existIndex];
+                            const newQty = existing.quantity + localItem.quantity;
+                            const maxStock = existing.variant.stock;
+                            existing.quantity = Math.min(newQty, maxStock);
+                            existing.subtotal = existing.quantity * existing.price;
                         } else {
-                            existingItem.quantity += localItem.quantity;
+                            // New item: add it
+                            mergedItems.push(localItem);
                         }
-                        existingItem.subtotal = existingItem.quantity * existingItem.price;
-                    } else {
-                        mergedItems.push(localItem);
+                    });
+
+                    // 3. Create merged cart object
+                    const finalCart: ICart = {
+                        _id: serverCart?._id || '',
+                        cartItems: mergedItems,
+                        total: mergedItems.reduce((sum, item) => sum + item.subtotal, 0),
+                        guestId,
+                    };
+
+                    // 4. Sync merged cart to server (upsert by guestId)
+                    const returnedId = await cartClientService.updateCart(finalCart);
+                    if (returnedId) {
+                        finalCart._id = returnedId;
                     }
+
+                    // 5. Update store and cleanup
+                    setCart(finalCart);
+                    localStorage.removeItem('cart');
+                } catch (error) {
+                    console.error('Cart merge failed:', error);
+                    localStorage.removeItem('cart');
+                    // Fallback: set server cart
+                    setCart(serverCart || { _id: '', cartItems: [], total: 0, guestId });
+                }
+            } else {
+                // No localStorage: just set server cart
+                setCart(serverCart || {
+                    _id: '',
+                    cartItems: [],
+                    total: 0,
+                    guestId,
                 });
-                const mergedCart: ICart = {
-                    ...localCart,
-                    cartItems: mergedItems,
-                    _id: cart ? cart._id : "1", // Default id cho cart khi thêm sp vào (sẽ được server cấp sau)
-                    guestId: user?.id || '',
-                };
-                mergedCart.total = mergedCart.cartItems.reduce((sum, i) => sum + i.subtotal, 0);
-                await cartClientService.updateCart(mergedCart._id, mergedCart);
-                setCart(mergedCart);
-                localStorage.removeItem('cart');
-                console.log("✅ Cart merged successfully");
-                return;
             }
-            setCart(cart || {
-                _id: '',
-                cartItems: [],
-                total: 0,
-                guestId: user?.id || '',
-            });
         };
-        fetchCart();
+
+        initializeCart();
     }, [user, setCart]);
 
     return <>{children}</>;
 }
 
 
+/**
+ * Sync cart to server or localStorage depending on login state
+ */
 export const syncCartToServer = async (cart: ICart, userId: string | null) => {
     try {
-        if (userId) {
-            await cartClientService.updateCart(cart._id, cart);
+        if (userId && cart.guestId) {
+            // User is logged in: sync to server (upsert by guestId)
+            const returnedId = await cartClientService.updateCart(cart);
 
-            console.log("✅ Cart synced successfully");
+            // Update cart._id in store if it was updated on server
+            if (returnedId && cart._id !== returnedId) {
+                const currentCart = useCartStore.getState().cart;
+                if (currentCart) {
+                    useCartStore.setState({
+                        cart: { ...currentCart, _id: returnedId },
+                    });
+                }
+            }
         } else {
-            localStorage.setItem('cart', JSON.stringify(cart));
-            console.log("✅ Cart saved to localStorage");
+            // User is not logged in: save to localStorage only
+            if (cart && cart.cartItems.length > 0) {
+                localStorage.setItem('cart', JSON.stringify(cart));
+            }
         }
-    } catch (err) {
-        console.error("❌ Sync failed:", err);
+    } catch (error) {
+        console.error('Cart sync error:', error);
     }
-}
+};
 
-// ⚡ Dùng debounce để tránh gọi API liên tục
+/**
+ * Debounce cart sync to avoid excessive API calls
+ */
 export const debouncedSync = debounce(syncCartToServer, 2000);

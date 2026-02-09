@@ -92,20 +92,13 @@ instance.interceptors.response.use(
             // Update Zustand store with new access_token
             const { setAccessToken, setAccountLogin } = useAuthEmployee.getState();
             setAccessToken(refreshResponse.data.data.access_token);
-            const roleResponse = await axios.get(
-              `${baseURL}role/${refreshResponse.data.data.payload.roleId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${refreshResponse.data.data.access_token}`,
-                }
-              })
-            console.log("Role response:", roleResponse.data);
             setAccountLogin({
               _id: refreshResponse.data.data.payload._id,
               username: refreshResponse.data.data.payload.username,
               IDEmp: refreshResponse.data.data.payload.IDEmp,
               roleId: refreshResponse.data.data.payload.roleId,
-              role: roleResponse.data.data,
+              avatar: refreshResponse.data.data.payload.avatar || '',
+              role: refreshResponse.data.data.payload.role,
             })
           }
 

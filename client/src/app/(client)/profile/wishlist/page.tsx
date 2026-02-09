@@ -12,8 +12,8 @@ import {
     getProductOriginalPrice,
     getProductDiscount,
     getProductImage,
-    getProductSoldCount,
     getProductStock,
+    getDefaultCartVariant,
 } from '@/utils/productHelpers';
 import { WishlistSkeleton } from '@/components/Skeletons/WishlistSkeleton';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
@@ -68,7 +68,12 @@ export default function WishlistPage() {
             message.error('Sản phẩm đã hết hàng');
             return;
         }
-        addToCart(product);
+        const variant = getDefaultCartVariant(product);
+        if (!variant) {
+            message.warning('Sản phẩm không có phiên bản khả dụng!');
+            return;
+        }
+        addToCart(product, variant);
         message.success('Đã thêm sản phẩm vào giỏ hàng!');
     };
 

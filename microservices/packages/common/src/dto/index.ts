@@ -33,3 +33,9 @@ export * from "./history/create-history.dto";
 
 export * from "./cart/create-cart.dto";
 export * from "./cart/update-cart.dto";
+
+export * from "./product/product-variant";
+
+export * from "./common/brand.entity";
+export * from "./common/category.entity";
+export * from "./common/product.entity";

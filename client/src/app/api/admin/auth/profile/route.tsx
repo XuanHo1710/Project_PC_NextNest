@@ -20,8 +20,6 @@ export async function POST(request: NextRequest) {
     const accessToken = request.cookies.get('admin_access_token')?.value;
     const sessionId = request.cookies.get('admin_sessionId')?.value;
 
-    console.log('[Profile] Checking auth - accessToken:', !!accessToken, 'sessionId:', !!sessionId);
-
     // Nếu không có cả access token và session ID → chưa đăng nhập
     if (!accessToken && !sessionId) {
         console.log('[Profile] No credentials found');
@@ -66,6 +64,7 @@ export async function POST(request: NextRequest) {
 
                 const profileData = profileResponse.data?.data || profileResponse.data;
 
+                console.log(profileData)
                 return NextResponse.json({
                     success: true,
                     data: {
@@ -76,6 +75,8 @@ export async function POST(request: NextRequest) {
                             IDEmp: profileData.IDEmp,
                             roleId: profileData.roleId,
                             employeeId: profileData.employeeId,
+                            avatar: profileData.avatar || '',
+                            role: profileData.role,
                         },
                     }
                 });
@@ -95,6 +96,7 @@ export async function POST(request: NextRequest) {
                                     IDEmp: refreshData.payload.IDEmp,
                                     roleId: refreshData.payload.roleId,
                                     employeeId: refreshData.payload.employeeId,
+                                    avatar: refreshData.payload.avatar || '',
                                 },
                             },
                         });
@@ -145,6 +147,7 @@ export async function POST(request: NextRequest) {
                             IDEmp: refreshData.payload.IDEmp,
                             roleId: refreshData.payload.roleId,
                             employeeId: refreshData.payload.employeeId,
+                            avatar: refreshData.payload.avatar || '',
                         },
                     },
                 });

@@ -1,66 +1,129 @@
 import { ICartItem } from "@/types/order";
-import { IProductCard } from "@/types/product";
-import {
-    getProductDisplayPrice,
-    getProductOriginalPrice,
-    getProductImage,
-} from "@/utils/productHelpers";
-import { Button, Image } from "antd"
+import { formatCurrencyVND } from "@/utils/productHelpers";
+import { Button, Image, Tag, Popconfirm } from "antd"
+import { DeleteOutlined, MinusOutlined, PlusOutlined } from "@ant-design/icons";
 import Link from "next/link";
 
 
 interface CartProductProps {
     cartItem: ICartItem;
     handle: {
-        removeFromCart: (id: string) => void;
-        updateQuantity: (product: IProductCard, qty: number) => void;
-        // Add other handler functions if needed
+        removeFromCart: (variantId: string) => void;
+        updateQuantity: (variantId: string, delta: number) => void;
     };
 }
 
 const CartProduct = ({ cartItem, handle }: CartProductProps) => {
+    const { product, variant, quantity, price, subtotal } = cartItem;
+    const displayImage = variant.images?.[0] || "/placeholder-product.png";
+    const originalPrice = variant.price;
+    const hasDiscount = variant.discount > 0;
+    console.log(cartItem)
+
     return (
-        <>
-            {cartItem &&
-                <div className='cart-product-item flex gap-3 p-3 border-solid border-2 dark:bg-gray-800 dark:border-stone-800 border-stone-100'>
-                    <div className='basis-1/6'>
-                        <Image alt="Product" width={100} src={getProductImage(cartItem.product)} />
+        <div className="group relative flex gap-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-750">
+            {/* Product Image */}
+            <Link href={`/product/${product.slug}`} className="flex-shrink-0">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-50">
+                    <Image
+                        alt={product.name}
+                        width="100%"
+                        height="100%"
+                        src={displayImage}
+                        fallback="/placeholder-product.png"
+                        className="!object-contain"
+                        preview={false}
+                    />
+                </div>
+            </Link>
+
+            {/* Product Info */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                {/* Top Row: Name + Delete */}
+                <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                        <Link href={`/product/${product.slug}`}>
+                            <h3 className="text-sm md:text-base font-medium text-gray-800 dark:text-gray-100 hover:text-blue-500 transition-colors line-clamp-2 leading-snug">
+                                {product.name}
+                            </h3>
+                        </Link>
+
+                        {/* Variant Tags */}
+                        {variant.combination && Object.keys(variant.combination).length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                                {Object.entries(variant.combination).map(([key, val]) => (
+                                    <Tag key={key} color="blue" className="!text-xs !m-0 !rounded-md">
+                                        {val}
+                                    </Tag>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <div className='basis-5/6'>
-                        <div className='flex items-center pb-3 justify-between'>
-                            <Link href={`/product/${cartItem.product.slug}`}>
-                                <h2 className='hover:text-blue-500 dark:text-white cursor-pointer text-sm md:text-base line-clamp-1'>
-                                    <span className='font-bold text-red-500'>[DEAL] </span>
-                                    {cartItem.product.name}
-                                </h2>
-                            </Link>
-                            <i onClick={() => handle.removeFromCart(cartItem.product._id)} className="hover:text-red-600 dark:text-purple-500 text-lg cursor-pointer fa-regular fa-trash-can"></i>
-                        </div>
-                        <div className='flex items-center justify-between mt-2'>
-                            <div className='text-stone-500'>
-                                <p className='font-bold text-xs md:text-lg line-through'>{getProductOriginalPrice(cartItem.product).toLocaleString()} đ</p>
-                                <p className='font-bold text-xs md:text-xl text-blue-500'>{getProductDisplayPrice(cartItem.product).toLocaleString()} đ</p>
+                    <Popconfirm
+                        title="Xóa sản phẩm"
+                        description="Bạn có chắc muốn xóa sản phẩm này khỏi giỏ hàng?"
+                        onConfirm={() => handle.removeFromCart(variant._id)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                        okButtonProps={{ danger: true }}
+                    >
+                        <button className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all cursor-pointer">
+                            <DeleteOutlined className="text-base" />
+                        </button>
+                    </Popconfirm>
+                </div>
+
+                {/* Bottom Row: Price + Quantity + Subtotal */}
+                <div className="flex items-end justify-between mt-2 gap-3">
+                    {/* Unit Price */}
+                    <div className="flex-shrink-0">
+                        <p className="font-semibold text-sm md:text-base text-blue-600 dark:text-blue-400">
+                            {formatCurrencyVND(price)}
+                        </p>
+                        {hasDiscount && (
+                            <div className="flex items-center gap-1.5">
+                                <p className="text-xs line-through text-gray-400">{formatCurrencyVND(originalPrice)}</p>
+                                <span className="text-xs font-medium text-red-500 bg-red-50 dark:bg-red-900/20 px-1 py-0.5 rounded">
+                                    -{variant.discount}%
+                                </span>
                             </div>
-                            <div className='text-stone-600 flex flex-col items-end'>
-                                <div className='flex items-center text-sm md:text-xl'>
-                                    <Button onClick={() => handle.updateQuantity(cartItem.product, -1)} className='rounded-none px-1 md:px-3 dark:bg-black dark:text-white dark:border-slate-700'>
-                                        <i className="fa-solid fa-minus"></i>
-                                    </Button>
-                                    <input type='text' className='dark:bg-black bg-stone-100 dark:text-white w-5 md:w-14 text-center h-8 border-solid' disabled value={cartItem.quantity} />
-                                    <Button onClick={() => handle.updateQuantity(cartItem.product, 1)} className='rounded-none px-1 md:px-3 dark:bg-black dark:text-white dark:border-slate-700'>
-                                        <i className="fa-solid fa-plus"></i>
-                                    </Button>
-                                </div>
-                                <div className='total-price mt-1'>
-                                    <p className='dark:text-slate-400 font-semibold block md:inline-block text-xs md:text-lg'>Thành tiền:</p>
-                                    <p className='text-red-500 block md:inline-block font-bold text-xs md:text-xl'> {(cartItem.subtotal).toLocaleString()} đ</p>
-                                </div>
-                            </div>
+                        )}
+                    </div>
+
+                    {/* Quantity Controls */}
+                    <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                            <button
+                                onClick={() => handle.updateQuantity(variant._id, -1)}
+                                className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                disabled={quantity <= 1}
+                            >
+                                <MinusOutlined className="text-xs" />
+                            </button>
+                            <span className="w-10 h-8 flex items-center justify-center text-sm font-medium bg-gray-50 dark:bg-gray-700 dark:text-white border-x border-gray-200 dark:border-gray-600">
+                                {quantity}
+                            </span>
+                            <button
+                                onClick={() => handle.updateQuantity(variant._id, 1)}
+                                className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                                disabled={quantity >= variant.stock}
+                            >
+                                <PlusOutlined className="text-xs" />
+                            </button>
                         </div>
+                        {variant.stock > 0 && variant.stock <= 5 && (
+                            <p className="text-[10px] text-orange-500 font-medium">Còn {variant.stock} sp</p>
+                        )}
+                    </div>
+
+                    {/* Subtotal */}
+                    <div className="text-right flex-shrink-0">
+                        <p className="text-xs text-gray-400">Thành tiền</p>
+                        <p className="font-bold text-sm md:text-base text-red-500">{formatCurrencyVND(subtotal)}</p>
                     </div>
                 </div>
-            }
-        </>
+            </div>
+        </div>
     )
 }
 

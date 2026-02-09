@@ -257,6 +257,7 @@ export class ClientAuthService {
       username: account.name,
       roleId: account.roleId,
       employeeId: account._id,
+      avatar: account?.avatar || '',
       _id: account._id.toString(),
     };
 
@@ -328,6 +329,7 @@ export class ClientAuthService {
         roleId: payload.roleId,
         employeeId: payload.employeeId,
         _id: payload._id.toString(),
+        avatar: payload.avatar || '',
       };
 
       const access_token = this.createAccessToken(payloadFinal);

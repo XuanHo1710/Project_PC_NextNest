@@ -1,8 +1,9 @@
 'use client';
 import CartProduct from "@/components/client/Cart/CartProduct";
 import useCartStore from "@/hooks/useCart";
-import { Button, Form, Input, Select } from "antd";
+import { Button, Form, Input, Select, Empty, Divider } from "antd";
 import TextArea from "antd/es/input/TextArea";
+import { ShoppingCartOutlined, SafetyCertificateOutlined, CarOutlined, CustomerServiceOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
@@ -14,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { IOrderData } from "@/types/order";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import { accountGuestService } from "@/services/client";
+import { formatCurrencyVND } from "@/utils/productHelpers";
 
 
 
@@ -276,304 +278,365 @@ export default function CartClient() {
                 ogTitle={`Giỏ hàng`}
                 ogDescription="Hoàn tất đơn hàng ngay để nhận ưu đãi miễn phí vận chuyển và trả góp 0%"
             />
-            <div className="md:pt-3 pt-52 dark:bg-slate-900">
-                <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
-                    <Link href="/home" className="font-medium text-lg text-stone-500 mr-3 header-nav active">Trang chủ</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <h3 className="font-medium text-lg dark:text-white text-blue-500 mr-3">Thông tin giỏ hàng</h3>
-                </div>
-                <h1 className='mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3 font-bold text-xl lg:text-3xl uppercase text-blue-500'>Giỏ hàng của tôi
-                    <span className='ml-2 text-sm border-none text-stone-400 lowercase font-medium'>({cart?.cartItems.length} sản phẩm)</span>
-                </h1>
-                <div className='mx-5 xl:mx-32 mt-5 pb-10 content-body grid grid-flow-row grid-cols-12 gap-8 '>
-                    <div className='col-span-12 lg:col-span-7 max-h-max bg-white shadow-lg rounded-lg'>
-                        <div className='cart-list-product overflow-y-scroll' style={{ maxHeight: "700px", scrollbarWidth: "none" }}>
-                            {cart && cart.cartItems.length > 0 ?
-                                cart.cartItems.map((cartItem, index) => (
-                                    <CartProduct key={index} cartItem={cartItem} handle={{ removeFromCart, updateQuantity }} />
-                                ))
-                                :
-                                <div className='text-center flex flex-col py-10 cursor-default font-bold text-2xl text-blue-400 dark:bg-slate-900 border-solid border-t-[1px] border-x-[1px] border-blue-500'>
-                                    <span> Không có sản phẩm nào trong giỏ hàng</span>
-                                    <i className="py-10 text-blue-200 block fa-solid fa-cart-shopping text-8xl"></i>
-                                </div>
-                            }
+            <div className="md:pt-4 pt-52 pb-10 dark:bg-slate-900 min-h-screen bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                    {/* Breadcrumb */}
+                    <nav className="flex items-center gap-2 text-sm py-3">
+                        <Link href="/home" className="text-gray-500 hover:text-blue-500 transition-colors">Trang chủ</Link>
+                        <span className="text-gray-300">/</span>
+                        <span className="text-blue-500 font-medium">Giỏ hàng</span>
+                    </nav>
 
-                        </div>
-                        <div className='subtotal border-solid border-[1px] border-blue-500 p-4 flex items-center justify-between dark:bg-slate-900 dark:text-white'>
-                            <h2 className='dark:text-white font-bold text-stone-500'>Tổng giá trị đơn hàng: </h2>
-                            <div className="text-right">
-                                <p className='font-bold text-blue-500 text-lg md:text-2xl'>{calculateTotal().toLocaleString()} đ</p>
-                                {calculateTotal() < 100000 && (
-                                    <p className="text-xs text-orange-500 mt-1">
-                                        ⚠️ Đơn hàng tối thiểu 100.000đ
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-6">
+                        <h1 className="font-bold text-2xl lg:text-3xl text-gray-800 dark:text-white flex items-center gap-3">
+                            <ShoppingCartOutlined className="text-blue-500" />
+                            Giỏ hàng
+                            <span className="text-base font-normal text-gray-400">
+                                ({cart?.cartItems.length || 0} sản phẩm)
+                            </span>
+                        </h1>
                     </div>
-                    <div className='col-span-12 lg:col-span-5 py-3 px-5 border-solid border-2 rounded-lg shadow-xl border-blue-500'>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className='font-bold text-xl text-blue-500'>Thông tin thanh toán</h2>
-                            {user && profile && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    <span className="text-green-600 font-medium">Đã đăng nhập</span>
-                                </div>
-                            )}
-                        </div>
 
-                        {/* Hiển thị thông tin user khi đã đăng nhập */}
-                        {user && profile ? (
-                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                                        {profile.fullname.charAt(0).toUpperCase()}
+                    {cart && cart.cartItems.length > 0 ? (
+                        <div className="grid grid-cols-12 gap-6">
+                            {/* Cart Items Column */}
+                            <div className="col-span-12 lg:col-span-7">
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
+                                    {/* Cart Header */}
+                                    <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-750 border-b border-gray-100 dark:border-gray-700 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                        <div className="col-span-6">Sản phẩm</div>
+                                        <div className="col-span-2 text-center">Đơn giá</div>
+                                        <div className="col-span-2 text-center">Số lượng</div>
+                                        <div className="col-span-2 text-right">Thành tiền</div>
                                     </div>
-                                    <div>
-                                        <p className="font-semibold text-blue-800 dark:text-blue-300">{profile.fullname}</p>
-                                        <p className="text-sm text-blue-600 dark:text-blue-400">{profile.email}</p>
-                                        {profile.phone && (
-                                            <p className="text-sm text-blue-600 dark:text-blue-400">{profile.phone}</p>
+
+                                    {/* Cart Items */}
+                                    <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[600px] overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+                                        {cart.cartItems.map((cartItem) => (
+                                            <CartProduct
+                                                key={cartItem.variant._id}
+                                                cartItem={cartItem}
+                                                handle={{ removeFromCart, updateQuantity }}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {/* Cart Summary Bar */}
+                                    <div className="border-t-2 border-blue-500 bg-gradient-to-r from-blue-50 to-white dark:from-gray-800 dark:to-gray-800 px-4 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-gray-600 dark:text-gray-300 font-medium">
+                                                    Tổng ({cart.cartItems.length} sản phẩm):
+                                                </span>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-xl md:text-2xl text-blue-600 dark:text-blue-400">
+                                                    {formatCurrencyVND(calculateTotal())}
+                                                </p>
+                                                {calculateTotal() >= 2000000 && (
+                                                    <p className="text-xs text-green-600 mt-0.5 font-medium">
+                                                        <CarOutlined className="mr-1" />Miễn phí vận chuyển
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {calculateTotal() < 100000 && (
+                                            <div className="mt-2 text-xs text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-3 py-1.5 rounded-md">
+                                                Đơn hàng tối thiểu 100.000đ. Thêm {formatCurrencyVND(100000 - calculateTotal())} nữa để đặt hàng.
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                                {profile.addresses.length > 0 && (
-                                    <div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
-                                        📍 {profile.addresses.length} địa chỉ đã lưu
+
+                                {/* Trust badges */}
+                                <div className="grid grid-cols-3 gap-3 mt-4">
+                                    <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                                        <SafetyCertificateOutlined className="text-green-500 text-lg" />
+                                        <span className="text-xs text-gray-600 dark:text-gray-300">Bảo hành chính hãng</span>
                                     </div>
-                                )}
-                            </div>
-                        ) : (
-                            <p className='my-5 font-medium text-base text-stone-500'>
-                                Để tiếp tục đặt hàng, quý khách xin vui lòng
-                                <Link href={"#"} className='text-blue-500 font-bold'> đăng nhập </Link>
-                                để nhập thông tin bên dưới
-                            </p>
-                        )}
-
-                        <Form
-                            form={form}
-                            onFinish={handlePlaceOrder}
-                            layout="vertical"
-                            initialValues={{
-                                fullname: profile?.fullname || "",
-                                phone: profile?.phone || "",
-                                email: profile?.email || "",
-                                savedAddress: profile?.addresses && profile.addresses.length > 0 ? profile.addresses[0]._id : "new",
-                                note: ""
-                            }}
-                        >
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                                <Form.Item
-                                    name='fullname'
-                                    label="Họ và tên"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập họ và tên!' },
-                                        { min: 2, message: 'Họ tên phải có ít nhất 2 ký tự!' },
-                                        { max: 50, message: 'Họ tên không được vượt quá 50 ký tự!' },
-                                        { pattern: /^[a-zA-ZÀ-ỹ\s]+$/, message: 'Họ tên chỉ được chứa chữ cái và khoảng trắng!' }
-                                    ]}
-                                >
-                                    <Input
-                                        name='fullname'
-                                        className='text-base dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500 py-2 font-medium'
-                                        placeholder='Nhập họ và tên'
-                                    />
-                                </Form.Item>
-                                <Form.Item
-                                    name='phone'
-                                    label="Số điện thoại"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập số điện thoại!' },
-                                        { pattern: /^(0|84|\+84)[1-9][0-9]{8,9}$/, message: 'Số điện thoại không hợp lệ!' },
-                                        { min: 10, message: 'Số điện thoại phải có ít nhất 10 số!' },
-                                        { max: 12, message: 'Số điện thoại không được vượt quá 12 số!' }
-                                    ]}
-                                >
-                                    <Input
-                                        name='phone'
-                                        className='text-base dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500 py-2 font-medium'
-                                        placeholder='Nhập số điện thoại'
-                                    />
-                                </Form.Item>
-                            </div>
-                            <Form.Item
-                                name='email'
-                                label="Email"
-                                rules={[
-                                    { required: true, message: 'Vui lòng nhập email!' },
-                                    { type: 'email', message: 'Email không hợp lệ!' },
-                                    { max: 100, message: 'Email không được vượt quá 100 ký tự!' }
-                                ]}
-                            >
-                                <Input
-                                    name='email'
-                                    className='text-base dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500 py-2 font-medium'
-                                    placeholder='Nhập email'
-                                />
-                            </Form.Item>
-
-                            {/* Saved Address Selection - Chỉ hiện khi user đã đăng nhập */}
-                            {user && profile && savedAddresses.length > 0 && (
-                                <Form.Item name="savedAddress" label="Địa chỉ giao hàng">
-                                    <Select
-                                        placeholder="Chọn địa chỉ có sẵn hoặc nhập mới"
-                                        onChange={handleSavedAddressChange}
-                                        className="w-full"
-                                    >
-                                        <Select.Option value="new">📍 Nhập địa chỉ mới</Select.Option>
-                                        {savedAddresses.map((address) => (
-                                            <Select.Option key={address._id} value={address._id}>
-                                                {address.isDefault ? '🏠' : '🏢'} {address.label} - {address.detailAddress}, {address.ward.name}, {address.district.name}, {address.province.name}
-                                            </Select.Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            )}
-
-                            {/* Address form - Luôn hiển thị để có thể nhập địa chỉ mới */}
-                            <Form.Item
-                                name="province"
-                                label="Tỉnh/Thành phố"
-                                rules={[
-                                    { required: true, message: 'Vui lòng chọn tỉnh/thành phố!' }
-                                ]}
-                            >
-                                <Select
-                                    placeholder="Chọn tỉnh/thành phố"
-                                    loading={loading.provinces}
-                                    onChange={handleProvinceChange}
-                                    value={selectedProvince}
-                                    className="w-full"
-                                    showSearch
-                                    filterOption={(input, option) =>
-                                        (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
-                                    }
-                                >
-                                    {provinces.map(province => (
-                                        <Select.Option key={province.code} value={province.code}>
-                                            {province.name}
-                                        </Select.Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-
-                            <Form.Item
-                                name="district"
-                                label="Quận/Huyện"
-                                rules={[
-                                    { required: true, message: 'Vui lòng chọn quận/huyện!' }
-                                ]}
-                            >
-                                <Select
-                                    placeholder="Chọn quận/huyện"
-                                    loading={loading.districts}
-                                    onChange={handleDistrictChange}
-                                    value={selectedDistrict}
-                                    className="w-full"
-                                    disabled={!selectedProvince}
-                                    showSearch
-                                    filterOption={(input, option) =>
-                                        (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
-                                    }
-                                >
-                                    {districts.map(district => (
-                                        <Select.Option key={district.code} value={district.code}>
-                                            {district.name}
-                                        </Select.Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <Form.Item
-                                    name="ward"
-                                    label="Phường/Xã"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng chọn phường/xã!' }
-                                    ]}
-                                >
-                                    <Select
-                                        placeholder="Chọn phường/xã"
-                                        loading={loading.wards}
-                                        onChange={handleWardChange}
-                                        value={selectedWard}
-                                        className="w-full"
-                                        disabled={!selectedDistrict}
-                                        showSearch
-                                        filterOption={(input, option) =>
-                                            (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
-                                        }
-                                    >
-                                        {wards.map(ward => (
-                                            <Select.Option key={ward.code} value={ward.code}>
-                                                {ward.name}
-                                            </Select.Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-
-                                <Form.Item
-                                    name='detailAddress'
-                                    label="Địa chỉ cụ thể"
-                                    rules={[
-                                        { required: true, message: 'Vui lòng nhập địa chỉ cụ thể!' },
-                                        { min: 5, message: 'Địa chỉ phải có ít nhất 5 ký tự!' },
-                                        { max: 200, message: 'Địa chỉ không được vượt quá 200 ký tự!' }
-                                    ]}
-                                >
-                                    <Input
-                                        className='text-base py-2 font-medium dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500'
-                                        placeholder='Số nhà, tên đường...'
-                                    />
-                                </Form.Item>
-                            </div>
-                            <Form.Item
-                                name='note'
-                                label="Ghi chú"
-                                rules={[
-                                    { max: 500, message: 'Ghi chú không được vượt quá 500 ký tự!' }
-                                ]}
-                            >
-                                <TextArea
-                                    name='note'
-                                    rows={4}
-                                    className='text-base font-medium dark:bg-slate-700 dark:text-white dark:hover:bg-slate-500 dark:focus:bg-slate-500'
-                                    placeholder='Ghi chú đơn hàng (tùy chọn)'
-                                    showCount
-                                    maxLength={500}
-                                />
-                            </Form.Item>
-                            <Button
-                                type='primary'
-                                htmlType='submit'
-                                className='!h-24 !block !text-center !w-full'
-                                disabled={!cart || cart.cartItems.length === 0 || calculateTotal() < 100000}
-                                loading={false}
-                            >
-                                <h2 className='font-bold uppercase text-2xl'>
-                                    {(!cart || cart.cartItems.length === 0)
-                                        ? 'Giỏ hàng trống'
-                                        : calculateTotal() < 100000
-                                            ? 'Chưa đủ đơn tối thiểu'
-                                            : 'Đặt hàng'
-                                    }
-                                </h2>
-                                <div className='text-sm'>
-                                    {(!cart || cart.cartItems.length === 0)
-                                        ? 'Vui lòng thêm sản phẩm vào giỏ hàng'
-                                        : calculateTotal() < 100000
-                                            ? 'Đơn hàng tối thiểu 100.000đ'
-                                            : 'Tư vấn viên sẽ gọi điện thoại để xác nhận'
-                                    }
+                                    <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                                        <CarOutlined className="text-blue-500 text-lg" />
+                                        <span className="text-xs text-gray-600 dark:text-gray-300">Giao hàng toàn quốc</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
+                                        <CustomerServiceOutlined className="text-orange-500 text-lg" />
+                                        <span className="text-xs text-gray-600 dark:text-gray-300">Hỗ trợ 24/7</span>
+                                    </div>
                                 </div>
-                            </Button>
-                        </Form>
-                    </div>
-                </div >
-            </div >
+                            </div>
+
+                            {/* Checkout Form Column */}
+                            <div className="col-span-12 lg:col-span-5">
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 sticky top-24">
+                                    <div className="p-5">
+                                        <h2 className="font-bold text-lg text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                                            <i className="fa-solid fa-clipboard-list text-blue-500"></i>
+                                            Thông tin đặt hàng
+                                        </h2>
+
+                                        {/* User Profile Badge */}
+                                        {user && profile ? (
+                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 mb-4 border border-blue-100 dark:border-blue-800">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                                        {profile.fullname?.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="font-semibold text-sm text-gray-800 dark:text-blue-200 truncate">{profile.fullname}</p>
+                                                        <p className="text-xs text-gray-500 dark:text-blue-300 truncate">{profile.email}</p>
+                                                    </div>
+                                                    <span className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full"></span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 mb-4 border border-amber-200 dark:border-amber-800">
+                                                <p className="text-sm text-amber-700 dark:text-amber-300">
+                                                    <Link href="#" className="text-blue-500 font-semibold hover:underline">Đăng nhập</Link>
+                                                    {" "}để tự động điền thông tin và sử dụng địa chỉ đã lưu.
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        <Form
+                                            form={form}
+                                            onFinish={handlePlaceOrder}
+                                            layout="vertical"
+                                            className="cart-checkout-form"
+                                            initialValues={{
+                                                fullname: profile?.fullname || "",
+                                                phone: profile?.phone || "",
+                                                email: profile?.email || "",
+                                                savedAddress: profile?.addresses && profile.addresses.length > 0 ? profile.addresses[0]._id : "new",
+                                                note: ""
+                                            }}
+                                        >
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <Form.Item
+                                                    name='fullname'
+                                                    label={<span className="text-xs font-medium">Họ và tên</span>}
+                                                    rules={[
+                                                        { required: true, message: 'Vui lòng nhập họ tên!' },
+                                                        { min: 2, message: 'Tối thiểu 2 ký tự!' },
+                                                        { max: 50, message: 'Tối đa 50 ký tự!' },
+                                                    ]}
+                                                    className="!mb-3"
+                                                >
+                                                    <Input placeholder="Nhập họ và tên" className="!py-2" />
+                                                </Form.Item>
+                                                <Form.Item
+                                                    name='phone'
+                                                    label={<span className="text-xs font-medium">Số điện thoại</span>}
+                                                    rules={[
+                                                        { required: true, message: 'Vui lòng nhập SĐT!' },
+                                                        { pattern: /^(0|84|\+84)[1-9][0-9]{8,9}$/, message: 'SĐT không hợp lệ!' },
+                                                    ]}
+                                                    className="!mb-3"
+                                                >
+                                                    <Input placeholder="Nhập số điện thoại" className="!py-2" />
+                                                </Form.Item>
+                                            </div>
+
+                                            <Form.Item
+                                                name='email'
+                                                label={<span className="text-xs font-medium">Email</span>}
+                                                rules={[
+                                                    { required: true, message: 'Vui lòng nhập email!' },
+                                                    { type: 'email', message: 'Email không hợp lệ!' },
+                                                ]}
+                                                className="!mb-3"
+                                            >
+                                                <Input placeholder="Nhập email" className="!py-2" />
+                                            </Form.Item>
+
+                                            <Divider className="!my-3" />
+
+                                            {/* Saved Address */}
+                                            {user && profile && savedAddresses.length > 0 && (
+                                                <Form.Item
+                                                    name="savedAddress"
+                                                    label={<span className="text-xs font-medium">Địa chỉ đã lưu</span>}
+                                                    className="!mb-3"
+                                                >
+                                                    <Select
+                                                        placeholder="Chọn địa chỉ hoặc nhập mới"
+                                                        onChange={handleSavedAddressChange}
+                                                        className="w-full"
+                                                    >
+                                                        <Select.Option value="new">+ Nhập địa chỉ mới</Select.Option>
+                                                        {savedAddresses.map((address) => (
+                                                            <Select.Option key={address._id} value={address._id}>
+                                                                {address.isDefault ? '🏠' : '📍'} {address.label} - {address.detailAddress}
+                                                            </Select.Option>
+                                                        ))}
+                                                    </Select>
+                                                </Form.Item>
+                                            )}
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <Form.Item
+                                                    name="province"
+                                                    label={<span className="text-xs font-medium">Tỉnh/Thành phố</span>}
+                                                    rules={[{ required: true, message: 'Chọn tỉnh/TP!' }]}
+                                                    className="!mb-3"
+                                                >
+                                                    <Select
+                                                        placeholder="Chọn tỉnh/TP"
+                                                        loading={loading.provinces}
+                                                        onChange={handleProvinceChange}
+                                                        value={selectedProvince}
+                                                        showSearch
+                                                        filterOption={(input, option) =>
+                                                            (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                                                        }
+                                                    >
+                                                        {provinces.map(province => (
+                                                            <Select.Option key={province.code} value={province.code}>
+                                                                {province.name}
+                                                            </Select.Option>
+                                                        ))}
+                                                    </Select>
+                                                </Form.Item>
+                                                <Form.Item
+                                                    name="district"
+                                                    label={<span className="text-xs font-medium">Quận/Huyện</span>}
+                                                    rules={[{ required: true, message: 'Chọn quận/huyện!' }]}
+                                                    className="!mb-3"
+                                                >
+                                                    <Select
+                                                        placeholder="Chọn quận/huyện"
+                                                        loading={loading.districts}
+                                                        onChange={handleDistrictChange}
+                                                        value={selectedDistrict}
+                                                        disabled={!selectedProvince}
+                                                        showSearch
+                                                        filterOption={(input, option) =>
+                                                            (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                                                        }
+                                                    >
+                                                        {districts.map(district => (
+                                                            <Select.Option key={district.code} value={district.code}>
+                                                                {district.name}
+                                                            </Select.Option>
+                                                        ))}
+                                                    </Select>
+                                                </Form.Item>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <Form.Item
+                                                    name="ward"
+                                                    label={<span className="text-xs font-medium">Phường/Xã</span>}
+                                                    rules={[{ required: true, message: 'Chọn phường/xã!' }]}
+                                                    className="!mb-3"
+                                                >
+                                                    <Select
+                                                        placeholder="Chọn phường/xã"
+                                                        loading={loading.wards}
+                                                        onChange={handleWardChange}
+                                                        value={selectedWard}
+                                                        disabled={!selectedDistrict}
+                                                        showSearch
+                                                        filterOption={(input, option) =>
+                                                            (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+                                                        }
+                                                    >
+                                                        {wards.map(ward => (
+                                                            <Select.Option key={ward.code} value={ward.code}>
+                                                                {ward.name}
+                                                            </Select.Option>
+                                                        ))}
+                                                    </Select>
+                                                </Form.Item>
+                                                <Form.Item
+                                                    name='detailAddress'
+                                                    label={<span className="text-xs font-medium">Địa chỉ cụ thể</span>}
+                                                    rules={[
+                                                        { required: true, message: 'Nhập địa chỉ!' },
+                                                        { min: 5, message: 'Tối thiểu 5 ký tự!' },
+                                                    ]}
+                                                    className="!mb-3"
+                                                >
+                                                    <Input placeholder="Số nhà, tên đường..." className="!py-2" />
+                                                </Form.Item>
+                                            </div>
+
+                                            <Form.Item
+                                                name='note'
+                                                label={<span className="text-xs font-medium">Ghi chú</span>}
+                                                className="!mb-4"
+                                            >
+                                                <TextArea
+                                                    rows={3}
+                                                    placeholder="Ghi chú cho đơn hàng (tùy chọn)"
+                                                    showCount
+                                                    maxLength={500}
+                                                    className="!text-sm"
+                                                />
+                                            </Form.Item>
+
+                                            {/* Order Summary */}
+                                            <div className="bg-gray-50 dark:bg-gray-750 rounded-lg p-3 mb-4 space-y-2">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-500">Tạm tính ({cart.cartItems.length} sản phẩm)</span>
+                                                    <span className="font-medium">{formatCurrencyVND(calculateTotal())}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-500">Phí vận chuyển</span>
+                                                    <span className="font-medium text-green-600">
+                                                        {calculateTotal() >= 2000000 ? 'Miễn phí' : 'Tính khi giao hàng'}
+                                                    </span>
+                                                </div>
+                                                <Divider className="!my-2" />
+                                                <div className="flex justify-between">
+                                                    <span className="font-bold text-gray-800 dark:text-white">Tổng cộng</span>
+                                                    <span className="font-bold text-xl text-red-500">{formatCurrencyVND(calculateTotal())}</span>
+                                                </div>
+                                            </div>
+
+                                            <Button
+                                                type='primary'
+                                                htmlType='submit'
+                                                block
+                                                size="large"
+                                                className="!h-14 !rounded-lg !font-bold !text-base"
+                                                disabled={!cart || cart.cartItems.length === 0 || calculateTotal() < 100000}
+                                            >
+                                                {(!cart || cart.cartItems.length === 0)
+                                                    ? 'Giỏ hàng trống'
+                                                    : calculateTotal() < 100000
+                                                        ? `Thêm ${formatCurrencyVND(100000 - calculateTotal())} để đặt hàng`
+                                                        : 'ĐẶT HÀNG NGAY'
+                                                }
+                                            </Button>
+                                            <p className="text-center text-xs text-gray-400 mt-2">
+                                                Nhân viên sẽ liên hệ xác nhận đơn hàng qua điện thoại
+                                            </p>
+                                        </Form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        /* Empty Cart State */
+                        <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div className="w-32 h-32 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
+                                <ShoppingCartOutlined className="text-6xl text-blue-300 dark:text-blue-500" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">Giỏ hàng trống</h2>
+                            <p className="text-gray-400 mb-6 text-center max-w-md">
+                                Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm công nghệ hấp dẫn ngay!
+                            </p>
+                            <Link
+                                href="/home"
+                                className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-8 py-3 rounded-lg transition-colors shadow-sm"
+                            >
+                                Tiếp tục mua sắm
+                            </Link>
+                        </div>
+                    )}
+                </div>
+            </div>
         </>
     );
 }

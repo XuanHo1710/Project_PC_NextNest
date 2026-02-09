@@ -104,7 +104,6 @@ export class ProductService {
   }
 
   async findBySlug(slug: string) {
-    console.log('slug', slug);
     const product = await this.productModel
       .findOne({ slug, isDeleted: false })
       .populate('brand')
@@ -123,7 +122,17 @@ export class ProductService {
         })
         .exec();
       if (defaultVariant) {
-        product['defaultVariant'] = defaultVariant.toObject();
+        const obj = defaultVariant.toObject();
+
+        const responseVariant = {
+          ...obj,
+          combination:
+            obj.combination instanceof Map
+              ? Object.fromEntries(obj.combination)
+              : obj.combination,
+        };
+
+        product['defaultVariant'] = responseVariant;
       }
     }
     // Fetch all variants for this product
@@ -140,7 +149,6 @@ export class ProductService {
       })
       .exec();
     product['allowValues'] = allowValues;
-    console.log('product', product);
     return product;
   }
 

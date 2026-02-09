@@ -1,20 +1,21 @@
 // ============== ORDER & CART ==============
 
-import type { IProductCard } from "./product";
+import type { IProductCard, IProductVariant } from "./product";
 
 export interface ICartItem {
-  product: IProductCard;
-  variant?: {
+  product: IProductCard; // Product info for display (name, slug, brand, category)
+  variant: {
     _id: string;
     sku: string;
     price: number;
     discount: number;
+    stock: number;
     images: string[];
     combination: Record<string, string>;
   };
   quantity: number;
   subtotal: number;
-  price: number;
+  price: number; // Unit price after discount
 }
 
 export interface ICart {
@@ -22,6 +23,14 @@ export interface ICart {
   cartItems: ICartItem[];
   total: number;
   guestId: string;
+}
+
+// Server cart item shape (what backend returns after populate)
+export interface IServerCartItem {
+  product: IProductVariant & { product?: IProductCard };
+  quantity: number;
+  subtotal: number;
+  price: number;
 }
 
 export interface IOrderData {
