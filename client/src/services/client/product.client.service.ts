@@ -306,6 +306,8 @@ class ProductClientService {
     page = 1,
     limit = 12,
     sort?: string,
+    cpu?: string,
+    ram?: string,
   ): Promise<{
     items: IProductCard[];
     totalItems: number;
@@ -320,9 +322,38 @@ class ProductClientService {
     const response = await axiosClient.get(
       `${this.baseURL}/collection/${slug}`,
       {
-        params: { page, limit, sort },
+        params: { page, limit, sort, cpu, ram },
       },
     );
+    return response.data;
+  }
+
+  /**
+   * Get products for homepage "Gợi ý cho bạn" section
+   */
+  async getClientProducts(
+    page = 1,
+    limit = 20,
+  ): Promise<{
+    items: IProductCard[];
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  }> {
+    const response = await axiosClient.get(`${this.baseURL}/client-products`, {
+      params: { page, limit },
+    });
+    return response.data;
+  }
+
+  /**
+   * Get top discount products for homepage carousel
+   */
+  async getTopDiscountProducts(limit = 20): Promise<IProductCard[]> {
+    const response = await axiosClient.get(`${this.baseURL}/top-discount`, {
+      params: { limit },
+    });
     return response.data;
   }
 

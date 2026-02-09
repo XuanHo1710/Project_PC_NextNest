@@ -203,8 +203,137 @@ export class ProductService {
     return { message: 'Product deleted successfully', data: product };
   }
 
+  // ============= CLIENT PRODUCT APIs =============
+
+  /**
+   * Get products for client homepage "Gợi ý cho bạn"
+   * Returns ACTIVE products with populated defaultVariant
+   */
+  async findAllClientProducts(page = 1, limit = 20) {
+    const query: any = { isDeleted: false, status: 'ACTIVE' };
+    const skip = (page - 1) * limit;
+
+    const [products, total] = await Promise.all([
+      this.productModel
+        .find(query)
+        .populate('brand', 'name slug logo')
+        .populate('category', 'name slug')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.productModel.countDocuments(query).exec(),
+    ]);
+
+    const items = await Promise.all(
+      products.map(async (product) => {
+        if (product.defaultProductVariantId) {
+          const variant = await this.productVariantModel
+            .findOne({
+              _id: product.defaultProductVariantId,
+              isDeleted: false,
+            })
+            .lean()
+            .exec();
+          if (variant) {
+            product['defaultVariant'] = {
+              ...variant,
+              combination:
+                variant.combination instanceof Map
+                  ? Object.fromEntries(variant.combination)
+                  : variant.combination,
+            };
+          }
+        }
+        return product;
+      }),
+    );
+
+    return {
+      items,
+      totalItems: total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      limit,
+    };
+  }
+
+  /**
+   * Get top discount products (highest discount variants)
+   * Also auto-updates each product's defaultProductVariantId to the highest discount variant
+   */
+  async getTopDiscountProducts(limit = 20) {
+    // Find top discount variants, grouped by product
+    const topVariants = await this.productVariantModel.aggregate([
+      { $match: { isDeleted: false, discount: { $gt: 0 }, stock: { $gt: 0 } } },
+      { $sort: { discount: -1 } },
+      {
+        $group: {
+          _id: '$product',
+          topVariant: { $first: '$$ROOT' },
+        },
+      },
+      { $sort: { 'topVariant.discount': -1 } },
+      { $limit: limit },
+    ]);
+
+    if (topVariants.length === 0) return [];
+
+    // Auto-update defaultProductVariantId for each product
+    const updatePromises = topVariants.map((item) =>
+      this.productModel.updateOne(
+        { _id: item._id },
+        { $set: { defaultProductVariantId: item.topVariant._id } },
+      ),
+    );
+    await Promise.all(updatePromises);
+
+    // Fetch products with populated fields
+    const productIds = topVariants.map((v) => v._id);
+    const products = await this.productModel
+      .find({ _id: { $in: productIds }, isDeleted: false, status: 'ACTIVE' })
+      .populate('brand', 'name slug logo')
+      .populate('category', 'name slug')
+      .lean()
+      .exec();
+
+    // Attach the top variant as defaultVariant
+    const variantMap = new Map(
+      topVariants.map((v) => [v._id.toString(), v.topVariant]),
+    );
+
+    const items = products
+      .map((product) => {
+        const variant = variantMap.get(product._id.toString());
+        if (variant) {
+          product['defaultVariant'] = {
+            ...variant,
+            combination:
+              variant.combination instanceof Map
+                ? Object.fromEntries(variant.combination)
+                : variant.combination,
+          };
+        }
+        return product;
+      })
+      .sort((a, b) => {
+        const dA = a['defaultVariant']?.discount || 0;
+        const dB = b['defaultVariant']?.discount || 0;
+        return dB - dA;
+      });
+
+    return items;
+  }
+
   // ============= COLLECTION (Category + Brand by Slug) =============
-  async findByCollection(slug: string, page = 1, limit = 12, sort?: string) {
+  async findByCollection(
+    slug: string,
+    page = 1,
+    limit = 12,
+    sort?: string,
+    filters?: { cpu?: string; ram?: string },
+  ) {
     // Find by category slug or brand slug using $or
     const [category, brand] = await Promise.all([
       this.categoryModel
@@ -229,6 +358,44 @@ export class ProductService {
       query.$or = conditions;
     } else {
       Object.assign(query, conditions[0]);
+    }
+
+    // Apply CPU/RAM filters via variant combination matching
+    if (filters?.cpu || filters?.ram) {
+      const variantFilter: any = { isDeleted: false };
+      const combinationConditions: any[] = [];
+
+      if (filters.cpu) {
+        // Match any combination key containing 'cpu' (case-insensitive) with value containing the filter
+        combinationConditions.push({
+          $or: [
+            { [`combination.CPU`]: { $regex: filters.cpu, $options: 'i' } },
+            { [`combination.cpu`]: { $regex: filters.cpu, $options: 'i' } },
+            { [`combination.Cpu`]: { $regex: filters.cpu, $options: 'i' } },
+          ],
+        });
+      }
+
+      if (filters.ram) {
+        combinationConditions.push({
+          $or: [
+            { [`combination.RAM`]: { $regex: filters.ram, $options: 'i' } },
+            { [`combination.ram`]: { $regex: filters.ram, $options: 'i' } },
+            { [`combination.Ram`]: { $regex: filters.ram, $options: 'i' } },
+          ],
+        });
+      }
+
+      if (combinationConditions.length > 0) {
+        variantFilter.$and = combinationConditions;
+      }
+
+      const matchingVariants = await this.productVariantModel
+        .find(variantFilter)
+        .distinct('product')
+        .exec();
+
+      query._id = { ...query._id, $in: matchingVariants };
     }
 
     let sortOption: any = { createdAt: -1 };

@@ -44,12 +44,36 @@ export class ProductController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('sort') sort?: string,
+    @Query('cpu') cpu?: string,
+    @Query('ram') ram?: string,
   ) {
     return this.productService.send('product.findByCollection', {
       slug,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 12,
       sort: sort || '',
+      cpu: cpu || '',
+      ram: ram || '',
+    });
+  }
+
+  @Get('client-products')
+  @Public()
+  findAllClientProducts(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.productService.send('product.findAllClient', {
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+    });
+  }
+
+  @Get('top-discount')
+  @Public()
+  getTopDiscountProducts(@Query('limit') limit?: string) {
+    return this.productService.send('product.topDiscount', {
+      limit: limit ? parseInt(limit, 10) : 20,
     });
   }
 

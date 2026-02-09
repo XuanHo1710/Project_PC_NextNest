@@ -6,7 +6,7 @@ import { IProductCard } from "@/types/product";
 import { ICategory } from "@/types/category";
 import { IBrand } from "@/types/brand";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Drawer, Image, Pagination, Checkbox, message } from "antd";
+import { Button, Drawer, Image, Pagination, Checkbox, message, Select } from "antd";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -48,13 +48,17 @@ export default function CollectionPage() {
 
     // Filter states
     const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
+    const [selectedCpu, setSelectedCpu] = useState<string>("");
+    const [selectedRam, setSelectedRam] = useState<string>("");
 
     const sort = searchParams.get("sort") || "";
+    const cpuParam = searchParams.get("cpu") || "";
+    const ramParam = searchParams.get("ram") || "";
 
     // Single API call: fetches products + collection info (category or brand)
     const { data: collectionData, isLoading } = useQuery<CollectionResponse | null>({
-        queryKey: ['collection', slug, page, sort],
-        queryFn: () => productClientService.getCollectionProducts(slug as string, page, 12, sort || undefined),
+        queryKey: ['collection', slug, page, sort, cpuParam, ramParam],
+        queryFn: () => productClientService.getCollectionProducts(slug as string, page, 12, sort || undefined, cpuParam || undefined, ramParam || undefined),
         enabled: !!slug,
         staleTime: 1000 * 60 * 5,
     });
@@ -93,6 +97,55 @@ export default function CollectionPage() {
         router.push(`/collection/${slug}?${params.toString()}`);
     };
 
+    const handleApplyFilters = () => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (selectedCpu) {
+            params.set("cpu", selectedCpu);
+        } else {
+            params.delete("cpu");
+        }
+        if (selectedRam) {
+            params.set("ram", selectedRam);
+        } else {
+            params.delete("ram");
+        }
+        params.delete("page");
+        setPage(1);
+        router.push(`/collection/${slug}?${params.toString()}`);
+    };
+
+    const handleClearFilters = () => {
+        setSelectedCpu("");
+        setSelectedRam("");
+        setSelectedPrices([]);
+        const params = new URLSearchParams();
+        if (sort) params.set("sort", sort);
+        router.push(`/collection/${slug}?${params.toString()}`);
+    };
+
+    const cpuOptions = [
+        { label: 'Intel Core i3', value: 'i3' },
+        { label: 'Intel Core i5', value: 'i5' },
+        { label: 'Intel Core i7', value: 'i7' },
+        { label: 'Intel Core i9', value: 'i9' },
+        { label: 'AMD Ryzen 3', value: 'Ryzen 3' },
+        { label: 'AMD Ryzen 5', value: 'Ryzen 5' },
+        { label: 'AMD Ryzen 7', value: 'Ryzen 7' },
+        { label: 'AMD Ryzen 9', value: 'Ryzen 9' },
+        { label: 'Apple M1', value: 'M1' },
+        { label: 'Apple M2', value: 'M2' },
+        { label: 'Apple M3', value: 'M3' },
+        { label: 'Apple M4', value: 'M4' },
+    ];
+
+    const ramOptions = [
+        { label: '4GB', value: '4GB' },
+        { label: '8GB', value: '8GB' },
+        { label: '16GB', value: '16GB' },
+        { label: '32GB', value: '32GB' },
+        { label: '64GB', value: '64GB' },
+    ];
+
     const prices = [
         { label: 'Dưới 10 triệu', value: 'price_0-10' },
         { label: '10 - 15 triệu', value: 'price_10-15' },
@@ -125,10 +178,32 @@ export default function CollectionPage() {
                 placement="bottom"
                 onClose={() => setDrawerOpen(false)}
                 open={drawerOpen}
-                height={400}
+                height={500}
             >
-                <div className="mb-5">
-                    <h3 className="uppercase font-semibold py-3 border-b-2 border-stone-200">Khoảng giá</h3>
+                <div className="mb-4">
+                    <h3 className="uppercase font-semibold py-2 border-b-2 border-stone-200">CPU</h3>
+                    <Select
+                        placeholder="Chọn CPU"
+                        className="w-full mt-2"
+                        value={selectedCpu || undefined}
+                        onChange={(val) => setSelectedCpu(val || "")}
+                        allowClear
+                        options={cpuOptions}
+                    />
+                </div>
+                <div className="mb-4">
+                    <h3 className="uppercase font-semibold py-2 border-b-2 border-stone-200">RAM</h3>
+                    <Select
+                        placeholder="Chọn RAM"
+                        className="w-full mt-2"
+                        value={selectedRam || undefined}
+                        onChange={(val) => setSelectedRam(val || "")}
+                        allowClear
+                        options={ramOptions}
+                    />
+                </div>
+                <div className="mb-4">
+                    <h3 className="uppercase font-semibold py-2 border-b-2 border-stone-200">Khoảng giá</h3>
                     <Checkbox.Group
                         className="flex flex-col gap-3 mt-3 font-medium text-black dark:text-white"
                         options={prices}
@@ -136,9 +211,21 @@ export default function CollectionPage() {
                         onChange={setSelectedPrices}
                     />
                 </div>
-                <Button className="uppercase w-full my-3 py-6 border-blue-500 font-bold text-blue-500">
+                <Button
+                    type="primary"
+                    className="uppercase w-full my-2 py-5"
+                    onClick={() => { handleApplyFilters(); setDrawerOpen(false); }}
+                >
                     Lọc sản phẩm
                 </Button>
+                {(selectedCpu || selectedRam || selectedPrices.length > 0) && (
+                    <Button
+                        className="w-full py-5"
+                        onClick={() => { handleClearFilters(); setDrawerOpen(false); }}
+                    >
+                        Xóa bộ lọc
+                    </Button>
+                )}
             </Drawer>
 
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
@@ -181,6 +268,34 @@ export default function CollectionPage() {
                     <div className="hidden lg:block lg:col-span-3">
                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 sticky top-24">
                             <h3 className="font-bold text-base mb-4 text-gray-800 dark:text-white">Bộ lọc</h3>
+
+                            {/* CPU Filter */}
+                            <div className="mb-5">
+                                <h4 className="uppercase text-xs font-semibold text-gray-500 py-2 border-b border-stone-200">CPU</h4>
+                                <Select
+                                    placeholder="Chọn CPU"
+                                    className="w-full mt-2"
+                                    value={selectedCpu || undefined}
+                                    onChange={(val) => setSelectedCpu(val || "")}
+                                    allowClear
+                                    options={cpuOptions}
+                                />
+                            </div>
+
+                            {/* RAM Filter */}
+                            <div className="mb-5">
+                                <h4 className="uppercase text-xs font-semibold text-gray-500 py-2 border-b border-stone-200">RAM</h4>
+                                <Select
+                                    placeholder="Chọn RAM"
+                                    className="w-full mt-2"
+                                    value={selectedRam || undefined}
+                                    onChange={(val) => setSelectedRam(val || "")}
+                                    allowClear
+                                    options={ramOptions}
+                                />
+                            </div>
+
+                            {/* Price Filter */}
                             <div className="mb-5">
                                 <h4 className="uppercase text-xs font-semibold text-gray-500 py-2 border-b border-stone-200">Khoảng giá</h4>
                                 <Checkbox.Group
@@ -190,6 +305,22 @@ export default function CollectionPage() {
                                     onChange={setSelectedPrices}
                                 />
                             </div>
+
+                            <Button
+                                type="primary"
+                                className="w-full mb-2"
+                                onClick={handleApplyFilters}
+                            >
+                                Lọc sản phẩm
+                            </Button>
+                            {(selectedCpu || selectedRam || selectedPrices.length > 0) && (
+                                <Button
+                                    className="w-full"
+                                    onClick={handleClearFilters}
+                                >
+                                    Xóa bộ lọc
+                                </Button>
+                            )}
                         </div>
                     </div>
 

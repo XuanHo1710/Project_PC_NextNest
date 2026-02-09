@@ -211,11 +211,11 @@ export default function ProfileAddress() {
 
             if (editingAddress) {
                 // Update existing address
-                await accountGuestService.updateAddress(user.id, editingAddress._id!, addressData);
+                await accountGuestService.updateAddress(editingAddress._id!, addressData);
                 message.success('Cập nhật địa chỉ thành công!');
             } else {
                 // Add new address
-                await accountGuestService.addAddress(user.id, addressData);
+                await accountGuestService.addAddress(addressData);
                 message.success('Thêm địa chỉ mới thành công!');
             }
 

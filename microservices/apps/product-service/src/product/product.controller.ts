@@ -60,6 +60,8 @@ export class ProductController {
       page?: number;
       limit?: number;
       sort?: string;
+      cpu?: string;
+      ram?: string;
     },
   ) {
     return this.productService.findByCollection(
@@ -67,7 +69,18 @@ export class ProductController {
       data.page,
       data.limit,
       data.sort,
+      { cpu: data.cpu, ram: data.ram },
     );
+  }
+
+  @MessagePattern('product.findAllClient')
+  findAllClientProducts(@Payload() data: { page?: number; limit?: number }) {
+    return this.productService.findAllClientProducts(data?.page, data?.limit);
+  }
+
+  @MessagePattern('product.topDiscount')
+  getTopDiscountProducts(@Payload() data: { limit?: number }) {
+    return this.productService.getTopDiscountProducts(data?.limit);
   }
 
   @MessagePattern('product.findBySlug')

@@ -3,37 +3,27 @@ import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { categoryClientService, productClientService } from "@/services/client";
 import { ICategory } from "@/types/category";
 import { IBrand } from "@/types/brand";
-import { IProduct } from "@/types/product";
-import { ICategoryPreview } from "@/types/category";
 import { IProductCard } from "@/types/product";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Carousel, Image, Spin } from "antd";
+import { Carousel, Spin } from "antd";
 import Link from "next/link";
 import { HomePageSkeleton } from "@/components/Skeletons";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import { getProductDiscount } from "@/utils/productHelpers";
 
 import { MdKeyboardArrowRight, MdLaptopChromebook, MdPhoneIphone, MdTv, MdHeadset, MdCameraAlt, MdWatch } from "react-icons/md";
-import { useState } from "react";
 
 
 export default function HomeClient() {
-    const [type, setType] = useState<string>("");
-
-    const { data: categoriesPreview, isLoading } = useQuery<ICategoryPreview[] | []>({
-        queryKey: ['categories-preview'], // key để cache
-        queryFn: () => categoryClientService.getCategoriesPreview(),
-        staleTime: 1000 * 60 * 5,
-    });
+    // const { data: categoriesPreview, isLoading: isLoadingPreview } = useQuery<ICategoryPreview[] | []>({
+    //     queryKey: ['categories-preview'],
+    //     queryFn: () => categoryClientService.getCategoriesPreview(),
+    //     staleTime: 1000 * 60 * 5,
+    // });
 
     const { data: categories } = useQuery<ICategory[] | []>({
-        queryKey: ['categories'], // key để cache
+        queryKey: ['categories'],
         queryFn: () => categoryClientService.getAllCategories(),
-        staleTime: 1000 * 60 * 5,
-    });
-
-    const { data: featureProducts, isLoading: isLoadingFeature } = useQuery<IProductCard[] | []>({
-        queryKey: ['feature-products', type],
-        queryFn: () => productClientService.getBannerProducts(type),
         staleTime: 1000 * 60 * 5,
     });
 
@@ -43,9 +33,19 @@ export default function HomeClient() {
         staleTime: 1000 * 60 * 10,
     });
 
+    const { data: clientProducts, isLoading: isLoadingProducts } = useQuery<{ items: IProductCard[] }>({
+        queryKey: ['client-products'],
+        queryFn: () => productClientService.getClientProducts(1, 20),
+        staleTime: 1000 * 60 * 5,
+    });
 
+    const { data: topDiscountProducts } = useQuery<IProductCard[]>({
+        queryKey: ['top-discount-products'],
+        queryFn: () => productClientService.getTopDiscountProducts(20),
+        staleTime: 1000 * 60 * 5,
+    });
 
-    if (isLoading || isLoadingFeature) {
+    if (isLoadingProducts) {
         return <HomePageSkeleton />
     }
 
@@ -74,9 +74,20 @@ export default function HomeClient() {
         },
     ];
 
-    const handleChangeFeature = (type: string) => {
-        setType(type);
-    };
+    const brandResponsiveSettings = [
+        {
+            breakpoint: 1024,
+            settings: { slidesToShow: 4, slidesToScroll: 1 },
+        },
+        {
+            breakpoint: 800,
+            settings: { slidesToShow: 3, slidesToScroll: 1 },
+        },
+        {
+            breakpoint: 600,
+            settings: { slidesToShow: 2, slidesToScroll: 1 },
+        },
+    ];
 
     const ListIcon = [
         <MdLaptopChromebook key={1} className="text-xl" />,
@@ -97,10 +108,10 @@ export default function HomeClient() {
                 ogImage="/logo.jpg"
             />
             <div className="dark:bg-slate-900 md:pt-3 pt-52 py-10 bg-slate-50">
+                {/* Category sidebar + placeholder for banner (commented out — APIs not ready) */}
                 <div className='content-header mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5'>
                     <div className='row-span-3 hidden xl:block col-span-3 rounded-lg shadow-lg bg-white'>
                         <ul style={{ scrollbarWidth: "none" }} className='m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-blue-950'>
-                            <Spin spinning={isLoading} size="large" />
                             {categories && categories.length > 0 && categories.map((category, index) => (
                                 <Link key={category._id} href={`/collection/${category.slug}`}>
                                     <li className='w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-blue-100 hover:text-blue-500 px-6 py-3 flex items-center'>
@@ -111,208 +122,49 @@ export default function HomeClient() {
                             ))}
                         </ul>
                     </div>
-                    <div className='col-span-12 xl:col-span-6 row-span-2'>
+                    {/* Banner carousel — commented out (API chưa có) */}
+                    {/* <div className='col-span-12 xl:col-span-6 row-span-2'>
                         <Carousel autoplay arrows autoplaySpeed={2500} dots={false}>
-                            <Image
-                                src='https://hoanghapccdn.com/media/banner/19_12-396775e024dad81b1084c0dc4ed14390.jpg'
-                                preview={false}
-                                className='rounded'
-                                alt="AnhGiangSinh"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover", // Đảm bảo ảnh phủ toàn bộ Carousel
-                                }}
-                            />
-
-                            <Image
-                                src='https://hoanghapccdn.com/media/banner/04_11-dca01f31346b48ad8656ccd1ea50432a.jpg'
-                                preview={false}
-                                className='rounded'
-                                alt="AnhGiangSinh"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover", // Đảm bảo ảnh phủ toàn bộ Carousel
-                                }}
-                            />
-
-                            <Image
-                                src='https://hoanghapccdn.com/media/banner/30_11-0861730b0853038b309107cc73c47fca.jpg'
-                                preview={false}
-                                className='rounded object-cover'
-                                alt="AnhGiangSinh"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover", // Đảm bảo ảnh phủ toàn bộ Carousel
-                                }}
-                            />
-
-                            <Image
-                                src='https://hoanghapccdn.com/media/banner/08_08-4c3b1c18af0454d4ede41f9d926b5144.jpg'
-                                preview={false}
-                                className='rounded object-cover'
-                                alt="AnhGiangSinh"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover", // Đảm bảo ảnh phủ toàn bộ Carousel
-                                }}
-                            />
-
-                            <Image
-                                src='https://hoanghapccdn.com/media/banner/30_11-c9a3ef925ef41a91115da0938bf91b34.jpg'
-                                preview={false}
-                                className='rounded'
-                                alt="AnhGiangSinh"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover", // Đảm bảo ảnh phủ toàn bộ Carousel
-                                }}
-                            />
+                            ... banner images ...
                         </Carousel>
-                    </div>
-                    <div className='col-span-6 xl:col-span-3 img-hover relative overflow-hidden cursor-pointer'>
-                        <Image
-                            src='https://hoanghapccdn.com/media/banner/10_12-2906c45f5aa9cc1f70200a19dc2a91f0.jpg'
-                            preview={false}
-                            className='rounded-lg'
-                            alt="BannerPromotion"
-                        />
-                    </div>
-                    <div className='col-span-6 xl:col-span-3 img-hover relative overflow-hidden cursor-pointer'>
-                        <Image
-                            src='https://hoanghapccdn.com/media/banner/10_12-3ac52790a24dbfc2563ca090d5937912.jpg'
-                            preview={false}
-                            className='rounded-lg'
-                            alt="BannerPromotion"
-                        />
-                    </div>
-                    <div className='col-span-6 xl:col-span-3 img-hover relative overflow-hidden cursor-pointer'>
-                        <Image
-                            src='https://hoanghapccdn.com/media/banner/10_12-e1a62b6fabf446ea5147cb3fe78b3d1a.jpg'
-                            preview={false}
-                            className='rounded-lg'
-                            alt="BannerPromotion"
-                        />
-                    </div>
-                    <div className='col-span-6 xl:col-span-3 img-hover relative overflow-hidden cursor-pointer'>
-                        <Image
-                            src='https://hoanghapccdn.com/media/banner/10_12-159fb99633969cadb30627ba6ccea31c.jpg'
-                            preview={false}
-                            className='rounded-lg'
-                            alt="BannerPromotion"
-                        />
-                    </div>
-                    <div className='col-span-6 xl:col-span-3 img-hover relative overflow-hidden cursor-pointer'>
-                        <Image
-                            src='https://hoanghapccdn.com/media/banner/10_12-ba62370217c50916330b44e260fbceba.jpg'
-                            preview={false}
-                            className='rounded-lg'
-                            alt="BannerPromotion"
-                        />
-                    </div>
-                    <div className='col-span-6 xl:col-span-3 img-hover relative overflow-hidden cursor-pointer'>
-                        <Image
-                            src='https://hoanghapccdn.com/media/banner/10_12-81ab60c0c9a80c6b6dff7bf9fca94ffa.jpg'
-                            preview={false}
-                            className='rounded-lg'
-                            alt="BannerPromotion"
-                        />
-                    </div>
-                    <div className='col-span-6 xl:col-span-3 img-hover relative overflow-hidden cursor-pointer'>
-                        <Image
-                            src='https://hoanghapccdn.com/media/banner/10_12-eb6e14906117c2b5a8729e7c9c293942.jpg'
-                            preview={false}
-                            className='rounded-lg'
-                            alt="BannerPromotion"
-                        />
-                    </div>
-                    <div className='col-span-6 xl:col-span-3 img-hover relative overflow-hidden cursor-pointer'>
-                        <Image
-                            src='https://hoanghapccdn.com/media/banner/10_12-77f4accd855186627e29ed36474e6fbb.jpg'
-                            preview={false}
-                            className='rounded-lg'
-                            alt="BannerPromotion"
-                        />
-                    </div>
-                    <div className='col-span-6 xl:col-span-3 img-hover relative overflow-hidden cursor-pointer'>
-                        <Image
-                            src='https://hoanghapccdn.com/media/banner/10_12-0ac681a53e44b6b59d4a8fdd60f29cb2.jpg'
-                            preview={false}
-                            className='rounded-lg'
-                            alt="BannerPromotion"
-                        />
+                    </div> */}
+                    <div className='col-span-12 xl:col-span-9 row-span-3 flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg min-h-[300px]'>
+                        <div className='text-center text-white p-8'>
+                            <h2 className='text-3xl md:text-4xl font-extrabold mb-3'>PC Store</h2>
+                            <p className='text-lg md:text-xl opacity-90'>Khơi nguồn đam mê, chạm đến đỉnh công nghệ!</p>
+                        </div>
                     </div>
                 </div>
-                <div className='content-center my-10'>
-                    <div className='mx-5 xl:mx-32 grid grid-flow-row grid-cols-6 lg:flex gap-2 lg:gap-4 my-16'>
-                        <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={() => handleChangeFeature("")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "" ? "active" : "")}>
-                                <div className='flex-wrap'>
-                                    <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Top PC Bán Chạy</h2>
-                                    <p className='hidden md:block font-medium'>Nhất năm 2025</p>
-                                </div>
-                            </Button>
+
+                {/* ============= TOP DISCOUNT PRODUCTS CAROUSEL ============= */}
+                {topDiscountProducts && topDiscountProducts.length > 0 && (
+                    <div className='mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-8 px-7 shadow-lg'>
+                        <div className='flex items-center justify-between mb-6'>
+                            <h1 className='text-xl md:text-3xl font-bold text-red-500'>
+                                🔥 Khuyến mãi hot - Top {topDiscountProducts.length} sản phẩm giảm giá sốc
+                            </h1>
                         </div>
-                        <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={() => handleChangeFeature("aio")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "aio" ? "active" : "")}>
-                                <div className='flex-wrap'>
-                                    <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Giải nhiệt pc</h2>
-                                    <p className='hidden md:block font-medium'>Nâng cao hiệu suất</p>
-                                </div>
-                            </Button>
-                        </div>
-                        <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={() => handleChangeFeature("pc")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "pc" ? "active" : "")}>
-                                <div className='flex-wrap'>
-                                    <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Top PC Cực Khủng</h2>
-                                    <p className='hidden md:block font-medium'>Dành cho dân đồ họa</p>
-                                </div>
-                            </Button>
-                        </div>
-                        <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={() => handleChangeFeature("screen")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "screen" ? "active" : "")}>
-                                <div className='flex-wrap'>
-                                    <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>màn hình đồ họa</h2>
-                                    <p className='hidden md:block font-medium'>Nhiều ưu đãi hấp dẫn</p>
-                                </div>
-                            </Button>
-                        </div>
-                        <div className='col-span-2 lg:basis-1/5'>
-                            <Button onClick={() => handleChangeFeature("discount")} className={"w-full button !py-7 !rounded-3xl text-blue-700 hover:text-white hover:bg-blue-500 " + (type === "discount" ? "active" : "")}>
-                                <div className='flex-wrap'>
-                                    <h2 className='uppercase font-medium md:font-bold text-xs lg:text-base'>Góc thanh lý</h2>
-                                    <p className='hidden md:block font-medium'>Xả hàng không lợi nhuận</p>
-                                </div>
-                            </Button>
-                        </div>
-                    </div>
-                    <Carousel
-                        slidesToShow={5}
-                        slidesToScroll={1}
-                        draggable
-                        className='mx-5 xl:mx-32 gap-10 pb-12 border-none'
-                        dots={false}
-                        autoplay
-                        arrows
-                        autoplaySpeed={2000}
-                        responsive={responsiveSettings}
-                    >
-                        {featureProducts && featureProducts.length > 0 &&
-                            featureProducts.map((product: IProductCard) => (
-                                <div key={product?._id} className='px-1.5'>
+                        <Carousel
+                            slidesToShow={5}
+                            slidesToScroll={1}
+                            draggable
+                            className='gap-10 pb-6 border-none'
+                            dots={false}
+                            autoplay
+                            arrows
+                            autoplaySpeed={2500}
+                            responsive={responsiveSettings}
+                        >
+                            {topDiscountProducts.map((product: IProductCard) => (
+                                <div key={product._id} className='px-1.5'>
                                     <CardProduct css="p-3" product={product} />
                                 </div>
-                            ))
-                        }
+                            ))}
+                        </Carousel>
+                    </div>
+                )}
 
-                    </Carousel>
-                </div>
-
-                {/* Brand Cards Section */}
+                {/* ============= BRAND CAROUSEL ============= */}
                 {brands && brands.length > 0 && (
                     <div className="mx-5 xl:mx-32 my-10">
                         <div className="flex items-center justify-between mb-6">
@@ -320,80 +172,90 @@ export default function HomeClient() {
                                 Thương hiệu nổi bật
                             </h1>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                        <Carousel
+                            slidesToShow={5}
+                            slidesToScroll={1}
+                            draggable
+                            dots={false}
+                            autoplay
+                            arrows
+                            autoplaySpeed={3000}
+                            responsive={brandResponsiveSettings}
+                            className="brand-carousel pb-4"
+                        >
                             {brands.map((brand) => (
-                                <Link
-                                    key={brand._id}
-                                    href={`/collection/${brand.name.toLowerCase().replace(/\s+/g, '-')}`}
-                                    className="group"
-                                >
-                                    <div className="bg-white dark:bg-blue-950 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 h-full">
-                                        <div className="w-16 h-16 mb-3 flex items-center justify-center">
-                                            {brand.logo ? (
-                                                <img
-                                                    src={brand.logo}
-                                                    alt={brand.name}
-                                                    className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-200"
-                                                />
-                                            ) : (
-                                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                                                    {brand.name.charAt(0)}
-                                                </div>
+                                <div key={brand._id} className="px-2">
+                                    <a
+                                        href={brand.website || `/collection/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
+                                        target={brand.website ? '_blank' : '_self'}
+                                        rel={brand.website ? 'noopener noreferrer' : undefined}
+                                        className="group block"
+                                    >
+                                        <div className="bg-white dark:bg-blue-950 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 h-[180px] justify-center">
+                                            <h3 className="font-bold text-sm md:text-base text-gray-800 dark:text-white group-hover:text-blue-500 transition-colors mb-3">
+                                                {brand.name}
+                                            </h3>
+                                            <div className="w-16 h-16 mb-3 flex items-center justify-center">
+                                                {brand.logo ? (
+                                                    <img
+                                                        src={brand.logo}
+                                                        alt={brand.name}
+                                                        className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-200"
+                                                    />
+                                                ) : (
+                                                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                                        {brand.name.charAt(0)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {brand.description && (
+                                                <p className="text-xs text-gray-400 line-clamp-2">
+                                                    {brand.description}
+                                                </p>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-sm md:text-base text-gray-800 dark:text-white group-hover:text-blue-500 transition-colors">
-                                            {brand.name}
-                                        </h3>
-                                        {brand.description && (
-                                            <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-                                                {brand.description}
-                                            </p>
-                                        )}
-                                    </div>
-                                </Link>
+                                    </a>
+                                </div>
                             ))}
-                        </div>
+                        </Carousel>
                     </div>
                 )}
 
-                <Spin size="large" spinning={isLoading}>
-                    {!isLoading && categoriesPreview && categoriesPreview.length > 0 &&
+                {/* ============= GỢI Ý CHO BẠN - Product Grid ============= */}
+                <div className='mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-8 px-7 shadow-lg'>
+                    <div className='flex items-center justify-between mb-6'>
+                        <h1 className='text-xl md:text-3xl font-bold text-blue-500'>
+                            Gợi ý cho bạn
+                        </h1>
+                    </div>
+                    {clientProducts && clientProducts.items && clientProducts.items.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                            {clientProducts.items.map((product: IProductCard) => (
+                                <div key={product._id}>
+                                    <CardProduct css="p-3" product={product} />
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-10 text-gray-400">
+                            Chưa có sản phẩm nào
+                        </div>
+                    )}
+                </div>
+
+                {/* ============= CATEGORIES PREVIEW — commented out (API chưa có) ============= */}
+                {/* <Spin size="large" spinning={isLoadingPreview}>
+                    {!isLoadingPreview && categoriesPreview && categoriesPreview.length > 0 &&
                         categoriesPreview.map(category => (
                             <div key={category?._id} className='box-promotion mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-lg'>
-                                <div className='flex items-center justify-between'>
-                                    <h1 className='text-xl md:text-3xl font-bold text-blue-500'>{category?.name}</h1>
-                                    <Link href={`/collection/${category?.slug}`}>
-                                        <p className='text-sm font-bold text-slate-500 cursor-pointer'>Xem tất cả</p>
-                                    </Link>
-                                </div>
-                                <Carousel
-                                    slidesToShow={5}
-                                    slidesToScroll={1}
-                                    draggable
-                                    className='mt-12 cursor-grab'
-                                    dots={false}
-                                    autoplay
-                                    arrows
-                                    autoplaySpeed={2000}
-                                    responsive={responsiveSettings}
-                                >
-                                    {category.products.length > 0 &&
-                                        category.products.map(product => (
-                                            <div key={product?._id} className='px-1.5'>
-                                                <CardProduct product={product} css="p-3" />
-                                            </div>
-                                        ))
-                                    }
-                                </Carousel>
-
+                                ...
                             </div>
                         ))
                     }
+                </Spin> */}
 
-                </Spin>
-
-                <div className='h-60 content-center  text-white my-10 flex flex-wrap items-center justify-center font-extrabold text-base sm:text-xl lg:text-4xl cursor-default'>
-                    Khơi nguồn đam mê, chạm đến đỉnh công nghệ!❣️
+                <div className='h-60 content-center text-white my-10 flex flex-wrap items-center justify-center font-extrabold text-base sm:text-xl lg:text-4xl cursor-default'>
+                    Khơi nguồn đam mê, chạm đến đỉnh công nghệ!
                 </div>
                 <div className='mx-5 xl:mx-32 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-md'>
                     <div className='flex items-center justify-center'>
