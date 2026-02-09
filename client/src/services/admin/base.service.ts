@@ -16,7 +16,6 @@ export class BaseService<T> {
   }
 
   async getById(id: string, config?: AxiosRequestConfig): Promise<T> {
-    console.log(id);
     const response = await axiosInstance.get(`${this.baseUrl}/${id}`, config);
     return response.data;
   }

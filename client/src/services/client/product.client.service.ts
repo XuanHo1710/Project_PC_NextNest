@@ -4,6 +4,7 @@ import {
   IProductCard,
   IProductListResponse,
   IProductVariant,
+  APIResponse,
 } from "@/types";
 import { ICategory } from "@/types/category";
 import { IBrand } from "@/types/brand";
@@ -12,8 +13,7 @@ import {
   ICreateProductInteraction,
 } from "@/types/interaction";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 class ProductClientService {
   private baseURL = "/products";
@@ -137,7 +137,7 @@ class ProductClientService {
    */
   async getProductsBySlug(slug: string): Promise<IProductCard> {
     const response = await axiosClient.get(`/product/slug/${slug}`);
-    return response as unknown as IProductCard;
+    return response.data;
   }
 
   /**

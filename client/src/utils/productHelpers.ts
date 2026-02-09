@@ -52,16 +52,6 @@ export function getProductImages(product: IProductCard): string[] {
   return [];
 }
 
-/** Get sold count */
-export function getProductSoldCount(product: IProductCard): number {
-  return product.soldCount || 0;
-}
-
-/** Get stock quantity */
-export function getProductStock(product: IProductCard): number {
-  return product.stock || 0;
-}
-
 /** Format currency in VND */
 export function formatCurrencyVND(amount: number): string {
   return amount.toLocaleString("vi-VN") + " đ";

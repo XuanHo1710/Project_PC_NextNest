@@ -24,7 +24,7 @@ export class ClientAuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     @Inject(MICROSERVICE.REDIS_SERVICE) private readonly redisClient: Redis,
-  ) { }
+  ) {}
 
   async signIn(email: string, password: string) {
     const guest = await this.accountGuestModel
@@ -134,6 +134,8 @@ export class ClientAuthService {
       fullname: accountGuest?.fullname || '',
       authProvider:
         accountGuest?.authProvider || accountGuest.authProvider || 'local',
+      phone: accountGuest.phone,
+      gender: accountGuest.gender,
     };
 
     const access_token = this.createAccessToken(payload);
@@ -218,11 +220,13 @@ export class ClientAuthService {
         accountStatus: payload.accountStatus,
         fullname: payload.fullname,
         authProvider: payload.authProvider,
+        phone: payload.phone,
+        gender: payload.gender,
       };
 
       const access_token = this.createAccessToken(payloadFinal);
 
-      return { access_token, ...payload };
+      return { access_token, payload: payloadFinal };
     } catch (err) {
       throw new BadRequestException(
         'Refresh token không hợp lệ hoặc đã hết hạn',
@@ -293,7 +297,10 @@ export class ClientAuthService {
         `admin_refresh_token:${sessionId}`,
       );
 
-      console.log('[RefreshAdmin] Stored refresh token exists:', !!storedRefreshToken);
+      console.log(
+        '[RefreshAdmin] Stored refresh token exists:',
+        !!storedRefreshToken,
+      );
 
       if (!storedRefreshToken) {
         console.log('[RefreshAdmin] No refresh token found in Redis');
@@ -304,7 +311,12 @@ export class ClientAuthService {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
       });
 
-      console.log('[RefreshAdmin] Payload verified:', !!payload, 'IDEmp:', payload?.IDEmp);
+      console.log(
+        '[RefreshAdmin] Payload verified:',
+        !!payload,
+        'IDEmp:',
+        payload?.IDEmp,
+      );
 
       if (!payload) {
         throw new BadRequestException('Tài khoản không tồn tại');
@@ -321,7 +333,7 @@ export class ClientAuthService {
       const access_token = this.createAccessToken(payloadFinal);
       console.log('[RefreshAdmin] New access token created successfully');
 
-      return { access_token, ...payloadFinal };
+      return { access_token, payload: payloadFinal };
     } catch (err: any) {
       console.error('[RefreshAdmin] Error:', err?.message);
       throw new BadRequestException(
@@ -357,6 +369,9 @@ export class ClientAuthService {
     const isMatch = compareSync(currentPassword, account.password);
     if (!isMatch) throw new BadRequestException('Mật khẩu hiện tại không đúng');
 
-    return await this.accountEmployeeService.update(new mongoose.Types.ObjectId(id), { password: newPassword } as any);
+    return await this.accountEmployeeService.update(
+      new mongoose.Types.ObjectId(id),
+      { password: newPassword } as any,
+    );
   }
 }

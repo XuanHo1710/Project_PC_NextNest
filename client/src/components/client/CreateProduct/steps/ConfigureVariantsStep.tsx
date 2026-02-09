@@ -134,7 +134,7 @@ export default function ConfigureVariantsStep({
             });
 
             const skuParts = combo.map(v => v.value.toUpperCase().replace(/\s+/g, ''));
-            const sku = `SKU-${skuParts.join('-')}-${String(idx + 1).padStart(3, '0')}`;
+            const sku = `SKU-${skuParts.join('-')}-${String(idx + 1).padStart(3, '0')}-${new Date().getTime().toString()}`;
 
             return {
                 key: `variant-${idx}`,

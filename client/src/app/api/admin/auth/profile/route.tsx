@@ -33,7 +33,6 @@ export async function POST(request: NextRequest) {
 
     // Hàm helper để gọi refresh token
     const tryRefreshToken = async () => {
-        console.log('[Profile] Attempting refresh with sessionId:', sessionId);
         const refreshResponse = await axios.post(
             `${API_URL}/auth/refresh`,
             {},
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
         );
 
         const refreshData = refreshResponse.data?.data || refreshResponse.data;
-        console.log('[Profile] Refresh response:', !!refreshData?.access_token);
 
         if (!refreshData?.access_token) {
             throw new Error("Refresh token failed - no access token returned");
@@ -67,7 +65,6 @@ export async function POST(request: NextRequest) {
                 });
 
                 const profileData = profileResponse.data?.data || profileResponse.data;
-                console.log('[Profile] Profile success:', profileData?.IDEmp);
 
                 return NextResponse.json({
                     success: true,
@@ -83,9 +80,6 @@ export async function POST(request: NextRequest) {
                     }
                 });
             } catch (profileError: any) {
-                // Access token expired hoặc invalid → thử refresh
-                console.log('[Profile] Profile failed:', profileError?.response?.status, '- trying refresh');
-
                 if (profileError?.response?.status === 401 && sessionId) {
                     // Token expired, try refresh
                     try {
@@ -96,11 +90,11 @@ export async function POST(request: NextRequest) {
                             data: {
                                 access_token: refreshData.access_token,
                                 user: {
-                                    _id: refreshData._id,
-                                    username: refreshData.username,
-                                    IDEmp: refreshData.IDEmp,
-                                    roleId: refreshData.roleId,
-                                    employeeId: refreshData.employeeId,
+                                    _id: refreshData.payload._id,
+                                    username: refreshData.payload.username,
+                                    IDEmp: refreshData.payload.IDEmp,
+                                    roleId: refreshData.payload.roleId,
+                                    employeeId: refreshData.payload.employeeId,
                                 },
                             },
                         });
@@ -146,11 +140,11 @@ export async function POST(request: NextRequest) {
                     data: {
                         access_token: refreshData.access_token,
                         user: {
-                            _id: refreshData._id,
-                            username: refreshData.username,
-                            IDEmp: refreshData.IDEmp,
-                            roleId: refreshData.roleId,
-                            employeeId: refreshData.employeeId,
+                            _id: refreshData.payload._id,
+                            username: refreshData.payload.username,
+                            IDEmp: refreshData.payload.IDEmp,
+                            roleId: refreshData.payload.roleId,
+                            employeeId: refreshData.payload.employeeId,
                         },
                     },
                 });

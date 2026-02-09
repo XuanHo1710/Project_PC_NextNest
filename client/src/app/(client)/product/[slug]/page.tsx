@@ -4,7 +4,7 @@ import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
 import { IProductCard, IProductWithPagination, IProductVariant } from "@/types/product";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Carousel, Rate, Tag, Tabs, message, Breadcrumb, Divider, Badge } from "antd";
+import { Button, Carousel, Rate, Tag, Tabs, message, Breadcrumb, Divider, Badge, Image } from "antd";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ProductDetailSkeleton } from "@/components/Skeletons";
@@ -17,7 +17,6 @@ import {
     SafetyCertificateFilled,
     ThunderboltFilled,
     RocketFilled,
-    QuestionCircleOutlined,
     HomeOutlined,
     TruckOutlined,
     PhoneOutlined,
@@ -29,12 +28,10 @@ import DescriptionProduct from '@/components/client/ProductDetail/Description';
 import ProductImageGallery from '@/components/client/ProductDetail/ProductImageGallery';
 import useCartStore from '@/hooks/useCart';
 import {
-    getProductDisplayPrice,
     getProductOriginalPrice,
     getProductDiscount,
     getProductImage,
     getProductImages,
-    getProductSoldCount,
 } from '@/utils/productHelpers';
 import Swal from "sweetalert2";
 import useAuthUser from '@/hooks/useAuthUser';
@@ -55,8 +52,8 @@ interface ProductDetail extends IProductCard {
                 _id: string;
                 name: string;
                 code: string;
-                displayType: string;
-            };
+                displayType: 'RADIO' | 'COLOR' | 'IMAGE' | 'BUTTON';
+            }
         };
     }>;
 }
@@ -66,48 +63,50 @@ export default function ProductDetailClient() {
     const router = useRouter();
     const { addToCart } = useCartStore();
     const { user } = useAuthUser();
-    const queryClient = useQueryClient();
-
     // Selected variant state
     const [selectedVariant, setSelectedVariant] = useState<IProductVariant | null>(null);
     const [selectedCombination, setSelectedCombination] = useState<Record<string, string>>({});
 
     const { data: product, isLoading: isLoadingProduct } = useQuery<ProductDetail>({
         queryKey: ['product-slug', slug],
-        queryFn: () => productClientService.getProductsBySlug(slug as string) as Promise<ProductDetail>,
+        queryFn: () => productClientService.getProductsBySlug(slug as string),
         staleTime: 1000 * 60 * 5,
     });
 
-    const { data: dataWishlist } = useQuery<{ isWishlisted: boolean }>({
-        queryKey: ['product-isWishlist', product?._id, user?.id],
-        queryFn: () => productClientService.isWishlistByGuestAndProduct(user?.id || "", product?._id as string),
-        enabled: !!product?._id && !!user?.id,
-    });
+    // const { data: dataWishlist } = useQuery<{ isWishlisted: boolean }>({
+    //     queryKey: ['product-isWishlist', product?._id, user?.id],
+    //     queryFn: () => productClientService.isWishlistByGuestAndProduct(user?.id || "", product?._id as string),
+    //     enabled: !!product?._id && !!user?.id,
+    // });
 
-    const { data: dataProduct } = useQuery<IProductWithPagination | null>({
+    const { data: dataProduct, isLoading: isLoadingDataProduct } = useQuery<IProductWithPagination | null>({
         queryKey: ['product-by-category', product?.category?._id || ""],
         queryFn: () => productClientService.getProductsByCategoryId(product?.category?._id || "" as string),
         enabled: !!product?.category?._id,
     });
 
-    const addToListMutation = useMutation({
-        mutationFn: ({ guestID, productID, isWishlist }: { guestID: string; productID: string; isWishlist: boolean }) =>
-            productClientService.handleWishlist(guestID, productID, isWishlist),
-        onSuccess: () => {
-            Swal.fire({ icon: "success", title: "Cập nhật danh sách yêu thích thành công!" });
-            queryClient.invalidateQueries({ queryKey: ['product-isWishlist', product?._id, user?.id] });
-        },
-        onError: () => message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.'),
-    });
+
+    console.log('Product detail product:', product);
+
+
+    // const addToListMutation = useMutation({
+    //     mutationFn: ({ guestID, productID, isWishlist }: { guestID: string; productID: string; isWishlist: boolean }) =>
+    //         productClientService.handleWishlist(guestID, productID, isWishlist),
+    //     onSuccess: () => {
+    //         Swal.fire({ icon: "success", title: "Cập nhật danh sách yêu thích thành công!" });
+    //         queryClient.invalidateQueries({ queryKey: ['product-isWishlist', product?._id, user?.id] });
+    //     },
+    //     onError: () => message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.'),
+    // });
 
     // Derive attribute groups from allowValues
     const attributeGroups = useMemo(() => {
         if (!product?.allowValues) return [];
         const groups: Record<string, {
-            attribute: { _id: string; name: string; code: string; displayType: string };
+            attribute: { _id: string; name: string; code: string; displayType: 'RADIO' | 'COLOR' | 'IMAGE' | 'BUTTON' | '' };
             values: Array<{ _id: string; value: string; label: string; colorHex?: string; imageUrl?: string }>;
         }> = {};
-        for (const av of product.allowValues) {
+        for (const av of product?.allowValues) {
             if (!av.attributeValue?.attribute) continue;
             const attr = av.attributeValue.attribute;
             if (!groups[attr._id]) {
@@ -127,10 +126,11 @@ export default function ProductDetailClient() {
         return Object.values(groups);
     }, [product?.allowValues]);
 
+
     // Set default variant on load
     useEffect(() => {
         if (product?.defaultVariant && !selectedVariant) {
-            const dv = product.defaultVariant as unknown as IProductVariant;
+            const dv = product?.defaultVariant as IProductVariant;
             setSelectedVariant(dv);
             if (dv.combination) setSelectedCombination(dv.combination);
         }
@@ -148,14 +148,14 @@ export default function ProductDetailClient() {
         if (match) setSelectedVariant(match);
     }, [selectedCombination, product?.variants]);
 
-    const handleCombinationSelect = (attrCode: string, valueLabel: string) => {
-        setSelectedCombination(prev => ({ ...prev, [attrCode]: valueLabel }));
+    const handleCombinationSelect = (attrCode: string, valueId: string) => {
+        setSelectedCombination(prev => ({ ...prev, [attrCode]: valueId }));
     };
 
     // Current display data from selected variant or defaultVariant
-    const displayImages = selectedVariant?.images?.length ? selectedVariant.images : getProductImages(product as IProductCard);
-    const displayPrice = selectedVariant ? selectedVariant.price : getProductOriginalPrice(product as IProductCard);
-    const displayDiscount = selectedVariant ? selectedVariant.discount : getProductDiscount(product as IProductCard);
+    const displayImages = selectedVariant ? selectedVariant.images ? product.variants.map(v => v.images).flat() : [] : getProductImages(product);
+    const displayPrice = selectedVariant ? selectedVariant.price : getProductOriginalPrice(product);
+    const displayDiscount = selectedVariant ? selectedVariant.discount : getProductDiscount(product);
     const displayFinalPrice = Math.round(displayPrice * (1 - displayDiscount / 100));
     const displayStock = selectedVariant?.stock ?? 0;
 
@@ -175,12 +175,13 @@ export default function ProductDetailClient() {
             Swal.fire({ icon: "warning", title: "Vui lòng đăng nhập để sử dụng tính năng này!" });
             return;
         }
-        addToListMutation.mutate({ guestID, productID: p._id, isWishlist: !dataWishlist?.isWishlisted });
+        // addToListMutation.mutate({ guestID, productID: p._id, isWishlist: !dataWishlist?.isWishlisted });
     };
 
     if (isLoadingProduct) return <ProductDetailSkeleton />;
 
-    if (!product || !product._id) return null;
+
+    if (!product || !product?._id) return null;
 
     return (
         <>
@@ -208,15 +209,15 @@ export default function ProductDetailClient() {
                 {/* Main Product Card */}
                 <div className="mx-5 xl:mx-32 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 md:p-8 mb-6">
                     {/* Product Title */}
-                    <h1 className="font-bold text-xl lg:text-2xl text-gray-900 dark:text-white pb-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3 flex-wrap">
+                    <h1 className="font-bold text-2xl items-center lg:text-4xl text-gray-900 dark:text-white pb-4 border-b border-gray-100 dark:border-gray-700 flex gap-3 flex-wrap">
                         {product.name}
-                        {displayDiscount > 10 && (
-                            <Tag color="red" className="!text-sm !font-semibold !rounded-lg !px-3">
+                        {displayDiscount > 0 && (
+                            <Tag color="red" className="!text-lg !font-semibold !rounded-lg !px-3">
                                 <FireFilled className="mr-1" /> -{displayDiscount}%
                             </Tag>
                         )}
                         {product.brand?.name && (
-                            <Tag color="blue" className="!rounded-lg !text-xs">{product.brand.name}</Tag>
+                            <Tag color="blue" className="!rounded-lg !text-xl">{product.brand.name}</Tag>
                         )}
                     </h1>
 
@@ -234,7 +235,7 @@ export default function ProductDetailClient() {
                                     <Rate disabled defaultValue={product.ratingAvg || 0} allowHalf className="text-sm" />
                                     <span className="text-xs text-gray-500 mt-1">{product.totalRatings || 0} đánh giá</span>
                                 </div>
-                                <Divider type="vertical" className="!h-10 !border-gray-300" />
+                                <Divider orientation="vertical" className="!h-10 !border-gray-300" />
                                 <div className="flex flex-col text-sm">
                                     <span className="text-green-600 font-semibold flex items-center gap-1">
                                         <CheckCircleFilled /> Hàng chính hãng
@@ -288,11 +289,11 @@ export default function ProductDetailClient() {
                                             </label>
                                             <div className="flex flex-wrap gap-2">
                                                 {group.values.map(val => {
-                                                    const isSelected = selectedCombination[group.attribute.code] === val.label;
+                                                    const isSelected = selectedCombination[group.attribute.code] === val._id;
                                                     return (
                                                         <button
                                                             key={val._id}
-                                                            onClick={() => handleCombinationSelect(group.attribute.code, val.label)}
+                                                            onClick={() => handleCombinationSelect(group.attribute.code, val._id)}
                                                             className={`
                                                                 px-4 py-2 rounded-lg border-2 transition-all flex items-center gap-2 text-sm font-medium
                                                                 ${isSelected
@@ -302,15 +303,23 @@ export default function ProductDetailClient() {
                                                             `}
                                                         >
                                                             {group.attribute.displayType === 'COLOR' && val.colorHex && (
-                                                                <span
-                                                                    className="w-5 h-5 rounded-full border-2 border-white shadow shrink-0"
-                                                                    style={{ backgroundColor: val.colorHex }}
-                                                                />
+                                                                <>
+                                                                    <span
+                                                                        className="w-5 h-5 rounded-full border-2 border-white shadow shrink-0"
+                                                                        style={{ backgroundColor: val.colorHex }}
+                                                                    />
+                                                                    <span>{val.label}</span>
+                                                                </>
                                                             )}
                                                             {group.attribute.displayType === 'IMAGE' && val.imageUrl && (
-                                                                <img src={val.imageUrl} alt={val.label} className="w-6 h-6 rounded object-cover" />
+                                                                <div className='flex flex-col gap-5 items-center justify-center'>
+                                                                    <Image src={val.imageUrl} alt={val.label} className="!w-20 !h-20 rounded object-cover" />
+                                                                    <p>{val.label}</p>
+                                                                </div>
                                                             )}
-                                                            {val.label}
+                                                            {(group.attribute.displayType === 'BUTTON' || group.attribute.displayType === 'RADIO') &&
+                                                                <span>{val.label}</span>
+                                                            }
                                                             {isSelected && <CheckCircleFilled className="text-blue-500 text-xs" />}
                                                         </button>
                                                     );
@@ -319,11 +328,6 @@ export default function ProductDetailClient() {
                                         </div>
                                     ))}
                                 </div>
-                            )}
-
-                            {/* SKU display */}
-                            {selectedVariant?.sku && (
-                                <div className="text-xs text-gray-400">SKU: {selectedVariant.sku}</div>
                             )}
 
                             {/* Shipping Info */}
@@ -370,7 +374,7 @@ export default function ProductDetailClient() {
                                     size="large"
                                     icon={<HeartOutlined />}
                                     onClick={() => handleAddToWishlist(product)}
-                                    className={`!h-12 !px-6 !rounded-xl !font-medium ${dataWishlist?.isWishlisted ? '!text-red-500 !border-red-300' : '!text-gray-500 !border-gray-300'} hover:!text-red-500`}
+                                // className={`!h-12 !px-6 !rounded-xl !font-medium ${dataWishlist?.isWishlisted ? '!text-red-500 !border-red-300' : '!text-gray-500 !border-gray-300'} hover:!text-red-500`}
                                 >
                                     Yêu thích
                                 </Button>
@@ -400,42 +404,7 @@ export default function ProductDetailClient() {
                                     </span>
                                 ),
                                 children: <CommentProduct product={product} />,
-                            },
-                            ...(product.variants && product.variants.length > 1 ? [{
-                                key: '3',
-                                label: `Tất cả biến thể (${product.variants.length})`,
-                                children: (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {product.variants.map(v => {
-                                            const finalP = Math.round(v.price * (1 - v.discount / 100));
-                                            const isActive = selectedVariant?._id === v._id;
-                                            return (
-                                                <div
-                                                    key={v._id}
-                                                    onClick={() => { setSelectedVariant(v); if (v.combination) setSelectedCombination(v.combination); }}
-                                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${isActive ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-blue-300 bg-white'}`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        {v.images?.[0] && (
-                                                            <img src={v.images[0]} alt={v.sku} className="w-16 h-16 rounded-lg object-cover border" />
-                                                        )}
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex flex-wrap gap-1 mb-1">
-                                                                {v.combination && Object.entries(v.combination).map(([k, val]) => (
-                                                                    <Tag key={k} color="blue" className="!text-xs !rounded-md !m-0">{val}</Tag>
-                                                                ))}
-                                                            </div>
-                                                            <div className="font-bold text-blue-600">{finalP.toLocaleString()}đ</div>
-                                                            {v.discount > 0 && <span className="text-xs text-gray-400 line-through">{v.price.toLocaleString()}đ</span>}
-                                                            <div className="text-xs text-gray-500 mt-0.5">Kho: {v.stock}</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                ),
-                            }] : []),
+                            }
                         ]}
                     />
                 </div>

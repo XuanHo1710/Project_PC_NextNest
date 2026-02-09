@@ -1,6 +1,7 @@
 import { Controller, Get, Param, Query, Inject } from '@nestjs/common';
 import { MICROSERVICE } from '@project-pc/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { Public } from 'decorators/customize';
 
 @Controller('/client/category')
 export class CategoryController {
@@ -9,6 +10,7 @@ export class CategoryController {
     private readonly categoryService: ClientProxy,
   ) {}
 
+  @Public()
   @Get()
   findAll(
     @Query('page') page?: string,
@@ -24,6 +26,7 @@ export class CategoryController {
     });
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.categoryService.send('category.findOne', { id });

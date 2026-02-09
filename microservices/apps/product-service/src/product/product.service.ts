@@ -48,6 +48,7 @@ export class ProductService {
 
   // ============= PRODUCT CRUD =============
   async createProduct(createProductDto: CreateProductDto) {
+    console.log('createProductDto', createProductDto);
     const payload = {
       ...createProductDto,
       brand: new Types.ObjectId(createProductDto.brandId),

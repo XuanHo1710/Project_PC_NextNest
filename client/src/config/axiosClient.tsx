@@ -88,8 +88,20 @@ axiosClient.interceptors.response.use(
 
           if (refreshResponse.data.success && refreshResponse.data.data?.access_token) {
             // Update Zustand store with new access_token
-            const { setAccessToken } = useAuthUser.getState();
+            const { setAccessToken, setUser } = useAuthUser.getState();
             setAccessToken(refreshResponse.data.data.access_token);
+            setUser({
+              _id: refreshResponse.data.data.payload.id,
+              fullname: refreshResponse.data.data.payload.fullname,
+              email: refreshResponse.data.data.payload.email,
+              accountStatus: refreshResponse.data.data.payload.accountStatus,
+              authProvider: refreshResponse.data.data.payload.authProvider,
+              avatar: refreshResponse.data.data.payload.avatar,
+              gender: refreshResponse.data.data.payload.gender,
+              phone: refreshResponse.data.data.payload.phone,
+              id: refreshResponse.data.data.payload.id,
+              isEmailVerified: refreshResponse.data.data.payload.isEmailVerified,
+            })
           }
 
           // Refresh succeeded — notify queued requests

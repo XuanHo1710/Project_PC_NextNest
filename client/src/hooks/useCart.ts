@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { ICart, ICartItem } from "@/types/order";
 import { IProductCard } from "@/types/product";
-import { getProductDisplayPrice, getProductStock } from "@/utils/productHelpers";
+import { getProductDisplayPrice } from "@/utils/productHelpers";
 import { debouncedSync } from "@/providers/CartProviderClient";
 
 interface CartState {
@@ -32,7 +32,8 @@ const useCartStore = create<CartState>((set, get) => ({
 
     if (existingItem) {
       updatedItems = state.cart!.cartItems.map((item) =>
-        item.product._id === product._id && getProductStock(product) <= item.quantity
+        item.product._id === product._id &&
+        product.defaultVariant.stock <= item.quantity
           ? {
               ...item,
               quantity: item.quantity + quantity,
@@ -41,7 +42,7 @@ const useCartStore = create<CartState>((set, get) => ({
           : item,
       );
     } else {
-      if (getProductStock(product) > 0) {
+      if (product.defaultVariant.stock > 0) {
         const newItem: ICartItem = {
           product,
           quantity,
@@ -84,7 +85,7 @@ const useCartStore = create<CartState>((set, get) => ({
     const updatedItems = state
       .cart!.cartItems.map((item) => {
         if (item.product._id === product._id) {
-          if (item.quantity + qty <= getProductStock(product))
+          if (item.quantity + qty <= product.defaultVariant.stock)
             return {
               ...item,
               quantity: item.quantity + qty,
