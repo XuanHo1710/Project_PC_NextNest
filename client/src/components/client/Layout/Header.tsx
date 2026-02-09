@@ -314,15 +314,15 @@ export default function HeaderClient() {
                                         </div>
                                     ) : (
                                         <div className="max-h-80 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-                                            {cart && cart.cartItems.map((c, index) => (
-                                                <div key={index} className='flex items-center border-b border-gray-100 py-3 px-3'>
+                                            {cart && cart.cartItems.map((c) => (
+                                                <div key={c.variant._id} className='flex items-center border-b border-gray-100 py-3 px-3'>
                                                     <div className='w-16 h-16 flex-shrink-0'>
                                                         <Image alt={c.product?.name} src={c.variant?.images?.[0] || getProductImage(c.product)} />
                                                     </div>
                                                     <div className='flex-grow ml-3'>
                                                         <div className='flex justify-between'>
                                                             <Link onClick={() => setOpenCart(false)} href={"/product/" + c.product?.slug}>
-                                                                <h2 className='hover:text-blue-500 font-semibold text-sm line-clamp-2 pr-4'>
+                                                                <h2 className='hover:text-blue-500 font-semibold text-sm line-clamp-1 pr-4'>
                                                                     {c.product?.name}
                                                                 </h2>
                                                             </Link>
@@ -333,7 +333,17 @@ export default function HeaderClient() {
                                                                 <i className="fa-solid fa-xmark"></i>
                                                             </button>
                                                         </div>
-                                                        <div className='flex justify-between mt-2 items-center'>
+                                                        {/* Show variant combination to distinguish same-product items */}
+                                                        {c.variant?.combination && Object.keys(c.variant.combination).length > 0 && (
+                                                            <div className='flex flex-wrap gap-1 mt-1'>
+                                                                {Object.values(c.variant.combination).map((val, i) => (
+                                                                    <span key={i} className='text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded'>
+                                                                        {val}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        <div className='flex justify-between mt-1.5 items-center'>
                                                             <div className='flex items-center border border-gray-200 rounded'>
                                                                 <Button
                                                                     onClick={() => updateQuantity(c.variant._id, -1)}

@@ -146,8 +146,8 @@ export default function ProductDetailClient() {
         if (match) setSelectedVariant(match);
     }, [selectedCombination, product?.variants]);
 
-    const handleCombinationSelect = (attrCode: string, valueId: string) => {
-        setSelectedCombination(prev => ({ ...prev, [attrCode]: valueId }));
+    const handleCombinationSelect = (attrCode: string, valueLabel: string) => {
+        setSelectedCombination(prev => ({ ...prev, [attrCode]: valueLabel }));
     };
 
     // Current display data from selected variant or defaultVariant
@@ -321,11 +321,11 @@ export default function ProductDetailClient() {
                                             </label>
                                             <div className="flex flex-wrap gap-2">
                                                 {group.values.map(val => {
-                                                    const isSelected = selectedCombination[group.attribute.code] === val._id;
+                                                    const isSelected = selectedCombination[group.attribute.code] === val.label;
                                                     return (
                                                         <button
                                                             key={val._id}
-                                                            onClick={() => handleCombinationSelect(group.attribute.code, val._id)}
+                                                            onClick={() => handleCombinationSelect(group.attribute.code, val.label)}
                                                             className={`
                                                                 px-4 py-2 rounded-lg border-2 transition-all flex items-center gap-2 text-sm font-medium
                                                                 ${isSelected

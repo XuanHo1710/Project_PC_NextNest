@@ -18,7 +18,6 @@ const CartProduct = ({ cartItem, handle }: CartProductProps) => {
     const displayImage = variant.images?.[0] || "/placeholder-product.png";
     const originalPrice = variant.price;
     const hasDiscount = variant.discount > 0;
-    console.log(cartItem)
 
     return (
         <div className="group relative flex gap-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-750">
