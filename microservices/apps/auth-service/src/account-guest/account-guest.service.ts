@@ -22,7 +22,7 @@ export class AccountGuestService {
   constructor(
     @InjectModel(AccountGuest.name)
     private accountGuestModel: Model<AccountGuestDocument>,
-  ) { }
+  ) {}
 
   async updateAccountUserToken(token: string, id: string) {
     return await this.accountGuestModel.findByIdAndUpdate(
@@ -37,7 +37,7 @@ export class AccountGuestService {
   ): Promise<AccountGuest> {
     // Check if email already exists
 
-    console.log(createAccountGuestDto)
+    console.log(createAccountGuestDto);
     const existingAccount = await this.accountGuestModel.findOne({
       email: createAccountGuestDto.email,
       deletedAt: { $exists: false },
@@ -240,8 +240,8 @@ export class AccountGuestService {
           {
             deletedAt: new Date(),
             isActive: false,
-            accountStatus: 'DELETED'
-          }
+            accountStatus: 'DELETED',
+          },
         );
       }
       case 'update': {
@@ -307,16 +307,6 @@ export class AccountGuestService {
     }
   }
 
-  async softDelete(id: string, deletedBy?: string): Promise<void> {
-    const account = await this.findOne(id);
-
-    await this.accountGuestModel.findByIdAndUpdate(id, {
-      deletedAt: new Date(),
-      deletedBy: deletedBy || null,
-      isActive: false,
-    });
-  }
-
   async getStatistics() {
     const stats = await this.accountGuestModel.aggregate([
       {
@@ -361,9 +351,126 @@ export class AccountGuestService {
     );
   }
 
+  // ============== ADDRESS MANAGEMENT ==============
+
+  async getAddresses(guestId: string) {
+    const account = await this.accountGuestModel
+      .findById(new Types.ObjectId(guestId))
+      .select('addresses')
+      .exec();
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+    return account.addresses || [];
+  }
+
+  async addAddress(guestId: string, address: any) {
+    const account = await this.accountGuestModel.findById(guestId).exec();
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+
+    // If this is the first address, make it default
+    if (!account.addresses || account.addresses.length === 0) {
+      address.isDefault = true;
+    }
+
+    const result = await this.accountGuestModel
+      .findByIdAndUpdate(
+        new Types.ObjectId(guestId),
+        { $push: { addresses: address } },
+        { new: true },
+      )
+      .select('addresses')
+      .exec();
+
+    if (!result) {
+      throw new NotFoundException('Account not found');
+    }
+
+    return result.addresses;
+  }
+
+  async updateAddress(guestId: string, addressId: string, addressData: any) {
+    const updateFields = {};
+    for (const [key, value] of Object.entries(addressData)) {
+      updateFields[`addresses.$.${key}`] = value;
+    }
+
+    const result = await this.accountGuestModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(guestId), 'addresses._id': addressId },
+        { $set: updateFields },
+        { new: true },
+      )
+      .select('addresses')
+      .exec();
+
+    if (!result) {
+      throw new NotFoundException('Address not found');
+    }
+    return result.addresses;
+  }
+
+  async deleteAddress(guestId: string, addressId: string) {
+    const account = await this.accountGuestModel
+      .findById(new Types.ObjectId(guestId))
+      .exec();
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+
+    const addressToDelete = account.addresses?.find(
+      (addr: any) => addr._id?.toString() === addressId,
+    );
+    if (addressToDelete?.isDefault) {
+      throw new BadRequestException('Cannot delete default address');
+    }
+
+    const result = await this.accountGuestModel
+      .findByIdAndUpdate(
+        new Types.ObjectId(guestId),
+        { $pull: { addresses: { _id: addressId } } },
+        { new: true },
+      )
+      .select('addresses')
+      .exec();
+
+    if (!result) {
+      throw new NotFoundException('Account not found');
+    }
+    return result.addresses;
+  }
+
+  async setDefaultAddress(guestId: string, addressId: string) {
+    // Unset all defaults first
+    await this.accountGuestModel.updateOne(
+      { _id: new Types.ObjectId(guestId) },
+      { $set: { 'addresses.$[].isDefault': false } },
+    );
+
+    // Set the specified address as default
+    const result = await this.accountGuestModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(guestId), 'addresses._id': addressId },
+        { $set: { 'addresses.$.isDefault': true } },
+        { new: true },
+      )
+      .select('addresses')
+      .exec();
+
+    if (!result) {
+      throw new NotFoundException('Address not found');
+    }
+    return result.addresses;
+  }
+
   async getGuestById(guestId: string) {
     const account = await this.accountGuestModel
-      .findOne({ _id: guestId, deletedAt: { $exists: false } })
+      .findOne({
+        _id: new Types.ObjectId(guestId),
+        deletedAt: { $exists: false },
+      })
       .select(
         '-password -emailVerificationToken -resetPasswordToken -twoFactorSecret',
       )

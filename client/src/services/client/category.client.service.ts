@@ -10,11 +10,13 @@ class CategoryClientService {
 
   async getAllCategories(): Promise<ICategory[]> {
     const response = await axios.get(`/category`);
-    return response.data;
+    // Backend returns { data: [...], pagination: {...} }
+    const result = response.data;
+    return result?.data || result || [];
   }
 
   async getCategoryBySlug(slug: string): Promise<ICategory | null> {
-    const response = await axios.get(`/category/` + slug);
+    const response = await axios.get(`/category/slug/${slug}`);
     return response.data;
   }
 }

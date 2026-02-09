@@ -37,6 +37,22 @@ export class ProductController {
     return this.productService.send('product.findAll', { searchDto });
   }
 
+  @Get('collection/:slug')
+  @Public()
+  findByCollection(
+    @Param('slug') slug: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sort') sort?: string,
+  ) {
+    return this.productService.send('product.findByCollection', {
+      slug,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 12,
+      sort: sort || '',
+    });
+  }
+
   @Get('slug/:slug')
   @Public()
   findBySlug(@Param('slug') slug: string) {

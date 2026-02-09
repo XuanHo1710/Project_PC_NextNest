@@ -161,6 +161,9 @@ export default function ContentAccountEmployee() {
                 roleId: item.roleId,
                 gender: item.gender,
                 age: item.age,
+                addresses: item.addresses,
+                createdAt: item.createdAt,
+
             } as DataType<IAccountEmployee>;
         });
     }

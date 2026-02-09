@@ -98,7 +98,7 @@ export default function HeaderClient() {
                         setOpenItemCategory(false);
                         setOpenCategory(false)
                     }}
-                    href={"/category/" + cat.slug}
+                    href={"/collection/" + cat.slug}
                     className="font-semibold"
                 >
                     {cat.name}
@@ -111,7 +111,7 @@ export default function HeaderClient() {
                                     setOpenItemCategory(false);
                                     setOpenCategory(false)
                                 }}
-                                href={"/category/" + child.slug}
+                                href={"/collection/" + child.slug}
                                 key={child._id}
                                 className="text-sm hover:text-blue-500 cursor-pointer"
                             >

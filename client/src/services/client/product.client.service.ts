@@ -16,9 +16,9 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 class ProductClientService {
-  private baseURL = "/products";
-  private categoryURL = "/categories";
-  private brandURL = "/brands";
+  private baseURL = "/product";
+  private categoryURL = "/category";
+  private brandURL = "/brand";
 
   // ============== PRODUCT APIs ==============
 
@@ -284,6 +284,45 @@ class ProductClientService {
    */
   async getBrandById(id: string): Promise<IBrand> {
     const response = await axiosClient.get(`${this.brandURL}/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Get brand by slug
+   */
+  async getBrandBySlug(slug: string): Promise<IBrand> {
+    const response = await axiosClient.get(`${this.brandURL}/slug/${slug}`);
+    return response.data;
+  }
+
+  // ============== COLLECTION ==============
+
+  /**
+   * Get products by collection slug (matches both category & brand slugs)
+   * Uses $or query on backend
+   */
+  async getCollectionProducts(
+    slug: string,
+    page = 1,
+    limit = 12,
+    sort?: string,
+  ): Promise<{
+    items: IProductCard[];
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+    collectionInfo: {
+      category: ICategory | null;
+      brand: IBrand | null;
+    };
+  }> {
+    const response = await axiosClient.get(
+      `${this.baseURL}/collection/${slug}`,
+      {
+        params: { page, limit, sort },
+      },
+    );
     return response.data;
   }
 

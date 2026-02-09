@@ -78,6 +78,16 @@ export class BrandService {
     };
   }
 
+  async findBySlug(slug: string) {
+    const brand = await this.brandModel
+      .findOne({ slug, isDeleted: false })
+      .exec();
+    if (!brand) {
+      throw new NotFoundException(`Brand with slug "${slug}" not found`);
+    }
+    return brand;
+  }
+
   async findOneBrand(id: string) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException(`Invalid brand ID: ${id}`);

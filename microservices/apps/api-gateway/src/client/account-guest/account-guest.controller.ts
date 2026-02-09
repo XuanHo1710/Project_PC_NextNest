@@ -41,6 +41,55 @@ export class AccountGuestController {
     });
   }
 
+  // ============== ADDRESS MANAGEMENT ==============
+
+  @Get('addresses')
+  getAddresses(@Guest() guest: any) {
+    return this.accountGuestService.send('account_guest.getAddresses', {
+      guestId: guest._id,
+    });
+  }
+
+  @Post('addresses')
+  addAddress(@Guest() guest: any, @Body() addressData: any) {
+    return this.accountGuestService.send('account_guest.addAddress', {
+      guestId: guest._id,
+      address: addressData,
+    });
+  }
+
+  @Patch('addresses/:addressId')
+  updateAddress(
+    @Guest() guest: any,
+    @Param('addressId') addressId: string,
+    @Body() addressData: any,
+  ) {
+    return this.accountGuestService.send('account_guest.updateAddress', {
+      guestId: guest._id,
+      addressId,
+      address: addressData,
+    });
+  }
+
+  @Delete('addresses/:addressId')
+  deleteAddress(@Guest() guest: any, @Param('addressId') addressId: string) {
+    return this.accountGuestService.send('account_guest.deleteAddress', {
+      guestId: guest._id,
+      addressId,
+    });
+  }
+
+  @Patch('addresses/:addressId/set-default')
+  setDefaultAddress(
+    @Guest() guest: any,
+    @Param('addressId') addressId: string,
+  ) {
+    return this.accountGuestService.send('account_guest.setDefaultAddress', {
+      guestId: guest._id,
+      addressId,
+    });
+  }
+
   @Post()
   create(@Body() createAccountGuestDto: CreateAccountGuestDto) {
     return this.accountGuestService.send(

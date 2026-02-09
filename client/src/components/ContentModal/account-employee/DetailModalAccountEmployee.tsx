@@ -1,9 +1,10 @@
 'use client'
-import { Modal, Drawer, Descriptions, Tabs, Tag, Avatar } from 'antd';
+import { Drawer, Descriptions, Tabs, Tag, Avatar } from 'antd';
 import { UserOutlined, HistoryOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { IAccountEmployee } from "@/types";
 import { DataType } from "@/types/table.d";
 import EmployeeHistoryLog from './EmployeeHistoryLog';
+import { formatDate } from '@/utils/formatDateTime';
 
 interface DetailProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ export default function DetailModalAccountEmployee({ isOpen, setOpen, data }: De
 
     if (!data) return null;
 
+    console.log("DetailModalAccountEmployee data:", data);
     const items = [
         {
             key: '1',
@@ -38,6 +40,11 @@ export default function DetailModalAccountEmployee({ isOpen, setOpen, data }: De
                             {data.gender === "MALE" ? "Nam" : data.gender === "FEMALE" ? "Nữ" : "Khác"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Tuổi">{data.age}</Descriptions.Item>
+                        <Descriptions.Item label="Ngày vào làm">{formatDate(data.createdAt)}</Descriptions.Item>
+                        <Descriptions.Item label="Thành phố">{data.addresses.length > 0 && data.addresses[0].province.name}</Descriptions.Item>
+                        <Descriptions.Item label="Tỉnh">{data.addresses.length > 0 && data.addresses[0].district.name}</Descriptions.Item>
+                        <Descriptions.Item label="Quận">{data.addresses.length > 0 && data.addresses[0].ward.name}</Descriptions.Item>
+                        <Descriptions.Item label="Địa chỉ chi tiết">{data.addresses.length > 0 && data.addresses[0].detailAddress}</Descriptions.Item>
                     </Descriptions>
                 </div>
             )

@@ -9,7 +9,7 @@ import mongoose, { Model, Types } from 'mongoose';
 export class CategoryService {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<Category>,
-  ) { }
+  ) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
     const parentCategory = (await this.categoryModel.findOne({
@@ -41,9 +41,7 @@ export class CategoryService {
 
     if (filter.search) {
       const keyword = filter.search;
-      filterCategory['$or'] = [
-        { name: { $regex: keyword, $options: 'i' } },
-      ];
+      filterCategory['$or'] = [{ name: { $regex: keyword, $options: 'i' } }];
     }
 
     if (filter.sort) {
@@ -79,6 +77,14 @@ export class CategoryService {
 
   async findOne(id: string) {
     return await this.categoryModel.findById(id);
+  }
+
+  async findBySlug(slug: string) {
+    const category = await this.categoryModel.findOne({
+      slug,
+      isDeleted: { $ne: true },
+    });
+    return category;
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto) {

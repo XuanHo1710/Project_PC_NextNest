@@ -2,6 +2,7 @@
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { categoryClientService, productClientService } from "@/services/client";
 import { ICategory } from "@/types/category";
+import { IBrand } from "@/types/brand";
 import { IProduct } from "@/types/product";
 import { ICategoryPreview } from "@/types/category";
 import { IProductCard } from "@/types/product";
@@ -34,6 +35,12 @@ export default function HomeClient() {
         queryKey: ['feature-products', type],
         queryFn: () => productClientService.getBannerProducts(type),
         staleTime: 1000 * 60 * 5,
+    });
+
+    const { data: brands } = useQuery<IBrand[]>({
+        queryKey: ['brands'],
+        queryFn: () => productClientService.getBrands(),
+        staleTime: 1000 * 60 * 10,
     });
 
 
@@ -95,7 +102,7 @@ export default function HomeClient() {
                         <ul style={{ scrollbarWidth: "none" }} className='m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-blue-950'>
                             <Spin spinning={isLoading} size="large" />
                             {categories && categories.length > 0 && categories.map((category, index) => (
-                                <Link key={category._id} href={`/category/${category.slug}`}>
+                                <Link key={category._id} href={`/collection/${category.slug}`}>
                                     <li className='w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-blue-100 hover:text-blue-500 px-6 py-3 flex items-center'>
                                         <span className='font-medium flex items-center gap-3'>{ListIcon[index % ListIcon.length]} {category.name}</span>
                                         <MdKeyboardArrowRight className="text-xl" />
@@ -304,13 +311,58 @@ export default function HomeClient() {
 
                     </Carousel>
                 </div>
+
+                {/* Brand Cards Section */}
+                {brands && brands.length > 0 && (
+                    <div className="mx-5 xl:mx-32 my-10">
+                        <div className="flex items-center justify-between mb-6">
+                            <h1 className="text-xl md:text-3xl font-bold text-gray-800 dark:text-white">
+                                Thương hiệu nổi bật
+                            </h1>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            {brands.map((brand) => (
+                                <Link
+                                    key={brand._id}
+                                    href={`/collection/${brand.name.toLowerCase().replace(/\s+/g, '-')}`}
+                                    className="group"
+                                >
+                                    <div className="bg-white dark:bg-blue-950 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 h-full">
+                                        <div className="w-16 h-16 mb-3 flex items-center justify-center">
+                                            {brand.logo ? (
+                                                <img
+                                                    src={brand.logo}
+                                                    alt={brand.name}
+                                                    className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-200"
+                                                />
+                                            ) : (
+                                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                                    {brand.name.charAt(0)}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <h3 className="font-bold text-sm md:text-base text-gray-800 dark:text-white group-hover:text-blue-500 transition-colors">
+                                            {brand.name}
+                                        </h3>
+                                        {brand.description && (
+                                            <p className="text-xs text-gray-400 mt-1 line-clamp-2">
+                                                {brand.description}
+                                            </p>
+                                        )}
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <Spin size="large" spinning={isLoading}>
                     {!isLoading && categoriesPreview && categoriesPreview.length > 0 &&
                         categoriesPreview.map(category => (
                             <div key={category?._id} className='box-promotion mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-lg'>
                                 <div className='flex items-center justify-between'>
                                     <h1 className='text-xl md:text-3xl font-bold text-blue-500'>{category?.name}</h1>
-                                    <Link href={`/category/${category?.slug}`}>
+                                    <Link href={`/collection/${category?.slug}`}>
                                         <p className='text-sm font-bold text-slate-500 cursor-pointer'>Xem tất cả</p>
                                     </Link>
                                 </div>

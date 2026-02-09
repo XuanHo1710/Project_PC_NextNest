@@ -8,7 +8,7 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('account-guest')
 export class AccountGuestController {
-  constructor(private readonly accountGuestService: AccountGuestService) { }
+  constructor(private readonly accountGuestService: AccountGuestService) {}
 
   @MessagePattern('account_guest.create')
   create(@Payload() data: { createAccountGuestDto: CreateAccountGuestDto }) {
@@ -77,8 +77,44 @@ export class AccountGuestController {
     return this.accountGuestService.update(data.id, updateData);
   }
 
-  @MessagePattern('account_guest.softDelete')
-  remove(@Payload() data: { id: string; userId: string }) {
-    return this.accountGuestService.softDelete(data.id, data.userId);
+  // ============== ADDRESS MANAGEMENT ==============
+
+  @MessagePattern('account_guest.getAddresses')
+  getAddresses(@Payload() data: { guestId: string }) {
+    return this.accountGuestService.getAddresses(data.guestId);
+  }
+
+  @MessagePattern('account_guest.addAddress')
+  addAddress(@Payload() data: { guestId: string; address: any }) {
+    return this.accountGuestService.addAddress(data.guestId, data.address);
+  }
+
+  @MessagePattern('account_guest.updateAddress')
+  updateAddress(
+    @Payload()
+    data: {
+      guestId: string;
+      addressId: string;
+      address: any;
+    },
+  ) {
+    return this.accountGuestService.updateAddress(
+      data.guestId,
+      data.addressId,
+      data.address,
+    );
+  }
+
+  @MessagePattern('account_guest.deleteAddress')
+  deleteAddress(@Payload() data: { guestId: string; addressId: string }) {
+    return this.accountGuestService.deleteAddress(data.guestId, data.addressId);
+  }
+
+  @MessagePattern('account_guest.setDefaultAddress')
+  setDefaultAddress(@Payload() data: { guestId: string; addressId: string }) {
+    return this.accountGuestService.setDefaultAddress(
+      data.guestId,
+      data.addressId,
+    );
   }
 }

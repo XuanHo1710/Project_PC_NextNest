@@ -66,8 +66,8 @@ export default function ProfileAddress() {
         if (!user?.id) return;
 
         try {
-            const profile = await accountGuestService.getProfile(user.id);
-            setAddresses(profile.addresses || []);
+            const addresses = await accountGuestService.getAddresses();
+            setAddresses(addresses || []);
         } catch (error) {
             console.error('Error fetching addresses:', error);
             message.error('Không thể tải danh sách địa chỉ');
@@ -243,7 +243,7 @@ export default function ProfileAddress() {
         }
 
         try {
-            await accountGuestService.deleteAddress(user.id, addressId);
+            await accountGuestService.deleteAddress(addressId);
             message.success('Xóa địa chỉ thành công!');
             await fetchUserAddresses();
         } catch (error) {
@@ -259,7 +259,7 @@ export default function ProfileAddress() {
         }
 
         try {
-            await accountGuestService.setDefaultAddress(user.id, addressId);
+            await accountGuestService.setDefaultAddress(addressId);
             message.success('Đã đặt làm địa chỉ mặc định!');
             await fetchUserAddresses();
         } catch (error) {

@@ -27,6 +27,12 @@ export class CategoryController {
   }
 
   @Public()
+  @Get('slug/:slug')
+  findBySlug(@Param('slug') slug: string) {
+    return this.categoryService.send('category.findBySlug', { slug });
+  }
+
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.categoryService.send('category.findOne', { id });

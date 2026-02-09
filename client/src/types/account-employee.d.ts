@@ -19,10 +19,10 @@ export interface IAccountEmployee {
   createdBy?: { _id: string; email: string };
   updatedBy?: { _id: string; email: string };
   deletedBy?: { _id: string; email: string };
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
   isDeleted?: boolean;
-  deletedAt?: string;
+  deletedAt?: Date;
 }
 
 // For admin auth context (sidebar, permissions)

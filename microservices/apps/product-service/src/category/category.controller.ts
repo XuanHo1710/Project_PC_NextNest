@@ -23,6 +23,11 @@ export class CategoryController {
     return this.categoryService.updateMany(data.dataUpdate);
   }
 
+  @MessagePattern('category.findBySlug')
+  findBySlug(@Payload() data: { slug: string }) {
+    return this.categoryService.findBySlug(data.slug);
+  }
+
   @MessagePattern('category.findOne')
   findOne(@Payload() data: { id: string }) {
     return this.categoryService.findOne(data.id);

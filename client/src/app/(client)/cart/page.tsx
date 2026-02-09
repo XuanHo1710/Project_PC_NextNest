@@ -1,7 +1,7 @@
 'use client';
 import CartProduct from "@/components/client/Cart/CartProduct";
 import useCartStore from "@/hooks/useCart";
-import { Button, Form, Input, Select, Empty, Divider } from "antd";
+import { Button, Form, Input, Select, Empty, Divider, Avatar } from "antd";
 import TextArea from "antd/es/input/TextArea";
 import { ShoppingCartOutlined, SafetyCertificateOutlined, CarOutlined, CustomerServiceOutlined } from "@ant-design/icons";
 import Link from "next/link";
@@ -90,13 +90,19 @@ export default function CartClient() {
     // Update form values khi profile được load
     useEffect(() => {
         if (profile) {
+            // Find default address or first address
+            const defaultAddr = profile.addresses?.find(a => a.isDefault) || profile.addresses?.[0];
             form.setFieldsValue({
                 fullname: profile.fullname || "",
                 phone: profile.phone || "",
                 email: profile.email || "",
-                savedAddress: profile.addresses && profile.addresses.length > 0 && "new",
+                savedAddress: defaultAddr?._id || "new",
                 note: ""
             });
+            // Auto-load default address data
+            if (defaultAddr?._id) {
+                handleSavedAddressChange(defaultAddr._id);
+            }
         }
     }, [profile, form]);
 
@@ -379,9 +385,14 @@ export default function CartClient() {
                                         {user && profile ? (
                                             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 mb-4 border border-blue-100 dark:border-blue-800">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                                                        {profile.fullname?.charAt(0).toUpperCase()}
-                                                    </div>
+                                                    {profile.avatar ?
+                                                        <Avatar src={profile.avatar} />
+                                                        :
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                                            {profile.fullname?.charAt(0).toUpperCase()}
+                                                        </div>
+
+                                                    }
                                                     <div className="min-w-0 flex-1">
                                                         <p className="font-semibold text-sm text-gray-800 dark:text-blue-200 truncate">{profile.fullname}</p>
                                                         <p className="text-xs text-gray-500 dark:text-blue-300 truncate">{profile.email}</p>
@@ -407,7 +418,10 @@ export default function CartClient() {
                                                 fullname: profile?.fullname || "",
                                                 phone: profile?.phone || "",
                                                 email: profile?.email || "",
-                                                savedAddress: profile?.addresses && profile.addresses.length > 0 ? profile.addresses[0]._id : "new",
+                                                savedAddress: (() => {
+                                                    const defaultAddr = profile?.addresses?.find(a => a.isDefault) || profile?.addresses?.[0];
+                                                    return defaultAddr?._id || "new";
+                                                })(),
                                                 note: ""
                                             }}
                                         >
@@ -453,24 +467,41 @@ export default function CartClient() {
 
                                             {/* Saved Address */}
                                             {user && profile && savedAddresses.length > 0 && (
-                                                <Form.Item
-                                                    name="savedAddress"
-                                                    label={<span className="text-xs font-medium">Địa chỉ đã lưu</span>}
-                                                    className="!mb-3"
-                                                >
-                                                    <Select
-                                                        placeholder="Chọn địa chỉ hoặc nhập mới"
-                                                        onChange={handleSavedAddressChange}
-                                                        className="w-full"
+                                                <>
+                                                    {/* Default Address Highlight */}
+                                                    {(() => {
+                                                        const defaultAddr = savedAddresses.find(a => a.isDefault);
+                                                        if (!defaultAddr) return null;
+                                                        return (
+                                                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-3 border border-blue-200 dark:border-blue-800">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <span className="text-sm">🏠</span>
+                                                                    <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Địa chỉ mặc định</span>
+                                                                    <span className="ml-auto text-xs bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-full">{defaultAddr.label}</span>
+                                                                </div>
+                                                                <p className="text-xs text-gray-600 dark:text-gray-300">{defaultAddr.detailAddress}</p>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                    <Form.Item
+                                                        name="savedAddress"
+                                                        label={<span className="text-xs font-medium">Địa chỉ giao hàng</span>}
+                                                        className="!mb-3"
                                                     >
-                                                        <Select.Option value="new">+ Nhập địa chỉ mới</Select.Option>
-                                                        {savedAddresses.map((address) => (
-                                                            <Select.Option key={address._id} value={address._id}>
-                                                                {address.isDefault ? '🏠' : '📍'} {address.label} - {address.detailAddress}
-                                                            </Select.Option>
-                                                        ))}
-                                                    </Select>
-                                                </Form.Item>
+                                                        <Select
+                                                            placeholder="Chọn địa chỉ hoặc nhập mới"
+                                                            onChange={handleSavedAddressChange}
+                                                            className="w-full"
+                                                        >
+                                                            <Select.Option value="new">+ Nhập địa chỉ mới</Select.Option>
+                                                            {savedAddresses.map((address) => (
+                                                                <Select.Option key={address._id} value={address._id}>
+                                                                    {address.isDefault ? '🏠' : '📍'} {address.label} - {address.detailAddress}
+                                                                </Select.Option>
+                                                            ))}
+                                                        </Select>
+                                                    </Form.Item>
+                                                </>
                                             )}
 
                                             <div className="grid grid-cols-2 gap-3">

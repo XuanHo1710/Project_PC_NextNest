@@ -20,7 +20,7 @@ export const pathAdminRoutes = {
 export const pathClientRoutes = {
     home: "/",
     products: "/product",
-    category: "/category",
+    collection: "/collection",
     cart: "/cart",
     payment: "/payment",
     orderSuccess: "/order-success",

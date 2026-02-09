@@ -31,6 +31,11 @@ import {
   ProductAttributeAllowValue,
   ProductAttributeAllowValueDocument,
 } from './entities/product-attribute-allow-value';
+import {
+  Category,
+  CategoryDocument,
+} from '../category/entities/category.entity';
+import { Brand, BrandDocument } from '../brand/entities/brand.entity';
 
 @Injectable()
 export class ProductService {
@@ -44,6 +49,9 @@ export class ProductService {
     private productAttributeValueModel: Model<ProductAttributeValueDocument>,
     @InjectModel(ProductAttributeAllowValue.name)
     private productAttributeAllowValueModel: Model<ProductAttributeAllowValueDocument>,
+    @InjectModel(Category.name)
+    private categoryModel: Model<CategoryDocument>,
+    @InjectModel(Brand.name) private brandModel: Model<BrandDocument>,
   ) {}
 
   // ============= PRODUCT CRUD =============
@@ -193,6 +201,94 @@ export class ProductService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
     return { message: 'Product deleted successfully', data: product };
+  }
+
+  // ============= COLLECTION (Category + Brand by Slug) =============
+  async findByCollection(slug: string, page = 1, limit = 12, sort?: string) {
+    // Find by category slug or brand slug using $or
+    const [category, brand] = await Promise.all([
+      this.categoryModel
+        .findOne({ slug, isDeleted: { $ne: true } })
+        .lean()
+        .exec(),
+      this.brandModel.findOne({ slug, isDeleted: false }).lean().exec(),
+    ]);
+
+    if (!category && !brand) {
+      throw new NotFoundException(
+        `No category or brand found with slug "${slug}"`,
+      );
+    }
+
+    const query: any = { isDeleted: false, status: 'ACTIVE' };
+    const conditions: any[] = [];
+    if (category) conditions.push({ category: category._id });
+    if (brand) conditions.push({ brand: brand._id });
+
+    if (conditions.length > 1) {
+      query.$or = conditions;
+    } else {
+      Object.assign(query, conditions[0]);
+    }
+
+    let sortOption: any = { createdAt: -1 };
+    if (sort) {
+      const parts = sort.split('_');
+      if (parts.length === 2) {
+        sortOption = { [parts[0]]: parts[1] === '1' ? 1 : -1 };
+      }
+    }
+
+    const skip = (page - 1) * limit;
+    const [products, total] = await Promise.all([
+      this.productModel
+        .find(query)
+        .populate('brand', 'name slug logo')
+        .populate('category', 'name slug')
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.productModel.countDocuments(query).exec(),
+    ]);
+
+    // Populate defaultVariant for each product
+    const items = await Promise.all(
+      products.map(async (product) => {
+        if (product.defaultProductVariantId) {
+          const variant = await this.productVariantModel
+            .findOne({
+              _id: product.defaultProductVariantId,
+              isDeleted: false,
+            })
+            .lean()
+            .exec();
+          if (variant) {
+            product['defaultVariant'] = {
+              ...variant,
+              combination:
+                variant.combination instanceof Map
+                  ? Object.fromEntries(variant.combination)
+                  : variant.combination,
+            };
+          }
+        }
+        return product;
+      }),
+    );
+
+    return {
+      items,
+      totalItems: total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      limit,
+      collectionInfo: {
+        category: category || null,
+        brand: brand || null,
+      },
+    };
   }
 
   // ============= PRODUCT VARIANT CRUD =============

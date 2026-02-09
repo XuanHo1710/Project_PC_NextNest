@@ -52,6 +52,24 @@ export class ProductController {
     return this.productService.findAllProducts(data.searchDto);
   }
 
+  @MessagePattern('product.findByCollection')
+  findByCollection(
+    @Payload()
+    data: {
+      slug: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+    },
+  ) {
+    return this.productService.findByCollection(
+      data.slug,
+      data.page,
+      data.limit,
+      data.sort,
+    );
+  }
+
   @MessagePattern('product.findBySlug')
   findBySlug(@Payload() data: { slug: string }) {
     return this.productService.findBySlug(data.slug);

@@ -227,7 +227,7 @@ export default function ProductDetailClient() {
                     <Breadcrumb
                         items={[
                             { title: <Link href="/home" className="flex items-center gap-1"><HomeOutlined /> Trang chủ</Link> },
-                            ...(product.category ? [{ title: <Link href={`/category/${product.category.slug}`}>{product.category.name}</Link> }] : []),
+                            ...(product.category ? [{ title: <Link href={`/collection/${product.category.slug}`}>{product.category.name}</Link> }] : []),
                             { title: <span className="text-blue-600 font-medium">{product.name}</span> },
                         ]}
                     />
