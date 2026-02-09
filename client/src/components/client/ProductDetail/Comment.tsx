@@ -81,10 +81,6 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
         };
     }, [replyImages]);
 
-    console.log(productComments);
-
-
-
     // Xử lý trả lời comment
     const handleReplyClick = (commentIndex: string) => {
         if (showReplyForm === commentIndex) {
@@ -277,45 +273,53 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                 </div>
             </div>
 
-            {/* Form đánh giá */}
-            <form method='post' action="#" onSubmit={handleCommentSubmit} className="mb-10 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
-                <h3 className="text-xl font-bold mb-4 flex items-center">
-                    <StarFilled className="mr-2 text-yellow-500" /> Viết đánh giá của bạn
-                </h3>
-                <div>
-                    <div className="mb-4">
-                        <p className="mb-2 font-medium">Đánh giá sao:</p>
-                        <Rate
-                            value={userRating}
-                            onChange={setUserRating}
-                            className="text-xl"
-                        />
-                    </div>
-                    <TextArea
-                        rows={4}
-                        placeholder="Nhận xét của bạn về sản phẩm..."
-                        className="mb-4"
-                        name='commentText'
-                    />
-                    <div className="flex justify-between">
-                        <div className="flex items-center">
-                            <input type="file" id="image-upload" className="hidden" />
-                            <label htmlFor="image-upload" className="cursor-pointer text-blue-600 dark:text-blue-400 flex items-center">
-                                <span className="icon-[material-symbols--add-photo-alternate] mr-2"></span>
-                                Thêm ảnh
-                            </label>
+            {/* Form đánh giá — chỉ hiển thị khi đã đăng nhập */}
+            {user ? (
+                <form method='post' action="#" onSubmit={handleCommentSubmit} className="mb-10 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
+                    <h3 className="text-xl font-bold mb-4 flex items-center">
+                        <StarFilled className="mr-2 text-yellow-500" /> Viết đánh giá của bạn
+                    </h3>
+                    <div>
+                        <div className="mb-4">
+                            <p className="mb-2 font-medium">Đánh giá sao:</p>
+                            <Rate
+                                value={userRating}
+                                onChange={setUserRating}
+                                className="text-xl"
+                            />
                         </div>
-                        <Button
-                            type="primary"
-                            htmlType='submit'
-                            icon={<SendOutlined />}
-                            loading={isLoadingSubmit}
-                        >
-                            Gửi đánh giá
-                        </Button>
+                        <TextArea
+                            rows={4}
+                            placeholder="Nhận xét của bạn về sản phẩm..."
+                            className="mb-4"
+                            name='commentText'
+                        />
+                        <div className="flex justify-between">
+                            <div className="flex items-center">
+                                <input type="file" id="image-upload" className="hidden" />
+                                <label htmlFor="image-upload" className="cursor-pointer text-blue-600 dark:text-blue-400 flex items-center">
+                                    <span className="icon-[material-symbols--add-photo-alternate] mr-2"></span>
+                                    Thêm ảnh
+                                </label>
+                            </div>
+                            <Button
+                                type="primary"
+                                htmlType='submit'
+                                icon={<SendOutlined />}
+                                loading={isLoadingSubmit}
+                            >
+                                Gửi đánh giá
+                            </Button>
+                        </div>
                     </div>
+                </form>
+            ) : (
+                <div className="mb-10 border border-gray-200 dark:border-gray-700 rounded-lg p-5 text-center">
+                    <CommentOutlined className="text-4xl text-gray-300 mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-3">Vui lòng đăng nhập để viết đánh giá sản phẩm</p>
+                    <Button type="primary" href="/login">Đăng nhập</Button>
                 </div>
-            </form>
+            )}
 
             {/* Danh sách bình luận */}
             <div className="space-y-6">
@@ -352,13 +356,15 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                         {/* Like and dislike in this components */}
                                         <HandleLike user={user} product={product} comment={comment} />
                                         {/* End like and dislike in this components */}
-                                        <button
-                                            className="text-gray-500 cursor-pointer dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
-                                            onClick={() => handleReplyClick(index.toString())}
-                                        >
-                                            <CommentOutlined className="mr-1" />
-                                            Trả lời
-                                        </button>
+                                        {user && (
+                                            <button
+                                                className="text-gray-500 cursor-pointer dark:text-gray-400 text-sm flex items-center hover:text-blue-600"
+                                                onClick={() => handleReplyClick(index.toString())}
+                                            >
+                                                <CommentOutlined className="mr-1" />
+                                                Trả lời
+                                            </button>
+                                        )}
                                         {/* Nút xem replies */}
                                         {comment.replies && comment.replies.filter(r => r.isReply).length > 0 && (
                                             <button
@@ -380,8 +386,8 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                         )}
                                     </div>
 
-                                    {/* Form trả lời */}
-                                    {showReplyForm === index.toString() && (
+                                    {/* Form trả lời — chỉ hiện khi đã đăng nhập */}
+                                    {showReplyForm === index.toString() && user && (
                                         <div className="mt-3 ml-16 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
                                             <div className="flex items-start space-x-3">
                                                 <Image
@@ -466,7 +472,7 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                                     preview={false}
                                                     style={{ marginRight: '12px' }}
                                                 />
-                                                <div>
+                                                <div className="flex-1">
                                                     <div className="flex items-center">
                                                         <h5 className="font-medium text-sm">
                                                             {reply.guestIdInteractedBy.name}
@@ -479,6 +485,33 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                                                         <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(reply.ratingAt)}</span>
                                                     </div>
                                                     <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{reply.content}</p>
+                                                    {/* Reply to reply button — cấp 2 (max) */}
+                                                    {user && (
+                                                        <button
+                                                            className="text-gray-400 cursor-pointer text-xs flex items-center hover:text-blue-600 mt-2"
+                                                            onClick={() => handleReplyClick(`${index}-reply-${replyIndex}`)}
+                                                        >
+                                                            <CommentOutlined className="mr-1" />
+                                                            Trả lời
+                                                        </button>
+                                                    )}
+                                                    {/* Reply-to-reply form (level 2) */}
+                                                    {showReplyForm === `${index}-reply-${replyIndex}` && user && (
+                                                        <div className="mt-2 p-3 bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500">
+                                                            <form action="#" onSubmit={(e) => handleReplySubmit(comment._id, e)} method='post' className="flex-1">
+                                                                <TextArea
+                                                                    rows={2}
+                                                                    placeholder={`Trả lời ${reply.guestIdInteractedBy.name}...`}
+                                                                    name='replyText'
+                                                                    className="mb-2"
+                                                                />
+                                                                <div className="flex items-center justify-end space-x-2">
+                                                                    <Button size="small" onClick={handleCancelReply}>Hủy</Button>
+                                                                    <Button htmlType='submit' type="primary" size="small" loading={isSubmittingReply} icon={<SendOutlined />}>Trả lời</Button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

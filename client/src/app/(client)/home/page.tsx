@@ -128,11 +128,59 @@ export default function HomeClient() {
                             ... banner images ...
                         </Carousel>
                     </div> */}
-                    <div className='col-span-12 xl:col-span-9 row-span-3 flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg min-h-[300px]'>
-                        <div className='text-center text-white p-8'>
-                            <h2 className='text-3xl md:text-4xl font-extrabold mb-3'>PC Store</h2>
-                            <p className='text-lg md:text-xl opacity-90'>Khơi nguồn đam mê, chạm đến đỉnh công nghệ!</p>
-                        </div>
+                    <div className='col-span-12 xl:col-span-9 row-span-3 rounded-lg shadow-lg overflow-hidden min-h-[300px]'>
+                        <Carousel autoplay arrows autoplaySpeed={3000} dots={{ className: 'custom-dots' }} className="hero-banner-carousel">
+                            <div>
+                                <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 flex items-center">
+                                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                                    <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
+                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">PC Gaming</h2>
+                                        <p className="text-lg md:text-xl opacity-90 mb-4">Hiệu năng vượt trội, chiến mọi tựa game!</p>
+                                        <Link href="/collection/pc-gaming" className="inline-block bg-white text-blue-600 font-bold px-6 py-2.5 rounded-full hover:bg-blue-50 transition-colors">Khám phá ngay</Link>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 flex items-center">
+                                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                                    <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
+                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Laptop Gaming</h2>
+                                        <p className="text-lg md:text-xl opacity-90 mb-4">Mỏng nhẹ, mạnh mẽ, chiến game mọi nơi!</p>
+                                        <Link href="/collection/laptop" className="inline-block bg-white text-emerald-600 font-bold px-6 py-2.5 rounded-full hover:bg-emerald-50 transition-colors">Xem thêm</Link>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 flex items-center">
+                                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1547082299-de196ea013d6?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                                    <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
+                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Khuyến mãi HOT</h2>
+                                        <p className="text-lg md:text-xl opacity-90 mb-4">Giảm giá đến 50%, số lượng có hạn!</p>
+                                        <Link href="/home#top-discount" className="inline-block bg-white text-red-500 font-bold px-6 py-2.5 rounded-full hover:bg-red-50 transition-colors">Mua ngay</Link>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 flex items-center">
+                                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                                    <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
+                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Màn hình Gaming</h2>
+                                        <p className="text-lg md:text-xl opacity-90 mb-4">144Hz+, IPS, chuẩn màu chuyên nghiệp!</p>
+                                        <Link href="/collection/man-hinh" className="inline-block bg-white text-purple-600 font-bold px-6 py-2.5 rounded-full hover:bg-purple-50 transition-colors">Tìm hiểu</Link>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center">
+                                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1625225233840-695456021cde?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                                    <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
+                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Phụ kiện Gaming</h2>
+                                        <p className="text-lg md:text-xl opacity-90 mb-4">Bàn phím cơ, chuột, tai nghe chính hãng!</p>
+                                        <Link href="/collection/phu-kien" className="inline-block bg-white text-blue-600 font-bold px-6 py-2.5 rounded-full hover:bg-blue-50 transition-colors">Xem ngay</Link>
+                                    </div>
+                                </div>
+                            </div>
+                        </Carousel>
                     </div>
                 </div>
 
@@ -185,10 +233,8 @@ export default function HomeClient() {
                         >
                             {brands.map((brand) => (
                                 <div key={brand._id} className="px-2">
-                                    <a
-                                        href={brand.website || `/collection/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
-                                        target={brand.website ? '_blank' : '_self'}
-                                        rel={brand.website ? 'noopener noreferrer' : undefined}
+                                    <Link
+                                        href={`/collection/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
                                         className="group block"
                                     >
                                         <div className="bg-white dark:bg-blue-950 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 h-[180px] justify-center">
@@ -214,7 +260,7 @@ export default function HomeClient() {
                                                 </p>
                                             )}
                                         </div>
-                                    </a>
+                                    </Link>
                                 </div>
                             ))}
                         </Carousel>

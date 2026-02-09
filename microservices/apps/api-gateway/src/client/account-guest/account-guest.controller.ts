@@ -90,6 +90,42 @@ export class AccountGuestController {
     });
   }
 
+  // ============== FAVORITES / WISHLIST ==============
+
+  @Get('favorites')
+  getFavorites(@Guest() guest: any) {
+    return this.accountGuestService.send('account_guest.getFavorites', {
+      guestId: guest._id,
+    });
+  }
+
+  @Post('favorites/:productId')
+  addToFavorites(@Guest() guest: any, @Param('productId') productId: string) {
+    return this.accountGuestService.send('account_guest.addToFavorites', {
+      guestId: guest._id,
+      productId,
+    });
+  }
+
+  @Delete('favorites/:productId')
+  removeFromFavorites(
+    @Guest() guest: any,
+    @Param('productId') productId: string,
+  ) {
+    return this.accountGuestService.send('account_guest.removeFromFavorites', {
+      guestId: guest._id,
+      productId,
+    });
+  }
+
+  @Get('favorites/check/:productId')
+  isFavorite(@Guest() guest: any, @Param('productId') productId: string) {
+    return this.accountGuestService.send('account_guest.isFavorite', {
+      guestId: guest._id,
+      productId,
+    });
+  }
+
   @Post()
   create(@Body() createAccountGuestDto: CreateAccountGuestDto) {
     return this.accountGuestService.send(

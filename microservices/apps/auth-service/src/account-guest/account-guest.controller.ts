@@ -117,4 +117,32 @@ export class AccountGuestController {
       data.addressId,
     );
   }
+
+  // ============== FAVORITES / WISHLIST ==============
+
+  @MessagePattern('account_guest.getFavorites')
+  getFavorites(@Payload() data: { guestId: string }) {
+    return this.accountGuestService.getFavorites(data.guestId);
+  }
+
+  @MessagePattern('account_guest.addToFavorites')
+  addToFavorites(@Payload() data: { guestId: string; productId: string }) {
+    return this.accountGuestService.addToFavorites(
+      data.guestId,
+      data.productId,
+    );
+  }
+
+  @MessagePattern('account_guest.removeFromFavorites')
+  removeFromFavorites(@Payload() data: { guestId: string; productId: string }) {
+    return this.accountGuestService.removeFromFavorites(
+      data.guestId,
+      data.productId,
+    );
+  }
+
+  @MessagePattern('account_guest.isFavorite')
+  isFavorite(@Payload() data: { guestId: string; productId: string }) {
+    return this.accountGuestService.isFavorite(data.guestId, data.productId);
+  }
 }

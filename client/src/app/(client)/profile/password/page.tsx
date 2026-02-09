@@ -11,6 +11,7 @@ import {
 import { accountGuestService } from "@/services/client/account.client.service";
 import useAuthUser from "@/hooks/useAuthUser";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import ProfileSidebar from '@/components/client/ProfileSidebar/ProfileSidebar';
 
 interface PasswordFormValues {
     currentPassword: string;
@@ -106,59 +107,7 @@ export default function ProfilePassword() {
                 </div>
 
                 <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
-                    <div className='col-span-12 lg:col-span-3'>
-                        <div className='flex items-center'>
-                            {user && user.avatar ? (
-                                <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
-                            ) : (
-                                <>
-                                    <i className='fas fa-user-circle text-5xl text-blue-600'></i>
-                                </>
-                            )}
-                            <div className='mx-4'>
-                                <h6 className='text-base font-semibold'>Tài khoản của,</h6>
-                                <h1 className='font-bold text-lg'>{user?.fullname || 'Người dùng'}</h1>
-                            </div>
-                        </div>
-                        <ul className='pl-0 my-5'>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/detail"}>
-                                <li className='inline-block'>
-                                    <i className="fa-regular fa-user w-9"></i>
-                                    <span className='font-medium'>Thông tin tài khoản</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/order"}>
-                                <li className='inline-block'>
-                                    <i className="far fa-list-alt w-9"></i>
-                                    <span className='font-medium'>Tra cứu đơn hàng</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/wishlist"}>
-                                <li className='inline-block'>
-                                    <i className="fa-solid fa-heart w-9"></i>
-                                    <span className='font-medium'>Danh sách yêu thích</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/address"}>
-                                <li className='inline-block'>
-                                    <i className="fa-solid fa-location-dot w-9"></i>
-                                    <span className='font-medium'>Quản lý địa chỉ</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 bg-blue-400 text-white px-5 rounded-lg' href={"/profile/password"}>
-                                <li className='inline-block'>
-                                    <i className="fas fa-lock w-9"></i>
-                                    <span className='font-medium'>Thay đổi mật khẩu</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/home"}>
-                                <li className='inline-block'>
-                                    <i className="fas fa-sign-out-alt w-9"></i>
-                                    <span className='font-medium'>Đăng xuất</span>
-                                </li>
-                            </Link>
-                        </ul>
-                    </div>
+                    <ProfileSidebar user={user} activePage="password" />
 
                     <div className='col-span-12 lg:col-span-9 p-6 bg-white rounded-2xl shadow-xl dark:bg-gray-800 dark:text-white'>
                         <h2 className='text-xl font-bold pb-3 border-solid border-b-2 border-blue-200 dark:border-slate-900 dark:text-white mb-6'>

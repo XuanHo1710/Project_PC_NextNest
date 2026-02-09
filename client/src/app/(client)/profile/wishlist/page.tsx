@@ -17,6 +17,7 @@ import {
 } from '@/utils/productHelpers';
 import { WishlistSkeleton } from '@/components/Skeletons/WishlistSkeleton';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import ProfileSidebar from '@/components/client/ProfileSidebar/ProfileSidebar';
 import {
     HeartFilled,
     ShoppingCartOutlined,
@@ -39,24 +40,43 @@ export default function WishlistPage() {
         }).format(amount);
     };
 
-    console.log('User in avatar:', user?.avatar);
+    // Fetch wishlist favorite product IDs
+    const { data: favoriteIds = [], isLoading: isLoadingFavorites } = useQuery<string[]>({
+        queryKey: ['wishlist'],
+        queryFn: () => accountGuestService.getFavorites(),
+        enabled: !!user?.id,
+    });
 
-    // Fetch wishlist data
-    // const { data: wishlistProducts = [], isLoading } = useQuery<IProductCard[]>({
-    //     queryKey: ['wishlist', user?.id],
-    //     queryFn: () => accountGuestService.getWishlist(user?.id || ''),
-    //     enabled: !!user?.id,
-    // });
+    // Fetch product details for each favorite ID
+    const { data: wishlistProducts = [], isLoading: isLoadingProducts } = useQuery<IProductCard[]>({
+        queryKey: ['wishlist-products', favoriteIds],
+        queryFn: async () => {
+            if (!favoriteIds.length) return [];
+            const products = await Promise.all(
+                favoriteIds.map(async (id) => {
+                    try {
+                        const product = await productClientService.getProductById(id);
+                        return product as unknown as IProductCard;
+                    } catch {
+                        return null;
+                    }
+                }),
+            );
+            return products.filter(Boolean) as IProductCard[];
+        },
+        enabled: favoriteIds.length > 0,
+    });
 
-    const wishlistProducts = []
+    const isLoading = isLoadingFavorites || isLoadingProducts;
 
     // Mutation to remove from wishlist
     const removeFromWishlistMutation = useMutation({
         mutationFn: ({ productId }: { productId: string }) =>
-            productClientService.handleWishlist(user?.id || '', productId, false),
+            productClientService.removeFromWishlist(productId),
         onSuccess: () => {
             message.success('Đã xóa khỏi danh sách yêu thích!');
-            queryClient.invalidateQueries({ queryKey: ['wishlist', user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+            queryClient.invalidateQueries({ queryKey: ['wishlist-products'] });
         },
         onError: () => {
             message.error('Có lỗi xảy ra khi xóa sản phẩm!');
@@ -81,90 +101,33 @@ export default function WishlistPage() {
         removeFromWishlistMutation.mutate({ productId });
     };
 
-    // if (isLoading) {
-    //     return (
-    //         <div className='container mx-auto'>
-    //             {/* Breadcrumb */}
-    //             <div className='flex items-center mt-3 mx-5 xl:mx-32'>
-    //                 <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Trang chủ</Link>
-    //                 <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-    //                 <Link href="/profile/detail" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Hồ sơ người dùng</Link>
-    //                 <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-    //                 <h3 className="font-medium text-lg text-blue-400 dark:text-white mr-3">Danh sách yêu thích</h3>
-    //             </div>
-
-    //             <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
-    //                 {/* Sidebar */}
-    //                 <div className='col-span-12 lg:col-span-3'>
-    //                     <div className='flex items-center'>
-    //                         {user && user.avatar ? (
-    //                             <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
-    //                         ) : (
-    //                             <>
-    //                                 <i className='fas fa-user-circle text-5xl text-blue-600'></i>
-    //                             </>
-    //                         )}
-    //                         <div className='mx-4'>
-    //                             <h6 className='text-base font-semibold'>Tài khoản của,</h6>
-    //                             <h1 className='font-bold text-lg'>{user?.fullname || 'Khách hàng'}</h1>
-    //                         </div>
-    //                     </div>
-    //                     <ul className='pl-0 my-5'>
-    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/detail"}>
-    //                             <li className='inline-block'>
-    //                                 <i className="fa-regular fa-user w-9"></i>
-    //                                 <span className='font-medium'>Thông tin tài khoản</span>
-    //                             </li>
-    //                         </Link>
-    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/order"}>
-    //                             <li className='inline-block'>
-    //                                 <i className="far fa-list-alt w-9"></i>
-    //                                 <span className='font-medium'>Tra cứu đơn hàng</span>
-    //                             </li>
-    //                         </Link>
-    //                         <Link className='font-medium block my-3 py-3 bg-blue-400 text-white px-5 rounded-lg' href={"/profile/wishlist"}>
-    //                             <li className='inline-block'>
-    //                                 <i className="fa-solid fa-heart w-9"></i>
-    //                                 <span className='font-medium'>Danh sách yêu thích</span>
-    //                             </li>
-    //                         </Link>
-    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/address"}>
-    //                             <li className='inline-block'>
-    //                                 <i className="fa-solid fa-location-dot w-9"></i>
-    //                                 <span className='font-medium'>Quản lý địa chỉ</span>
-    //                             </li>
-    //                         </Link>
-    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/password"}>
-    //                             <li className='inline-block'>
-    //                                 <i className="fas fa-lock w-9"></i>
-    //                                 <span className='font-medium'>Thay đổi mật khẩu</span>
-    //                             </li>
-    //                         </Link>
-    //                         <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/home"}>
-    //                             <li className='inline-block'>
-    //                                 <i className="fas fa-sign-out-alt w-9"></i>
-    //                                 <span className='font-medium'>Đăng xuất</span>
-    //                             </li>
-    //                         </Link>
-    //                     </ul>
-    //                 </div>
-
-    //                 {/* Main Content with Skeleton */}
-    //                 <div className='col-span-12 lg:col-span-9'>
-    //                     <div className='bg-white dark:bg-gray-800 rounded-lg shadow-md p-6'>
-    //                         <div className='flex items-center justify-between mb-6'>
-    //                             <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center'>
-    //                                 <HeartFilled className='text-red-500 mr-3' />
-    //                                 Danh sách yêu thích
-    //                             </h2>
-    //                         </div>
-    //                         <WishlistSkeleton />
-    //                     </div>
-    //                 </div>
-    //             </div>
-    //         </div>
-    //     );
-    // }
+    if (isLoading) {
+        return (
+            <div className='container mx-auto'>
+                <div className='flex items-center mt-3 mx-5 xl:mx-32'>
+                    <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Trang chủ</Link>
+                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
+                    <Link href="/profile/detail" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Hồ sơ người dùng</Link>
+                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
+                    <h3 className="font-medium text-lg text-blue-400 dark:text-white mr-3">Danh sách yêu thích</h3>
+                </div>
+                <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
+                    <ProfileSidebar user={user} activePage="wishlist" />
+                    <div className='col-span-12 lg:col-span-9'>
+                        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-md p-6'>
+                            <div className='flex items-center justify-between mb-6'>
+                                <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center'>
+                                    <HeartFilled className='text-red-500 mr-3' />
+                                    Danh sách yêu thích
+                                </h2>
+                            </div>
+                            <WishlistSkeleton />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
@@ -187,60 +150,7 @@ export default function WishlistPage() {
 
                 <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
                     {/* Sidebar */}
-                    <div className='col-span-12 lg:col-span-3'>
-                        <div className='flex items-center'>
-                            {user && user?.avatar ? (
-                                <Image src={user.avatar} alt="User Avatar" width={40} height={40} className="rounded-full" />
-                            ) : (
-                                <>
-                                    <i className='fas fa-user-circle text-5xl text-blue-600'></i>
-                                </>
-                            )}
-
-                            <div className='mx-4'>
-                                <h6 className='text-base font-semibold'>Tài khoản của,</h6>
-                                <h1 className='font-bold text-lg'>{user?.fullname || 'Khách hàng'}</h1>
-                            </div>
-                        </div>
-                        <ul className='pl-0 my-5'>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/detail"}>
-                                <li className='inline-block'>
-                                    <i className="fa-regular fa-user w-9"></i>
-                                    <span className='font-medium'>Thông tin tài khoản</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/order"}>
-                                <li className='inline-block'>
-                                    <i className="far fa-list-alt w-9"></i>
-                                    <span className='font-medium'>Tra cứu đơn hàng</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 bg-blue-400 text-white px-5 rounded-lg' href={"/profile/wishlist"}>
-                                <li className='inline-block'>
-                                    <i className="fa-solid fa-heart w-9"></i>
-                                    <span className='font-medium'>Danh sách yêu thích</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/address"}>
-                                <li className='inline-block'>
-                                    <i className="fa-solid fa-location-dot w-9"></i>
-                                    <span className='font-medium'>Quản lý địa chỉ</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/profile/password"}>
-                                <li className='inline-block'>
-                                    <i className="fas fa-lock w-9"></i>
-                                    <span className='font-medium'>Thay đổi mật khẩu</span>
-                                </li>
-                            </Link>
-                            <Link className='font-medium block my-3 py-3 hover:bg-blue-400 hover:text-white px-5 bg-stone-100 rounded-lg text-stone-600' href={"/home"}>
-                                <li className='inline-block'>
-                                    <i className="fas fa-sign-out-alt w-9"></i>
-                                    <span className='font-medium'>Đăng xuất</span>
-                                </li>
-                            </Link>
-                        </ul>
-                    </div>
+                    <ProfileSidebar user={user} activePage="wishlist" />
 
                     {/* Main Content */}
                     <div className='col-span-12 lg:col-span-9'>
@@ -351,10 +261,9 @@ export default function WishlistPage() {
                                                     )}
                                                 </div>
 
-                                                {/* Sold Count */}
-
+                                                {/* Stock */}
                                                 <div className='mb-4 text-xs text-gray-500 dark:text-gray-400'>
-                                                    Đã bán: {getProductSoldCount(product) || 0} sản phẩm
+                                                    Tồn kho: {getProductStock(product)} sản phẩm
                                                 </div>
 
 

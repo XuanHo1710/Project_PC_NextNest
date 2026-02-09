@@ -478,4 +478,59 @@ export class AccountGuestService {
 
     return account;
   }
+
+  // ============== FAVORITES / WISHLIST ==============
+
+  async getFavorites(guestId: string): Promise<string[]> {
+    const account = await this.accountGuestModel
+      .findById(new Types.ObjectId(guestId))
+      .select('favoriteProducts')
+      .exec();
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+    return (account.favoriteProducts || []).map((id) => id.toString());
+  }
+
+  async addToFavorites(guestId: string, productId: string) {
+    const result = await this.accountGuestModel
+      .findByIdAndUpdate(
+        new Types.ObjectId(guestId),
+        { $addToSet: { favoriteProducts: new Types.ObjectId(productId) } },
+        { new: true },
+      )
+      .select('favoriteProducts')
+      .exec();
+
+    if (!result) {
+      throw new NotFoundException('Account not found');
+    }
+    return result.favoriteProducts.map((id) => id.toString());
+  }
+
+  async removeFromFavorites(guestId: string, productId: string) {
+    const result = await this.accountGuestModel
+      .findByIdAndUpdate(
+        new Types.ObjectId(guestId),
+        { $pull: { favoriteProducts: new Types.ObjectId(productId) } },
+        { new: true },
+      )
+      .select('favoriteProducts')
+      .exec();
+
+    if (!result) {
+      throw new NotFoundException('Account not found');
+    }
+    return result.favoriteProducts.map((id) => id.toString());
+  }
+
+  async isFavorite(guestId: string, productId: string): Promise<boolean> {
+    const account = await this.accountGuestModel
+      .findOne({
+        _id: new Types.ObjectId(guestId),
+        favoriteProducts: { $in: [new Types.ObjectId(productId)] },
+      } as any)
+      .exec();
+    return !!account;
+  }
 }

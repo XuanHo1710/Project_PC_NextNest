@@ -161,47 +161,43 @@ class ProductClientService {
 
   /**
    * Check if product is in user wishlist
+   * Uses auth-service via gateway: GET /account-guest/favorites/check/:productId
    */
-  async isWishlistByGuestAndProduct(
-    guestId: string,
-    productId: string,
-  ): Promise<{ isWishlisted: boolean }> {
+  async isWishlistByGuestAndProduct(productId: string): Promise<boolean> {
     const response = await axiosClient.get(
-      `/guest/profile/${guestId}/wishlist/check/${productId}`,
+      `/account-guest/favorites/check/${productId}`,
     );
     return response.data;
   }
 
   /**
-   * Add/Remove product from wishlist
+   * Add product to wishlist
+   * Uses auth-service via gateway: POST /account-guest/favorites/:productId
    */
-  async handleWishlist(
-    guestId: string,
-    productId: string,
-    isWishlist: boolean,
-  ): Promise<unknown> {
-    if (isWishlist) {
-      // Add to wishlist
-      const response = await axiosClient.post(
-        `/guest/profile/${guestId}/wishlist/${productId}`,
-      );
-      return response.data;
-    } else {
-      // Remove from wishlist
-      const response = await axiosClient.delete(
-        `/guest/profile/${guestId}/wishlist/${productId}`,
-      );
-      return response.data;
-    }
+  async addToWishlist(productId: string): Promise<string[]> {
+    const response = await axiosClient.post(
+      `/account-guest/favorites/${productId}`,
+    );
+    return response.data;
   }
 
   /**
-   * Get user wishlist
+   * Remove product from wishlist
+   * Uses auth-service via gateway: DELETE /account-guest/favorites/:productId
    */
-  async getWishlist(guestId: string): Promise<IProductCard[]> {
-    const response = await axiosClient.get(
-      `/guest/profile/${guestId}/wishlist`,
+  async removeFromWishlist(productId: string): Promise<string[]> {
+    const response = await axiosClient.delete(
+      `/account-guest/favorites/${productId}`,
     );
+    return response.data;
+  }
+
+  /**
+   * Get all favorite product IDs
+   * Uses auth-service via gateway: GET /account-guest/favorites
+   */
+  async getWishlistIds(): Promise<string[]> {
+    const response = await axiosClient.get(`/account-guest/favorites`);
     return response.data;
   }
 

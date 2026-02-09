@@ -11,6 +11,7 @@ import { ProductDetailSkeleton } from "@/components/Skeletons";
 import {
     ShoppingCartOutlined,
     HeartOutlined,
+    HeartFilled,
     CheckCircleFilled,
     FireFilled,
     CommentOutlined,
@@ -73,11 +74,12 @@ export default function ProductDetailClient() {
         staleTime: 1000 * 60 * 5,
     });
 
-    // const { data: dataWishlist } = useQuery<{ isWishlisted: boolean }>({
-    //     queryKey: ['product-isWishlist', product?._id, user?.id],
-    //     queryFn: () => productClientService.isWishlistByGuestAndProduct(user?.id || "", product?._id as string),
-    //     enabled: !!product?._id && !!user?.id,
-    // });
+    // Wishlist status check
+    const { data: isWishlisted } = useQuery<boolean>({
+        queryKey: ['product-isWishlist', product?._id],
+        queryFn: () => productClientService.isWishlistByGuestAndProduct(product?._id as string),
+        enabled: !!product?._id && !!user?.id,
+    });
 
     const { data: dataProduct, isLoading: isLoadingDataProduct } = useQuery<IProductWithPagination | null>({
         queryKey: ['product-by-category', product?.category?._id || ""],
@@ -87,15 +89,25 @@ export default function ProductDetailClient() {
 
 
 
-    // const addToListMutation = useMutation({
-    //     mutationFn: ({ guestID, productID, isWishlist }: { guestID: string; productID: string; isWishlist: boolean }) =>
-    //         productClientService.handleWishlist(guestID, productID, isWishlist),
-    //     onSuccess: () => {
-    //         Swal.fire({ icon: "success", title: "Cập nhật danh sách yêu thích thành công!" });
-    //         queryClient.invalidateQueries({ queryKey: ['product-isWishlist', product?._id, user?.id] });
-    //     },
-    //     onError: () => message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.'),
-    // });
+    const queryClient = useQueryClient();
+
+    const addToWishlistMutation = useMutation({
+        mutationFn: ({ productID, shouldAdd }: { productID: string; shouldAdd: boolean }) =>
+            shouldAdd
+                ? productClientService.addToWishlist(productID)
+                : productClientService.removeFromWishlist(productID),
+        onSuccess: (_data, variables) => {
+            Swal.fire({
+                icon: "success",
+                title: variables.shouldAdd ? "Đã thêm vào yêu thích!" : "Đã xóa khỏi yêu thích!",
+                showConfirmButton: false,
+                timer: 1500,
+            });
+            queryClient.invalidateQueries({ queryKey: ['product-isWishlist', product?._id] });
+            queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+        },
+        onError: () => message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.'),
+    });
 
     // Derive attribute groups from allowValues
     const attributeGroups = useMemo(() => {
@@ -197,12 +209,11 @@ export default function ProductDetailClient() {
     ];
 
     const handleAddToWishlist = (p: IProductCard) => {
-        const guestID = user?.id || "";
-        if (!guestID) {
+        if (!user?.id) {
             Swal.fire({ icon: "warning", title: "Vui lòng đăng nhập để sử dụng tính năng này!" });
             return;
         }
-        // addToListMutation.mutate({ guestID, productID: p._id, isWishlist: !dataWishlist?.isWishlisted });
+        addToWishlistMutation.mutate({ productID: p._id, shouldAdd: !isWishlisted });
     };
 
     if (isLoadingProduct) return <ProductDetailSkeleton />;
@@ -406,11 +417,12 @@ export default function ProductDetailClient() {
                                 </Button>
                                 <Button
                                     size="large"
-                                    icon={<HeartOutlined />}
+                                    icon={isWishlisted ? <HeartFilled /> : <HeartOutlined />}
                                     onClick={() => handleAddToWishlist(product)}
-                                // className={`!h-12 !px-6 !rounded-xl !font-medium ${dataWishlist?.isWishlisted ? '!text-red-500 !border-red-300' : '!text-gray-500 !border-gray-300'} hover:!text-red-500`}
+                                    loading={addToWishlistMutation.isPending}
+                                    className={`!h-12 !px-6 !rounded-xl !font-medium ${isWishlisted ? '!text-red-500 !border-red-300' : '!text-gray-500 !border-gray-300'} hover:!text-red-500`}
                                 >
-                                    Yêu thích
+                                    {isWishlisted ? 'Đã yêu thích' : 'Yêu thích'}
                                 </Button>
                             </div>
                         </div>
