@@ -47,7 +47,7 @@ class ProductClientService {
    */
   async getProductById(id: string): Promise<IProductPopulated> {
     const response = await axiosClient.get(`${this.baseURL}/${id}`);
-    return response as unknown as IProductPopulated;
+    return response.data;
   }
 
   /**
@@ -56,7 +56,7 @@ class ProductClientService {
    */
   async getProductBySlug(slug: string): Promise<IProductPopulated> {
     const response = await axiosClient.get(`/product/slug/${slug}`);
-    return response as unknown as IProductPopulated;
+    return response.data;
   }
 
   /**
@@ -66,7 +66,7 @@ class ProductClientService {
     const response = await axiosClient.get(`${this.baseURL}/featured`, {
       params: { limit },
     });
-    return response as unknown as IProductCard[];
+    return response.data;
   }
 
   /**
@@ -82,7 +82,7 @@ class ProductClientService {
         params: { limit },
       },
     );
-    return response as unknown as IProductCard[];
+    return response.data;
   }
 
   /**
@@ -95,7 +95,7 @@ class ProductClientService {
     const response = await axiosClient.get(`${this.baseURL}/search`, {
       params: { q: query, limit },
     });
-    return response as unknown as IProductCard[];
+    return response.data;
   }
 
   /**
@@ -105,7 +105,7 @@ class ProductClientService {
     const response = await axiosClient.get(`${this.baseURL}/new-arrivals`, {
       params: { limit },
     });
-    return response as unknown as IProductCard[];
+    return response.data;
   }
 
   /**
@@ -115,7 +115,7 @@ class ProductClientService {
     const response = await axiosClient.get(`${this.baseURL}/best-sellers`, {
       params: { limit },
     });
-    return response as unknown as IProductCard[];
+    return response.data;
   }
 
   /**
@@ -126,7 +126,7 @@ class ProductClientService {
     const response = await axiosClient.get(`${this.baseURL}/banner`, {
       params: { type },
     });
-    return response as unknown as IProductCard[];
+    return response.data;
   }
 
   // ============== BACKWARD COMPATIBLE METHODS ==============
@@ -154,7 +154,7 @@ class ProductClientService {
     const response = await axiosClient.get(`${this.baseURL}`, {
       params: { category: categoryId, page, sort, cpu, ram, price },
     });
-    return response as unknown as IProductListResponse;
+    return response.data;
   }
 
   // ============== WISHLIST APIS ==============
@@ -169,7 +169,7 @@ class ProductClientService {
     const response = await axiosClient.get(
       `/guest/profile/${guestId}/wishlist/check/${productId}`,
     );
-    return response as unknown as { isWishlisted: boolean };
+    return response.data;
   }
 
   /**
@@ -185,13 +185,13 @@ class ProductClientService {
       const response = await axiosClient.post(
         `/guest/profile/${guestId}/wishlist/${productId}`,
       );
-      return response;
+      return response.data;
     } else {
       // Remove from wishlist
       const response = await axiosClient.delete(
         `/guest/profile/${guestId}/wishlist/${productId}`,
       );
-      return response;
+      return response.data;
     }
   }
 
@@ -202,7 +202,7 @@ class ProductClientService {
     const response = await axiosClient.get(
       `/guest/profile/${guestId}/wishlist`,
     );
-    return response as unknown as IProductCard[];
+    return response.data;
   }
 
   // ============== PRODUCT VARIANTS ==============
@@ -214,7 +214,7 @@ class ProductClientService {
     const response = await axiosClient.get(
       `${this.baseURL}/${productId}/variants`,
     );
-    return response as unknown as IProductVariant[];
+    return response.data;
   }
 
   /**
@@ -230,7 +230,7 @@ class ProductClientService {
         combination,
       },
     );
-    return response as unknown as IProductVariant | null;
+    return response.data;
   }
 
   // ============== CATEGORIES ==============
@@ -242,7 +242,7 @@ class ProductClientService {
     const response = await axiosClient.get(this.categoryURL, {
       params: { parentId },
     });
-    return response as unknown as ICategory[];
+    return response.data;
   }
 
   /**
@@ -250,7 +250,7 @@ class ProductClientService {
    */
   async getCategoryById(id: string): Promise<ICategory> {
     const response = await axiosClient.get(`${this.categoryURL}/${id}`);
-    return response as unknown as ICategory;
+    return response.data;
   }
 
   /**
@@ -258,7 +258,7 @@ class ProductClientService {
    */
   async getCategoryBySlug(slug: string): Promise<ICategory> {
     const response = await axiosClient.get(`${this.categoryURL}/slug/${slug}`);
-    return response as unknown as ICategory;
+    return response.data;
   }
 
   /**
@@ -266,7 +266,7 @@ class ProductClientService {
    */
   async getCategoryTree(): Promise<ICategory[]> {
     const response = await axiosClient.get(`${this.categoryURL}/tree`);
-    return response as unknown as ICategory[];
+    return response.data;
   }
 
   // ============== BRANDS ==============
@@ -276,7 +276,7 @@ class ProductClientService {
    */
   async getBrands(): Promise<IBrand[]> {
     const response = await axiosClient.get(this.brandURL);
-    return response as unknown as IBrand[];
+    return response.data;
   }
 
   /**
@@ -284,7 +284,7 @@ class ProductClientService {
    */
   async getBrandById(id: string): Promise<IBrand> {
     const response = await axiosClient.get(`${this.brandURL}/${id}`);
-    return response as unknown as IBrand;
+    return response.data;
   }
 
   // ============== PRODUCT INTERACTIONS ==============
@@ -303,7 +303,7 @@ class ProductClientService {
         params: { page, limit },
       },
     );
-    return response;
+    return response.data;
   }
 
   /**
@@ -317,7 +317,7 @@ class ProductClientService {
     images?: string[];
   }): Promise<unknown> {
     const response = await axiosClient.post("/product-interaction", data);
-    return response;
+    return response.data;
   }
 
   /**
@@ -332,7 +332,7 @@ class ProductClientService {
     isAdminReply?: boolean;
   }): Promise<unknown> {
     const response = await axiosClient.post("/product-interaction/reply", data);
-    return response;
+    return response.data;
   }
 
   /**
@@ -348,7 +348,7 @@ class ProductClientService {
       guestIdInteractedBy,
       isLike,
     });
-    return response;
+    return response.data;
   }
 
   // ============== BACKWARD COMPATIBLE ALIASES ==============
@@ -368,7 +368,7 @@ class ProductClientService {
         params: { page, limit },
       },
     );
-    return response as unknown as IProductInteraction;
+    return response.data;
   }
 
   /**
@@ -379,7 +379,7 @@ class ProductClientService {
     data: ICreateProductInteraction,
   ): Promise<unknown> {
     const response = await axiosClient.post("/product-interaction", data);
-    return response;
+    return response.data;
   }
 
   /**
@@ -399,7 +399,7 @@ class ProductClientService {
       images,
       isAdminReply,
     });
-    return response;
+    return response.data;
   }
 }
 
