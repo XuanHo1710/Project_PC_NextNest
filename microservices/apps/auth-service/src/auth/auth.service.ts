@@ -208,20 +208,24 @@ export class ClientAuthService {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
       });
 
-      if (!payload) {
+      const accountGuest = await this.accountGuestService.findByEmail(
+        payload.email,
+      );
+
+      if (!payload || !accountGuest) {
         throw new BadRequestException('Tài khoản không tồn tại');
       }
 
       const payloadFinal = {
-        _id: payload._id,
-        guestId: payload.guestId,
-        email: payload.email,
-        avatar: payload.avatar,
-        accountStatus: payload.accountStatus,
-        fullname: payload.fullname,
-        authProvider: payload.authProvider,
-        phone: payload.phone,
-        gender: payload.gender,
+        _id: accountGuest._id,
+        guestId: accountGuest._id,
+        email: accountGuest.email,
+        avatar: accountGuest?.avatar || '',
+        accountStatus: accountGuest.accountStatus,
+        fullname: accountGuest?.fullname || '',
+        authProvider: accountGuest.authProvider || 'local',
+        phone: accountGuest.phone,
+        gender: accountGuest.gender,
       };
 
       const access_token = this.createAccessToken(payloadFinal);
@@ -290,17 +294,10 @@ export class ClientAuthService {
   }
 
   async processNewTokenAdmin(sessionId: string) {
-    console.log('[RefreshAdmin] Starting refresh for sessionId:', sessionId);
-
     try {
       //  Check refresh token in redis
       const storedRefreshToken = await this.redisClient.get(
         `admin_refresh_token:${sessionId}`,
-      );
-
-      console.log(
-        '[RefreshAdmin] Stored refresh token exists:',
-        !!storedRefreshToken,
       );
 
       if (!storedRefreshToken) {
@@ -312,24 +309,20 @@ export class ClientAuthService {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
       });
 
-      console.log(
-        '[RefreshAdmin] Payload verified:',
-        !!payload,
-        'IDEmp:',
-        payload?.IDEmp,
-      );
+      const accountEmployee =
+        await this.accountEmployeeService.findAccountByIDEmp(payload.IDEmp);
 
-      if (!payload) {
+      if (!payload || !accountEmployee) {
         throw new BadRequestException('Tài khoản không tồn tại');
       }
 
       const payloadFinal = {
-        IDEmp: payload.IDEmp,
-        username: payload.username,
-        roleId: payload.roleId,
-        employeeId: payload.employeeId,
-        _id: payload._id.toString(),
-        avatar: payload.avatar || '',
+        IDEmp: accountEmployee.IDEmp,
+        username: accountEmployee.name,
+        roleId: accountEmployee.roleId,
+        employeeId: accountEmployee._id,
+        _id: accountEmployee._id.toString(),
+        avatar: accountEmployee.avatar || '',
       };
 
       const access_token = this.createAccessToken(payloadFinal);

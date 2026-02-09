@@ -473,6 +473,7 @@ function AuthSection({
     ];
 
     if (user) {
+        console.log(user)
         return (
             <div className="flex items-center gap-2">
                 <Dropdown

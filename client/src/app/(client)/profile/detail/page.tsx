@@ -32,7 +32,7 @@ export default function ProfileDetail() {
     const [avatarUrl, setAvatarUrl] = useState<string>("");
     const [fileUrl, setFileUrl] = useState<File | null>(null);
 
-    const { user } = useAuthUser();
+    const { user, setUser } = useAuthUser();
     const queryClient = useQueryClient();
 
     const { data: guest, isLoading } = useQuery<IAccountGuest | null>({
@@ -57,9 +57,13 @@ export default function ProfileDetail() {
                 inforGuestUpdate.avatar = avatarUploadedUrl;
             }
 
-            await accountGuestService.updateProfile(inforGuestUpdate as Partial<IAccountGuest>);
+            const guestUpdated = await accountGuestService.updateProfile(inforGuestUpdate as Partial<IAccountGuest>);
             message.success('Cập nhật thông tin thành công!');
             queryClient.invalidateQueries({ queryKey: ['profile-guest'] });
+            setUser({
+                ...user,
+                avatar: guestUpdated.avatar,
+            });
         } catch (error) {
             console.error('Error updating profile:', error);
             message.error('Có lỗi xảy ra khi cập nhật thông tin');
