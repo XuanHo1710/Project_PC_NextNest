@@ -100,9 +100,11 @@ export class ProductService {
       }
     }
 
-    const [data, total] = await Promise.all([
+    const [products, total] = await Promise.all([
       this.productModel
         .find(query)
+        .populate('brand', 'name slug logo')
+        .populate('category', 'name slug')
         .sort(sortObj)
         .skip(skip)
         .limit(limit)
@@ -111,8 +113,33 @@ export class ProductService {
       this.productModel.countDocuments(query).exec(),
     ]);
 
+    // Populate defaultVariant for each product (same pattern as findAllClientProducts)
+    const items = await Promise.all(
+      products.map(async (product) => {
+        if (product.defaultProductVariantId) {
+          const variant = await this.productVariantModel
+            .findOne({
+              _id: product.defaultProductVariantId,
+              isDeleted: false,
+            })
+            .lean()
+            .exec();
+          if (variant) {
+            product['defaultVariant'] = {
+              ...variant,
+              combination:
+                variant.combination instanceof Map
+                  ? Object.fromEntries(variant.combination)
+                  : variant.combination,
+            };
+          }
+        }
+        return product;
+      }),
+    );
+
     return {
-      data,
+      data: items,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(total / limit),
@@ -607,6 +634,31 @@ export class ProductService {
     return await variant.save();
   }
 
+  async createBulkProductVariants(variants: CreateProductVariantDto[]) {
+    const results: any[] = [];
+    for (const dto of variants) {
+      const payload = {
+        ...dto,
+        product: new Types.ObjectId(dto.product),
+      };
+      const variant = new this.productVariantModel(payload);
+      const variantSaved = (await variant.save()).toObject();
+      results.push(variantSaved);
+    }
+    return results;
+  }
+
+  async updateBulkProductVariants(
+    updates: { id: string; data: UpdateProductVariantDto }[],
+  ) {
+    const results: any[] = [];
+    for (const update of updates) {
+      const result = await this.updateProductVariant(update.id, update.data);
+      results.push(result);
+    }
+    return results;
+  }
+
   async findAllProductVariants(productId?: string, page = 1, limit = 100) {
     const skip = (page - 1) * limit;
     const query: any = { isDeleted: false };
@@ -661,6 +713,7 @@ export class ProductService {
         { new: true },
       )
       .populate('product')
+      .lean()
       .exec();
 
     if (!variant) {

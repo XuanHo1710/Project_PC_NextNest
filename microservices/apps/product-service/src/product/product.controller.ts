@@ -126,6 +126,23 @@ export class ProductController {
     );
   }
 
+  @MessagePattern('product.variant.createBulk')
+  createBulkProductVariants(
+    @Payload() data: { variants: CreateProductVariantDto[] },
+  ) {
+    return this.productService.createBulkProductVariants(data.variants);
+  }
+
+  @MessagePattern('product.variant.updateBulk')
+  updateBulkProductVariants(
+    @Payload()
+    data: {
+      updates: { id: string; data: UpdateProductVariantDto }[];
+    },
+  ) {
+    return this.productService.updateBulkProductVariants(data.updates);
+  }
+
   @MessagePattern('product.variant.findAll')
   findAllProductVariants(
     @Payload() data?: { productId?: string; page?: number; limit?: number },

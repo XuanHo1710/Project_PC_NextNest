@@ -31,6 +31,24 @@ export class ProductVariantController {
     });
   }
 
+  @Post('bulk')
+  createBulkProductVariants(
+    @Body() body: { variants: CreateProductVariantDto[] },
+  ) {
+    return this.productService.send('product.variant.createBulk', {
+      variants: body.variants,
+    });
+  }
+
+  @Patch('bulk')
+  updateBulkProductVariants(
+    @Body() body: { updates: { id: string; data: UpdateProductVariantDto }[] },
+  ) {
+    return this.productService.send('product.variant.updateBulk', {
+      updates: body.updates,
+    });
+  }
+
   @Get(':productId')
   findAllProductVariants(@Param('productId') productId?: string) {
     return this.productService.send('product.variant.findAll', { productId });

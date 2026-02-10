@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Table,
     Input,
@@ -18,7 +18,7 @@ import {
     InputNumber,
     Spin,
     Tabs,
-    Descriptions,
+    Divider,
 } from "antd";
 import {
     SearchOutlined,
@@ -32,25 +32,17 @@ import {
     InboxOutlined,
     SaveOutlined,
     PictureOutlined,
+    PlusOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import {
     useMyProducts,
     useClientUpdateProduct,
     useClientRemoveProduct,
-    useClientUpdateVariant,
 } from "@/hooks/client/useProductManage";
 import { productManageClientService } from "@/services/client";
-import {
-    getProductImage,
-    getProductDisplayPrice,
-    getProductOriginalPrice,
-    getProductDiscount,
-    getProductStock,
-    formatCurrencyVND,
-} from "@/utils/productHelpers";
-import type { IProduct, IProductCard, IProductVariant } from "@/types";
-import Link from "next/link";
+import { formatCurrencyVND } from "@/utils/productHelpers";
+import type { IProduct, IProductVariant } from "@/types";
 import { useRouter } from "next/navigation";
 import RichTextEditor from "@/components/common/RichTextEditor";
 
@@ -61,6 +53,10 @@ export default function MyProductsPage() {
     const [search, setSearch] = useState("");
     const [searchInput, setSearchInput] = useState("");
 
+    // Variants map for table display (productId → variants[])
+    const [variantsMap, setVariantsMap] = useState<Record<string, IProductVariant[]>>({});
+    const [loadingTableVariants, setLoadingTableVariants] = useState(false);
+
     // Edit modal state
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
@@ -69,19 +65,54 @@ export default function MyProductsPage() {
     const [loadingVariants, setLoadingVariants] = useState(false);
     const [savingVariants, setSavingVariants] = useState(false);
 
+    // Attribute insertion state
+    const [newAttrKey, setNewAttrKey] = useState("");
+    const [newAttrValue, setNewAttrValue] = useState("");
+
     const { data, isLoading, refetch } = useMyProducts(page, limit, search);
     const updateProduct = useClientUpdateProduct();
     const removeProduct = useClientRemoveProduct();
-    const updateVariant = useClientUpdateVariant();
 
-    // Stats computed from data
+    // Derived data
     const products = data?.data || [];
     const totalProducts = data?.pagination?.totalItems || 0;
     const activeCount = products.filter((p) => p.status === "ACTIVE").length;
     const inactiveCount = products.filter((p) => p.status === "INACTIVE").length;
+
+    // Fetch variants for all products on current page (for table display)
+    useEffect(() => {
+        if (products.length === 0) {
+            setVariantsMap({});
+            return;
+        }
+        const productIds = products.map((p) => p._id);
+        setLoadingTableVariants(true);
+        Promise.all(
+            productIds.map((id) =>
+                productManageClientService
+                    .getVariantsByProduct(id)
+                    .then((res) => ({
+                        id,
+                        variants: ((res as any)?.data || []) as IProductVariant[],
+                    }))
+                    .catch(() => ({ id, variants: [] as IProductVariant[] })),
+            ),
+        ).then((results) => {
+            const map: Record<string, IProductVariant[]> = {};
+            results.forEach((r) => {
+                map[r.id] = r.variants;
+            });
+            setVariantsMap(map);
+            setLoadingTableVariants(false);
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data]);
+
+    // Computed stats from variantsMap
     const outOfStockCount = products.filter((p) => {
-        const card = p as unknown as IProductCard;
-        return getProductStock(card) === 0;
+        const variants = variantsMap[p._id] || [];
+        const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+        return totalStock === 0;
     }).length;
 
     const handleSearch = () => {
@@ -98,6 +129,8 @@ export default function MyProductsPage() {
         });
         setEditModalOpen(true);
         setLoadingVariants(true);
+        setNewAttrKey("");
+        setNewAttrValue("");
         try {
             const res = await productManageClientService.getVariantsByProduct(record._id);
             const variantList = (res as any)?.data || (res as any)?.items || (res as any) || [];
@@ -114,22 +147,35 @@ export default function MyProductsPage() {
             const values = await editForm.validateFields();
             if (!editingProduct) return;
 
-            // Update product info (name, status)
+            // Update product info
             await updateProduct.mutateAsync({
                 id: editingProduct._id,
-                data: { name: values.name, status: values.status, description: values.description },
+                data: {
+                    name: values.name,
+                    status: values.status,
+                    description: values.description,
+                },
             });
 
-            // Update each variant's price, discount, stock
-            setSavingVariants(true);
-            for (const v of editVariants) {
-                await updateVariant.mutateAsync({
-                    id: v._id,
-                    data: { price: v.price, discount: v.discount, stock: v.stock },
-                });
+            // Bulk update all variants (single API call)
+            if (editVariants.length > 0) {
+                setSavingVariants(true);
+                await productManageClientService.bulkUpdateVariants(
+                    editVariants.map((v) => ({
+                        id: v._id,
+                        data: {
+                            price: v.price,
+                            discount: v.discount,
+                            stock: v.stock,
+                            combination: v.combination,
+                            sku: v.sku,
+                        },
+                    })),
+                );
+                setSavingVariants(false);
             }
-            setSavingVariants(false);
 
+            message.success("Cập nhật sản phẩm thành công!");
             setEditModalOpen(false);
             setEditingProduct(null);
             setEditVariants([]);
@@ -139,10 +185,47 @@ export default function MyProductsPage() {
         }
     };
 
-    const handleVariantFieldChange = (variantId: string, field: string, value: number) => {
-        setEditVariants(prev =>
-            prev.map(v => v._id === variantId ? { ...v, [field]: value } : v)
+    const handleVariantFieldChange = useCallback(
+        (variantId: string, field: string, value: number | string) => {
+            setEditVariants((prev) =>
+                prev.map((v) =>
+                    v._id === variantId ? { ...v, [field]: value } : v,
+                ),
+            );
+        },
+        [],
+    );
+
+    const handleAddAttribute = () => {
+        const key = newAttrKey.trim();
+        const value = newAttrValue.trim();
+        if (!key || !value) return;
+
+        setEditVariants((prev) =>
+            prev.map((v) => ({
+                ...v,
+                combination: { ...(v.combination || {}), [key]: value },
+                sku: v.sku
+                    ? `${v.sku}-${value.toLowerCase().replace(/[^a-z0-9]/gi, "")}`
+                    : value.toLowerCase().replace(/[^a-z0-9]/gi, ""),
+            })),
         );
+        setNewAttrKey("");
+        setNewAttrValue("");
+        message.success(
+            `Đã thêm thuộc tính "${key}: ${value}" cho tất cả ${editVariants.length} biến thể`,
+        );
+    };
+
+    const handleRemoveAttribute = (attrKey: string) => {
+        setEditVariants((prev) =>
+            prev.map((v) => {
+                const newCombo = { ...(v.combination || {}) };
+                delete newCombo[attrKey];
+                return { ...v, combination: newCombo };
+            }),
+        );
+        message.info(`Đã xóa thuộc tính "${attrKey}" khỏi tất cả biến thể`);
     };
 
     const handleRemove = async (id: string) => {
@@ -162,7 +245,8 @@ export default function MyProductsPage() {
         }
     };
 
-    const columns: ColumnsType<any> = [
+    // =========== TABLE COLUMNS ===========
+    const columns: ColumnsType<IProduct> = [
         {
             title: "#",
             key: "index",
@@ -174,7 +258,9 @@ export default function MyProductsPage() {
             key: "image",
             width: 80,
             render: (_, record) => {
-                const img = getProductImage(record as IProductCard);
+                const variants = variantsMap[record._id] || [];
+                const allImages = variants.flatMap((v) => v.images || []);
+                const img = allImages[0];
                 return img ? (
                     <Image
                         src={img}
@@ -186,7 +272,7 @@ export default function MyProductsPage() {
                     />
                 ) : (
                     <div className="w-[60px] h-[60px] bg-gray-100 rounded-md flex items-center justify-center text-xs text-gray-400">
-                        No img
+                        {loadingTableVariants ? <Spin size="small" /> : "No img"}
                     </div>
                 );
             },
@@ -196,7 +282,7 @@ export default function MyProductsPage() {
             dataIndex: "name",
             key: "name",
             ellipsis: true,
-            render: (name: string, record: any) => (
+            render: (name: string, record) => (
                 <div>
                     <div className="font-medium text-sm line-clamp-1">{name}</div>
                     <div className="text-xs text-gray-400">{record.slug}</div>
@@ -206,30 +292,19 @@ export default function MyProductsPage() {
         {
             title: "Giá",
             key: "price",
-            width: 180,
-            render: (_, record) => {
-                const card = record as IProductCard;
-                const displayPrice = getProductDisplayPrice(card);
-                const originalPrice = getProductOriginalPrice(card);
-                const discount = getProductDiscount(card);
-                return (
-                    <div>
-                        <div className="font-semibold text-red-500 text-sm">
-                            {formatCurrencyVND(displayPrice)}
-                        </div>
-                        {discount > 0 && (
-                            <div className="text-xs text-gray-400 line-through">
-                                {formatCurrencyVND(originalPrice)}
-                            </div>
-                        )}
-                        {discount > 0 && (
-                            <Tag color="red" className="text-xs mt-0.5">
-                                -{discount}%
-                            </Tag>
-                        )}
+            width: 200,
+            render: (_, record) => (
+                <div>
+                    <div className="font-semibold text-red-500 text-sm">
+                        {formatCurrencyVND(record.minPrice || 0)}
                     </div>
-                );
-            },
+                    {record.minPrice !== record.maxPrice && (
+                        <div className="text-xs text-gray-500">
+                            ~ {formatCurrencyVND(record.maxPrice || 0)}
+                        </div>
+                    )}
+                </div>
+            ),
         },
         {
             title: "Tồn kho",
@@ -237,12 +312,11 @@ export default function MyProductsPage() {
             width: 90,
             align: "center",
             render: (_, record) => {
-                const stock = getProductStock(record as IProductCard);
+                const variants = variantsMap[record._id] || [];
+                const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
                 return (
-                    <span
-                        className={`font-medium ${stock === 0 ? "text-red-500" : "text-green-600"}`}
-                    >
-                        {stock}
+                    <span className={`font-medium ${totalStock === 0 ? "text-red-500" : "text-green-600"}`}>
+                        {loadingTableVariants ? <Spin size="small" /> : totalStock}
                     </span>
                 );
             },
@@ -319,14 +393,18 @@ export default function MyProductsPage() {
         },
     ];
 
+    // =========== All attribute keys from current variants ===========
+    const existingAttrKeys = Array.from(
+        new Set(editVariants.flatMap((v) => Object.keys(v.combination || {}))),
+    );
+
     return (
         <div>
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold m-0">Sản phẩm đã đăng bán</h1>
                     <p className="text-gray-500 text-sm m-0 mt-1">
-                        Quản lý các sản phẩm bạn đã đăng bán (
-                        {totalProducts} sản phẩm)
+                        Quản lý các sản phẩm bạn đã đăng bán ({totalProducts} sản phẩm)
                     </p>
                 </div>
                 <Button icon={<ReloadOutlined />} onClick={() => refetch()}>
@@ -415,7 +493,7 @@ export default function MyProductsPage() {
                 </div>
             )}
 
-            {/* Edit Modal — Full variant editing */}
+            {/* =========== EDIT MODAL =========== */}
             <Modal
                 title={
                     <div className="flex items-center gap-2">
@@ -433,8 +511,8 @@ export default function MyProductsPage() {
                 confirmLoading={updateProduct.isPending || savingVariants}
                 okText={<><SaveOutlined /> Lưu thay đổi</>}
                 cancelText="Hủy"
-                width={900}
-                styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
+                width={1000}
+                styles={{ body: { maxHeight: "70vh", overflowY: "auto" } }}
             >
                 <Tabs
                     defaultActiveKey="info"
@@ -490,7 +568,6 @@ export default function MyProductsPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            {/* Preview image */}
                                             {(() => {
                                                 const allImages = editVariants.flatMap(v => v.images || []);
                                                 return allImages.length > 0 ? (
@@ -502,7 +579,7 @@ export default function MyProductsPage() {
                                                                 alt="Product"
                                                                 width={64}
                                                                 height={64}
-                                                                style={{ objectFit: 'cover', borderRadius: 6 }}
+                                                                style={{ objectFit: "cover", borderRadius: 6 }}
                                                             />
                                                         </div>
                                                     </div>
@@ -534,12 +611,76 @@ export default function MyProductsPage() {
                                 </div>
                             ) : (
                                 <div className="mt-2">
+                                    {/* ===== ADD ATTRIBUTE SECTION ===== */}
+                                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                                        <h4 className="font-medium mb-3 text-gray-700 text-sm flex items-center gap-1.5">
+                                            <PlusOutlined className="text-blue-500" />
+                                            Thêm thuộc tính mới cho tất cả biến thể
+                                        </h4>
+                                        <div className="flex gap-3 items-end flex-wrap">
+                                            <div>
+                                                <label className="text-xs text-gray-500 mb-1 block">Tên thuộc tính</label>
+                                                <Input
+                                                    value={newAttrKey}
+                                                    onChange={(e) => setNewAttrKey(e.target.value)}
+                                                    placeholder="VD: Kích thước"
+                                                    size="small"
+                                                    className="!w-44"
+                                                    onPressEnter={handleAddAttribute}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-gray-500 mb-1 block">Giá trị</label>
+                                                <Input
+                                                    value={newAttrValue}
+                                                    onChange={(e) => setNewAttrValue(e.target.value)}
+                                                    placeholder="VD: 15.6 inch"
+                                                    size="small"
+                                                    className="!w-44"
+                                                    onPressEnter={handleAddAttribute}
+                                                />
+                                            </div>
+                                            <Button
+                                                type="primary"
+                                                size="small"
+                                                icon={<PlusOutlined />}
+                                                disabled={!newAttrKey.trim() || !newAttrValue.trim()}
+                                                onClick={handleAddAttribute}
+                                            >
+                                                Thêm
+                                            </Button>
+                                        </div>
+
+                                        {/* Existing attribute keys with remove */}
+                                        {existingAttrKeys.length > 0 && (
+                                            <div className="mt-3">
+                                                <span className="text-xs text-gray-500">Thuộc tính hiện tại:</span>
+                                                <div className="flex gap-1.5 mt-1 flex-wrap">
+                                                    {existingAttrKeys.map((key) => (
+                                                        <Tag
+                                                            key={key}
+                                                            closable
+                                                            onClose={() => handleRemoveAttribute(key)}
+                                                            color="blue"
+                                                            className="text-xs"
+                                                        >
+                                                            {key}
+                                                        </Tag>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <Divider className="!my-3" />
+
+                                    {/* ===== VARIANTS TABLE ===== */}
                                     <Table
                                         dataSource={editVariants}
                                         rowKey="_id"
                                         pagination={false}
                                         size="small"
-                                        scroll={{ x: 700 }}
+                                        scroll={{ x: 800 }}
                                         columns={[
                                             {
                                                 title: "Ảnh",
@@ -548,7 +689,7 @@ export default function MyProductsPage() {
                                                 render: (_, v: IProductVariant) => {
                                                     const img = v.images?.[0];
                                                     return img ? (
-                                                        <Image src={img} alt="variant" width={40} height={40} style={{ objectFit: 'cover', borderRadius: 4 }} />
+                                                        <Image src={img} alt="variant" width={40} height={40} style={{ objectFit: "cover", borderRadius: 4 }} />
                                                     ) : (
                                                         <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
                                                             <PictureOutlined className="text-gray-300" />
@@ -558,26 +699,34 @@ export default function MyProductsPage() {
                                             },
                                             {
                                                 title: "SKU",
-                                                dataIndex: "sku",
                                                 key: "sku",
-                                                width: 120,
-                                                render: (sku: string) => (
-                                                    <span className="text-xs font-mono text-gray-600">{sku || '—'}</span>
+                                                width: 140,
+                                                render: (_, v: IProductVariant) => (
+                                                    <Input
+                                                        value={v.sku}
+                                                        onChange={(e) => handleVariantFieldChange(v._id, "sku", e.target.value)}
+                                                        size="small"
+                                                        className="!text-xs !font-mono"
+                                                    />
                                                 ),
                                             },
                                             {
                                                 title: "Thuộc tính",
                                                 key: "combination",
-                                                width: 150,
+                                                width: 180,
                                                 render: (_, v: IProductVariant) => {
                                                     const combo = v.combination || {};
                                                     return Object.entries(combo).length > 0 ? (
                                                         <div className="flex flex-wrap gap-1">
                                                             {Object.entries(combo).map(([key, val]) => (
-                                                                <Tag key={key} className="text-xs">{val}</Tag>
+                                                                <Tooltip key={key} title={key}>
+                                                                    <Tag className="text-xs">{key}: {val}</Tag>
+                                                                </Tooltip>
                                                             ))}
                                                         </div>
-                                                    ) : <span className="text-gray-400 text-xs">—</span>;
+                                                    ) : (
+                                                        <span className="text-gray-400 text-xs">—</span>
+                                                    );
                                                 },
                                             },
                                             {
@@ -589,9 +738,9 @@ export default function MyProductsPage() {
                                                         value={v.price}
                                                         min={0}
                                                         step={1000}
-                                                        formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                                        parser={(val) => Number(val?.replace(/,/g, '') || 0)}
-                                                        onChange={(val) => handleVariantFieldChange(v._id, 'price', val || 0)}
+                                                        formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                                        parser={(val) => Number(val?.replace(/,/g, "") || 0)}
+                                                        onChange={(val) => handleVariantFieldChange(v._id, "price", val || 0)}
                                                         size="small"
                                                         className="w-full"
                                                     />
@@ -606,7 +755,7 @@ export default function MyProductsPage() {
                                                         value={v.discount}
                                                         min={0}
                                                         max={100}
-                                                        onChange={(val) => handleVariantFieldChange(v._id, 'discount', val || 0)}
+                                                        onChange={(val) => handleVariantFieldChange(v._id, "discount", val || 0)}
                                                         size="small"
                                                         className="w-full"
                                                     />
@@ -620,7 +769,7 @@ export default function MyProductsPage() {
                                                     <InputNumber
                                                         value={v.stock}
                                                         min={0}
-                                                        onChange={(val) => handleVariantFieldChange(v._id, 'stock', val || 0)}
+                                                        onChange={(val) => handleVariantFieldChange(v._id, "stock", val || 0)}
                                                         size="small"
                                                         className="w-full"
                                                     />

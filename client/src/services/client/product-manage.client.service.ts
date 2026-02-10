@@ -163,6 +163,24 @@ class ProductManageClientService {
     return response.data;
   }
 
+  async bulkCreateVariants(
+    variants: Partial<IProductVariant>[],
+  ): Promise<IProductVariant[]> {
+    const response = await axiosClient.post("/product-variant/bulk", {
+      variants,
+    });
+    return response.data;
+  }
+
+  async bulkUpdateVariants(
+    updates: { id: string; data: Partial<IProductVariant> }[],
+  ): Promise<IProductVariant[]> {
+    const response = await axiosClient.patch("/product-variant/bulk", {
+      updates,
+    });
+    return response.data;
+  }
+
   // ============== PRODUCT ATTRIBUTE ALLOW VALUES ==============
 
   async createAllowValue(data: {

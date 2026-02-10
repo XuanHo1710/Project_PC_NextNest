@@ -93,7 +93,9 @@ class ProductClientService {
     const response = await axiosClient.get(`${this.baseURL}/search`, {
       params: { q: query, limit },
     });
-    return response.data;
+    const result = response.data;
+    // API returns PaginatedResponse — extract the data array
+    return Array.isArray(result) ? result : (result as any)?.data || [];
   }
 
   /**

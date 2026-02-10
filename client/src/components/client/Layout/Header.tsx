@@ -246,7 +246,7 @@ export default function HeaderClient() {
                                                 >
                                                     <div className="flex max-w-max justify-center flex-1 flex-col">
                                                         <Image
-                                                            src={p.defaultVariant.images?.[0] || undefined}
+                                                            src={p.defaultVariant?.images?.[0] || undefined}
                                                             alt={p.name}
                                                             width={80}
                                                             height={80}
@@ -263,21 +263,30 @@ export default function HeaderClient() {
                                                         </div>
                                                         <div className="flex justify-between">
                                                             <div className="flex gap-5">
-                                                                <p className="text-blue-600 font-bold">{(p.defaultVariant.price * (1 - p.defaultVariant.discount / 100)).toLocaleString()}đ</p>
-                                                                <p className="text-stone-300 line-through">{p.defaultVariant.price.toLocaleString()}đ</p>
+                                                                <p className="text-blue-600 font-bold">
+                                                                    {p.defaultVariant
+                                                                        ? (p.defaultVariant.price * (1 - (p.defaultVariant.discount || 0) / 100)).toLocaleString()
+                                                                        : ((p as any).minPrice || 0).toLocaleString()
+                                                                    }đ
+                                                                </p>
+                                                                {p.defaultVariant && p.defaultVariant.discount > 0 && (
+                                                                    <p className="text-stone-300 line-through">{p.defaultVariant.price.toLocaleString()}đ</p>
+                                                                )}
                                                             </div>
-                                                            <Badge
-                                                                count={`${p.defaultVariant.discount}% OFF`}
-                                                                style={{
-                                                                    backgroundColor: "#f5222d",
-                                                                    color: "#fff",
-                                                                    fontWeight: "bold",
-                                                                    fontSize: "12px",
-                                                                    padding: "0 6px",
-                                                                    borderRadius: "6px",
-                                                                    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                                                                }}
-                                                            />
+                                                            {p.defaultVariant?.discount ? (
+                                                                <Badge
+                                                                    count={`${p.defaultVariant.discount}% OFF`}
+                                                                    style={{
+                                                                        backgroundColor: "#f5222d",
+                                                                        color: "#fff",
+                                                                        fontWeight: "bold",
+                                                                        fontSize: "12px",
+                                                                        padding: "0 6px",
+                                                                        borderRadius: "6px",
+                                                                        boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                                                                    }}
+                                                                />
+                                                            ) : null}
                                                         </div>
                                                     </div>
                                                 </div>
