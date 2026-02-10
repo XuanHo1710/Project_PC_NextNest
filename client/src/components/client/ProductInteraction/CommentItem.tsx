@@ -173,8 +173,8 @@ function InlineReplyForm({
                     <div className="flex gap-2 mb-2 flex-wrap">
                         {mediaFiles.map((item, idx) => (
                             <div key={idx} className="relative group">
-                                {isVideoUrl(item.previewUrl) ? (
-                                    <video src={item.previewUrl} className="w-14 h-14 rounded-lg object-cover border" muted />
+                                {item.file.type.startsWith('video/') ? (
+                                    <video src={item.previewUrl} className="w-14 h-14 rounded-lg object-cover border" muted preload="metadata" />
                                 ) : (
                                     <AntImage src={item.previewUrl} alt="" width={56} height={56} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} />
                                 )}
@@ -320,7 +320,7 @@ function ReplyItem({
                                 {editImages.map((url, idx) => (
                                     <div key={`existing-${idx}`} className="relative group">
                                         {isVideoUrl(url) ? (
-                                            <video src={url} className="w-14 h-14 rounded-lg object-cover border" muted />
+                                            <video src={url} className="w-14 h-14 rounded-lg object-cover border" muted preload="metadata" />
                                         ) : (
                                             <AntImage src={url} alt="" width={56} height={56} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} preview={false} />
                                         )}
@@ -339,8 +339,8 @@ function ReplyItem({
                             <div className="flex gap-2 mb-2 flex-wrap">
                                 {newEditFiles.map((item, idx) => (
                                     <div key={`new-${idx}`} className="relative group">
-                                        {isVideoUrl(item.previewUrl) ? (
-                                            <video src={item.previewUrl} className="w-14 h-14 rounded-lg object-cover border" muted />
+                                        {item.file.type.startsWith('video/') ? (
+                                            <video src={item.previewUrl} className="w-14 h-14 rounded-lg object-cover border" muted preload="metadata" />
                                         ) : (
                                             <AntImage src={item.previewUrl} alt="" width={56} height={56} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} preview={false} />
                                         )}
@@ -395,17 +395,17 @@ function ReplyItem({
                 <MediaGallery items={reply.images} size={64} />
 
                 {/* Actions */}
-                <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-4 mt-2">
                     <button
                         onClick={handleLike}
-                        className={`flex items-center gap-1 text-xs hover:text-blue-500 transition-colors cursor-pointer ${reply.myReaction === true ? "text-blue-500 font-medium" : "text-gray-400"}`}
+                        className={`flex items-center gap-1.5 text-sm hover:text-blue-500 transition-colors cursor-pointer ${reply.myReaction === true ? "text-blue-500 font-medium" : "text-gray-400"}`}
                     >
                         {reply.myReaction === true ? <LikeFilled /> : <LikeOutlined />}
                         {reply.likesCount > 0 && <span>{reply.likesCount}</span>}
                     </button>
                     <button
                         onClick={handleDislike}
-                        className={`flex items-center gap-1 text-xs hover:text-red-500 transition-colors cursor-pointer ${reply.myReaction === false ? "text-red-500 font-medium" : "text-gray-400"}`}
+                        className={`flex items-center gap-1.5 text-sm hover:text-red-500 transition-colors cursor-pointer ${reply.myReaction === false ? "text-red-500 font-medium" : "text-gray-400"}`}
                     >
                         {reply.myReaction === false ? <DislikeFilled /> : <DislikeOutlined />}
                         {reply.dislikesCount > 0 && <span>{reply.dislikesCount}</span>}
@@ -415,7 +415,7 @@ function ReplyItem({
                     {isAuthenticated && (
                         <button
                             onClick={() => setShowReplyForm(!showReplyForm)}
-                            className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 cursor-pointer transition-colors"
+                            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-blue-500 cursor-pointer transition-colors"
                         >
                             <CommentOutlined /> Trả lời
                         </button>
@@ -423,11 +423,11 @@ function ReplyItem({
 
                     {isOwner && !isEditing && (
                         <>
-                            <button onClick={() => { setIsEditing(true); setEditImages(reply.images || []); setNewEditFiles([]); }} className="text-xs text-gray-400 hover:text-blue-500 cursor-pointer">
+                            <button onClick={() => { setIsEditing(true); setEditImages(reply.images || []); setNewEditFiles([]); }} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-blue-500 cursor-pointer transition-colors">
                                 <EditOutlined /> Sửa
                             </button>
                             <Popconfirm title="Xóa phản hồi này?" onConfirm={() => deleteComment.mutate(reply._id)} okText="Xóa" cancelText="Hủy" okButtonProps={{ danger: true }}>
-                                <button className="text-xs text-gray-400 hover:text-red-500 cursor-pointer">
+                                <button className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 cursor-pointer transition-colors">
                                     <DeleteOutlined /> Xóa
                                 </button>
                             </Popconfirm>
@@ -548,7 +548,7 @@ export default function CommentItem({ comment, productId }: CommentItemProps) {
                                     {editImages.map((url, idx) => (
                                         <div key={`existing-${idx}`} className="relative group">
                                             {isVideoUrl(url) ? (
-                                                <video src={url} className="w-16 h-16 rounded-lg object-cover border" muted />
+                                                <video src={url} className="w-16 h-16 rounded-lg object-cover border" muted preload="metadata" />
                                             ) : (
                                                 <AntImage src={url} alt="" width={64} height={64} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} preview={false} />
                                             )}
@@ -567,8 +567,8 @@ export default function CommentItem({ comment, productId }: CommentItemProps) {
                                 <div className="flex gap-2 mb-2 flex-wrap">
                                     {newEditFiles.map((item, idx) => (
                                         <div key={`new-${idx}`} className="relative group">
-                                            {isVideoUrl(item.previewUrl) ? (
-                                                <video src={item.previewUrl} className="w-16 h-16 rounded-lg object-cover border" muted />
+                                            {item.file.type.startsWith('video/') ? (
+                                                <video src={item.previewUrl} className="w-16 h-16 rounded-lg object-cover border" muted preload="metadata" />
                                             ) : (
                                                 <AntImage src={item.previewUrl} alt="" width={64} height={64} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} preview={false} />
                                             )}

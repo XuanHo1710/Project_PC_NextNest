@@ -52,6 +52,7 @@ import {
 import type { IProduct, IProductCard, IProductVariant } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import RichTextEditor from "@/components/common/RichTextEditor";
 
 export default function MyProductsPage() {
     const router = useRouter();
@@ -99,7 +100,7 @@ export default function MyProductsPage() {
         setLoadingVariants(true);
         try {
             const res = await productManageClientService.getVariantsByProduct(record._id);
-            const variantList = (res as any)?.items || (res as any) || [];
+            const variantList = (res as any)?.data || (res as any)?.items || (res as any) || [];
             setEditVariants(Array.isArray(variantList) ? variantList : []);
         } catch {
             setEditVariants([]);
@@ -116,7 +117,7 @@ export default function MyProductsPage() {
             // Update product info (name, status)
             await updateProduct.mutateAsync({
                 id: editingProduct._id,
-                data: { name: values.name, status: values.status },
+                data: { name: values.name, status: values.status, description: values.description },
             });
 
             // Update each variant's price, discount, stock
@@ -510,16 +511,12 @@ export default function MyProductsPage() {
                                         </div>
                                     )}
 
-                                    {/* Description preview */}
-                                    {editingProduct?.description && (
-                                        <div className="border rounded-lg p-3 mb-4">
-                                            <h4 className="font-medium mb-2 text-gray-600 text-sm">Mô tả sản phẩm</h4>
-                                            <div
-                                                className="prose prose-sm max-h-32 overflow-y-auto text-gray-600"
-                                                dangerouslySetInnerHTML={{ __html: editingProduct.description }}
-                                            />
-                                        </div>
-                                    )}
+                                    <Form.Item name="description" label="Mô tả sản phẩm">
+                                        <RichTextEditor
+                                            placeholder="Nhập mô tả sản phẩm..."
+                                            minHeight={120}
+                                        />
+                                    </Form.Item>
                                 </Form>
                             ),
                         },
