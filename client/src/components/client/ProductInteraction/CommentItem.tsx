@@ -106,6 +106,7 @@ function InlineReplyForm({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [content, setContent] = useState("");
     const [mediaFiles, setMediaFiles] = useState<{ file: File; previewUrl: string }[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -127,12 +128,15 @@ function InlineReplyForm({
         // Upload files first
         let imageUrls: string[] = [];
         if (mediaFiles.length > 0) {
+            setIsUploading(true);
             try {
                 imageUrls = await UploadImages(mediaFiles.map((m) => m.file));
             } catch {
+                setIsUploading(false);
                 message.error("Upload ảnh/video thất bại");
                 return;
             }
+            setIsUploading(false);
         }
 
         await replyComment.mutateAsync({
@@ -190,21 +194,25 @@ function InlineReplyForm({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileChange} />
-                        <button onClick={() => fileInputRef.current?.click()} className="text-xs text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-1">
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading || replyComment.isPending}
+                            className="text-xs text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                        >
                             <PictureOutlined /> Ảnh/Video
                         </button>
                     </div>
                     <Space size="small">
-                        <Button size="small" onClick={onCancel}>Hủy</Button>
+                        <Button size="small" onClick={onCancel} disabled={isUploading || replyComment.isPending}>Hủy</Button>
                         <Button
                             type="primary"
                             size="small"
                             icon={<SendOutlined />}
                             onClick={handleSubmit}
-                            loading={replyComment.isPending}
-                            disabled={!content.trim()}
+                            loading={replyComment.isPending || isUploading}
+                            disabled={!content.trim() || replyComment.isPending || isUploading}
                         >
-                            Gửi
+                            {isUploading ? "Đang tải..." : "Gửi"}
                         </Button>
                     </Space>
                 </div>
@@ -238,6 +246,7 @@ function ReplyItem({
     const editFileRef = useRef<HTMLInputElement>(null);
     const [showReplyForm, setShowReplyForm] = useState(false);
     const updateComment = useUpdateComment(productId);
+    const [isUploading, setIsUploading] = useState(false);
 
     const isOwner = user?._id === reply.guest?._id;
 
@@ -256,12 +265,15 @@ function ReplyItem({
         // Upload any new files
         let uploadedUrls: string[] = [];
         if (newEditFiles.length > 0) {
+            setIsUploading(true);
             try {
                 uploadedUrls = await UploadImages(newEditFiles.map((f) => f.file));
             } catch {
+                setIsUploading(false);
                 message.error("Upload ảnh/video thất bại");
                 return;
             }
+            setIsUploading(false);
         }
         const allImages = [...editImages, ...uploadedUrls];
         await updateComment.mutateAsync({
@@ -362,10 +374,14 @@ function ReplyItem({
                             }}
                         />
                         <Space size="small">
-                            <button onClick={() => editFileRef.current?.click()} className="text-xs text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-1">
+                            <button
+                                onClick={() => editFileRef.current?.click()}
+                                disabled={isUploading || updateComment.isPending}
+                                className="text-xs text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                            >
                                 <PictureOutlined /> Thêm ảnh
                             </button>
-                            <Button type="primary" size="small" onClick={handleEdit} loading={updateComment.isPending}>Lưu</Button>
+                            <Button type="primary" size="small" onClick={handleEdit} loading={updateComment.isPending || isUploading} disabled={isUploading || updateComment.isPending}>Lưu</Button>
                             <Button size="small" onClick={() => { setIsEditing(false); setEditContent(reply.content); setEditImages(reply.images || []); setNewEditFiles([]); }}>Hủy</Button>
                         </Space>
                     </div>
@@ -447,6 +463,7 @@ export default function CommentItem({ comment, productId }: CommentItemProps) {
     const [editImages, setEditImages] = useState<string[]>(comment.images || []);
     const [newEditFiles, setNewEditFiles] = useState<{ file: File; previewUrl: string }[]>([]);
     const editFileRef = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const isOwner = user?._id === comment.guest?._id;
 
@@ -465,12 +482,15 @@ export default function CommentItem({ comment, productId }: CommentItemProps) {
         // Upload any new files
         let uploadedUrls: string[] = [];
         if (newEditFiles.length > 0) {
+            setIsUploading(true);
             try {
                 uploadedUrls = await UploadImages(newEditFiles.map((f) => f.file));
             } catch {
+                setIsUploading(false);
                 message.error("Upload ảnh/video thất bại");
                 return;
             }
+            setIsUploading(false);
         }
         const allImages = [...editImages, ...uploadedUrls];
         await updateComment.mutateAsync({
@@ -582,11 +602,15 @@ export default function CommentItem({ comment, productId }: CommentItemProps) {
                                 }}
                             />
                             <Space size="small">
-                                <button onClick={() => editFileRef.current?.click()} className="text-xs text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-1">
+                                <button
+                                    onClick={() => editFileRef.current?.click()}
+                                    disabled={isUploading || updateComment.isPending}
+                                    className="text-xs text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                                >
                                     <PictureOutlined /> Thêm ảnh/video
                                 </button>
-                                <Button type="primary" size="small" onClick={handleEdit} loading={updateComment.isPending}>Lưu</Button>
-                                <Button size="small" onClick={() => { setIsEditing(false); setEditContent(comment.content); setEditImages(comment.images || []); setNewEditFiles([]); }}>Hủy</Button>
+                                <Button type="primary" size="small" onClick={handleEdit} loading={updateComment.isPending || isUploading} disabled={isUploading || updateComment.isPending}>Lưu</Button>
+                                <Button size="small" onClick={() => { setIsEditing(false); setEditContent(comment.content); setEditImages(comment.images || []); setNewEditFiles([]); }} disabled={isUploading || updateComment.isPending}>Hủy</Button>
                             </Space>
                         </div>
                     ) : (

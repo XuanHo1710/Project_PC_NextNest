@@ -29,6 +29,7 @@ export default function CommentForm({ productId }: CommentFormProps) {
     const [content, setContent] = useState("");
     const [rating, setRating] = useState(5);
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -83,12 +84,15 @@ export default function CommentForm({ productId }: CommentFormProps) {
         let imageUrls: string[] = [];
         const filesToUpload = mediaItems.filter((m) => m.file).map((m) => m.file!);
         if (filesToUpload.length > 0) {
+            setIsUploading(true);
             try {
                 imageUrls = await UploadImages(filesToUpload);
             } catch {
+                setIsUploading(false);
                 message.error("Upload ảnh/video thất bại. Vui lòng thử lại.");
                 return;
             }
+            setIsUploading(false);
         }
 
         const dto: ICreateCommentDto = {
@@ -196,7 +200,8 @@ export default function CommentForm({ productId }: CommentFormProps) {
                     />
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-600 transition-colors cursor-pointer"
+                        disabled={isUploading || createComment.isPending}
+                        className="flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <PictureOutlined /> Ảnh/Video
                     </button>
@@ -210,12 +215,12 @@ export default function CommentForm({ productId }: CommentFormProps) {
                     type="primary"
                     icon={<SendOutlined />}
                     onClick={handleSubmit}
-                    loading={createComment.isPending}
-                    disabled={!content.trim() || rating === 0}
+                    loading={createComment.isPending || isUploading}
+                    disabled={!content.trim() || rating === 0 || createComment.isPending || isUploading}
                     size="large"
                     style={{ borderRadius: 10 }}
                 >
-                    Gửi đánh giá
+                    {isUploading ? "Đang tải ảnh..." : "Gửi đánh giá"}
                 </Button>
             </div>
         </div>
