@@ -270,11 +270,13 @@ export class ProductService {
     );
 
     return {
-      items,
-      totalItems: total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      limit,
+      data: items,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
     };
   }
 
@@ -326,11 +328,13 @@ export class ProductService {
     );
 
     return {
-      items,
-      totalItems: total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      limit,
+      data: items,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
     };
   }
 
@@ -407,7 +411,7 @@ export class ProductService {
     page = 1,
     limit = 12,
     sort?: string,
-    filters?: { cpu?: string; ram?: string },
+    filters?: { cpu?: string; ram?: string; storage?: string },
   ) {
     // Find by category slug or brand slug using $or
     const [category, brand] = await Promise.all([
@@ -435,8 +439,8 @@ export class ProductService {
       Object.assign(query, conditions[0]);
     }
 
-    // Apply CPU/RAM filters via variant combination matching
-    if (filters?.cpu || filters?.ram) {
+    // Apply CPU/RAM/Storage filters via variant combination matching
+    if (filters?.cpu || filters?.ram || filters?.storage) {
       const variantFilter: any = { isDeleted: false };
       const combinationConditions: any[] = [];
 
@@ -457,6 +461,43 @@ export class ProductService {
             { [`combination.RAM`]: { $regex: filters.ram, $options: 'i' } },
             { [`combination.ram`]: { $regex: filters.ram, $options: 'i' } },
             { [`combination.Ram`]: { $regex: filters.ram, $options: 'i' } },
+          ],
+        });
+      }
+
+      if (filters.storage) {
+        combinationConditions.push({
+          $or: [
+            {
+              [`combination.Storage`]: {
+                $regex: filters.storage,
+                $options: 'i',
+              },
+            },
+            {
+              [`combination.storage`]: {
+                $regex: filters.storage,
+                $options: 'i',
+              },
+            },
+            {
+              [`combination.Dung lượng`]: {
+                $regex: filters.storage,
+                $options: 'i',
+              },
+            },
+            {
+              [`combination.SSD`]: {
+                $regex: filters.storage,
+                $options: 'i',
+              },
+            },
+            {
+              [`combination.Ổ cứng`]: {
+                $regex: filters.storage,
+                $options: 'i',
+              },
+            },
           ],
         });
       }
@@ -521,11 +562,13 @@ export class ProductService {
     );
 
     return {
-      items,
-      totalItems: total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      limit,
+      data: items,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
       collectionInfo: {
         category: category || null,
         brand: brand || null,

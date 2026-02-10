@@ -1,5 +1,5 @@
 'use client'
-import { Button, Form, Input, Select, Spin } from 'antd';
+import { Button, Form, Input, Select, Spin, Switch } from 'antd';
 import { useEffect } from 'react';
 import { IBrand } from '@/types/brand';
 import { useUpdateBrand } from '@/hooks/admin/useBrand';
@@ -23,6 +23,7 @@ export default function UpdateModalBrand({ dataBrand, setOpen }: { dataBrand: IB
                 logo: dataBrand.logo || '',
                 website: dataBrand.website || '',
                 status: dataBrand.status || 'ACTIVE',
+                feature: !!dataBrand.feature,
             });
         }
     }, [dataBrand, form]);
@@ -107,6 +108,15 @@ export default function UpdateModalBrand({ dataBrand, setOpen }: { dataBrand: IB
                                 <Select.Option value="ACTIVE">Hoạt động</Select.Option>
                                 <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
                             </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Nổi bật"
+                            name="feature"
+                            className='font-sans text-lg'
+                            valuePropName="checked"
+                        >
+                            <Switch checkedChildren="Có" unCheckedChildren="Không" />
                         </Form.Item>
 
                         <div className='text-right mb-10'>

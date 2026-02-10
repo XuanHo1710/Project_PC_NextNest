@@ -29,12 +29,12 @@ export default function HomeClient() {
     });
 
     const { data: brands } = useQuery<PaginatedResponse<IBrand>>({
-        queryKey: ['brands'],
-        queryFn: () => productClientService.getBrands(),
+        queryKey: ['brands', 'featured'],
+        queryFn: () => productClientService.getBrands({ feature: 'true' }),
         staleTime: 1000 * 60 * 10,
     });
 
-    const { data: clientProducts, isLoading: isLoadingProducts } = useQuery<{ items: IProductCard[] }>({
+    const { data: clientProducts, isLoading: isLoadingProducts } = useQuery<PaginatedResponse<IProductCard>>({
         queryKey: ['client-products'],
         queryFn: () => productClientService.getClientProducts(1, 20),
         staleTime: 1000 * 60 * 5,
@@ -327,9 +327,9 @@ export default function HomeClient() {
                             Gợi ý cho bạn
                         </h1>
                     </div>
-                    {clientProducts && clientProducts.items && clientProducts.items.length > 0 ? (
+                    {clientProducts && clientProducts.data && clientProducts.data.length > 0 ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                            {clientProducts.items.map((product: IProductCard) => (
+                            {clientProducts.data.map((product: IProductCard) => (
                                 <div key={product._id}>
                                     <CardProduct css="p-3" product={product} />
                                 </div>

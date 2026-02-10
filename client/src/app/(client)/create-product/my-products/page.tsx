@@ -22,6 +22,10 @@ import {
     StopOutlined,
     EyeOutlined,
     ReloadOutlined,
+    ShoppingOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    InboxOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import {
@@ -56,6 +60,16 @@ export default function MyProductsPage() {
     const { data, isLoading, refetch } = useMyProducts(page, limit, search);
     const updateProduct = useClientUpdateProduct();
     const removeProduct = useClientRemoveProduct();
+
+    // Stats computed from data
+    const products = data?.data || [];
+    const totalProducts = data?.pagination?.totalItems || 0;
+    const activeCount = products.filter((p) => p.status === "ACTIVE").length;
+    const inactiveCount = products.filter((p) => p.status === "INACTIVE").length;
+    const outOfStockCount = products.filter((p) => {
+        const card = p as unknown as IProductCard;
+        return getProductStock(card) === 0;
+    }).length;
 
     const handleSearch = () => {
         setSearch(searchInput);
@@ -268,12 +282,52 @@ export default function MyProductsPage() {
                     <h1 className="text-2xl font-bold m-0">Sản phẩm đã đăng bán</h1>
                     <p className="text-gray-500 text-sm m-0 mt-1">
                         Quản lý các sản phẩm bạn đã đăng bán (
-                        {data?.data.length ?? 0} sản phẩm)
+                        {totalProducts} sản phẩm)
                     </p>
                 </div>
                 <Button icon={<ReloadOutlined />} onClick={() => refetch()}>
                     Làm mới
                 </Button>
+            </div>
+
+            {/* Statistics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                        <ShoppingOutlined className="text-blue-500 text-lg" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-400 m-0">Tổng sản phẩm</p>
+                        <p className="text-xl font-bold m-0">{totalProducts}</p>
+                    </div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-50 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                        <CheckCircleOutlined className="text-green-500 text-lg" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-400 m-0">Đang bán</p>
+                        <p className="text-xl font-bold text-green-600 m-0">{activeCount}</p>
+                    </div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                        <CloseCircleOutlined className="text-orange-500 text-lg" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-400 m-0">Đang ẩn</p>
+                        <p className="text-xl font-bold text-orange-500 m-0">{inactiveCount}</p>
+                    </div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-xl border p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                        <InboxOutlined className="text-red-500 text-lg" />
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-400 m-0">Hết hàng</p>
+                        <p className="text-xl font-bold text-red-500 m-0">{outOfStockCount}</p>
+                    </div>
+                </div>
             </div>
 
             {/* Search */}
@@ -294,7 +348,7 @@ export default function MyProductsPage() {
             <div className="bg-white rounded-lg border overflow-hidden">
                 <Table
                     columns={columns}
-                    dataSource={data?.data || []}
+                    dataSource={products}
                     loading={isLoading}
                     rowKey="_id"
                     pagination={false}
@@ -304,11 +358,11 @@ export default function MyProductsPage() {
             </div>
 
             {/* Pagination */}
-            {(data?.data.length ?? 0) > 1 && (
+            {totalProducts > limit && (
                 <div className="flex justify-end mt-4">
                     <Pagination
                         current={page}
-                        total={data?.data.length || 0}
+                        total={totalProducts}
                         pageSize={limit}
                         onChange={(p) => setPage(p)}
                         showTotal={(total) => `Tổng ${total} sản phẩm`}

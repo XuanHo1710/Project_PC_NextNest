@@ -22,7 +22,14 @@ export class BrandService {
   }
 
   async findAllBrands(searchDto?: SearchBrandDto) {
-    const { keyword, status, sort, page = 1, limit = 10 } = searchDto || {};
+    const {
+      keyword,
+      status,
+      sort,
+      page = 1,
+      limit = 10,
+      feature,
+    } = searchDto || {};
     const query: any = { isDeleted: false };
 
     if (keyword) {
@@ -34,6 +41,12 @@ export class BrandService {
 
     if (status) {
       query.status = status;
+    }
+
+    if (feature === 'true') {
+      query.feature = true;
+    } else if (feature === 'false') {
+      query.feature = { $ne: true };
     }
 
     // Handle sorting - default to createdAt desc (newest first)

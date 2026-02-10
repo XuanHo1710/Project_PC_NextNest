@@ -7,19 +7,23 @@ export default function FilterBrand() {
     const { queryParams, setQueryParams } = useQueryParams();
     const [form] = Form.useForm();
 
-    const handleFilter = (values: { keyword?: string; status?: string }) => {
+    const handleFilter = (values: { keyword?: string; status?: string; feature?: string }) => {
         // Giữ lại các params hiện tại (như sort)
         const params = new URLSearchParams(queryParams.toString());
 
         // Xóa keyword cũ nếu có
         params.delete('keyword');
         params.delete('status');
+        params.delete('feature');
 
         if (values.keyword && values.keyword.trim()) {
             params.set('keyword', values.keyword.trim());
         }
         if (values.status) {
             params.set('status', values.status);
+        }
+        if (values.feature) {
+            params.set('feature', values.feature);
         }
 
         setQueryParams(params);
@@ -31,6 +35,7 @@ export default function FilterBrand() {
         const params = new URLSearchParams(queryParams.toString());
         params.delete('keyword');
         params.delete('status');
+        params.delete('feature');
         setQueryParams(params);
     };
 
@@ -60,6 +65,17 @@ export default function FilterBrand() {
                     >
                         <Select.Option value="ACTIVE">Hoạt động</Select.Option>
                         <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
+                    </Select>
+                </Form.Item>
+
+                <Form.Item name="feature" className="mb-2">
+                    <Select
+                        placeholder="Nổi bật"
+                        allowClear
+                        style={{ width: 130 }}
+                    >
+                        <Select.Option value="true">Nổi bật</Select.Option>
+                        <Select.Option value="false">Không nổi bật</Select.Option>
                     </Select>
                 </Form.Item>
 

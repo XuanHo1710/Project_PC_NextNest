@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import {
   useQuery,
   useMutation,
@@ -11,6 +12,8 @@ import type {
   ICreateCommentDto,
   IUpdateCommentDto,
   IToggleReactionDto,
+  IProductInteractionResponse,
+  IProductComment,
 } from "@/types";
 import { toast } from "react-toastify";
 
@@ -135,20 +138,113 @@ export const useDeleteComment = (productId: string) => {
 // ============== REACTION HOOKS ==============
 
 /**
- * Hook toggle like/dislike
+ * Hook toggle like/dislike with optimistic update + debounce.
+ * Instantly updates the UI cache, then debounces the actual API call
+ * so rapid clicks don't fire multiple requests.
  */
 export const useToggleReaction = (productId: string) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
+  // Track the latest intended state per comment so we send the correct one
+  const pendingStates = useRef<Map<string, IToggleReactionDto>>(new Map());
+
+  const mutation = useMutation({
     mutationFn: (dto: IToggleReactionDto) =>
       interactionClientService.toggleReaction(dto),
-    onSuccess: () => {
+    // No onSuccess invalidation — we already updated cache optimistically.
+    // Only invalidate on error to re-sync.
+    onError: (_error: Error, _dto: IToggleReactionDto) => {
       queryClient.invalidateQueries({
         queryKey: ["product-comments", productId],
       });
     },
-    onError: (error: Error) => {
-      toast.error(`Thao tác thất bại: ${error.message}`);
-    },
   });
+
+  /**
+   * Call this from the component. It will:
+   * 1. Immediately update the query cache (optimistic)
+   * 2. Debounce the real API call by 600ms
+   */
+  const toggle = useCallback(
+    (dto: IToggleReactionDto) => {
+      const { commentId, isLike } = dto;
+
+      // ---- Optimistic cache update ----
+      // Update ALL pages that might contain this comment
+      queryClient.setQueriesData<IProductInteractionResponse>(
+        { queryKey: ["product-comments", productId] },
+        (old) => {
+          if (!old) return old;
+          const updateComment = (c: IProductComment) => {
+            if (c._id !== commentId) {
+              // Check replies
+              if (c.replies) {
+                c.replies = c.replies.map((r: any) => {
+                  if (r._id !== commentId) return r;
+                  return applyReactionOptimistic(r, isLike);
+                });
+              }
+              return c;
+            }
+            return applyReactionOptimistic(c, isLike);
+          };
+          return {
+            ...old,
+            comments: old.comments.map(updateComment),
+          };
+        },
+      );
+
+      // ---- Debounce the API call ----
+      pendingStates.current.set(commentId, dto);
+
+      const existing = debounceTimers.current.get(commentId);
+      if (existing) clearTimeout(existing);
+
+      const timer = setTimeout(() => {
+        debounceTimers.current.delete(commentId);
+        const latestDto = pendingStates.current.get(commentId);
+        pendingStates.current.delete(commentId);
+        if (latestDto) {
+          mutation.mutate(latestDto);
+        }
+      }, 600);
+
+      debounceTimers.current.set(commentId, timer);
+    },
+    [queryClient, productId, mutation],
+  );
+
+  return { toggle, isPending: mutation.isPending };
 };
+
+/** Helper: apply like/dislike optimistically on a comment object */
+function applyReactionOptimistic<
+  T extends {
+    myReaction: boolean | null;
+    likesCount: number;
+    dislikesCount: number;
+  },
+>(comment: T, isLike: boolean): T {
+  const prev = comment.myReaction;
+  let { likesCount, dislikesCount } = comment;
+  let next: boolean | null;
+
+  if (prev === isLike) {
+    // Toggle off (remove reaction)
+    next = null;
+    if (isLike) likesCount = Math.max(0, likesCount - 1);
+    else dislikesCount = Math.max(0, dislikesCount - 1);
+  } else {
+    // New reaction or switch
+    if (prev === true) likesCount = Math.max(0, likesCount - 1);
+    if (prev === false) dislikesCount = Math.max(0, dislikesCount - 1);
+    next = isLike;
+    if (isLike) likesCount += 1;
+    else dislikesCount += 1;
+  }
+
+  return { ...comment, myReaction: next, likesCount, dislikesCount };
+}

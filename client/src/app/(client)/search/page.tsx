@@ -9,6 +9,7 @@ import Link from "next/link";
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
 import { IProductCard } from "@/types/product";
+import { PaginatedResponse } from "@/types";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 
 const sortOptions = [
@@ -82,30 +83,15 @@ export default function SearchPage() {
     };
 
     // Search query
-    const { data: searchData, isLoading } = useQuery<{
-        items: IProductCard[];
-        totalItems: number;
-        totalPages: number;
-        currentPage: number;
-        limit: number;
-    }>({
+    const { data: searchData, isLoading } = useQuery<PaginatedResponse<IProductCard>>({
         queryKey: ["search-products", q, sort, page],
-        queryFn: () =>
-            productClientService.searchProductsPaginated
-                ? productClientService.searchProductsPaginated(q, page, 20, sort || undefined)
-                : productClientService.searchProducts(q).then((items: IProductCard[]) => ({
-                    items,
-                    totalItems: items.length,
-                    totalPages: 1,
-                    currentPage: 1,
-                    limit: 20,
-                })),
+        queryFn: () => productClientService.searchProductsPaginated(q, page, 20, sort || undefined),
         enabled: !!q,
         staleTime: 1000 * 60 * 3,
     });
 
-    const products = searchData?.items || [];
-    const totalItems = searchData?.totalItems || 0;
+    const products = searchData?.data || [];
+    const totalItems = searchData?.pagination?.totalItems || 0;
 
     return (
         <>
@@ -167,8 +153,8 @@ export default function SearchPage() {
                                             key={opt.value}
                                             onClick={() => handleSortChange(opt.value)}
                                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${sort === opt.value
-                                                    ? "bg-blue-500 text-white shadow-sm"
-                                                    : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600"
+                                                ? "bg-blue-500 text-white shadow-sm"
+                                                : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600"
                                                 }`}
                                         >
                                             {opt.label}
@@ -193,12 +179,12 @@ export default function SearchPage() {
                                     </div>
 
                                     {/* Pagination */}
-                                    {(searchData?.totalPages ?? 0) > 1 && (
+                                    {(searchData?.pagination?.totalPages ?? 0) > 1 && (
                                         <div className="flex justify-center mt-8">
                                             <Pagination
                                                 current={page}
                                                 total={totalItems}
-                                                pageSize={searchData?.limit || 20}
+                                                pageSize={searchData?.pagination?.itemsPerPage || 20}
                                                 onChange={handlePageChange}
                                                 showSizeChanger={false}
                                             />

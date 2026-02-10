@@ -1,5 +1,5 @@
 'use client'
-import { Modal, Popconfirm, Spin, Tag } from "antd";
+import { Modal, Popconfirm, Spin, Switch, Tag } from "antd";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
 import { createContext, useContext, useState, useEffect } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
@@ -11,7 +11,7 @@ import ContentModalBrand from "@/components/ContentModal/brand/ContentModalBrand
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { IBrand } from "@/types/brand";
-import { useBrands, useDeleteBrand } from "@/hooks/admin/useBrand";
+import { useBrands, useDeleteBrand, useUpdateBrand } from '@/hooks/admin/useBrand';
 import UpdateModalBrand from "@/components/ContentModal/brand/UpdateModalBrand";
 import FilterBrand from "@/components/ActionFilter/brand/FilterBrand";
 
@@ -49,6 +49,7 @@ export default function ContentBrand() {
     };
 
     const deleteBrand = useDeleteBrand();
+    const updateBrandMutation = useUpdateBrand();
 
     const handleDelete = async (id: string) => {
         try {
@@ -111,6 +112,25 @@ export default function ContentBrand() {
             )
         },
         {
+            title: 'Nổi bật',
+            dataIndex: 'feature',
+            key: 'feature',
+            width: 100,
+            align: 'center' as const,
+            render: (_: unknown, record: DataType<IBrand>) => (
+                <Switch
+                    checked={!!record.feature}
+                    onChange={(checked) => {
+                        updateBrandMutation.mutate({
+                            id: record._id as string,
+                            data: { feature: checked },
+                        });
+                    }}
+                    size="small"
+                />
+            ),
+        },
+        {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
@@ -167,6 +187,7 @@ export default function ContentBrand() {
                 description: item.description,
                 logo: item.logo,
                 website: item.website,
+                feature: item.feature,
                 status: item.status,
             };
             return row;

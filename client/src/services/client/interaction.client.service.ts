@@ -11,6 +11,26 @@ import type {
 class InteractionClientService {
   private baseURL = "/product-interaction";
 
+  // ============== MEDIA UPLOAD ==============
+
+  /**
+   * Upload images/videos for comments
+   * Returns array of server URLs
+   */
+  async uploadMedia(files: File[]): Promise<string[]> {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("files", file));
+    const response = await axiosClient.post("/upload/media", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    // response.data = { urls: ['/uploads/...', ...] }
+    const baseURL = process.env.NEXT_PUBLIC_API_URL;
+    const urls: string[] = (response.data?.urls || []).map((url: string) =>
+      url.startsWith("http") ? url : `${baseURL}${url}`,
+    );
+    return urls;
+  }
+
   // ============== COMMENTS ==============
 
   /**

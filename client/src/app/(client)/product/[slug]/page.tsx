@@ -456,7 +456,7 @@ export default function ProductDetailClient() {
                 </div>
 
                 {/* Related Products */}
-                {dataProduct && dataProduct.items?.length > 0 && (
+                {dataProduct && dataProduct.data?.length > 0 && (
                     <div className="mx-5 xl:mx-32 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mb-10">
                         <h2 className="font-bold text-blue-600 dark:text-white text-xl lg:text-2xl pb-4 border-b border-gray-100 flex items-center gap-2">
                             <RocketFilled className="text-blue-500" /> Sản phẩm tương tự
@@ -472,7 +472,7 @@ export default function ProductDetailClient() {
                             autoplaySpeed={3000}
                             responsive={responsiveSettings}
                         >
-                            {dataProduct.items.map(item => (
+                            {dataProduct.data.map(item => (
                                 <div key={item._id} className="px-1.5">
                                     <CardProduct css="hover:shadow-lg transition-all" product={item} />
                                 </div>

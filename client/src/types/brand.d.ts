@@ -9,6 +9,7 @@ export interface IBrand {
   logo?: string;
   website?: string;
   status: "ACTIVE" | "INACTIVE";
+  feature?: boolean;
   createdAt?: string;
   updatedAt?: string;
   isDeleted?: boolean;

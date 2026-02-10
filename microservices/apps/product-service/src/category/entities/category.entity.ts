@@ -35,6 +35,11 @@ export class Category {
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
 
+// Compound indexes for optimized queries
+CategorySchema.index({ isDeleted: 1, parentId: 1 });
+CategorySchema.index({ isDeleted: 1, name: 1 });
+CategorySchema.index({ isDeleted: 1, createdAt: -1 });
+
 CategorySchema.pre('save', async function () {
   if (!this.isModified('name')) return;
 

@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { Rate, Button, Input, Space, message, Image as AntImage } from "antd";
 import { SendOutlined, PictureOutlined, VideoCameraOutlined, CloseCircleFilled } from "@ant-design/icons";
 import { useCreateComment } from "@/hooks/client/useProductInteraction";
+import { interactionClientService } from "@/services/client/interaction.client.service";
 import useAuthUser from "@/hooks/useAuthUser";
 import type { ICreateCommentDto } from "@/types";
 
@@ -78,8 +79,17 @@ export default function CommentForm({ productId }: CommentFormProps) {
             return;
         }
 
-        // In a real app, upload files first and get URLs. For now, use blob URLs as placeholders.
-        const imageUrls = mediaItems.map((m) => m.url);
+        // Upload media files to server first, get real URLs
+        let imageUrls: string[] = [];
+        const filesToUpload = mediaItems.filter((m) => m.file).map((m) => m.file!);
+        if (filesToUpload.length > 0) {
+            try {
+                imageUrls = await interactionClientService.uploadMedia(filesToUpload);
+            } catch {
+                message.error("Upload ảnh/video thất bại. Vui lòng thử lại.");
+                return;
+            }
+        }
 
         const dto: ICreateCommentDto = {
             product: productId,

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Empty, Image, message, Popconfirm } from 'antd';
+import { Button, Empty, Image, message, Popconfirm, Tooltip } from 'antd';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { IProductCard } from '@/types/product';
@@ -14,6 +14,7 @@ import {
     getProductImage,
     getProductStock,
     getDefaultCartVariant,
+    formatCurrencyVND,
 } from '@/utils/productHelpers';
 import { WishlistSkeleton } from '@/components/Skeletons/WishlistSkeleton';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
@@ -22,23 +23,13 @@ import {
     HeartFilled,
     ShoppingCartOutlined,
     DeleteOutlined,
-    EyeOutlined
+    EyeOutlined,
 } from '@ant-design/icons';
 
 export default function WishlistPage() {
     const { user } = useAuthUser();
     const queryClient = useQueryClient();
     const { addToCart } = useCartStore();
-
-    // Format currency function
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
-    };
 
     // Fetch wishlist favorite product IDs
     const { data: favoriteIds = [], isLoading: isLoadingFavorites } = useQuery<string[]>({
@@ -94,32 +85,34 @@ export default function WishlistPage() {
             return;
         }
         addToCart(product, variant);
-        message.success('Đã thêm sản phẩm vào giỏ hàng!');
+        message.success('Đã thêm vào giỏ hàng!');
     };
 
     const handleRemoveFromWishlist = (productId: string) => {
         removeFromWishlistMutation.mutate({ productId });
     };
 
+    const breadcrumb = (
+        <div className="flex items-center gap-2 mt-3 mx-5 xl:mx-32 text-sm">
+            <Link href="/home" className="text-gray-500 hover:text-blue-500 transition-colors">Trang chủ</Link>
+            <span className="text-gray-300">/</span>
+            <Link href="/profile/detail" className="text-gray-500 hover:text-blue-500 transition-colors">Hồ sơ</Link>
+            <span className="text-gray-300">/</span>
+            <span className="text-blue-500 font-medium">Yêu thích</span>
+        </div>
+    );
+
     if (isLoading) {
         return (
-            <div className='container mx-auto'>
-                <div className='flex items-center mt-3 mx-5 xl:mx-32'>
-                    <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Trang chủ</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <Link href="/profile/detail" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Hồ sơ người dùng</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <h3 className="font-medium text-lg text-blue-400 dark:text-white mr-3">Danh sách yêu thích</h3>
-                </div>
-                <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
+            <div className="container mx-auto">
+                {breadcrumb}
+                <div className="mx-5 xl:mx-32 mt-5 pb-5 grid grid-cols-12 gap-0 lg:gap-9">
                     <ProfileSidebar user={user} activePage="wishlist" />
-                    <div className='col-span-12 lg:col-span-9'>
-                        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-md p-6'>
-                            <div className='flex items-center justify-between mb-6'>
-                                <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center'>
-                                    <HeartFilled className='text-red-500 mr-3' />
-                                    Danh sách yêu thích
-                                </h2>
+                    <div className="col-span-12 lg:col-span-9">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <HeartFilled className="text-red-500 text-xl" />
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-white m-0">Danh sách yêu thích</h2>
                             </div>
                             <WishlistSkeleton />
                         </div>
@@ -132,181 +125,161 @@ export default function WishlistPage() {
     return (
         <>
             <DynamicMetadata
-                title={`Danh sách yêu thích (${wishlistProducts?.length || 0} sản phẩm) - PC Store`}
-                description="Quản lý danh sách sản phẩm yêu thích của bạn tại PC Store. Dễ dàng theo dõi và mua sắm các sản phẩm bạn quan tâm."
-                keywords="danh sách yêu thích, wishlist, sản phẩm yêu thích, theo dõi sản phẩm"
-                ogTitle="Danh sách yêu thích của tôi - PC Store"
-                ogDescription="Quản lý và theo dõi các sản phẩm yêu thích của bạn"
+                title={`Danh sách yêu thích (${wishlistProducts?.length || 0}) - PC Store`}
+                description="Quản lý danh sách sản phẩm yêu thích của bạn tại PC Store."
             />
-            <div className='container mx-auto'>
-                {/* Breadcrumb */}
-                <div className='flex items-center mt-3 mx-5 xl:mx-32'>
-                    <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Trang chủ</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <Link href="/profile/detail" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Hồ sơ người dùng</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <h3 className="font-medium text-lg text-blue-400 dark:text-white mr-3">Danh sách yêu thích</h3>
-                </div>
+            <div className="container mx-auto">
+                {breadcrumb}
 
-                <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
-                    {/* Sidebar */}
+                <div className="mx-5 xl:mx-32 mt-5 pb-5 grid grid-cols-12 gap-0 lg:gap-9">
                     <ProfileSidebar user={user} activePage="wishlist" />
 
-                    {/* Main Content */}
-                    <div className='col-span-12 lg:col-span-9'>
-                        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-md p-6'>
-                            <div className='flex items-center justify-between mb-6'>
-                                <h2 className='text-2xl font-bold text-gray-800 dark:text-white flex items-center'>
-                                    <HeartFilled className='!text-red-500 mr-3' />
-                                    Danh sách yêu thích
-                                </h2>
-                                <div className='text-sm text-gray-500 dark:text-gray-400'>
-                                    {wishlistProducts.length} sản phẩm
+                    <div className="col-span-12 lg:col-span-9">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm">
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
+                                <div className="flex items-center gap-3">
+                                    <HeartFilled className="text-red-500 text-xl" />
+                                    <h2 className="text-xl font-bold text-gray-800 dark:text-white m-0">
+                                        Yêu thích
+                                    </h2>
+                                    <span className="bg-red-50 dark:bg-red-900/30 text-red-500 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                        {wishlistProducts.length}
+                                    </span>
                                 </div>
                             </div>
 
-                            {wishlistProducts.length === 0 ? (
-                                <Empty
-                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                    description={
-                                        <div className='text-center'>
-                                            <p className='text-gray-500 dark:text-gray-400 mb-4'>
-                                                Danh sách yêu thích của bạn đang trống
-                                            </p>
-                                            <Link href="/home">
-                                                <Button type="primary" size="large">
-                                                    <ShoppingCartOutlined className='mr-2' />
-                                                    Khám phá sản phẩm
-                                                </Button>
-                                            </Link>
-                                        </div>
-                                    }
-                                />
-                            ) : (
-                                <div className='grid max-h-[900px] overflow-y-scroll grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
-                                    {wishlistProducts.map((product) => (
-                                        <div key={product._id} className='group bg-white dark:bg-gray-700 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-600 transform hover:-translate-y-1'>
-                                            {/* Product Image */}
-                                            <div className='relative h-48 overflow-hidden'>
-                                                <Image
-                                                    src={getProductImage(product) || '/laptop.png'}
-                                                    alt={product.name}
-
-                                                    className='object-cover group-hover:scale-110 transition-transform duration-500'
-                                                />
-                                                {getProductDiscount(product) > 0 && (
-                                                    <div className='absolute top-2 left-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg'>
-                                                        -{getProductDiscount(product)}%
-                                                    </div>
-                                                )}
-                                                {/* Remove from wishlist button */}
-                                                <Popconfirm
-                                                    title="Xóa khỏi danh sách yêu thích?"
-                                                    description="Bạn có chắc chắn muốn xóa sản phẩm này khỏi danh sách yêu thích?"
-                                                    onConfirm={() => handleRemoveFromWishlist(product._id)}
-                                                    okText="Xóa"
-                                                    cancelText="Hủy"
-                                                    okButtonProps={{ danger: true }}
-                                                >
-                                                    <Button
-                                                        type="text"
-                                                        danger
-                                                        icon={<DeleteOutlined />}
-                                                        className='absolute top-2 right-2 bg-white bg-opacity-90 hover:bg-opacity-100 shadow-md'
-                                                        size="small"
-                                                        loading={removeFromWishlistMutation.isPending}
-                                                    />
-                                                </Popconfirm>
-                                            </div>
-
-                                            {/* Product Info */}
-                                            <div className='p-4'>
-                                                <h3 className='font-semibold text-gray-800 dark:text-white mb-2 line-clamp-2 h-12 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'>
-                                                    {product.name}
-                                                </h3>
-
-                                                {/* Category */}
-                                                {product.category && (
-                                                    <p className='text-sm text-blue-600 dark:text-blue-400 mb-2 font-medium'>
-                                                        {product.category.name}
+                            {/* Content */}
+                            <div className="p-5">
+                                {wishlistProducts.length === 0 ? (
+                                    <div className="py-16">
+                                        <Empty
+                                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                            description={
+                                                <div className="text-center">
+                                                    <p className="text-gray-400 mb-4 text-sm">
+                                                        Bạn chưa thêm sản phẩm nào vào danh sách yêu thích
                                                     </p>
-                                                )}
-
-                                                {/* Price */}
-                                                <div className='mb-4'>
-                                                    <div className='flex items-center space-x-2'>
-                                                        <span className='text-xl font-bold text-red-600 dark:text-red-400'>
-                                                            {formatCurrency(getProductDisplayPrice(product))}
-                                                        </span>
-                                                        {getProductDiscount(product) > 0 && (
-                                                            <span className='text-sm text-gray-500 dark:text-gray-400 line-through'>
-                                                                {formatCurrency(getProductOriginalPrice(product))}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Stock Status */}
-                                                <div className='mb-4'>
-                                                    {getProductStock(product) > 0 ? (
-                                                        <div className='flex items-center text-green-600 dark:text-green-400 text-sm'>
-                                                            <div className='w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse'></div>
-                                                            Còn hàng ({getProductStock(product)} sản phẩm)
-                                                        </div>
-                                                    ) : (
-                                                        <div className='flex items-center text-red-600 dark:text-red-400 text-sm'>
-                                                            <div className='w-2 h-2 bg-red-500 rounded-full mr-2'></div>
-                                                            Hết hàng
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Stock */}
-                                                <div className='mb-4 text-xs text-gray-500 dark:text-gray-400'>
-                                                    Tồn kho: {getProductStock(product)} sản phẩm
-                                                </div>
-
-
-                                                {/* Action Buttons */}
-                                                <div className='flex space-x-2'>
-                                                    <Link href={`/product/${product.slug}`} className='flex-1'>
-                                                        <Button
-                                                            type="primary"
-                                                            block
-                                                            icon={<EyeOutlined />}
-                                                            className='bg-gradient-to-r from-blue-500 to-blue-600 border-none hover:from-blue-600 hover:to-blue-700'
-                                                        >
-                                                            Xem chi tiết
+                                                    <Link href="/home">
+                                                        <Button type="primary">
+                                                            Khám phá sản phẩm
                                                         </Button>
                                                     </Link>
-                                                    <Button
-                                                        type="default"
-                                                        icon={<ShoppingCartOutlined />}
-                                                        disabled={getProductStock(product) === 0}
-                                                        onClick={() => handleAddToCart(product)}
-                                                        className='hover:border-green-500 hover:text-green-500'
-                                                    >
-                                                        Giỏ hàng
-                                                    </Button>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                            }
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {wishlistProducts.map((product) => {
+                                            const displayPrice = getProductDisplayPrice(product);
+                                            const originalPrice = getProductOriginalPrice(product);
+                                            const discount = getProductDiscount(product);
+                                            const stock = getProductStock(product);
+                                            const image = getProductImage(product);
 
-                        {/* Additional Info */}
-                        <div className='mt-6 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4'>
-                            <h3 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-                                <i className="fas fa-lightbulb mr-2"></i>
-                                Mẹo sử dụng:
-                            </h3>
-                            <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-                                <li>• Thêm sản phẩm vào danh sách yêu thích để theo dõi giá và tình trạng hàng</li>
-                                <li>• Bạn sẽ nhận được thông báo khi sản phẩm có khuyến mãi</li>
-                                <li>• Danh sách yêu thích giúp bạn so sánh và quyết định mua hàng dễ dàng hơn</li>
-                            </ul>
+                                            return (
+                                                <div
+                                                    key={product._id}
+                                                    className="group flex items-center gap-4 p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-md transition-all duration-200"
+                                                >
+                                                    {/* Image */}
+                                                    <Link href={`/product/${product.slug}`} className="flex-shrink-0">
+                                                        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-700">
+                                                            <Image
+                                                                src={image || '/laptop.png'}
+                                                                alt={product.name}
+                                                                preview={false}
+                                                                className="!w-full !h-full object-contain"
+                                                                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                                            />
+                                                            {discount > 0 && (
+                                                                <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                                                    -{discount}%
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </Link>
+
+                                                    {/* Info */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <Link href={`/product/${product.slug}`}>
+                                                            <h3 className="font-medium text-gray-800 dark:text-white text-sm sm:text-base line-clamp-2 hover:text-blue-500 transition-colors mb-1">
+                                                                {product.name}
+                                                            </h3>
+                                                        </Link>
+
+                                                        {product.category && (
+                                                            <span className="text-xs text-gray-400 mb-2 block">
+                                                                {product.category.name}
+                                                            </span>
+                                                        )}
+
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className="text-lg font-bold text-red-500">
+                                                                {formatCurrencyVND(displayPrice)}
+                                                            </span>
+                                                            {discount > 0 && (
+                                                                <span className="text-xs text-gray-400 line-through">
+                                                                    {formatCurrencyVND(originalPrice)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
+                                                            <span className={`text-xs ${stock > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>
+                                                                {stock > 0 ? `Còn ${stock} sản phẩm` : 'Hết hàng'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    <div className="flex flex-col sm:flex-row items-center gap-2 flex-shrink-0">
+                                                        <Tooltip title="Thêm vào giỏ hàng">
+                                                            <Button
+                                                                type="primary"
+                                                                icon={<ShoppingCartOutlined />}
+                                                                disabled={stock === 0}
+                                                                onClick={() => handleAddToCart(product)}
+                                                                className="!rounded-lg"
+                                                                size="middle"
+                                                            />
+                                                        </Tooltip>
+                                                        <Tooltip title="Xem chi tiết">
+                                                            <Link href={`/product/${product.slug}`}>
+                                                                <Button
+                                                                    icon={<EyeOutlined />}
+                                                                    className="!rounded-lg"
+                                                                    size="middle"
+                                                                />
+                                                            </Link>
+                                                        </Tooltip>
+                                                        <Popconfirm
+                                                            title="Xóa khỏi yêu thích?"
+                                                            onConfirm={() => handleRemoveFromWishlist(product._id)}
+                                                            okText="Xóa"
+                                                            cancelText="Hủy"
+                                                            okButtonProps={{ danger: true }}
+                                                        >
+                                                            <Tooltip title="Xóa">
+                                                                <Button
+                                                                    type="text"
+                                                                    danger
+                                                                    icon={<DeleteOutlined />}
+                                                                    className="!rounded-lg"
+                                                                    size="middle"
+                                                                    loading={removeFromWishlistMutation.isPending}
+                                                                />
+                                                            </Tooltip>
+                                                        </Popconfirm>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

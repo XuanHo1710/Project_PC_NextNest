@@ -89,6 +89,7 @@ export class ProductController {
       sort?: string;
       cpu?: string;
       ram?: string;
+      storage?: string;
     },
   ) {
     return this.productService.findByCollection(
@@ -96,7 +97,7 @@ export class ProductController {
       data.page,
       data.limit,
       data.sort,
-      { cpu: data.cpu, ram: data.ram },
+      { cpu: data.cpu, ram: data.ram, storage: data.storage },
     );
   }
 

@@ -36,6 +36,9 @@ export class Brand {
   updatedAt: Date;
 
   @Prop({ default: false })
+  feature: boolean;
+
+  @Prop({ default: false })
   isDeleted: boolean;
 
   @Prop()

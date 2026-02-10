@@ -1,6 +1,6 @@
 'use client'
 import { IBrand } from '@/types/brand';
-import { Button, Form, Input, Select, Spin } from 'antd';
+import { Button, Form, Input, Select, Spin, Switch } from 'antd';
 import { useCreateBrand } from '@/hooks/admin/useBrand';
 
 const { TextArea } = Input;
@@ -54,6 +54,7 @@ export default function ContentModalBrand({ setOpen }: ContentModalBrandProps) {
                         logo: "",
                         website: "",
                         status: "ACTIVE",
+                        feature: false,
                     }}
                     form={form}
                 >
@@ -105,6 +106,15 @@ export default function ContentModalBrand({ setOpen }: ContentModalBrandProps) {
                             <Select.Option value="ACTIVE">Hoạt động</Select.Option>
                             <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
                         </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        label="Nổi bật"
+                        name="feature"
+                        className='font-sans text-lg'
+                        valuePropName="checked"
+                    >
+                        <Switch checkedChildren="Có" unCheckedChildren="Không" />
                     </Form.Item>
 
                     <div className='text-right mb-10'>

@@ -126,15 +126,13 @@ export interface IProductCard {
 }
 
 // ============== PAGINATION ==============
-export interface IProductListResponse {
-  items: IProductCard[];
-  totalItems: number;
-  totalPages: number;
-  currentPage: number;
-  limit?: number;
-}
+import type { PaginatedResponse } from "./index";
 
-export type IProductWithPagination = IProductListResponse;
+/** @deprecated Use PaginatedResponse<IProductCard> instead */
+export type IProductListResponse = PaginatedResponse<IProductCard>;
+
+/** @deprecated Use PaginatedResponse<IProductCard> instead */
+export type IProductWithPagination = PaginatedResponse<IProductCard>;
 
 export interface IProductDetailResponse {
   data: IProductPopulated;

@@ -2,9 +2,9 @@ import axiosClient from "@/config/axiosClient";
 import {
   IProductPopulated,
   IProductCard,
-  IProductListResponse,
   IProductVariant,
   APIResponse,
+  PaginatedResponse,
 } from "@/types";
 import { ICategory } from "@/types/category";
 import { IBrand } from "@/types/brand";
@@ -12,7 +12,6 @@ import {
   IProductInteraction,
   ICreateProductInteraction,
 } from "@/types/interaction";
-import { PaginatedResponse } from "@/types/common";
 
 class ProductClientService {
   private baseURL = "/product";
@@ -36,9 +35,9 @@ class ProductClientService {
     status?: "ACTIVE" | "INACTIVE";
     sortBy?: string;
     sortOrder?: "asc" | "desc";
-  }): Promise<IProductListResponse> {
+  }): Promise<PaginatedResponse<IProductCard>> {
     const response = await axiosClient.get(this.baseURL, { params });
-    return response as unknown as IProductListResponse;
+    return response as unknown as PaginatedResponse<IProductCard>;
   }
 
   /**
@@ -105,28 +104,11 @@ class ProductClientService {
     page = 1,
     limit = 20,
     sort?: string,
-  ): Promise<{
-    items: IProductCard[];
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    limit: number;
-  }> {
+  ): Promise<PaginatedResponse<IProductCard>> {
     const response = await axiosClient.get(`${this.baseURL}/search`, {
       params: { q: query, page, limit, sort },
     });
-    // If backend returns paginated format, use it; otherwise wrap array
-    if (response.data?.items) {
-      return response.data;
-    }
-    const items = Array.isArray(response.data) ? response.data : [];
-    return {
-      items,
-      totalItems: items.length,
-      totalPages: 1,
-      currentPage: 1,
-      limit,
-    };
+    return response.data;
   }
 
   /**
@@ -181,7 +163,7 @@ class ProductClientService {
     cpu?: string,
     ram?: string,
     price?: string,
-  ): Promise<IProductListResponse> {
+  ): Promise<PaginatedResponse<IProductCard>> {
     const response = await axiosClient.get(`${this.baseURL}`, {
       params: { category: categoryId, page, sort, cpu, ram, price },
     });
@@ -301,8 +283,10 @@ class ProductClientService {
   /**
    * Get all brands
    */
-  async getBrands(): Promise<PaginatedResponse<IBrand>> {
-    const response = await axiosClient.get(this.brandURL);
+  async getBrands(
+    params?: Record<string, string>,
+  ): Promise<PaginatedResponse<IBrand>> {
+    const response = await axiosClient.get(this.brandURL, { params });
     return response.data;
   }
 
@@ -336,17 +320,14 @@ class ProductClientService {
     cpu?: string,
     ram?: string,
     storage?: string,
-  ): Promise<{
-    items: IProductCard[];
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    limit: number;
-    collectionInfo: {
-      category: ICategory | null;
-      brand: IBrand | null;
-    };
-  }> {
+  ): Promise<
+    PaginatedResponse<IProductCard> & {
+      collectionInfo: {
+        category: ICategory | null;
+        brand: IBrand | null;
+      };
+    }
+  > {
     const response = await axiosClient.get(
       `${this.baseURL}/collection/${slug}`,
       {
@@ -362,13 +343,7 @@ class ProductClientService {
   async getClientProducts(
     page = 1,
     limit = 20,
-  ): Promise<{
-    items: IProductCard[];
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    limit: number;
-  }> {
+  ): Promise<PaginatedResponse<IProductCard>> {
     const response = await axiosClient.get(`${this.baseURL}/client-products`, {
       params: { page, limit },
     });

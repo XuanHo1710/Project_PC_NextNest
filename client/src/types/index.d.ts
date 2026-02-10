@@ -10,14 +10,20 @@ export interface APIResponse<T> {
   timestamp: string;
 }
 
-// Paginated response (data field inside APIResponse)
-export interface PageResponse<T> {
-  items: T[];
-  totalItems: number;
-  totalPages: number;
-  currentPage: number;
-  limit?: number;
+// Paginated response — standardized format from all backend services
+// { data: T[], pagination: { currentPage, totalPages, totalItems, itemsPerPage } }
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
 }
+
+/** @deprecated Use PaginatedResponse<T> instead */
+export type PageResponse<T> = PaginatedResponse<T>;
 
 // Auth
 export type {

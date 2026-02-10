@@ -20,4 +20,7 @@ export class CreateBrandDto {
   @IsOptional()
   @IsEnum(["ACTIVE", "INACTIVE"])
   status?: string;
+
+  @IsOptional()
+  feature?: boolean;
 }

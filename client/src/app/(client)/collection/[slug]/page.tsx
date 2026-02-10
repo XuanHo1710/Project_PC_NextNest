@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { CategoryPageSkeleton } from "@/components/Skeletons";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import { PaginatedResponse } from "@/types";
 import { getDefaultCartVariant } from "@/utils/productHelpers";
 import { FiShoppingCart } from "react-icons/fi";
 import {
@@ -23,12 +24,7 @@ import {
 } from "@/utils/productHelpers";
 
 
-interface CollectionResponse {
-    items: IProductCard[];
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    limit: number;
+interface CollectionResponse extends PaginatedResponse<IProductCard> {
     collectionInfo: {
         category: ICategory | null;
         brand: IBrand | null;
@@ -181,9 +177,9 @@ export default function CollectionPage() {
             {collectionName && (
                 <DynamicMetadata
                     title={`${collectionName} - PC Store | Mua ${collectionName} chính hãng giá tốt`}
-                    description={`Mua ${collectionName} chính hãng với giá tốt nhất tại PC Store. Đa dạng sản phẩm, bảo hành uy tín, giao hàng nhanh. Tổng ${collectionData?.totalItems || 0} sản phẩm.`}
+                    description={`Mua ${collectionName} chính hãng với giá tốt nhất tại PC Store. Đa dạng sản phẩm, bảo hành uy tín, giao hàng nhanh. Tổng ${collectionData?.pagination?.totalItems || 0} sản phẩm.`}
                     keywords={`${collectionName}, mua ${collectionName}, ${collectionName} giá rẻ, ${collectionName} chính hãng`}
-                    ogTitle={`${collectionName} - Hơn ${collectionData?.totalItems || 0} sản phẩm chính hãng`}
+                    ogTitle={`${collectionName} - Hơn ${collectionData?.pagination?.totalItems || 0} sản phẩm chính hãng`}
                     ogDescription={`Khám phá bộ sưu tập ${collectionName} đa dạng tại PC Store.`}
                 />
             )}
@@ -273,7 +269,7 @@ export default function CollectionPage() {
                     <h1 className="font-bold text-xl lg:text-3xl uppercase text-blue-500 border-b-2 border-blue-400 pb-2 inline-block">
                         {collectionName}
                         <span className="ml-2 text-sm text-stone-400 lowercase font-medium">
-                            (Tổng {collectionData?.totalItems || 0} sản phẩm)
+                            (Tổng {collectionData?.pagination?.totalItems || 0} sản phẩm)
                         </span>
                     </h1>
                     {collectionType === 'brand' && collectionData?.collectionInfo?.brand?.logo && (
@@ -423,8 +419,8 @@ export default function CollectionPage() {
                             {/* Products */}
                             {isGridView ? (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                                    {collectionData && collectionData.items.length > 0 ? (
-                                        collectionData.items.map((product) => (
+                                    {collectionData && collectionData.data.length > 0 ? (
+                                        collectionData.data.map((product) => (
                                             <div key={product._id} className="border border-gray-100 dark:border-gray-700 rounded-lg">
                                                 <CardProduct css="p-2" product={product} />
                                             </div>
@@ -438,8 +434,8 @@ export default function CollectionPage() {
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {collectionData && collectionData.items.length > 0 ? (
-                                        collectionData.items.map((product) => (
+                                    {collectionData && collectionData.data.length > 0 ? (
+                                        collectionData.data.map((product) => (
                                             <div key={product._id} className="flex gap-4 p-3 border border-gray-100 dark:border-gray-700 rounded-lg hover:shadow-sm transition-shadow">
                                                 <div className="w-32 h-32 flex-shrink-0">
                                                     <Image
@@ -508,12 +504,12 @@ export default function CollectionPage() {
                             )}
 
                             {/* Pagination */}
-                            {collectionData && collectionData.totalItems > 0 && (
+                            {collectionData && collectionData.pagination.totalItems > 0 && (
                                 <div className="flex justify-end mt-6">
                                     <Pagination
-                                        current={collectionData.currentPage}
-                                        total={collectionData.totalItems}
-                                        pageSize={collectionData.limit}
+                                        current={collectionData.pagination.currentPage}
+                                        total={collectionData.pagination.totalItems}
+                                        pageSize={collectionData.pagination.itemsPerPage}
                                         onChange={handlePagination}
                                         showSizeChanger={false}
                                     />

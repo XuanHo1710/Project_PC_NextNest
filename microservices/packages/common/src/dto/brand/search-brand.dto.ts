@@ -25,4 +25,8 @@ export class SearchBrandDto {
   @IsNumber()
   @Min(1)
   limit?: number;
+
+  @IsOptional()
+  @IsString()
+  feature?: string;
 }

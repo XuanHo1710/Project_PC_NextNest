@@ -50,6 +50,7 @@ export class ProductController {
     @Query('sort') sort?: string,
     @Query('cpu') cpu?: string,
     @Query('ram') ram?: string,
+    @Query('storage') storage?: string,
   ) {
     return this.productService.send('product.findByCollection', {
       slug,
@@ -58,6 +59,7 @@ export class ProductController {
       sort: sort || '',
       cpu: cpu || '',
       ram: ram || '',
+      storage: storage || '',
     });
   }
 
@@ -96,6 +98,12 @@ export class ProductController {
     });
   }
 
+  @Get('search')
+  @Public()
+  searchProducts(@Query() searchDto?: SearchProductDto) {
+    return this.productService.send('product.search', { searchDto });
+  }
+
   @Get('slug/:slug')
   @Public()
   findBySlug(@Param('slug') slug: string) {
@@ -127,11 +135,5 @@ export class ProductController {
       id,
       createdBy: guest._id,
     });
-  }
-
-  @Get('search')
-  @Public()
-  searchProducts(@Query() searchDto?: SearchProductDto) {
-    return this.productService.send('product.search', { searchDto });
   }
 }

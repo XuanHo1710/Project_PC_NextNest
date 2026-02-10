@@ -47,19 +47,8 @@ class ProductManageClientService {
   }
 
   async getMyProducts(
-    params?: Record<string, string>,
+    params?: Record<string, string | number>,
   ): Promise<PaginatedResponse<IProduct>> {
-    const response = await axiosClient.get("/product", { params });
-    return response.data;
-  }
-
-  async getMyProducts(params?: Record<string, string | number>): Promise<{
-    items: IProduct[];
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    limit: number;
-  }> {
     const response = await axiosClient.get("/product/my-products", { params });
     return response.data;
   }

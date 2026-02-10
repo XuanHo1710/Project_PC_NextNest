@@ -60,6 +60,7 @@ export class CategoryService {
         .sort(sortCategory)
         .skip(skip)
         .limit(limit)
+        .lean()
         .exec(),
       this.categoryModel.countDocuments(filterCategory),
     ]);
@@ -76,14 +77,16 @@ export class CategoryService {
   }
 
   async findOne(id: string) {
-    return await this.categoryModel.findById(id);
+    return await this.categoryModel.findById(id).lean();
   }
 
   async findBySlug(slug: string) {
-    const category = await this.categoryModel.findOne({
-      slug,
-      isDeleted: { $ne: true },
-    });
+    const category = await this.categoryModel
+      .findOne({
+        slug,
+        isDeleted: { $ne: true },
+      })
+      .lean();
     return category;
   }
 

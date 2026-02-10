@@ -36,6 +36,7 @@ import {
     useDeleteComment,
     useToggleReaction,
 } from "@/hooks/client/useProductInteraction";
+import { interactionClientService } from "@/services/client/interaction.client.service";
 import useAuthUser from "@/hooks/useAuthUser";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -98,33 +99,45 @@ function InlineReplyForm({
     const replyComment = useReplyComment(productId);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [content, setContent] = useState("");
-    const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+    const [mediaFiles, setMediaFiles] = useState<{ file: File; previewUrl: string }[]>([]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files) return;
         Array.from(files).forEach((file) => {
-            if (mediaUrls.length >= 5) {
+            if (mediaFiles.length >= 5) {
                 message.warning("Tối đa 5 ảnh/video cho phản hồi");
                 return;
             }
             if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
-            setMediaUrls((prev) => [...prev, URL.createObjectURL(file)]);
+            setMediaFiles((prev) => [...prev, { file, previewUrl: URL.createObjectURL(file) }]);
         });
         e.target.value = "";
     };
 
     const handleSubmit = async () => {
         if (!content.trim()) return;
+
+        // Upload files first
+        let imageUrls: string[] = [];
+        if (mediaFiles.length > 0) {
+            try {
+                imageUrls = await interactionClientService.uploadMedia(mediaFiles.map((m) => m.file));
+            } catch {
+                message.error("Upload ảnh/video thất bại");
+                return;
+            }
+        }
+
         await replyComment.mutateAsync({
             product: productId,
             content: content.trim(),
             parentComment: parentCommentId,
-            images: mediaUrls,
+            images: imageUrls,
         });
         setContent("");
-        mediaUrls.forEach((u) => URL.revokeObjectURL(u));
-        setMediaUrls([]);
+        mediaFiles.forEach((m) => URL.revokeObjectURL(m.previewUrl));
+        setMediaFiles([]);
         onCancel();
     };
 
@@ -146,19 +159,19 @@ function InlineReplyForm({
                     style={{ borderRadius: 10 }}
                 />
                 {/* Media previews */}
-                {mediaUrls.length > 0 && (
+                {mediaFiles.length > 0 && (
                     <div className="flex gap-2 mb-2 flex-wrap">
-                        {mediaUrls.map((url, idx) => (
+                        {mediaFiles.map((item, idx) => (
                             <div key={idx} className="relative group">
-                                {isVideoUrl(url) ? (
-                                    <video src={url} className="w-14 h-14 rounded-lg object-cover border" muted />
+                                {isVideoUrl(item.previewUrl) ? (
+                                    <video src={item.previewUrl} className="w-14 h-14 rounded-lg object-cover border" muted />
                                 ) : (
-                                    <AntImage src={url} alt="" width={56} height={56} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} />
+                                    <AntImage src={item.previewUrl} alt="" width={56} height={56} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} />
                                 )}
                                 <button
                                     onClick={() => {
-                                        URL.revokeObjectURL(url);
-                                        setMediaUrls((prev) => prev.filter((_, i) => i !== idx));
+                                        URL.revokeObjectURL(item.previewUrl);
+                                        setMediaFiles((prev) => prev.filter((_, i) => i !== idx));
                                     }}
                                     className="absolute -top-1.5 -right-1.5 text-red-500 bg-white rounded-full shadow"
                                 >
@@ -214,6 +227,9 @@ function ReplyItem({
     const deleteComment = useDeleteComment(productId);
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(reply.content);
+    const [editImages, setEditImages] = useState<string[]>(reply.images || []);
+    const [newEditFiles, setNewEditFiles] = useState<{ file: File; previewUrl: string }[]>([]);
+    const editFileRef = useRef<HTMLInputElement>(null);
     const [showReplyForm, setShowReplyForm] = useState(false);
     const updateComment = useUpdateComment(productId);
 
@@ -221,20 +237,33 @@ function ReplyItem({
 
     const handleLike = () => {
         if (!user) return;
-        toggleReaction.mutate({ commentId: reply._id, isLike: true });
+        toggleReaction.toggle({ commentId: reply._id, isLike: true });
     };
 
     const handleDislike = () => {
         if (!user) return;
-        toggleReaction.mutate({ commentId: reply._id, isLike: false });
+        toggleReaction.toggle({ commentId: reply._id, isLike: false });
     };
 
     const handleEdit = async () => {
         if (!editContent.trim()) return;
+        // Upload any new files
+        let uploadedUrls: string[] = [];
+        if (newEditFiles.length > 0) {
+            try {
+                uploadedUrls = await interactionClientService.uploadMedia(newEditFiles.map((f) => f.file));
+            } catch {
+                message.error("Upload ảnh/video thất bại");
+                return;
+            }
+        }
+        const allImages = [...editImages, ...uploadedUrls];
         await updateComment.mutateAsync({
             commentId: reply._id,
-            dto: { content: editContent.trim() },
+            dto: { content: editContent.trim(), images: allImages },
         });
+        newEditFiles.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+        setNewEditFiles([]);
         setIsEditing(false);
     };
 
@@ -267,9 +296,71 @@ function ReplyItem({
                             maxLength={2000}
                             className="mb-2"
                         />
+                        {/* Existing images with delete */}
+                        {editImages.length > 0 && (
+                            <div className="flex gap-2 mb-2 flex-wrap">
+                                {editImages.map((url, idx) => (
+                                    <div key={`existing-${idx}`} className="relative group">
+                                        {isVideoUrl(url) ? (
+                                            <video src={url} className="w-14 h-14 rounded-lg object-cover border" muted />
+                                        ) : (
+                                            <AntImage src={url} alt="" width={56} height={56} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} preview={false} />
+                                        )}
+                                        <button
+                                            onClick={() => setEditImages((prev) => prev.filter((_, i) => i !== idx))}
+                                            className="absolute -top-1.5 -right-1.5 text-red-500 bg-white rounded-full shadow"
+                                        >
+                                            <CloseCircleFilled style={{ fontSize: 16 }} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {/* New files preview */}
+                        {newEditFiles.length > 0 && (
+                            <div className="flex gap-2 mb-2 flex-wrap">
+                                {newEditFiles.map((item, idx) => (
+                                    <div key={`new-${idx}`} className="relative group">
+                                        {isVideoUrl(item.previewUrl) ? (
+                                            <video src={item.previewUrl} className="w-14 h-14 rounded-lg object-cover border" muted />
+                                        ) : (
+                                            <AntImage src={item.previewUrl} alt="" width={56} height={56} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} preview={false} />
+                                        )}
+                                        <button
+                                            onClick={() => {
+                                                URL.revokeObjectURL(item.previewUrl);
+                                                setNewEditFiles((prev) => prev.filter((_, i) => i !== idx));
+                                            }}
+                                            className="absolute -top-1.5 -right-1.5 text-red-500 bg-white rounded-full shadow"
+                                        >
+                                            <CloseCircleFilled style={{ fontSize: 16 }} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <input
+                            ref={editFileRef}
+                            type="file"
+                            accept="image/*,video/*"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                                const files = e.target.files;
+                                if (!files) return;
+                                Array.from(files).forEach((file) => {
+                                    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
+                                    setNewEditFiles((prev) => [...prev, { file, previewUrl: URL.createObjectURL(file) }]);
+                                });
+                                e.target.value = "";
+                            }}
+                        />
                         <Space size="small">
+                            <button onClick={() => editFileRef.current?.click()} className="text-xs text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-1">
+                                <PictureOutlined /> Thêm ảnh
+                            </button>
                             <Button type="primary" size="small" onClick={handleEdit} loading={updateComment.isPending}>Lưu</Button>
-                            <Button size="small" onClick={() => { setIsEditing(false); setEditContent(reply.content); }}>Hủy</Button>
+                            <Button size="small" onClick={() => { setIsEditing(false); setEditContent(reply.content); setEditImages(reply.images || []); setNewEditFiles([]); }}>Hủy</Button>
                         </Space>
                     </div>
                 ) : (
@@ -310,7 +401,7 @@ function ReplyItem({
 
                     {isOwner && !isEditing && (
                         <>
-                            <button onClick={() => setIsEditing(true)} className="text-xs text-gray-400 hover:text-blue-500 cursor-pointer">
+                            <button onClick={() => { setIsEditing(true); setEditImages(reply.images || []); setNewEditFiles([]); }} className="text-xs text-gray-400 hover:text-blue-500 cursor-pointer">
                                 <EditOutlined /> Sửa
                             </button>
                             <Popconfirm title="Xóa phản hồi này?" onConfirm={() => deleteComment.mutate(reply._id)} okText="Xóa" cancelText="Hủy" okButtonProps={{ danger: true }}>
@@ -347,25 +438,41 @@ export default function CommentItem({ comment, productId }: CommentItemProps) {
     const [showReplies, setShowReplies] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(comment.content);
+    const [editImages, setEditImages] = useState<string[]>(comment.images || []);
+    const [newEditFiles, setNewEditFiles] = useState<{ file: File; previewUrl: string }[]>([]);
+    const editFileRef = useRef<HTMLInputElement>(null);
 
     const isOwner = user?._id === comment.guest?._id;
 
     const handleLike = () => {
         if (!isAuthenticated) return;
-        toggleReaction.mutate({ commentId: comment._id, isLike: true });
+        toggleReaction.toggle({ commentId: comment._id, isLike: true });
     };
 
     const handleDislike = () => {
         if (!isAuthenticated) return;
-        toggleReaction.mutate({ commentId: comment._id, isLike: false });
+        toggleReaction.toggle({ commentId: comment._id, isLike: false });
     };
 
     const handleEdit = async () => {
         if (!editContent.trim()) return;
+        // Upload any new files
+        let uploadedUrls: string[] = [];
+        if (newEditFiles.length > 0) {
+            try {
+                uploadedUrls = await interactionClientService.uploadMedia(newEditFiles.map((f) => f.file));
+            } catch {
+                message.error("Upload ảnh/video thất bại");
+                return;
+            }
+        }
+        const allImages = [...editImages, ...uploadedUrls];
         await updateComment.mutateAsync({
             commentId: comment._id,
-            dto: { content: editContent.trim() },
+            dto: { content: editContent.trim(), images: allImages },
         });
+        newEditFiles.forEach((f) => URL.revokeObjectURL(f.previewUrl));
+        setNewEditFiles([]);
         setIsEditing(false);
     };
 
@@ -409,9 +516,71 @@ export default function CommentItem({ comment, productId }: CommentItemProps) {
                                 maxLength={2000}
                                 className="mb-2"
                             />
+                            {/* Existing images with delete */}
+                            {editImages.length > 0 && (
+                                <div className="flex gap-2 mb-2 flex-wrap">
+                                    {editImages.map((url, idx) => (
+                                        <div key={`existing-${idx}`} className="relative group">
+                                            {isVideoUrl(url) ? (
+                                                <video src={url} className="w-16 h-16 rounded-lg object-cover border" muted />
+                                            ) : (
+                                                <AntImage src={url} alt="" width={64} height={64} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} preview={false} />
+                                            )}
+                                            <button
+                                                onClick={() => setEditImages((prev) => prev.filter((_, i) => i !== idx))}
+                                                className="absolute -top-1.5 -right-1.5 text-red-500 bg-white rounded-full shadow"
+                                            >
+                                                <CloseCircleFilled style={{ fontSize: 16 }} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {/* New files preview */}
+                            {newEditFiles.length > 0 && (
+                                <div className="flex gap-2 mb-2 flex-wrap">
+                                    {newEditFiles.map((item, idx) => (
+                                        <div key={`new-${idx}`} className="relative group">
+                                            {isVideoUrl(item.previewUrl) ? (
+                                                <video src={item.previewUrl} className="w-16 h-16 rounded-lg object-cover border" muted />
+                                            ) : (
+                                                <AntImage src={item.previewUrl} alt="" width={64} height={64} className="rounded-lg object-cover border" style={{ borderRadius: 8 }} preview={false} />
+                                            )}
+                                            <button
+                                                onClick={() => {
+                                                    URL.revokeObjectURL(item.previewUrl);
+                                                    setNewEditFiles((prev) => prev.filter((_, i) => i !== idx));
+                                                }}
+                                                className="absolute -top-1.5 -right-1.5 text-red-500 bg-white rounded-full shadow"
+                                            >
+                                                <CloseCircleFilled style={{ fontSize: 16 }} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            <input
+                                ref={editFileRef}
+                                type="file"
+                                accept="image/*,video/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                    const files = e.target.files;
+                                    if (!files) return;
+                                    Array.from(files).forEach((file) => {
+                                        if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
+                                        setNewEditFiles((prev) => [...prev, { file, previewUrl: URL.createObjectURL(file) }]);
+                                    });
+                                    e.target.value = "";
+                                }}
+                            />
                             <Space size="small">
+                                <button onClick={() => editFileRef.current?.click()} className="text-xs text-blue-500 hover:text-blue-600 cursor-pointer flex items-center gap-1">
+                                    <PictureOutlined /> Thêm ảnh/video
+                                </button>
                                 <Button type="primary" size="small" onClick={handleEdit} loading={updateComment.isPending}>Lưu</Button>
-                                <Button size="small" onClick={() => { setIsEditing(false); setEditContent(comment.content); }}>Hủy</Button>
+                                <Button size="small" onClick={() => { setIsEditing(false); setEditContent(comment.content); setEditImages(comment.images || []); setNewEditFiles([]); }}>Hủy</Button>
                             </Space>
                         </div>
                     ) : (
@@ -467,7 +636,7 @@ export default function CommentItem({ comment, productId }: CommentItemProps) {
 
                         {isOwner && !isEditing && (
                             <>
-                                <button onClick={() => setIsEditing(true)} className="text-sm text-gray-400 hover:text-blue-500 cursor-pointer">
+                                <button onClick={() => { setIsEditing(true); setEditImages(comment.images || []); setNewEditFiles([]); }} className="text-sm text-gray-400 hover:text-blue-500 cursor-pointer">
                                     <EditOutlined /> Sửa
                                 </button>
                                 <Popconfirm
