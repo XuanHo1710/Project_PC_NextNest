@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Product, ProductDocument } from './entities/product.entity';
@@ -656,6 +660,42 @@ export class ProductService {
       const result = await this.updateProductVariant(update.id, update.data);
       results.push(result);
     }
+    return results;
+  }
+
+  async deleteAllProductVariants(productId: string) {
+    if (!Types.ObjectId.isValid(productId)) {
+      throw new BadRequestException(`Invalid product ID: ${productId}`);
+    }
+    const query = { product: new Types.ObjectId(productId), isDeleted: false };
+    const result = await this.productVariantModel
+      .updateMany(query, { $set: { isDeleted: true, deletedAt: new Date() } })
+      .exec();
+    return result;
+  }
+
+  async deleteAndRecreateProductVariants(
+    productId: string,
+    newVariants: CreateProductVariantDto[],
+  ) {
+    if (!Types.ObjectId.isValid(productId)) {
+      throw new BadRequestException(`Invalid product ID: ${productId}`);
+    }
+
+    // HARD delete old variants to free up unique SKU index slots
+    await this.productVariantModel
+      .deleteMany({ product: new Types.ObjectId(productId) })
+      .exec();
+
+    // Create new variants
+    if (!newVariants || newVariants.length === 0) return [];
+
+    const results = await this.productVariantModel.insertMany(
+      newVariants.map((dto) => ({
+        ...dto,
+        product: new Types.ObjectId(productId),
+      })),
+    );
     return results;
   }
 

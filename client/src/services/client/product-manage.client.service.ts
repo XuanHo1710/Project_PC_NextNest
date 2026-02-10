@@ -180,7 +180,23 @@ class ProductManageClientService {
     });
     return response.data;
   }
+  async deleteAllVariants(productId: string): Promise<{ message: string }> {
+    const response = await axiosClient.delete(
+      `/product-variant/bulk/${productId}`,
+    );
+    return response.data;
+  }
 
+  async deleteAndRecreateVariants(
+    productId: string,
+    variants: Partial<IProductVariant>[],
+  ): Promise<IProductVariant[]> {
+    const response = await axiosClient.post(
+      `/product-variant/bulk/recreate/${productId}`,
+      { variants },
+    );
+    return response.data;
+  }
   // ============== PRODUCT ATTRIBUTE ALLOW VALUES ==============
 
   async createAllowValue(data: {

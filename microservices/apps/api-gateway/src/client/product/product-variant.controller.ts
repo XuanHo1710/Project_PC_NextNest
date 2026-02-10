@@ -49,6 +49,22 @@ export class ProductVariantController {
     });
   }
 
+  @Delete('bulk/:productId')
+  deleteAllProductVariants(@Param('productId') productId: string) {
+    return this.productService.send('product.variant.deleteAll', { productId });
+  }
+
+  @Post('bulk/recreate/:productId')
+  deleteAndRecreateProductVariants(
+    @Param('productId') productId: string,
+    @Body() body: { variants: CreateProductVariantDto[] },
+  ) {
+    return this.productService.send('product.variant.deleteAndRecreate', {
+      productId,
+      variants: body.variants,
+    });
+  }
+
   @Get(':productId')
   findAllProductVariants(@Param('productId') productId?: string) {
     return this.productService.send('product.variant.findAll', { productId });

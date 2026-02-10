@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
           },
         );
 
+        console.log(refreshTokenResponse);
+
         const refreshData =
           refreshTokenResponse.data?.data || refreshTokenResponse.data;
         const res = NextResponse.json({

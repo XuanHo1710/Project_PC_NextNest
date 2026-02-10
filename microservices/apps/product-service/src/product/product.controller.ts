@@ -143,6 +143,25 @@ export class ProductController {
     return this.productService.updateBulkProductVariants(data.updates);
   }
 
+  @MessagePattern('product.variant.deleteAll')
+  deleteAllProductVariants(@Payload() data: { productId: string }) {
+    return this.productService.deleteAllProductVariants(data.productId);
+  }
+
+  @MessagePattern('product.variant.deleteAndRecreate')
+  deleteAndRecreateProductVariants(
+    @Payload()
+    data: {
+      productId: string;
+      variants: CreateProductVariantDto[];
+    },
+  ) {
+    return this.productService.deleteAndRecreateProductVariants(
+      data.productId,
+      data.variants,
+    );
+  }
+
   @MessagePattern('product.variant.findAll')
   findAllProductVariants(
     @Payload() data?: { productId?: string; page?: number; limit?: number },

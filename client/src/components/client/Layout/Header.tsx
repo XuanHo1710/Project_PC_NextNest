@@ -1,7 +1,7 @@
 "use client";
 import { IoIosArrowDown } from "react-icons/io";
 import { MdKeyboardArrowRight } from "react-icons/md";
-import { Badge, Button, Image, Input, Spin } from "antd";
+import { Button, Image, Input, Spin } from "antd";
 import { BiCategory } from "react-icons/bi";
 import { MdOutlineNotListedLocation } from "react-icons/md";
 import { MdOutlineShoppingCart } from "react-icons/md";
@@ -232,85 +232,72 @@ export default function HeaderClient() {
 
                             {/* Search Results */}
                             {isOpenSearch && (
-                                <div style={{ scrollbarWidth: "none" }} className="z-20 absolute grid-row top-full w-[500px] rounded-lg left-0 mt-1 min-h-52 max-h-64 bg-white overflow-y-scroll shadow-lg border border-gray-200">
+                                <div style={{ scrollbarWidth: "none" }} className="z-20 absolute top-full w-[480px] rounded-lg left-0 mt-1 max-h-[380px] bg-white overflow-y-auto shadow-xl border border-gray-200">
                                     {loadingSearch ? (
-                                        <div className="flex items-center justify-center min-h-[200px] min-w-[500px]">
+                                        <div className="flex items-center justify-center py-12">
                                             <Spin size="large" />
                                         </div>
                                     ) : (
                                         products && products.length > 0 ? (
-                                            products.map((p: IProductCard) => (
-                                                <div
-                                                    key={p._id}
-                                                    className="col-span-12 h-28 flex gap-4 py-2 px-4 border-b hover:bg-gray-50 transition rounded-lg cursor-pointer"
-                                                >
-                                                    <div className="flex max-w-max justify-center flex-1 flex-col">
-                                                        <Image
-                                                            src={p.defaultVariant?.images?.[0] || undefined}
-                                                            alt={p.name}
-                                                            width={80}
-                                                            height={80}
-                                                            className="object-cover rounded-md border"
-                                                        />
-                                                    </div>
-                                                    <div className="flex justify-between flex-col flex-1 overflow-hidden">
-                                                        <div>
-                                                            <Link onClick={() => {
-                                                                setSearch("");
-                                                                setOpenSearch(false);
-                                                            }} href={"/product/" + p.slug} className="font-semibold line-clamp-2 text-wrap text-gray-800 truncate">{p.name}</Link>
-                                                            <p className="text-sm line-clamp-1">{p.description}</p>
+                                            <div className="py-1">
+                                                {products.map((p: IProductCard) => (
+                                                    <Link
+                                                        key={p._id}
+                                                        href={"/product/" + p.slug}
+                                                        onClick={() => { setSearch(""); setOpenSearch(false); }}
+                                                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
+                                                    >
+                                                        <div className="w-12 h-12 shrink-0 rounded-md overflow-hidden border border-gray-100 bg-gray-50">
+                                                            <Image
+                                                                src={p.defaultVariant?.images?.[0] || undefined}
+                                                                alt={p.name}
+                                                                width={48}
+                                                                height={48}
+                                                                className="!object-cover !w-full !h-full"
+                                                                preview={false}
+                                                            />
                                                         </div>
-                                                        <div className="flex justify-between">
-                                                            <div className="flex gap-5">
-                                                                <p className="text-blue-600 font-bold">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-sm font-medium text-gray-800 line-clamp-1">{p.name}</div>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <span className="text-sm font-bold text-blue-600">
                                                                     {p.defaultVariant
                                                                         ? (p.defaultVariant.price * (1 - (p.defaultVariant.discount || 0) / 100)).toLocaleString()
                                                                         : ((p as any).minPrice || 0).toLocaleString()
                                                                     }đ
-                                                                </p>
+                                                                </span>
                                                                 {p.defaultVariant && p.defaultVariant.discount > 0 && (
-                                                                    <p className="text-stone-300 line-through">{p.defaultVariant.price.toLocaleString()}đ</p>
+                                                                    <span className="text-xs text-gray-400 line-through">{p.defaultVariant.price.toLocaleString()}đ</span>
                                                                 )}
+                                                                {p.defaultVariant?.discount ? (
+                                                                    <span className="text-[11px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
+                                                                        -{p.defaultVariant.discount}%
+                                                                    </span>
+                                                                ) : null}
                                                             </div>
-                                                            {p.defaultVariant?.discount ? (
-                                                                <Badge
-                                                                    count={`${p.defaultVariant.discount}% OFF`}
-                                                                    style={{
-                                                                        backgroundColor: "#f5222d",
-                                                                        color: "#fff",
-                                                                        fontWeight: "bold",
-                                                                        fontSize: "12px",
-                                                                        padding: "0 6px",
-                                                                        borderRadius: "6px",
-                                                                        boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                                                                    }}
-                                                                />
-                                                            ) : null}
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ))
+                                                    </Link>
+                                                ))}
+                                            </div>
                                         ) : (
-                                            <div className="col-span-12 flex flex-col items-center justify-center py-4 text-center text-gray-500">
+                                            <div className="flex flex-col items-center justify-center py-8 text-center text-gray-500">
                                                 <Image
                                                     src="https://stores.lifestylestores.com/VendorpageTheme/Enterprise/EThemeForLifestyleUpdated/images/product-not-found.jpg"
                                                     alt="Not Found"
-                                                    className="mb-4"
-                                                    width={150}
+                                                    className="mb-3"
+                                                    width={120}
                                                     preview={false}
                                                 />
-                                                <p className="text-lg font-semibold">Không tìm thấy sản phẩm nào</p>
-                                                <p className="text-sm">Hãy thử tìm kiếm với từ khóa khác.</p>
+                                                <p className="text-sm font-semibold mb-0.5">Không tìm thấy sản phẩm nào</p>
+                                                <p className="text-xs text-gray-400">Hãy thử tìm kiếm với từ khóa khác.</p>
                                             </div>
                                         )
                                     )}
-                                    {/* Xem tất cả kết quả */}
                                     {products && products.length > 0 && (
                                         <Link
                                             href={`/search?q=${encodeURIComponent(search)}`}
                                             onClick={() => { setOpenSearch(false); }}
-                                            className="block text-center py-3 text-sm font-semibold text-blue-500 hover:text-blue-600 hover:bg-blue-50 border-t border-gray-100 transition-colors sticky bottom-0 bg-white"
+                                            className="block text-center py-2.5 text-sm font-semibold text-blue-500 hover:text-blue-600 hover:bg-blue-50 border-t border-gray-100 transition-colors sticky bottom-0 bg-white rounded-b-lg"
                                         >
                                             Xem tất cả kết quả →
                                         </Link>
