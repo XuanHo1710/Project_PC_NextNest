@@ -3,12 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProductModule } from './product/product.module';
+import { ProductInteractionModule } from './product-interaction/product-interaction.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CategoryModule } from 'src/category/category.module';
 import { BrandModule } from 'src/brand/brand.module';
 import { Connection } from 'mongoose';
 import mongooseAutoPopulate from 'mongoose-autopopulate';
-
 
 @Module({
   imports: [
@@ -25,10 +25,11 @@ import mongooseAutoPopulate from 'mongoose-autopopulate';
       inject: [ConfigService],
     }),
     ProductModule,
+    ProductInteractionModule,
     CategoryModule,
     BrandModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

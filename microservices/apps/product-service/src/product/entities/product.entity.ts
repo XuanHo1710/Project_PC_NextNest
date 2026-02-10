@@ -39,6 +39,9 @@ export class Product {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'ProductVariant' })
   defaultProductVariantId: Types.ObjectId;
 
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'AccountGuest' })
+  createdBy: Types.ObjectId;
+
   @Prop()
   createdAt: Date;
 

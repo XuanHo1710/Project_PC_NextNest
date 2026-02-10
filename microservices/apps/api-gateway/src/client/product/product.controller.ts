@@ -16,7 +16,7 @@ import {
   SearchProductDto,
   UpdateProductDto,
 } from '@project-pc/common';
-import { Public } from '../../decorators/customize';
+import { Public, Guest } from '../../decorators/customize';
 
 @Controller('/client/product')
 export class ProductController {
@@ -27,7 +27,11 @@ export class ProductController {
 
   // ============= PRODUCT ENDPOINTS =============
   @Post()
-  createProduct(@Body() createProductDto: CreateProductDto) {
+  createProduct(
+    @Body() createProductDto: CreateProductDto,
+    @Guest() guest: any,
+  ) {
+    createProductDto.createdBy = guest._id;
     return this.productService.send('product.create', { createProductDto });
   }
 
@@ -54,6 +58,21 @@ export class ProductController {
       sort: sort || '',
       cpu: cpu || '',
       ram: ram || '',
+    });
+  }
+
+  @Get('my-products')
+  findMyProducts(
+    @Guest() guest: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.productService.send('product.findMyProducts', {
+      createdBy: guest._id,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 10,
+      search: search || '',
     });
   }
 
@@ -93,13 +112,21 @@ export class ProductController {
   updateProduct(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
+    @Guest() guest: any,
   ) {
-    return this.productService.send('product.update', { id, updateProductDto });
+    return this.productService.send('product.update', {
+      id,
+      updateProductDto,
+      createdBy: guest._id,
+    });
   }
 
   @Delete(':id')
-  removeProduct(@Param('id') id: string) {
-    return this.productService.send('product.remove', { id });
+  removeProduct(@Param('id') id: string, @Guest() guest: any) {
+    return this.productService.send('product.remove', {
+      id,
+      createdBy: guest._id,
+    });
   }
 
   @Get('search')

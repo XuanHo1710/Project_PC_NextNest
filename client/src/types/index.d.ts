@@ -78,6 +78,15 @@ export type {
   IReplyComment,
   ICreateProductInteraction,
   IPostReplyComment,
+  IProductComment,
+  IProductCommentReply,
+  ICommentGuest,
+  IRatingStatistics,
+  IProductInteractionResponse,
+  ICreateCommentDto,
+  IUpdateCommentDto,
+  IToggleReactionDto,
+  IReactionResult,
 } from "./interaction";
 
 // Payment

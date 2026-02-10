@@ -17,7 +17,9 @@ import { toast } from "react-toastify";
 
 // ============== QUERY KEYS ==============
 export const clientProductKeys = {
-  myProducts: ["client-my-products"] as const,
+  myProducts: (page?: number, limit?: number, search?: string) =>
+    ["client-my-products", page, limit, search] as const,
+  myProductsAll: ["client-my-products"] as const,
   attributes: ["client-product-attributes"] as const,
   allAttributeValues: (page: number, limit: number, search?: string) =>
     ["client-all-attribute-values", page, limit, search] as const,
@@ -112,10 +114,60 @@ export const useClientCreateProduct = () => {
     mutationFn: (data: Partial<IProduct>) =>
       productManageClientService.createProduct(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: clientProductKeys.myProducts });
+      queryClient.invalidateQueries({
+        queryKey: clientProductKeys.myProductsAll,
+      });
     },
     onError: (error: Error) => {
       toast.error(`Tạo sản phẩm thất bại: ${error.message}`);
+    },
+  });
+};
+
+// ============== MY PRODUCTS HOOKS ==============
+
+export const useMyProducts = (page = 1, limit = 10, search?: string) => {
+  return useQuery({
+    queryKey: clientProductKeys.myProducts(page, limit, search),
+    queryFn: () =>
+      productManageClientService.getMyProducts({
+        page,
+        limit,
+        ...(search ? { search } : {}),
+      }),
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+export const useClientUpdateProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<IProduct> }) =>
+      productManageClientService.updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: clientProductKeys.myProductsAll,
+      });
+      toast.success("Cập nhật sản phẩm thành công!");
+    },
+    onError: (error: Error) => {
+      toast.error(`Cập nhật sản phẩm thất bại: ${error.message}`);
+    },
+  });
+};
+
+export const useClientRemoveProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => productManageClientService.removeMyProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: clientProductKeys.myProductsAll,
+      });
+      toast.success("Gỡ sản phẩm đang bán thành công!");
+    },
+    onError: (error: Error) => {
+      toast.error(`Gỡ sản phẩm thất bại: ${error.message}`);
     },
   });
 };

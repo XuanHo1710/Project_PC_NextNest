@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from 'client/auth/auth.module';
 import { ProductModule } from 'client/product/product.module';
+import { ProductInteractionModule } from 'client/product-interaction/product-interaction.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ClientJwtStrategy } from 'guards/client-jwt.strategy';
 import { ConfigModule } from '@nestjs/config';
@@ -17,6 +18,7 @@ import { CartModule } from 'client/cart/cart.module';
     ConfigModule,
     AuthModule,
     ProductModule,
+    ProductInteractionModule,
     BrandModule,
     CartModule,
     CategoryModule,

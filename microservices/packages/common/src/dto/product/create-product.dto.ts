@@ -36,4 +36,8 @@ export class CreateProductDto {
   @IsMongoId()
   @IsOptional()
   defaultProductVariantId?: string;
+
+  @IsMongoId()
+  @IsOptional()
+  createdBy?: string;
 }

@@ -24,8 +24,8 @@ import {
     CreditCardOutlined,
     SwapOutlined,
 } from '@ant-design/icons';
-import CommentProduct from '@/components/client/ProductDetail/Comment';
 import DescriptionProduct from '@/components/client/ProductDetail/Description';
+import ProductInteractionSection from '@/components/client/ProductInteraction/ProductInteractionSection';
 import ProductImageGallery from '@/components/client/ProductDetail/ProductImageGallery';
 import useCartStore from '@/hooks/useCart';
 import {
@@ -449,7 +449,7 @@ export default function ProductDetailClient() {
                                         <CommentOutlined /> Đánh giá & bình luận
                                     </span>
                                 ),
-                                children: <CommentProduct product={product} />,
+                                children: <ProductInteractionSection productId={product._id} />,
                             }
                         ]}
                     />

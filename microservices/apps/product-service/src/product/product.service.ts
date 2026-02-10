@@ -57,11 +57,14 @@ export class ProductService {
   // ============= PRODUCT CRUD =============
   async createProduct(createProductDto: CreateProductDto) {
     console.log('createProductDto', createProductDto);
-    const payload = {
+    const payload: any = {
       ...createProductDto,
       brand: new Types.ObjectId(createProductDto.brandId),
       category: new Types.ObjectId(createProductDto.categoryId),
     };
+    if (createProductDto.createdBy) {
+      payload.createdBy = new Types.ObjectId(createProductDto.createdBy);
+    }
     const product = new this.productModel(payload);
     return await product.save();
   }
@@ -160,7 +163,11 @@ export class ProductService {
     return product;
   }
 
-  async updateProduct(id: string, updateProductDto: UpdateProductDto) {
+  async updateProduct(
+    id: string,
+    updateProductDto: UpdateProductDto,
+    createdBy?: string,
+  ) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException(`Invalid product ID: ${id}`);
     }
@@ -171,36 +178,104 @@ export class ProductService {
     if (updateProductDto.categoryId) {
       updateProductDto['category'] = updateProductDto.categoryId;
     }
+    const query: any = { _id: new Types.ObjectId(id), isDeleted: false };
+    if (createdBy) query.createdBy = new Types.ObjectId(createdBy);
     const product = await this.productModel
-      .findOneAndUpdate(
-        { _id: new Types.ObjectId(id), isDeleted: false },
-        { $set: updateProductDto },
-        { new: true },
-      )
+      .findOneAndUpdate(query, { $set: updateProductDto }, { new: true })
       .exec();
 
     if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+      throw new NotFoundException(
+        `Product with ID ${id} not found or you don't have permission`,
+      );
     }
     return product;
   }
 
-  async removeProduct(id: string) {
+  async removeProduct(id: string, createdBy?: string) {
     if (!Types.ObjectId.isValid(id)) {
       throw new NotFoundException(`Invalid product ID: ${id}`);
     }
+    const query: any = { _id: new Types.ObjectId(id), isDeleted: false };
+    if (createdBy) query.createdBy = new Types.ObjectId(createdBy);
     const product = await this.productModel
       .findOneAndUpdate(
-        { _id: new Types.ObjectId(id), isDeleted: false },
+        query,
         { $set: { isDeleted: true, deletedAt: new Date() } },
         { new: true },
       )
       .exec();
 
     if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+      throw new NotFoundException(
+        `Product with ID ${id} not found or you don't have permission`,
+      );
     }
     return { message: 'Product deleted successfully', data: product };
+  }
+
+  // ============= MY PRODUCTS (Guest) =============
+  async findMyProducts(
+    createdBy: string,
+    page = 1,
+    limit = 10,
+    search?: string,
+  ) {
+    const query: any = {
+      isDeleted: false,
+      createdBy: new Types.ObjectId(createdBy),
+    };
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+    const skip = (page - 1) * limit;
+    const [products, total] = await Promise.all([
+      this.productModel
+        .find(query)
+        .populate('brand', 'name slug logo')
+        .populate('category', 'name slug')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.productModel.countDocuments(query).exec(),
+    ]);
+
+    const items = await Promise.all(
+      products.map(async (product) => {
+        if (product.defaultProductVariantId) {
+          const variant = await this.productVariantModel
+            .findOne({
+              _id: product.defaultProductVariantId,
+              isDeleted: false,
+            })
+            .lean()
+            .exec();
+          if (variant) {
+            product['defaultVariant'] = {
+              ...variant,
+              combination:
+                variant.combination instanceof Map
+                  ? Object.fromEntries(variant.combination)
+                  : variant.combination,
+            };
+          }
+        }
+        return product;
+      }),
+    );
+
+    return {
+      items,
+      totalItems: total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      limit,
+    };
   }
 
   // ============= CLIENT PRODUCT APIs =============

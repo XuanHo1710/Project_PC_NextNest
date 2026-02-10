@@ -6,6 +6,7 @@ import {
     TagsOutlined,
     AppstoreOutlined,
     BookOutlined,
+    UnorderedListOutlined,
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import type { MenuProps } from 'antd';
@@ -15,6 +16,11 @@ const menuItems: MenuProps['items'] = [
         key: '/create-product',
         icon: <ShoppingOutlined />,
         label: 'Tạo sản phẩm',
+    },
+    {
+        key: '/create-product/my-products',
+        icon: <UnorderedListOutlined />,
+        label: 'Sản phẩm đã đăng bán',
     },
     {
         key: '/create-product/attributes',

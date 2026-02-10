@@ -34,8 +34,12 @@ export * from "./history/create-history.dto";
 export * from "./cart/create-cart.dto";
 export * from "./cart/update-cart.dto";
 
-export * from "./product/product-variant";
+export * from "./product-interaction/create-product-comment.dto";
+export * from "./product-interaction/update-product-comment.dto";
+export * from "./product-interaction/toggle-reaction.dto";
 
+export * from "./common/product-variant";
 export * from "./common/brand.entity";
 export * from "./common/category.entity";
 export * from "./common/product.entity";
+export * from "./common/account-guest.entity";

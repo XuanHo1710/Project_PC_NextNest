@@ -37,14 +37,41 @@ export class ProductController {
 
   @MessagePattern('product.update')
   updateProduct(
-    @Payload() data: { id: string; updateProductDto: UpdateProductDto },
+    @Payload()
+    data: {
+      id: string;
+      updateProductDto: UpdateProductDto;
+      createdBy?: string;
+    },
   ) {
-    return this.productService.updateProduct(data.id, data.updateProductDto);
+    return this.productService.updateProduct(
+      data.id,
+      data.updateProductDto,
+      data.createdBy,
+    );
   }
 
   @MessagePattern('product.remove')
-  removeProduct(@Payload() data: { id: string }) {
-    return this.productService.removeProduct(data.id);
+  removeProduct(@Payload() data: { id: string; createdBy?: string }) {
+    return this.productService.removeProduct(data.id, data.createdBy);
+  }
+
+  @MessagePattern('product.findMyProducts')
+  findMyProducts(
+    @Payload()
+    data: {
+      createdBy: string;
+      page?: number;
+      limit?: number;
+      search?: string;
+    },
+  ) {
+    return this.productService.findMyProducts(
+      data.createdBy,
+      data.page,
+      data.limit,
+      data.search,
+    );
   }
 
   @MessagePattern('product.search')

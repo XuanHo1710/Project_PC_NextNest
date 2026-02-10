@@ -26,6 +26,7 @@ export const pathClientRoutes = {
     orderSuccess: "/order-success",
     profile: "/profile",
     createProduct: "/create-product",
+    myProducts: "/create-product/my-products",
     auth: {
         login: "/auth/login",
         register: "/auth/register",

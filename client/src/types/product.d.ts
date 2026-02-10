@@ -70,6 +70,7 @@ export interface IProduct {
   maxPrice: number;
   status: "ACTIVE" | "INACTIVE" | "STOPSOLD";
   defaultProductVariantId?: string;
+  createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
   isDeleted?: boolean;

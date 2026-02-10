@@ -263,7 +263,7 @@ export default function CollectionPage() {
                 </div>
 
                 {/* Main Content */}
-                <div className="mx-5 xl:mx-32 grid grid-cols-12 lg:gap-8">
+                <div className="mx-5 my-5 xl:mx-32 grid grid-cols-12 lg:gap-8">
                     {/* Sidebar Filters (Desktop) */}
                     <div className="hidden lg:block lg:col-span-3">
                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 sticky top-24">
