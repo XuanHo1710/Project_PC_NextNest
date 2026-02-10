@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
     Table,
     Input,
@@ -15,6 +15,10 @@ import {
     Form,
     Select,
     message,
+    InputNumber,
+    Spin,
+    Tabs,
+    Descriptions,
 } from "antd";
 import {
     SearchOutlined,
@@ -26,13 +30,17 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     InboxOutlined,
+    SaveOutlined,
+    PictureOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import {
     useMyProducts,
     useClientUpdateProduct,
     useClientRemoveProduct,
+    useClientUpdateVariant,
 } from "@/hooks/client/useProductManage";
+import { productManageClientService } from "@/services/client";
 import {
     getProductImage,
     getProductDisplayPrice,
@@ -41,7 +49,7 @@ import {
     getProductStock,
     formatCurrencyVND,
 } from "@/utils/productHelpers";
-import type { IProduct, IProductCard } from "@/types";
+import type { IProduct, IProductCard, IProductVariant } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -56,10 +64,14 @@ export default function MyProductsPage() {
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
     const [editForm] = Form.useForm();
+    const [editVariants, setEditVariants] = useState<IProductVariant[]>([]);
+    const [loadingVariants, setLoadingVariants] = useState(false);
+    const [savingVariants, setSavingVariants] = useState(false);
 
     const { data, isLoading, refetch } = useMyProducts(page, limit, search);
     const updateProduct = useClientUpdateProduct();
     const removeProduct = useClientRemoveProduct();
+    const updateVariant = useClientUpdateVariant();
 
     // Stats computed from data
     const products = data?.data || [];
@@ -76,7 +88,7 @@ export default function MyProductsPage() {
         setPage(1);
     };
 
-    const handleEdit = (record: IProduct) => {
+    const handleEdit = async (record: IProduct) => {
         setEditingProduct(record);
         editForm.setFieldsValue({
             name: record.name,
@@ -84,21 +96,52 @@ export default function MyProductsPage() {
             status: record.status,
         });
         setEditModalOpen(true);
+        setLoadingVariants(true);
+        try {
+            const res = await productManageClientService.getVariantsByProduct(record._id);
+            const variantList = (res as any)?.items || (res as any) || [];
+            setEditVariants(Array.isArray(variantList) ? variantList : []);
+        } catch {
+            setEditVariants([]);
+        } finally {
+            setLoadingVariants(false);
+        }
     };
 
     const handleEditSubmit = async () => {
         try {
             const values = await editForm.validateFields();
             if (!editingProduct) return;
+
+            // Update product info (name, status)
             await updateProduct.mutateAsync({
                 id: editingProduct._id,
-                data: values,
+                data: { name: values.name, status: values.status },
             });
+
+            // Update each variant's price, discount, stock
+            setSavingVariants(true);
+            for (const v of editVariants) {
+                await updateVariant.mutateAsync({
+                    id: v._id,
+                    data: { price: v.price, discount: v.discount, stock: v.stock },
+                });
+            }
+            setSavingVariants(false);
+
             setEditModalOpen(false);
             setEditingProduct(null);
+            setEditVariants([]);
+            refetch();
         } catch {
-            // form validation error
+            setSavingVariants(false);
         }
+    };
+
+    const handleVariantFieldChange = (variantId: string, field: string, value: number) => {
+        setEditVariants(prev =>
+            prev.map(v => v._id === variantId ? { ...v, [field]: value } : v)
+        );
     };
 
     const handleRemove = async (id: string) => {
@@ -371,46 +414,241 @@ export default function MyProductsPage() {
                 </div>
             )}
 
-            {/* Edit Modal */}
+            {/* Edit Modal — Full variant editing */}
             <Modal
-                title="Chỉnh sửa sản phẩm"
+                title={
+                    <div className="flex items-center gap-2">
+                        <EditOutlined className="text-blue-500" />
+                        <span>Chỉnh sửa sản phẩm</span>
+                    </div>
+                }
                 open={editModalOpen}
                 onOk={handleEditSubmit}
                 onCancel={() => {
                     setEditModalOpen(false);
                     setEditingProduct(null);
+                    setEditVariants([]);
                 }}
-                confirmLoading={updateProduct.isPending}
-                okText="Lưu thay đổi"
+                confirmLoading={updateProduct.isPending || savingVariants}
+                okText={<><SaveOutlined /> Lưu thay đổi</>}
                 cancelText="Hủy"
-                width={600}
+                width={900}
+                styles={{ body: { maxHeight: '70vh', overflowY: 'auto' } }}
             >
-                <Form form={editForm} layout="vertical" className="mt-4">
-                    <Form.Item
-                        name="name"
-                        label="Tên sản phẩm"
-                        rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm" }]}
-                    >
-                        <Input placeholder="Tên sản phẩm" />
-                    </Form.Item>
+                <Tabs
+                    defaultActiveKey="info"
+                    items={[
+                        {
+                            key: "info",
+                            label: "Thông tin sản phẩm",
+                            children: (
+                                <Form form={editForm} layout="vertical" className="mt-2">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Form.Item
+                                            name="name"
+                                            label="Tên sản phẩm"
+                                            rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm" }]}
+                                        >
+                                            <Input placeholder="Tên sản phẩm" />
+                                        </Form.Item>
+                                        <Form.Item
+                                            name="status"
+                                            label="Trạng thái"
+                                            rules={[{ required: true }]}
+                                        >
+                                            <Select
+                                                options={[
+                                                    { value: "ACTIVE", label: "Đang bán" },
+                                                    { value: "INACTIVE", label: "Ẩn" },
+                                                ]}
+                                            />
+                                        </Form.Item>
+                                    </div>
 
-                    <Form.Item name="description" label="Mô tả">
-                        <Input.TextArea rows={4} placeholder="Mô tả sản phẩm" />
-                    </Form.Item>
+                                    {/* Product summary from variants */}
+                                    {editVariants.length > 0 && (
+                                        <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                                            <h4 className="font-medium mb-2 text-blue-700">Tổng quan</h4>
+                                            <div className="grid grid-cols-3 gap-4 text-sm">
+                                                <div>
+                                                    <span className="text-gray-500">Giá min:</span>
+                                                    <div className="font-semibold text-red-500">
+                                                        {formatCurrencyVND(Math.min(...editVariants.map(v => v.price * (1 - (v.discount || 0) / 100))))}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500">Giá max:</span>
+                                                    <div className="font-semibold text-red-500">
+                                                        {formatCurrencyVND(Math.max(...editVariants.map(v => v.price * (1 - (v.discount || 0) / 100))))}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500">Tổng tồn kho:</span>
+                                                    <div className="font-semibold text-green-600">
+                                                        {editVariants.reduce((sum, v) => sum + (v.stock || 0), 0)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {/* Preview image */}
+                                            {(() => {
+                                                const allImages = editVariants.flatMap(v => v.images || []);
+                                                return allImages.length > 0 ? (
+                                                    <div className="mt-3">
+                                                        <span className="text-gray-500 text-sm">Ảnh đại diện:</span>
+                                                        <div className="flex gap-2 mt-1">
+                                                            <Image
+                                                                src={allImages[0]}
+                                                                alt="Product"
+                                                                width={64}
+                                                                height={64}
+                                                                style={{ objectFit: 'cover', borderRadius: 6 }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ) : null;
+                                            })()}
+                                        </div>
+                                    )}
 
-                    <Form.Item
-                        name="status"
-                        label="Trạng thái"
-                        rules={[{ required: true }]}
-                    >
-                        <Select
-                            options={[
-                                { value: "ACTIVE", label: "Đang bán" },
-                                { value: "INACTIVE", label: "Ẩn" },
-                            ]}
-                        />
-                    </Form.Item>
-                </Form>
+                                    {/* Description preview */}
+                                    {editingProduct?.description && (
+                                        <div className="border rounded-lg p-3 mb-4">
+                                            <h4 className="font-medium mb-2 text-gray-600 text-sm">Mô tả sản phẩm</h4>
+                                            <div
+                                                className="prose prose-sm max-h-32 overflow-y-auto text-gray-600"
+                                                dangerouslySetInnerHTML={{ __html: editingProduct.description }}
+                                            />
+                                        </div>
+                                    )}
+                                </Form>
+                            ),
+                        },
+                        {
+                            key: "variants",
+                            label: `Biến thể (${editVariants.length})`,
+                            children: loadingVariants ? (
+                                <div className="flex justify-center py-12">
+                                    <Spin tip="Đang tải biến thể..." />
+                                </div>
+                            ) : editVariants.length === 0 ? (
+                                <div className="text-center text-gray-400 py-12">
+                                    <InboxOutlined className="text-4xl mb-2" />
+                                    <p>Không có biến thể nào</p>
+                                </div>
+                            ) : (
+                                <div className="mt-2">
+                                    <Table
+                                        dataSource={editVariants}
+                                        rowKey="_id"
+                                        pagination={false}
+                                        size="small"
+                                        scroll={{ x: 700 }}
+                                        columns={[
+                                            {
+                                                title: "Ảnh",
+                                                key: "image",
+                                                width: 60,
+                                                render: (_, v: IProductVariant) => {
+                                                    const img = v.images?.[0];
+                                                    return img ? (
+                                                        <Image src={img} alt="variant" width={40} height={40} style={{ objectFit: 'cover', borderRadius: 4 }} />
+                                                    ) : (
+                                                        <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                                                            <PictureOutlined className="text-gray-300" />
+                                                        </div>
+                                                    );
+                                                },
+                                            },
+                                            {
+                                                title: "SKU",
+                                                dataIndex: "sku",
+                                                key: "sku",
+                                                width: 120,
+                                                render: (sku: string) => (
+                                                    <span className="text-xs font-mono text-gray-600">{sku || '—'}</span>
+                                                ),
+                                            },
+                                            {
+                                                title: "Thuộc tính",
+                                                key: "combination",
+                                                width: 150,
+                                                render: (_, v: IProductVariant) => {
+                                                    const combo = v.combination || {};
+                                                    return Object.entries(combo).length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {Object.entries(combo).map(([key, val]) => (
+                                                                <Tag key={key} className="text-xs">{val}</Tag>
+                                                            ))}
+                                                        </div>
+                                                    ) : <span className="text-gray-400 text-xs">—</span>;
+                                                },
+                                            },
+                                            {
+                                                title: "Giá (₫)",
+                                                key: "price",
+                                                width: 140,
+                                                render: (_, v: IProductVariant) => (
+                                                    <InputNumber
+                                                        value={v.price}
+                                                        min={0}
+                                                        step={1000}
+                                                        formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                                        parser={(val) => Number(val?.replace(/,/g, '') || 0)}
+                                                        onChange={(val) => handleVariantFieldChange(v._id, 'price', val || 0)}
+                                                        size="small"
+                                                        className="w-full"
+                                                    />
+                                                ),
+                                            },
+                                            {
+                                                title: "Giảm (%)",
+                                                key: "discount",
+                                                width: 90,
+                                                render: (_, v: IProductVariant) => (
+                                                    <InputNumber
+                                                        value={v.discount}
+                                                        min={0}
+                                                        max={100}
+                                                        onChange={(val) => handleVariantFieldChange(v._id, 'discount', val || 0)}
+                                                        size="small"
+                                                        className="w-full"
+                                                    />
+                                                ),
+                                            },
+                                            {
+                                                title: "Tồn kho",
+                                                key: "stock",
+                                                width: 90,
+                                                render: (_, v: IProductVariant) => (
+                                                    <InputNumber
+                                                        value={v.stock}
+                                                        min={0}
+                                                        onChange={(val) => handleVariantFieldChange(v._id, 'stock', val || 0)}
+                                                        size="small"
+                                                        className="w-full"
+                                                    />
+                                                ),
+                                            },
+                                            {
+                                                title: "Giá sau giảm",
+                                                key: "final",
+                                                width: 120,
+                                                render: (_, v: IProductVariant) => {
+                                                    const finalPrice = v.price * (1 - (v.discount || 0) / 100);
+                                                    return (
+                                                        <span className="font-semibold text-red-500 text-xs">
+                                                            {formatCurrencyVND(finalPrice)}
+                                                        </span>
+                                                    );
+                                                },
+                                            },
+                                        ]}
+                                    />
+                                </div>
+                            ),
+                        },
+                    ]}
+                />
             </Modal>
         </div>
     );

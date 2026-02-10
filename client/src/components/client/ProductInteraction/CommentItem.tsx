@@ -50,7 +50,11 @@ const { TextArea } = Input;
 
 // ================== Helper: detect media type ==================
 function isVideoUrl(url: string) {
-    return /\.(mp4|webm|ogg|mov|avi)(\?|$)/i.test(url);
+    // Check common video file extensions
+    if (/\.(mp4|webm|ogg|mov|avi|mkv)(\?|$)/i.test(url)) return true;
+    // Cloudinary video URLs contain /video/upload/
+    if (/\/video\/upload\//i.test(url)) return true;
+    return false;
 }
 
 // ================== Media Gallery (images + videos) ==================
@@ -65,8 +69,9 @@ function MediaGallery({ items, size = 80 }: { items: string[]; size?: number }) 
                         key={idx}
                         src={url}
                         controls
-                        className="rounded-xl border border-gray-200 dark:border-gray-600 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                        style={{ width: size, height: size }}
+                        preload="metadata"
+                        className="rounded-xl border border-gray-200 dark:border-gray-600 object-cover cursor-pointer hover:opacity-90 transition-opacity bg-black"
+                        style={{ width: size * 2, height: size, maxWidth: 240 }}
                     />
                 ) : (
                     <AntImage

@@ -358,7 +358,7 @@ export default function HomeClient() {
                 </div>
                 <div className='mx-5 xl:mx-32 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-md'>
                     <div className='flex items-center justify-center'>
-                        <h1 className='text-xl md:text-3xl font-bold text-blue-500'>HỆ THỐNG SHOWROOM CỦA HOÀNG HÀ PC</h1>
+                        <h1 className='text-xl md:text-3xl font-bold text-blue-500'>HỆ THỐNG SHOWROOM CỦA ARISU</h1>
                     </div>
                     <div className='mt-12 grid grid-flow-row grid-cols-12 gap-3'>
                         <div className='dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3'>

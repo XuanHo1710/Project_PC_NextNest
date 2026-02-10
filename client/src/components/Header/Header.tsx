@@ -31,7 +31,7 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
         <div className="flex justify-between text-center">
           <div className='flex items-center justify-between px-2'>
             <h2 className='italic font-semibold text-lg'>
-              {collapsed ? "" : "Hoang Ha PC"}
+              {collapsed ? "" : "Arisu"}
             </h2>
             <Button variant='outlined' color='blue' onClick={() => setCollapsed(!collapsed)} className={collapsed ? "ml-2" : "ml-15"}>
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}

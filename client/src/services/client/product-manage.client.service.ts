@@ -155,6 +155,14 @@ class ProductManageClientService {
     return response.data;
   }
 
+  async updateVariant(
+    id: string,
+    data: Partial<IProductVariant>,
+  ): Promise<IProductVariant> {
+    const response = await axiosClient.patch(`/product-variant/${id}`, data);
+    return response.data;
+  }
+
   // ============== PRODUCT ATTRIBUTE ALLOW VALUES ==============
 
   async createAllowValue(data: {

@@ -169,7 +169,7 @@ export default function HeaderClient() {
                     {/* Main Header */}
                     <div className="flex items-center gap-4 py-3">
                         {/* Logo */}
-                        <h2 className="font-bold text-white text-2xl whitespace-nowrap">Hoàng Hà PC</h2>
+                        <h2 className="font-bold text-white text-2xl whitespace-nowrap">Arisu</h2>
 
                         {/* Category Dropdown */}
                         <div className="relative">

@@ -183,6 +183,29 @@ export const useClientCreateVariant = () => {
   });
 };
 
+/** Update a product variant */
+export const useClientUpdateVariant = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<IProductVariant>;
+    }) => productManageClientService.updateVariant(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: clientProductKeys.myProductsAll,
+      });
+      toast.success("Cập nhật biến thể thành công!");
+    },
+    onError: (error: Error) => {
+      toast.error(`Cập nhật biến thể thất bại: ${error.message}`);
+    },
+  });
+};
+
 // ============== PRODUCT ATTRIBUTE CRUD HOOKS ==============
 
 /** Create a product attribute */

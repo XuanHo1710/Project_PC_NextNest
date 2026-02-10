@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Thumbs, FreeMode, Autoplay } from 'swiper/modules';
 import { Image } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { LeftOutlined, RightOutlined, PlayCircleFilled } from '@ant-design/icons';
 import type { Swiper as SwiperType } from 'swiper';
 
 // Import Swiper styles
@@ -12,6 +12,13 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/thumbs';
 import 'swiper/css/free-mode';
+
+/** Detect video URLs by extension or Cloudinary video path */
+function isVideoUrl(url: string): boolean {
+    if (/\.(mp4|webm|ogg|mov|avi|mkv)(\?|$)/i.test(url)) return true;
+    if (/\/video\/upload\//i.test(url)) return true;
+    return false;
+}
 
 interface ProductImageGalleryProps {
     images: string[];
@@ -26,6 +33,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
     const nextRef = useRef<HTMLDivElement>(null);
     const thumbPrevRef = useRef<HTMLDivElement>(null);
     const thumbNextRef = useRef<HTMLDivElement>(null);
+    const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
 
     const handleThumbnailClick = (index: number) => {
         if (mainSwiper) {
@@ -33,9 +41,26 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
         }
     };
 
+    /** Pause all videos and optionally play the active one */
+    const handleSlideChange = useCallback((swiper: SwiperType) => {
+        const newIndex = swiper.activeIndex;
+        setActiveIndex(newIndex);
+        // pause all videos except the active one
+        Object.entries(videoRefs.current).forEach(([idx, videoEl]) => {
+            if (videoEl) {
+                if (Number(idx) === newIndex) {
+                    // auto-play the video slide
+                    videoEl.play().catch(() => { });
+                } else {
+                    videoEl.pause();
+                }
+            }
+        });
+    }, []);
+
     return (
         <div className="product-image-gallery">
-            {/* Main Image Swiper */}
+            {/* Main Image / Video Swiper */}
             <div className="relative main-image-container mb-4">
                 <Swiper
                     spaceBetween={10}
@@ -49,7 +74,8 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
                     modules={[FreeMode, Navigation, Thumbs, Autoplay]}
                     autoplay={{
                         delay: 4000,
-                        disableOnInteraction: false,
+                        disableOnInteraction: true,
+                        pauseOnMouseEnter: true,
                     }}
                     onBeforeInit={(swiper) => {
                         if (swiper.params.navigation && typeof swiper.params.navigation !== 'boolean') {
@@ -58,17 +84,29 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
                         }
                     }}
                     onSwiper={setMainSwiper}
-                    onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+                    onSlideChange={handleSlideChange}
                     className="main-image-swiper"
                 >
-                    {images.map((image, index) => (
+                    {images.map((media, index) => (
                         <SwiperSlide key={index}>
-                            <div className="h-[350px] md:h-[450px] flex items-center justify-center bg-white rounded-lg shadow-sm border border-gray-100">
-                                <Image
-                                    src={image}
-                                    alt={`${productName} - ${index + 1}`}
-                                    className="object-contain !w-[400px] !h-[400px] p-4"
-                                />
+                            <div className="h-[350px] md:h-[450px] flex items-center justify-center bg-white rounded-xl border border-gray-100">
+                                {isVideoUrl(media) ? (
+                                    <video
+                                        ref={(el) => { videoRefs.current[index] = el; }}
+                                        src={media}
+                                        controls
+                                        playsInline
+                                        muted
+                                        className="max-h-full max-w-full object-contain rounded-lg"
+                                        style={{ maxHeight: '430px' }}
+                                    />
+                                ) : (
+                                    <Image
+                                        src={media}
+                                        alt={`${productName} - ${index + 1}`}
+                                        className="object-contain !max-w-[400px] !max-h-[400px] p-4"
+                                    />
+                                )}
                             </div>
                         </SwiperSlide>
                     ))}
@@ -77,55 +115,45 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
                 {/* Custom Navigation Arrows */}
                 <div
                     ref={prevRef}
-                    className="gallery-arrow absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-200 dark:border-gray-600"
+                    className="gallery-arrow absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-white transition-all duration-200 border border-gray-200"
                 >
-                    <LeftOutlined className="text-gray-600 dark:text-gray-300" />
+                    <LeftOutlined className="text-gray-600" />
                 </div>
                 <div
                     ref={nextRef}
-                    className="gallery-arrow absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-gray-800 rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border border-gray-200 dark:border-gray-600"
+                    className="gallery-arrow absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-white transition-all duration-200 border border-gray-200"
                 >
-                    <RightOutlined className="text-gray-600 dark:text-gray-300" />
+                    <RightOutlined className="text-gray-600" />
                 </div>
 
-                {/* Image Counter */}
-                <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                {/* Media Counter */}
+                <div className="absolute bottom-4 right-4 z-10 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
                     {activeIndex + 1} / {images.length}
                 </div>
             </div>
 
             {/* Thumbnails Swiper */}
             <div className="thumbnails-container relative overflow-visible">
-                {/* Thumbnail Navigation Arrows - Chỉ hiện khi có nhiều hơn slidesPerView */}
+                {/* Thumbnail Navigation Arrows */}
                 {images.length > 5 && (
                     <>
                         <div
                             ref={thumbPrevRef}
-                            className="hidden md:flex absolute -left-6 top-1/2 -translate-y-1/2 z-40 w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-xl items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border-2 border-gray-300 dark:border-gray-600 hover:scale-110"
-                            style={{
-                                backdropFilter: 'blur(8px)',
-                                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.05)'
-                            }}
+                            className="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-40 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center cursor-pointer hover:bg-gray-50 transition-all duration-200 border border-gray-200 hover:scale-110"
                         >
-                            <LeftOutlined className="text-gray-700 dark:text-gray-300 text-lg font-bold" />
+                            <LeftOutlined className="text-gray-600 text-sm" />
                         </div>
                         <div
                             ref={thumbNextRef}
-                            className="hidden md:flex absolute -right-6 top-1/2 -translate-y-1/2 z-40 w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-xl items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 border-2 border-gray-300 dark:border-gray-600 hover:scale-110"
-                            style={{
-                                backdropFilter: 'blur(8px)',
-                                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.05)'
-                            }}
+                            className="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-40 w-10 h-10 bg-white rounded-full shadow-lg items-center justify-center cursor-pointer hover:bg-gray-50 transition-all duration-200 border border-gray-200 hover:scale-110"
                         >
-                            <RightOutlined className="text-gray-700 dark:text-gray-300 text-lg font-bold" />
+                            <RightOutlined className="text-gray-600 text-sm" />
                         </div>
                     </>
                 )}
 
                 <Swiper
-                    onSwiper={(swiper) => {
-                        setThumbsSwiper(swiper);
-                    }}
+                    onSwiper={setThumbsSwiper}
                     spaceBetween={8}
                     slidesPerView="auto"
                     freeMode={true}
@@ -141,88 +169,93 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
                         }
                     }}
                     modules={[FreeMode, Navigation, Thumbs]}
-                    className={`thumbnails-swiper ${images.length > 5 ? 'md:mx-8' : ''}`}
+                    className={`thumbnails-swiper ${images.length > 5 ? 'md:mx-6' : ''}`}
                     style={{
                         maskImage: images.length > 5
-                            ? 'linear-gradient(to right, transparent 0px, black 25px, black calc(100% - 25px), transparent 100%)'
+                            ? 'linear-gradient(to right, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%)'
                             : 'none',
                         WebkitMaskImage: images.length > 5
-                            ? 'linear-gradient(to right, transparent 0px, black 25px, black calc(100% - 25px), transparent 100%)'
+                            ? 'linear-gradient(to right, transparent 0px, black 20px, black calc(100% - 20px), transparent 100%)'
                             : 'none',
                         overflow: 'visible'
                     }}
                     allowTouchMove={true}
                     grabCursor={true}
                     breakpoints={{
-                        320: {
-                            slidesPerView: 4,
-                            spaceBetween: 6,
-                        },
-                        480: {
-                            slidesPerView: 5,
-                            spaceBetween: 8,
-                        },
-                        640: {
-                            slidesPerView: 6,
-                            spaceBetween: 8,
-                        },
-                        768: {
-                            slidesPerView: 5,
-                            spaceBetween: 10,
-                        }
+                        320: { slidesPerView: 4, spaceBetween: 6 },
+                        480: { slidesPerView: 5, spaceBetween: 8 },
+                        640: { slidesPerView: 6, spaceBetween: 8 },
+                        768: { slidesPerView: 5, spaceBetween: 10 },
                     }}
                 >
-                    {images.map((image, index) => (
-                        <SwiperSlide key={index} className="!w-auto">
-                            <div
-                                className={`
-                                    relative cursor-pointer rounded-md overflow-hidden transition-all duration-200 border-2 hover:scale-105
-                                    ${activeIndex === index
-                                        ? 'border-blue-500 ring-2 ring-blue-200 shadow-md transform scale-105'
-                                        : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                                    }
-                                `}
-                                onClick={() => handleThumbnailClick(index)}
-                            >
-                                <div className="w-16 h-16 md:w-20 md:h-20">
-                                    <Image
-                                        src={image}
-                                        alt={`${productName} thumbnail ${index + 1}`}
-                                        className="object-cover w-full h-full"
-                                        preview={false}
-                                    />
-                                </div>
-                                {/* Active indicator */}
-                                {activeIndex === index && (
-                                    <div className="absolute inset-0 border-blue-500 bg-opacity-10 flex items-center justify-center">
-                                        <div className="w-3 h-3 border-blue-500 rounded-full"></div>
+                    {images.map((media, index) => {
+                        const isVideo = isVideoUrl(media);
+                        return (
+                            <SwiperSlide key={index} className="!w-auto">
+                                <div
+                                    className={`
+                                        relative cursor-pointer rounded-lg overflow-hidden transition-all duration-200 border-2
+                                        ${activeIndex === index
+                                            ? 'border-blue-500 ring-2 ring-blue-200 shadow-md scale-105'
+                                            : 'border-gray-200 hover:border-blue-300 hover:shadow-sm hover:scale-105'
+                                        }
+                                    `}
+                                    onClick={() => handleThumbnailClick(index)}
+                                >
+                                    <div className="w-16 h-16 md:w-[72px] md:h-[72px] bg-gray-50">
+                                        {isVideo ? (
+                                            <>
+                                                <video
+                                                    src={media}
+                                                    muted
+                                                    preload="metadata"
+                                                    className="object-cover w-full h-full"
+                                                />
+                                                {/* Play overlay for video thumbnails */}
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                    <PlayCircleFilled className="text-white text-2xl drop-shadow-lg" />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <Image
+                                                src={media}
+                                                alt={`${productName} thumbnail ${index + 1}`}
+                                                className="object-cover w-full h-full"
+                                                preview={false}
+                                            />
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        </SwiperSlide>
-                    ))}
+                                </div>
+                            </SwiperSlide>
+                        );
+                    })}
                 </Swiper>
             </div>
 
-            {/* Image dots indicator for mobile */}
+            {/* Dot indicator for mobile */}
             <div className="flex justify-center mt-3 md:hidden">
-                <div className="flex space-x-1">
-                    {images.map((_, index) => (
+                <div className="flex space-x-1.5">
+                    {images.slice(0, 10).map((_, index) => (
                         <div
                             key={index}
-                            className={`w-2 h-2 rounded-full transition-all duration-200 ${activeIndex === index ? 'bg-blue-500' : 'bg-gray-300'
+                            className={`rounded-full transition-all duration-200 ${activeIndex === index
+                                    ? 'w-5 h-2 bg-blue-500'
+                                    : 'w-2 h-2 bg-gray-300'
                                 }`}
                         />
                     ))}
+                    {images.length > 10 && (
+                        <span className="text-xs text-gray-400 ml-1">+{images.length - 10}</span>
+                    )}
                 </div>
             </div>
 
             <style jsx global>{`
                 .main-image-swiper .swiper-slide {
                     height: auto;
-                    background: #f8fafc;
+                    background: #ffffff;
                 }
-                
+
                 .thumbnails-swiper .swiper-slide {
                     width: auto !important;
                 }
@@ -232,12 +265,10 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
                     display: none;
                 }
 
-                /* Loading animation for images */
                 .ant-image-img {
                     transition: opacity 0.3s ease;
                 }
 
-                /* Smooth scroll for thumbnails - Hidden scrollbar */
                 .thumbnails-swiper {
                     overflow: hidden !important;
                     scrollbar-width: none !important;
@@ -252,33 +283,23 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
                     transition-timing-function: ease-out;
                 }
 
-                /* Hide default swiper navigation for thumbnails */
                 .thumbnails-swiper .swiper-button-next,
                 .thumbnails-swiper .swiper-button-prev {
                     display: none !important;
                 }
 
-                /* Thumbnail container improvements */
                 .thumbnails-container {
                     position: relative;
-                    padding: 0 32px;
+                    padding: 0 28px;
                     overflow: visible !important;
                 }
 
-                /* Thumbnail navigation arrows */
-                .thumbnails-container .absolute {
-                    z-index: 40 !important;
-                }
-
-                /* Ensure arrows are above everything and visible */
                 .thumbnails-container > div[class*="absolute"] {
                     z-index: 40 !important;
-                    background: rgba(255, 255, 255, 0.98) !important;
                     position: absolute !important;
                     pointer-events: auto !important;
                 }
 
-                /* Make sure swiper doesn't clip arrows */
                 .thumbnails-swiper {
                     overflow: visible !important;
                     position: relative;
@@ -288,62 +309,44 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
                     overflow: visible !important;
                 }
 
-                /* Fade effect for thumbnails */
-                .thumbnails-swiper.fade-edges {
-                    mask-image: linear-gradient(to right, transparent 0px, black 30px, black calc(100% - 30px), transparent 100%);
-                    -webkit-mask-image: linear-gradient(to right, transparent 0px, black 30px, black calc(100% - 30px), transparent 100%);
-                }
-
-                /* Arrow hover effects */
                 .gallery-arrow {
                     backdrop-filter: blur(4px);
                     transition: all 0.2s ease;
                 }
 
                 .gallery-arrow:hover {
-                    transform: scale(1.1);
+                    transform: translateY(-50%) scale(1.1);
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 }
 
-                /* Main image container improvements */
                 .main-image-container {
                     position: relative;
                     border-radius: 12px;
                     overflow: hidden;
                 }
 
-                /* Thumbnail hover effects */
-                .thumbnail-hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                }
-
-                /* Mobile responsive adjustments */
                 @media (max-width: 768px) {
+                    .thumbnails-container {
+                        padding: 0 4px;
+                    }
+
                     .thumbnails-swiper {
-                        padding-left: 0 !important;
-                        padding-right: 0 !important;
                         mask-image: none !important;
                         -webkit-mask-image: none !important;
                     }
-                    
+
                     .gallery-arrow {
                         width: 32px;
                         height: 32px;
                     }
-                    
+
                     .main-image-container {
                         border-radius: 8px;
                     }
                 }
 
-                /* Smooth transitions for all elements */
                 * {
                     -webkit-tap-highlight-color: transparent;
-                }
-
-                .thumbnails-swiper .swiper-wrapper {
-                    transition-timing-function: ease-out;
                 }
             `}</style>
         </div>

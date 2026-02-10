@@ -1,72 +1,127 @@
-import { Image } from "antd";
+import { FaFacebook, FaTiktok, FaYoutube, FaInstagram } from "react-icons/fa";
+import { MdEmail, MdPhone, MdLocationOn } from "react-icons/md";
+import { HiShieldCheck } from "react-icons/hi";
 
 export default function FooterClient() {
     return (
-        <>
-            <footer style={{ backgroundColor: "#0062b9" }} className="grid grid-flow-row grid-cols-6 lg:grid-cols-12 gap-2 pt-9 text-white">
-                <div className="col-span-6 gap-2 lg:col-span-12 px-5 xl:px-32 grid grid-flow-row grid-cols-6 lg:grid-cols-12">
-                    <div className="col-span-6 lg:col-span-8 xl:col-span-6">
-                        <h2 className="font-bold mb-3">Email liên hệ</h2>
-                        <p className="w-3/4 text-justify">Vui lòng liên hệ phía bên dưới</p>
-                        <div className="flex items-center mt-3 my-4">
-                            <input className="px-3 py-2 bg-white focus:outline-blue-300 transition-all text-black w-full xl:w-3/5 rounded-lg" placeholder="Enter your Email" />
-                            <button className="bg-sky-500 mx-2 font-semibold px-3 py-2 rounded-md">Send</button>
+        <footer className="bg-[#0062b9] text-white">
+            {/* Newsletter section */}
+            <div className="px-5 xl:px-32 pt-10 pb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 border-b border-white/20 pb-8">
+                    <div className="lg:col-span-2">
+                        <h2 className="text-2xl font-bold mb-2">Arisu Store</h2>
+                        <p className="text-blue-100 text-sm mb-4 max-w-md">
+                            Hệ thống bán lẻ PC, Laptop và phụ kiện công nghệ hàng đầu. Cam kết chính hãng, giá tốt nhất thị trường.
+                        </p>
+                        <div className="flex items-center mt-3 max-w-md">
+                            <input
+                                className="px-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 focus:outline-none focus:border-sky-300 transition-all text-white placeholder-blue-200 w-full rounded-l-lg text-sm"
+                                placeholder="Nhập email để nhận ưu đãi"
+                            />
+                            <button className="bg-sky-400 hover:bg-sky-300 transition-colors font-semibold px-5 py-2.5 rounded-r-lg text-sm whitespace-nowrap">
+                                Đăng ký
+                            </button>
                         </div>
                     </div>
-                    <div className='lg:col-span-4 xl:col-span-2 col-span-3 '>
-                        <h2 className='font-semibold mb-3'>Hợp Tác Phát Triển:</h2>
-                        <p className='font-bold break-words cursor-pointer text-sky-300'>xuanhodcbas@gmail.com</p>
+                    <div>
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                            <MdEmail className="text-sky-300" /> Hợp Tác Phát Triển
+                        </h3>
+                        <p className="text-sky-300 font-medium break-words cursor-pointer hover:text-sky-200 transition-colors text-sm">
+                            xuanhodcbas@gmail.com
+                        </p>
                     </div>
-                    <div className='lg:col-span-6 xl:col-span-2 col-span-3'>
-                        <h2 className='font-semibold mb-3'>Liên Hệ Báo Giá:</h2>
-                        <p className='font-bold break-words cursor-pointer text-sky-300'>xuanhodcbas@gmail.com</p>
+                    <div>
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                            <MdPhone className="text-sky-300" /> Hotline
+                        </h3>
+                        <p className="text-sky-300 font-medium cursor-pointer hover:text-sky-200 transition-colors text-sm">
+                            1800 2097 (Miễn phí)
+                        </p>
                     </div>
-                    <div className='lg:col-span-6 xl:col-span-2 col-span-6 mt-4 lg:mt-0'>
-                        <h2 className='font-semibold mb-3'>Hỗ Trợ Bảo Hành:</h2>
-                        <p className='font-bold break-words cursor-pointer text-sky-300'>xuanhodcbas@gmail.com</p>
-                    </div>
-                    <div className='col-span-3 '>
-                        <h2 className='font-bold text-base lg:text-xl mt-10'>Hỗ trợ khách hàng</h2>
-                        <p className='font-bold border-solid w-3/5 border-white my-3 border-2'></p>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Hướng dẫn mua hàng Online</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Hướng dẫn thanh toán</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Hướng dẫn mua trả góp</div>
-                    </div>
-                    <div className='col-span-3 '>
-                        <h2 className='font-bold text-base lg:text-xl mt-10'>Thông tin Hoàng Hà PC</h2>
-                        <p className='font-bold border-solid w-3/5 border-white my-3 border-2'></p>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Giới thiệu Hoàng Hà PC</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Hệ thống showroom</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Thông tin liên hệ</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Tuyển dụng</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Tin tức</div>
-                    </div>
-                    <div className='col-span-3 '>
-                        <h2 className='font-bold text-base lg:text-xl mt-10'>Cộng đồng Hoàng Hà PC</h2>
-                        <p className='font-bold border-solid w-3/5 border-white my-3 border-2'></p>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Hoàng Hà PC Fanpage</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Hoàng Hà PC Group</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Hoàng Hà PC Tik Tok</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Hoàng Hà Media</div>
+                </div>
+            </div>
 
+            {/* Main footer links */}
+            <div className="px-5 xl:px-32 pb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    <div>
+                        <h3 className="font-bold text-base mb-4 text-white">Hỗ trợ khách hàng</h3>
+                        <div className="w-10 h-0.5 bg-sky-400 mb-4 rounded-full"></div>
+                        <ul className="space-y-2.5">
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Hướng dẫn mua hàng Online</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Hướng dẫn thanh toán</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Hướng dẫn mua trả góp</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Tra cứu đơn hàng</a></li>
+                        </ul>
                     </div>
-                    <div className='col-span-3 '>
-                        <h2 className='font-bold text-base lg:text-xl mt-10'>Chính sách mua và bảo hành</h2>
-                        <p className='font-bold border-solid w-3/5 border-white my-3 border-2'></p>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Chính sách bảo hành</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Chính sách bảo mật</div>
-                        <div className='font-medium hover:text-sky-300 my-2 cursor-pointer text-base'>Chính sách vận chuyển, giao nhận</div>
+                    <div>
+                        <h3 className="font-bold text-base mb-4 text-white">Thông tin Arisu</h3>
+                        <div className="w-10 h-0.5 bg-sky-400 mb-4 rounded-full"></div>
+                        <ul className="space-y-2.5">
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Giới thiệu Arisu</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Hệ thống showroom</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Thông tin liên hệ</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Tuyển dụng</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Tin tức công nghệ</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-base mb-4 text-white">Chính sách</h3>
+                        <div className="w-10 h-0.5 bg-sky-400 mb-4 rounded-full"></div>
+                        <ul className="space-y-2.5">
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Chính sách bảo hành</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Chính sách bảo mật</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Chính sách vận chuyển</a></li>
+                            <li><a href="#" className="text-blue-100 hover:text-sky-300 transition-colors text-sm">Chính sách đổi trả</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-base mb-4 text-white">Kết nối với chúng tôi</h3>
+                        <div className="w-10 h-0.5 bg-sky-400 mb-4 rounded-full"></div>
+                        <div className="flex gap-3 mb-4">
+                            <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-sky-400 transition-colors">
+                                <FaFacebook />
+                            </a>
+                            <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-sky-400 transition-colors">
+                                <FaTiktok />
+                            </a>
+                            <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-sky-400 transition-colors">
+                                <FaYoutube />
+                            </a>
+                            <a href="#" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-sky-400 transition-colors">
+                                <FaInstagram />
+                            </a>
+                        </div>
+                        <div className="flex items-center gap-2 text-blue-100 text-sm">
+                            <MdLocationOn className="text-sky-300 flex-shrink-0" />
+                            <span>Tòa nhà Arisu, Hà Nội</span>
+                        </div>
                     </div>
                 </div>
-                <div className='col-span-6 lg:col-span-12 mt-10 px-5 xl:px-32 py-9 lg:flex items-center justify-between' style={{ backgroundColor: "#005098" }}>
-                    <div className='w-full font-bold'>
-                        <h2>CÔNG TY TNHH DỊCH VỤ VÀ CÔNG NGHỆ HOÀNG HÀ ©</h2>
-                        <p className='my-4 font-medium'>2008 - 2020 - Công ty TNHH Dịch Vụ Và Công Nghệ Hoàng Hà / GPKD số: 0107406972 Do Sở Kế Hoạch Và Đầu Tư Thành Phố Hà Nội Cấp
-                            Bản Quyền Thuộc Về hoanghapc.vn</p>
+            </div>
+
+            {/* Bottom bar */}
+            <div className="bg-[#004a85] px-5 xl:px-32 py-5">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                    <div className="text-center md:text-left">
+                        <p className="font-semibold text-sm flex items-center gap-2">
+                            <HiShieldCheck className="text-sky-300" />
+                            ARISU STORE © {new Date().getFullYear()}
+                        </p>
+                        <p className="text-blue-200 text-xs mt-1">
+                            Tất cả quyền được bảo lưu. Bản quyền thuộc về Arisu Store.
+                        </p>
                     </div>
-                    <Image preview={false} width={250} src="https://hoanghapc.vn/static/assets/2022/images/bct.png" alt="logo" />
+                    <div className="flex items-center gap-4 text-blue-200 text-xs">
+                        <a href="#" className="hover:text-white transition-colors">Điều khoản sử dụng</a>
+                        <span>|</span>
+                        <a href="#" className="hover:text-white transition-colors">Chính sách bảo mật</a>
+                        <span>|</span>
+                        <a href="#" className="hover:text-white transition-colors">Sitemap</a>
+                    </div>
                 </div>
-            </footer>
-        </>
-    )
+            </div>
+        </footer>
+    );
 }
