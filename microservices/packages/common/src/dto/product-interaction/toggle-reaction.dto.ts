@@ -1,12 +1,12 @@
-import { IsBoolean, IsMongoId, IsNotEmpty } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class ToggleReactionDto {
-  @IsMongoId()
+  @IsString()
   @IsNotEmpty()
   commentId: string;
 
-  @IsMongoId()
-  @IsNotEmpty()
+  @IsString()
+  @IsOptional()
   guest?: string;
 
   @IsBoolean()

@@ -21,6 +21,7 @@ export const pathClientRoutes = {
     home: "/",
     products: "/product",
     collection: "/collection",
+    search: "/search",
     cart: "/cart",
     payment: "/payment",
     orderSuccess: "/order-success",

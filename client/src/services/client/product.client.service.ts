@@ -12,8 +12,7 @@ import {
   IProductInteraction,
   ICreateProductInteraction,
 } from "@/types/interaction";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { PaginatedResponse } from "@/types/common";
 
 class ProductClientService {
   private baseURL = "/product";
@@ -96,6 +95,38 @@ class ProductClientService {
       params: { q: query, limit },
     });
     return response.data;
+  }
+
+  /**
+   * Search products with pagination + sort (for search page)
+   */
+  async searchProductsPaginated(
+    query: string,
+    page = 1,
+    limit = 20,
+    sort?: string,
+  ): Promise<{
+    items: IProductCard[];
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  }> {
+    const response = await axiosClient.get(`${this.baseURL}/search`, {
+      params: { q: query, page, limit, sort },
+    });
+    // If backend returns paginated format, use it; otherwise wrap array
+    if (response.data?.items) {
+      return response.data;
+    }
+    const items = Array.isArray(response.data) ? response.data : [];
+    return {
+      items,
+      totalItems: items.length,
+      totalPages: 1,
+      currentPage: 1,
+      limit,
+    };
   }
 
   /**
@@ -270,7 +301,7 @@ class ProductClientService {
   /**
    * Get all brands
    */
-  async getBrands(): Promise<IBrand[]> {
+  async getBrands(): Promise<PaginatedResponse<IBrand>> {
     const response = await axiosClient.get(this.brandURL);
     return response.data;
   }
@@ -304,6 +335,7 @@ class ProductClientService {
     sort?: string,
     cpu?: string,
     ram?: string,
+    storage?: string,
   ): Promise<{
     items: IProductCard[];
     totalItems: number;
@@ -318,7 +350,7 @@ class ProductClientService {
     const response = await axiosClient.get(
       `${this.baseURL}/collection/${slug}`,
       {
-        params: { page, limit, sort, cpu, ram },
+        params: { page, limit, sort, cpu, ram, storage },
       },
     );
     return response.data;

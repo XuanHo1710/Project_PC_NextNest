@@ -12,6 +12,7 @@ import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import { getProductDiscount } from "@/utils/productHelpers";
 
 import { MdKeyboardArrowRight, MdLaptopChromebook, MdPhoneIphone, MdTv, MdHeadset, MdCameraAlt, MdWatch } from "react-icons/md";
+import { PaginatedResponse } from "@/types/common";
 
 
 export default function HomeClient() {
@@ -27,7 +28,7 @@ export default function HomeClient() {
         staleTime: 1000 * 60 * 5,
     });
 
-    const { data: brands } = useQuery<IBrand[]>({
+    const { data: brands } = useQuery<PaginatedResponse<IBrand>>({
         queryKey: ['brands'],
         queryFn: () => productClientService.getBrands(),
         staleTime: 1000 * 60 * 10,
@@ -236,6 +237,61 @@ export default function HomeClient() {
                     </div>
                 </div>
 
+                {/* ============= BRAND CAROUSEL (ở trên khuyến mãi) ============= */}
+                {brands.data && brands.data.length > 0 && (
+                    <div className="mx-5 xl:mx-32 my-10">
+                        <div className="flex items-center justify-between mb-6">
+                            <h1 className="text-xl md:text-3xl font-bold text-gray-800 dark:text-white">
+                                Thương hiệu nổi bật
+                            </h1>
+                        </div>
+                        <Carousel
+                            slidesToShow={5}
+                            slidesToScroll={1}
+                            draggable
+                            dots={false}
+                            autoplay
+                            arrows
+                            autoplaySpeed={3000}
+                            responsive={brandResponsiveSettings}
+                            className="brand-carousel pb-4"
+                        >
+                            {brands.data.map((brand) => (
+                                <div key={brand._id} className="px-2">
+                                    <Link
+                                        href={`/collection/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
+                                        className="group block"
+                                    >
+                                        <div className="bg-white dark:bg-blue-950 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 h-[180px] justify-center">
+                                            <div className="w-16 h-16 mb-3 flex items-center justify-center">
+                                                {brand.logo ? (
+                                                    <img
+                                                        src={brand.logo}
+                                                        alt={brand.name}
+                                                        className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-200"
+                                                    />
+                                                ) : (
+                                                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                                        {brand.name.charAt(0)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <h3 className="font-bold text-sm md:text-base text-gray-800 dark:text-white group-hover:text-blue-500 transition-colors">
+                                                {brand.name}
+                                            </h3>
+                                            {brand.description && (
+                                                <p className="text-xs text-gray-400 line-clamp-2 mt-1">
+                                                    {brand.description}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </Link>
+                                </div>
+                            ))}
+                        </Carousel>
+                    </div>
+                )}
+
                 {/* ============= TOP DISCOUNT PRODUCTS CAROUSEL ============= */}
                 {topDiscountProducts && topDiscountProducts.length > 0 && (
                     <div className='mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-8 px-7 shadow-lg'>
@@ -258,61 +314,6 @@ export default function HomeClient() {
                             {topDiscountProducts.map((product: IProductCard) => (
                                 <div key={product._id} className='px-1.5'>
                                     <CardProduct css="p-3" product={product} />
-                                </div>
-                            ))}
-                        </Carousel>
-                    </div>
-                )}
-
-                {/* ============= BRAND CAROUSEL ============= */}
-                {brands && brands.length > 0 && (
-                    <div className="mx-5 xl:mx-32 my-10">
-                        <div className="flex items-center justify-between mb-6">
-                            <h1 className="text-xl md:text-3xl font-bold text-gray-800 dark:text-white">
-                                Thương hiệu nổi bật
-                            </h1>
-                        </div>
-                        <Carousel
-                            slidesToShow={5}
-                            slidesToScroll={1}
-                            draggable
-                            dots={false}
-                            autoplay
-                            arrows
-                            autoplaySpeed={3000}
-                            responsive={brandResponsiveSettings}
-                            className="brand-carousel pb-4"
-                        >
-                            {brands.map((brand) => (
-                                <div key={brand._id} className="px-2">
-                                    <Link
-                                        href={`/collection/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
-                                        className="group block"
-                                    >
-                                        <div className="bg-white dark:bg-blue-950 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 h-[180px] justify-center">
-                                            <h3 className="font-bold text-sm md:text-base text-gray-800 dark:text-white group-hover:text-blue-500 transition-colors mb-3">
-                                                {brand.name}
-                                            </h3>
-                                            <div className="w-16 h-16 mb-3 flex items-center justify-center">
-                                                {brand.logo ? (
-                                                    <img
-                                                        src={brand.logo}
-                                                        alt={brand.name}
-                                                        className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-200"
-                                                    />
-                                                ) : (
-                                                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                                                        {brand.name.charAt(0)}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            {brand.description && (
-                                                <p className="text-xs text-gray-400 line-clamp-2">
-                                                    {brand.description}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </Link>
                                 </div>
                             ))}
                         </Carousel>

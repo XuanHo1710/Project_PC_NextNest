@@ -50,15 +50,17 @@ export default function CollectionPage() {
     const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
     const [selectedCpu, setSelectedCpu] = useState<string>("");
     const [selectedRam, setSelectedRam] = useState<string>("");
+    const [selectedStorage, setSelectedStorage] = useState<string>("");
 
     const sort = searchParams.get("sort") || "";
     const cpuParam = searchParams.get("cpu") || "";
     const ramParam = searchParams.get("ram") || "";
+    const storageParam = searchParams.get("storage") || "";
 
     // Single API call: fetches products + collection info (category or brand)
     const { data: collectionData, isLoading } = useQuery<CollectionResponse | null>({
-        queryKey: ['collection', slug, page, sort, cpuParam, ramParam],
-        queryFn: () => productClientService.getCollectionProducts(slug as string, page, 12, sort || undefined, cpuParam || undefined, ramParam || undefined),
+        queryKey: ['collection', slug, page, sort, cpuParam, ramParam, storageParam],
+        queryFn: () => productClientService.getCollectionProducts(slug as string, page, 12, sort || undefined, cpuParam || undefined, ramParam || undefined, storageParam || undefined),
         enabled: !!slug,
         staleTime: 1000 * 60 * 5,
     });
@@ -109,6 +111,11 @@ export default function CollectionPage() {
         } else {
             params.delete("ram");
         }
+        if (selectedStorage) {
+            params.set("storage", selectedStorage);
+        } else {
+            params.delete("storage");
+        }
         params.delete("page");
         setPage(1);
         router.push(`/collection/${slug}?${params.toString()}`);
@@ -117,6 +124,7 @@ export default function CollectionPage() {
     const handleClearFilters = () => {
         setSelectedCpu("");
         setSelectedRam("");
+        setSelectedStorage("");
         setSelectedPrices([]);
         const params = new URLSearchParams();
         if (sort) params.set("sort", sort);
@@ -144,6 +152,15 @@ export default function CollectionPage() {
         { label: '16GB', value: '16GB' },
         { label: '32GB', value: '32GB' },
         { label: '64GB', value: '64GB' },
+    ];
+
+    const storageOptions = [
+        { label: '128GB', value: '128GB' },
+        { label: '256GB', value: '256GB' },
+        { label: '512GB', value: '512GB' },
+        { label: '1TB', value: '1TB' },
+        { label: '2TB', value: '2TB' },
+        { label: '4TB', value: '4TB' },
     ];
 
     const prices = [
@@ -203,6 +220,17 @@ export default function CollectionPage() {
                     />
                 </div>
                 <div className="mb-4">
+                    <h3 className="uppercase font-semibold py-2 border-b-2 border-stone-200">Dung lượng</h3>
+                    <Select
+                        placeholder="Chọn dung lượng"
+                        className="w-full mt-2"
+                        value={selectedStorage || undefined}
+                        onChange={(val) => setSelectedStorage(val || "")}
+                        allowClear
+                        options={storageOptions}
+                    />
+                </div>
+                <div className="mb-4">
                     <h3 className="uppercase font-semibold py-2 border-b-2 border-stone-200">Khoảng giá</h3>
                     <Checkbox.Group
                         className="flex flex-col gap-3 mt-3 font-medium text-black dark:text-white"
@@ -218,7 +246,7 @@ export default function CollectionPage() {
                 >
                     Lọc sản phẩm
                 </Button>
-                {(selectedCpu || selectedRam || selectedPrices.length > 0) && (
+                {(selectedCpu || selectedRam || selectedStorage || selectedPrices.length > 0) && (
                     <Button
                         className="w-full py-5"
                         onClick={() => { handleClearFilters(); setDrawerOpen(false); }}
@@ -295,6 +323,19 @@ export default function CollectionPage() {
                                 />
                             </div>
 
+                            {/* Storage Filter */}
+                            <div className="mb-5">
+                                <h4 className="uppercase text-xs font-semibold text-gray-500 py-2 border-b border-stone-200">Dung lượng</h4>
+                                <Select
+                                    placeholder="Chọn dung lượng"
+                                    className="w-full mt-2"
+                                    value={selectedStorage || undefined}
+                                    onChange={(val) => setSelectedStorage(val || "")}
+                                    allowClear
+                                    options={storageOptions}
+                                />
+                            </div>
+
                             {/* Price Filter */}
                             <div className="mb-5">
                                 <h4 className="uppercase text-xs font-semibold text-gray-500 py-2 border-b border-stone-200">Khoảng giá</h4>
@@ -313,7 +354,7 @@ export default function CollectionPage() {
                             >
                                 Lọc sản phẩm
                             </Button>
-                            {(selectedCpu || selectedRam || selectedPrices.length > 0) && (
+                            {(selectedCpu || selectedRam || selectedStorage || selectedPrices.length > 0) && (
                                 <Button
                                     className="w-full"
                                     onClick={handleClearFilters}

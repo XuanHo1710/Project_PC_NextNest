@@ -13,6 +13,7 @@ import Marquee from "react-fast-marquee";
 import { MdOutlineSearch } from "react-icons/md";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ICategory } from "@/types/category";
 import { categoryClientService, productClientService } from "@/services/client";
@@ -27,6 +28,7 @@ import useAuthUser from "@/hooks/useAuthUser";
 
 
 export default function HeaderClient() {
+    const router = useRouter();
     const [isOpenCategory, setOpenCategory] = useState<boolean>(false);
     const [isOpenItemCategory, setOpenItemCategory] = useState<boolean>(false);
     const [isOpenCart, setOpenCart] = useState<boolean>(false);
@@ -73,6 +75,13 @@ export default function HeaderClient() {
             setOpenSearch(true);
         }
         setSearch(value);
+    }
+
+    const handleSearchNavigate = () => {
+        if (search.trim()) {
+            setOpenSearch(false);
+            router.push(`/search?q=${encodeURIComponent(search.trim())}`);
+        }
     }
 
     const handleOpenLogin = () => {
@@ -215,9 +224,10 @@ export default function HeaderClient() {
                             <Input
                                 value={search}
                                 onChange={(e) => handleOnChange(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") handleSearchNavigate(); }}
                                 placeholder="Bạn muốn mua gì ngày hôm nay"
                                 className="!py-2 !px-4 rounded-md w-full"
-                                suffix={<MdOutlineSearch className="text-xl text-gray-400" />}
+                                suffix={<MdOutlineSearch className="text-xl text-gray-400 cursor-pointer hover:text-blue-500" onClick={handleSearchNavigate} />}
                             />
 
                             {/* Search Results */}
@@ -285,6 +295,16 @@ export default function HeaderClient() {
                                                 <p className="text-sm">Hãy thử tìm kiếm với từ khóa khác.</p>
                                             </div>
                                         )
+                                    )}
+                                    {/* Xem tất cả kết quả */}
+                                    {products && products.length > 0 && (
+                                        <Link
+                                            href={`/search?q=${encodeURIComponent(search)}`}
+                                            onClick={() => { setOpenSearch(false); }}
+                                            className="block text-center py-3 text-sm font-semibold text-blue-500 hover:text-blue-600 hover:bg-blue-50 border-t border-gray-100 transition-colors sticky bottom-0 bg-white"
+                                        >
+                                            Xem tất cả kết quả →
+                                        </Link>
                                     )}
                                 </div>
                             )}

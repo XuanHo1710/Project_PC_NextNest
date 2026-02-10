@@ -37,21 +37,21 @@ export default function ProductInteractionSection({
     };
 
     return (
-        <div className="mt-8">
-            <h2 className="text-xl font-bold mb-6">Đánh giá & Bình luận</h2>
+        <div className="mt-10">
+            <h2 className="text-2xl font-bold mb-8 text-gray-800 dark:text-white">Đánh giá & Bình luận</h2>
 
             {/* Rating Overview */}
             <RatingOverview statistics={statistics} />
 
             {/* Comment Form */}
-            <div className="mt-6">
+            <div className="mt-8">
                 <CommentForm productId={productId} />
             </div>
 
             {/* Comments List */}
-            <div className="mt-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-semibold m-0">
+            <div className="mt-8">
+                <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-lg font-semibold m-0 text-gray-800 dark:text-white">
                         Tất cả bình luận ({data?.pagination?.totalItems || 0})
                     </h3>
                 </div>
@@ -63,11 +63,11 @@ export default function ProductInteractionSection({
                 ) : data?.comments?.length === 0 ? (
                     <Empty
                         description="Chưa có đánh giá nào. Hãy là người đầu tiên!"
-                        className="py-8"
+                        className="py-12"
                     />
                 ) : (
                     <>
-                        <div className="bg-white rounded-xl border divide-y divide-gray-100">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm">
                             {data?.comments?.map((comment) => (
                                 <CommentItem
                                     key={comment._id}
@@ -79,7 +79,7 @@ export default function ProductInteractionSection({
 
                         {/* Pagination */}
                         {(data?.pagination?.totalPages ?? 0) > 1 && (
-                            <div className="flex justify-center mt-6">
+                            <div className="flex justify-center mt-8">
                                 <Pagination
                                     current={page}
                                     total={data?.pagination?.totalItems || 0}
