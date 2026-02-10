@@ -11,7 +11,6 @@ import { AccountGuestModule } from 'client/account-guest/account-guest.module';
 import { BrandModule } from 'client/brand/brand.module';
 import { CategoryModule } from 'client/category/category.module';
 import { CartModule } from 'client/cart/cart.module';
-import { UploadModule } from 'client/upload/upload.module';
 
 @Module({
   imports: [
@@ -23,7 +22,6 @@ import { UploadModule } from 'client/upload/upload.module';
     BrandModule,
     CartModule,
     CategoryModule,
-    UploadModule,
     JwtModule.register({}),
   ],
   providers: [

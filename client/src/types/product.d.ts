@@ -70,6 +70,8 @@ export interface IProduct {
   maxPrice: number;
   status: "ACTIVE" | "INACTIVE" | "STOPSOLD";
   defaultProductVariantId?: string;
+  totalRatings?: number;
+  avgRating?: number;
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -94,6 +96,8 @@ export interface IProductPopulated {
   status: "ACTIVE" | "INACTIVE" | "STOPSOLD";
   defaultProductVariantId?: IProductVariant;
   variants?: IProductVariant[];
+  totalRatings?: number;
+  avgRating?: number;
   createdAt?: string;
   updatedAt?: string;
   isDeleted?: boolean;
@@ -119,7 +123,7 @@ export interface IProductCard {
   };
   brand?: { _id: string; name: string; logo?: string };
   category?: { _id: string; name: string; slug: string };
-  ratingAvg?: number;
+  avgRating?: number;
   totalRatings?: number;
   createdAt?: string;
   updatedAt?: string;

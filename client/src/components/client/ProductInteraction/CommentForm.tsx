@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { Rate, Button, Input, Space, message, Image as AntImage } from "antd";
 import { SendOutlined, PictureOutlined, VideoCameraOutlined, CloseCircleFilled } from "@ant-design/icons";
 import { useCreateComment } from "@/hooks/client/useProductInteraction";
-import { interactionClientService } from "@/services/client/interaction.client.service";
+import { UploadImages } from "@/utils/uploadImage";
 import useAuthUser from "@/hooks/useAuthUser";
 import type { ICreateCommentDto } from "@/types";
 
@@ -84,7 +84,7 @@ export default function CommentForm({ productId }: CommentFormProps) {
         const filesToUpload = mediaItems.filter((m) => m.file).map((m) => m.file!);
         if (filesToUpload.length > 0) {
             try {
-                imageUrls = await interactionClientService.uploadMedia(filesToUpload);
+                imageUrls = await UploadImages(filesToUpload);
             } catch {
                 message.error("Upload ảnh/video thất bại. Vui lòng thử lại.");
                 return;

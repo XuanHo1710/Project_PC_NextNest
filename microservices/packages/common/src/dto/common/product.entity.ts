@@ -1,6 +1,6 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument, Types } from 'mongoose';
-import slugify from 'slugify';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import mongoose, { HydratedDocument, Types } from "mongoose";
+import slugify from "slugify";
 export type ProductDocument = HydratedDocument<Product>;
 @Schema({ timestamps: true })
 export class Product {
@@ -15,10 +15,10 @@ export class Product {
   @Prop()
   description: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Brand' })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Brand" })
   brand: Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Category' })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "Category" })
   category: Types.ObjectId;
 
   // Mapping variants attributes
@@ -31,13 +31,19 @@ export class Product {
 
   @Prop({
     type: String,
-    enum: ['ACTIVE', 'INACTIVE', 'STOPSOLD'],
-    default: 'ACTIVE',
+    enum: ["ACTIVE", "INACTIVE", "STOPSOLD"],
+    default: "ACTIVE",
   })
   status: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'ProductVariant' })
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: "ProductVariant" })
   defaultProductVariantId: Types.ObjectId;
+
+  @Prop({ default: 0 })
+  totalRatings: number;
+
+  @Prop({ default: 0 })
+  avgRating: number;
 
   @Prop()
   createdAt: Date;
@@ -54,13 +60,13 @@ export class Product {
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
-ProductSchema.pre('save', async function () {
-  if (!this.isModified('name')) return;
+ProductSchema.pre("save", async function () {
+  if (!this.isModified("name")) return;
 
   const baseSlug = slugify(this.name, {
     lower: true,
     strict: true,
-    locale: 'vi',
+    locale: "vi",
   });
 
   let slug = baseSlug;

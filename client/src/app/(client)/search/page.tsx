@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { Input, Pagination, Empty, Spin, Select } from "antd";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { Input, Empty, Spin } from "antd";
 import { MdOutlineSearch } from "react-icons/md";
 import Link from "next/link";
 import CardProduct from "@/components/client/CardProduct/CardProduct";
@@ -11,6 +11,8 @@ import { productClientService } from "@/services/client";
 import { IProductCard } from "@/types/product";
 import { PaginatedResponse } from "@/types";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+
+const PAGE_SIZE = 20;
 
 const sortOptions = [
     { label: "Mới nhất", value: "" },
@@ -27,11 +29,10 @@ export default function SearchPage() {
 
     const q = searchParams.get("q") || "";
     const sortParam = searchParams.get("sort") || "";
-    const pageParam = parseInt(searchParams.get("page") || "1", 10);
 
     const [searchInput, setSearchInput] = useState(q);
-    const [page, setPage] = useState(pageParam);
     const [sort, setSort] = useState(sortParam);
+    const loadMoreRef = useRef<HTMLDivElement>(null);
 
     // Sync input from URL on back/forward navigation
     useEffect(() => {
@@ -39,23 +40,17 @@ export default function SearchPage() {
     }, [q]);
 
     useEffect(() => {
-        setPage(pageParam);
-    }, [pageParam]);
-
-    useEffect(() => {
         setSort(sortParam);
     }, [sortParam]);
 
     const updateURL = useCallback(
-        (params: { q?: string; sort?: string; page?: number }) => {
+        (params: { q?: string; sort?: string }) => {
             const sp = new URLSearchParams();
             const newQ = params.q ?? q;
             const newSort = params.sort ?? sort;
-            const newPage = params.page ?? 1;
 
             if (newQ) sp.set("q", newQ);
             if (newSort) sp.set("sort", newSort);
-            if (newPage > 1) sp.set("page", newPage.toString());
 
             router.push(`/search?${sp.toString()}`);
         },
@@ -64,7 +59,7 @@ export default function SearchPage() {
 
     const handleSearch = () => {
         if (!searchInput.trim()) return;
-        updateURL({ q: searchInput.trim(), page: 1 });
+        updateURL({ q: searchInput.trim() });
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -73,25 +68,53 @@ export default function SearchPage() {
 
     const handleSortChange = (value: string) => {
         setSort(value);
-        updateURL({ sort: value, page: 1 });
+        updateURL({ sort: value });
     };
 
-    const handlePageChange = (p: number) => {
-        setPage(p);
-        updateURL({ page: p });
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    // Search query
-    const { data: searchData, isLoading } = useQuery<PaginatedResponse<IProductCard>>({
-        queryKey: ["search-products", q, sort, page],
-        queryFn: () => productClientService.searchProductsPaginated(q, page, 20, sort || undefined),
+    // Infinite scroll query
+    const {
+        data,
+        isLoading,
+        isFetchingNextPage,
+        hasNextPage,
+        fetchNextPage,
+    } = useInfiniteQuery<PaginatedResponse<IProductCard>>({
+        queryKey: ["search-products", q, sort],
+        queryFn: ({ pageParam }) =>
+            productClientService.searchProductsPaginated(
+                q,
+                pageParam as number,
+                PAGE_SIZE,
+                sort || undefined,
+            ),
+        initialPageParam: 1,
+        getNextPageParam: (lastPage) => {
+            const { currentPage, totalPages } = lastPage.pagination;
+            return currentPage < totalPages ? currentPage + 1 : undefined;
+        },
         enabled: !!q,
         staleTime: 1000 * 60 * 3,
     });
 
-    const products = searchData?.data || [];
-    const totalItems = searchData?.pagination?.totalItems || 0;
+    // IntersectionObserver for auto-loading
+    useEffect(() => {
+        if (!loadMoreRef.current) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
+            },
+            { rootMargin: "200px" },
+        );
+
+        observer.observe(loadMoreRef.current);
+        return () => observer.disconnect();
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    const products = data?.pages.flatMap((page) => page.data) || [];
+    const totalItems = data?.pages[0]?.pagination?.totalItems || 0;
 
     return (
         <>
@@ -178,18 +201,13 @@ export default function SearchPage() {
                                         ))}
                                     </div>
 
-                                    {/* Pagination */}
-                                    {(searchData?.pagination?.totalPages ?? 0) > 1 && (
-                                        <div className="flex justify-center mt-8">
-                                            <Pagination
-                                                current={page}
-                                                total={totalItems}
-                                                pageSize={searchData?.pagination?.itemsPerPage || 20}
-                                                onChange={handlePageChange}
-                                                showSizeChanger={false}
-                                            />
-                                        </div>
-                                    )}
+                                    {/* Infinite scroll trigger */}
+                                    <div ref={loadMoreRef} className="flex justify-center py-8">
+                                        {isFetchingNextPage && <Spin size="large" />}
+                                        {!hasNextPage && products.length > 0 && (
+                                            <p className="text-sm text-gray-400">Đã hiển thị tất cả kết quả</p>
+                                        )}
+                                    </div>
                                 </>
                             ) : (
                                 <div className="bg-white dark:bg-gray-800 rounded-2xl py-20 flex flex-col items-center">

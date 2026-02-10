@@ -39,6 +39,12 @@ export class Product {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'ProductVariant' })
   defaultProductVariantId: Types.ObjectId;
 
+  @Prop({ default: 0 })
+  totalRatings: number;
+
+  @Prop({ default: 0 })
+  avgRating: number;
+
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'AccountGuest' })
   createdBy: Types.ObjectId;
 

@@ -270,7 +270,7 @@ export default function ProductDetailClient() {
                             {/* Rating + Stats */}
                             <div className="mt-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-xl flex items-center justify-between">
                                 <div className="flex flex-col items-center">
-                                    <Rate disabled defaultValue={product.ratingAvg || 0} allowHalf className="text-sm" />
+                                    <Rate disabled defaultValue={product.avgRating || 0} allowHalf className="text-sm" />
                                     <span className="text-xs text-gray-500 mt-1">{product.totalRatings || 0} đánh giá</span>
                                 </div>
                                 <Divider orientation="vertical" className="!h-10 !border-gray-300" />

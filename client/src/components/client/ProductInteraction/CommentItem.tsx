@@ -37,6 +37,7 @@ import {
     useToggleReaction,
 } from "@/hooks/client/useProductInteraction";
 import { interactionClientService } from "@/services/client/interaction.client.service";
+import { UploadImages } from "@/utils/uploadImage";
 import useAuthUser from "@/hooks/useAuthUser";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -122,7 +123,7 @@ function InlineReplyForm({
         let imageUrls: string[] = [];
         if (mediaFiles.length > 0) {
             try {
-                imageUrls = await interactionClientService.uploadMedia(mediaFiles.map((m) => m.file));
+                imageUrls = await UploadImages(mediaFiles.map((m) => m.file));
             } catch {
                 message.error("Upload ảnh/video thất bại");
                 return;
@@ -251,7 +252,7 @@ function ReplyItem({
         let uploadedUrls: string[] = [];
         if (newEditFiles.length > 0) {
             try {
-                uploadedUrls = await interactionClientService.uploadMedia(newEditFiles.map((f) => f.file));
+                uploadedUrls = await UploadImages(newEditFiles.map((f) => f.file));
             } catch {
                 message.error("Upload ảnh/video thất bại");
                 return;
@@ -460,7 +461,7 @@ export default function CommentItem({ comment, productId }: CommentItemProps) {
         let uploadedUrls: string[] = [];
         if (newEditFiles.length > 0) {
             try {
-                uploadedUrls = await interactionClientService.uploadMedia(newEditFiles.map((f) => f.file));
+                uploadedUrls = await UploadImages(newEditFiles.map((f) => f.file));
             } catch {
                 message.error("Upload ảnh/video thất bại");
                 return;

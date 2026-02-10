@@ -17,6 +17,7 @@ import {
   CreateProductCommentDto,
   UpdateProductCommentDto,
   ToggleReactionDto,
+  Product,
 } from '@project-pc/common';
 
 @Injectable()
@@ -26,7 +27,50 @@ export class ProductInteractionService {
     private commentModel: Model<ProductCommentDocument>,
     @InjectModel(ProductReaction.name)
     private reactionModel: Model<ProductReactionDocument>,
+    @InjectModel(Product.name)
+    private productModel: Model<any>,
   ) {}
+
+  // ============= HELPER: Recalculate product rating stats =============
+
+  /**
+   * Tính lại totalRatings + avgRating cho 1 product,
+   * rồi cập nhật vào document Product.
+   */
+  private async updateProductRatingStats(
+    productId: Types.ObjectId | string,
+  ): Promise<void> {
+    const productObjId =
+      productId instanceof Types.ObjectId
+        ? productId
+        : new Types.ObjectId(productId);
+
+    const stats = await this.commentModel.aggregate([
+      {
+        $match: {
+          product: productObjId,
+          depth: 0,
+          isDeleted: false,
+          rating: { $gte: 1, $lte: 5 },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRatings: { $sum: 1 },
+          avgRating: { $avg: '$rating' },
+        },
+      },
+    ]);
+
+    const totalRatings = stats[0]?.totalRatings || 0;
+    const avgRating = stats[0] ? +stats[0].avgRating.toFixed(1) : 0;
+
+    await this.productModel.updateOne(
+      { _id: productObjId },
+      { $set: { totalRatings, avgRating } },
+    );
+  }
 
   // ============= COMMENTS =============
 
@@ -91,6 +135,11 @@ export class ProductInteractionService {
         { _id: parentCommentId },
         { $inc: { repliesCount: 1 } },
       );
+    }
+
+    // Cập nhật rating stats cho product (nếu là comment gốc có rating)
+    if (depth === 0 && payload.rating) {
+      await this.updateProductRatingStats(payload.product);
     }
 
     // Populate guest info trước khi trả về
@@ -280,6 +329,11 @@ export class ProductInteractionService {
       );
     }
 
+    // Nếu rating đã thay đổi → cập nhật lại stats
+    if (dto.rating !== undefined && comment.depth === 0) {
+      await this.updateProductRatingStats(comment.product);
+    }
+
     return comment;
   }
 
@@ -323,6 +377,9 @@ export class ProductInteractionService {
         { parentComment: comment._id, isDeleted: false },
         { $set: { isDeleted: true, deletedAt: new Date() } },
       );
+
+      // Cập nhật rating stats (comment gốc bị xóa → rating thay đổi)
+      await this.updateProductRatingStats(comment.product);
     }
 
     return { message: 'Xóa bình luận thành công' };

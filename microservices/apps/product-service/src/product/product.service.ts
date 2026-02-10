@@ -70,13 +70,14 @@ export class ProductService {
   }
 
   async findAllProducts(searchDto?: SearchProductDto) {
-    const { keyword, status, page = 1, limit = 10 } = searchDto || {};
+    const { keyword, q, status, page = 1, limit = 10, sort } = searchDto || {};
+    const searchTerm = keyword || q;
     const query: any = { isDeleted: false };
 
-    if (keyword) {
+    if (searchTerm) {
       query.$or = [
-        { name: { $regex: keyword, $options: 'i' } },
-        { description: { $regex: keyword, $options: 'i' } },
+        { name: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } },
       ];
     }
 
@@ -85,8 +86,28 @@ export class ProductService {
     }
 
     const skip = (page - 1) * limit;
+
+    // Parse sort: e.g. "minPrice_1" → { minPrice: 1 }, "createdAt_-1" → { createdAt: -1 }
+    let sortObj: Record<string, 1 | -1> = { createdAt: -1 };
+    if (sort) {
+      const lastUnderscore = sort.lastIndexOf('_');
+      if (lastUnderscore > 0) {
+        const field = sort.substring(0, lastUnderscore);
+        const order = parseInt(sort.substring(lastUnderscore + 1), 10);
+        if (field && (order === 1 || order === -1)) {
+          sortObj = { [field]: order };
+        }
+      }
+    }
+
     const [data, total] = await Promise.all([
-      this.productModel.find(query).skip(skip).limit(limit).exec(),
+      this.productModel
+        .find(query)
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
       this.productModel.countDocuments(query).exec(),
     ]);
 
