@@ -137,7 +137,7 @@ export default function SearchPage() {
                 <div className="mx-5 xl:mx-32 mb-6">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 md:p-8">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-4">
-                            🔍 Tìm kiếm sản phẩm
+                            Tìm kiếm sản phẩm
                         </h1>
                         <div className="flex gap-3 max-w-2xl">
                             <Input
