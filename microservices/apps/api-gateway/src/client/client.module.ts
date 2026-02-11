@@ -11,6 +11,9 @@ import { AccountGuestModule } from 'client/account-guest/account-guest.module';
 import { BrandModule } from 'client/brand/brand.module';
 import { CategoryModule } from 'client/category/category.module';
 import { CartModule } from 'client/cart/cart.module';
+import { PaymentModule } from 'client/payment/payment.module';
+import { OrderModule } from 'client/order/order.module';
+import { NotificationModule } from 'client/notification/notification.module';
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { CartModule } from 'client/cart/cart.module';
     BrandModule,
     CartModule,
     CategoryModule,
+    PaymentModule,
+    OrderModule,
+    NotificationModule,
     JwtModule.register({}),
   ],
   providers: [

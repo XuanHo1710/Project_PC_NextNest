@@ -43,3 +43,9 @@ export * from "./common/brand.entity";
 export * from "./common/category.entity";
 export * from "./common/product.entity";
 export * from "./common/account-guest.entity";
+
+export * from "./notification/create-notification.dto";
+export * from "./notification/update-notification.dto";
+
+export * from "./order/create-order.dto";
+export * from "./order/update-order.dto";

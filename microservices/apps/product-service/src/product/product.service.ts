@@ -225,10 +225,12 @@ export class ProductService {
     }
 
     if (updateProductDto.brandId) {
-      updateProductDto['brand'] = updateProductDto.brandId;
+      updateProductDto['brand'] = new Types.ObjectId(updateProductDto.brandId);
     }
     if (updateProductDto.categoryId) {
-      updateProductDto['category'] = updateProductDto.categoryId;
+      updateProductDto['category'] = new Types.ObjectId(
+        updateProductDto.categoryId,
+      );
     }
     const query: any = { _id: new Types.ObjectId(id), isDeleted: false };
     if (createdBy) query.createdBy = new Types.ObjectId(createdBy);
@@ -749,7 +751,12 @@ export class ProductService {
     const variant = await this.productVariantModel
       .findOneAndUpdate(
         { _id: new Types.ObjectId(id), isDeleted: false },
-        { $set: updateProductVariantDto },
+        {
+          $set: {
+            ...updateProductVariantDto,
+            product: new Types.ObjectId(updateProductVariantDto.product),
+          },
+        },
         { new: true },
       )
       .populate('product')
