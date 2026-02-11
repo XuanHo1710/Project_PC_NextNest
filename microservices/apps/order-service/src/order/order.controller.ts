@@ -8,8 +8,8 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @MessagePattern('order.create')
-  createOrder(@Payload() data: { createOrderDto: CreateOrderDto }) {
-    return this.orderService.createOrder(data.createOrderDto);
+  createOrder(@Payload() data: { createOrderDto: CreateOrderDto; ip: string }) {
+    return this.orderService.createOrder(data.createOrderDto, data.ip);
   }
 
   @MessagePattern('order.getAllByGuestId')

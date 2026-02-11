@@ -28,7 +28,11 @@ export class Order {
   @Prop({
     type: [
       {
-        product: { type: Types.ObjectId, ref: 'Product', required: true },
+        productVariant: {
+          type: Types.ObjectId,
+          ref: 'ProductVariant',
+          required: true,
+        },
         quantity: { type: Number, default: 1 },
         subtotal: { type: Number, default: 0 },
         price: { type: Number, default: 0 },
@@ -38,7 +42,7 @@ export class Order {
   })
   orderDetail: [
     {
-      product: Types.ObjectId;
+      productVariant: Types.ObjectId;
       quantity: number;
       subtotal: number;
       price: number;
@@ -68,7 +72,7 @@ export class Order {
   @Prop(
     raw({
       isCheckout: { type: Boolean, default: false },
-      type: { type: String, enum: ['CASH', 'CARD'], default: 'CASH' },
+      type: { type: String, enum: ['COD', 'CARD'], default: 'COD' },
     }),
   )
   payment: {

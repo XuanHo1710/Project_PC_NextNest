@@ -49,3 +49,6 @@ export * from "./notification/update-notification.dto";
 
 export * from "./order/create-order.dto";
 export * from "./order/update-order.dto";
+
+export * from "./payment/create-payment.dto";
+export * from "./payment/update-payment.dto";

@@ -1,7 +1,7 @@
 import { Controller, Get, Query, Inject } from '@nestjs/common';
 import { MICROSERVICE } from '@project-pc/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { Public } from 'decorators/customize';
+import { Guest } from 'decorators/customize';
 
 @Controller('/client/payment')
 export class PaymentController {
@@ -10,19 +10,11 @@ export class PaymentController {
     private readonly paymentService: ClientProxy,
   ) {}
 
-  @Public()
-  @Get()
-  findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('search') search?: string,
-  ) {
-    return this.paymentService.send('payment.findAll', {
-      filter: {
-        page: page ? parseInt(page, 10) : 1,
-        limit: limit ? parseInt(limit, 10) : 20,
-        search: search || '',
-      },
+  @Get('/verify-vnpay')
+  verifyVnpay(@Query() query: any, @Guest() guest: any) {
+    return this.paymentService.send('payment.verify', {
+      query: query,
+      guestId: guest._id,
     });
   }
 }

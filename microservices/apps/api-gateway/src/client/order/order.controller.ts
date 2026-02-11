@@ -1,7 +1,17 @@
-import { Controller, Get, Param, Query, Inject } from '@nestjs/common';
-import { MICROSERVICE } from '@project-pc/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  Inject,
+  Post,
+  Body,
+  Req,
+} from '@nestjs/common';
+import { CreateOrderDto, MICROSERVICE } from '@project-pc/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Public } from 'decorators/customize';
+import type { Request } from 'express';
 
 @Controller('/client/order')
 export class OrderController {
@@ -10,19 +20,9 @@ export class OrderController {
     private readonly orderService: ClientProxy,
   ) {}
 
-  @Public()
-  @Get()
-  findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('search') search?: string,
-  ) {
-    return this.orderService.send('order.findAll', {
-      filter: {
-        page: page ? parseInt(page, 10) : 1,
-        limit: limit ? parseInt(limit, 10) : 20,
-        search: search || '',
-      },
-    });
+  @Post('/create')
+  createOrder(@Body() createOrderDto: CreateOrderDto, @Req() req: Request) {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    return this.orderService.send('order.create', { createOrderDto, ip });
   }
 }
