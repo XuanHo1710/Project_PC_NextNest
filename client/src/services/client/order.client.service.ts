@@ -17,6 +17,14 @@ export interface CreateOrderResponse {
   };
 }
 
+export interface OrderPageResponse {
+  items: IOrder[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+}
+
 class OrderClientService {
   async createOrder(data: IOrderData): Promise<CreateOrderResponse> {
     const response = await axiosClient.post("/order", data);
@@ -28,8 +36,19 @@ class OrderClientService {
     return response.data;
   }
 
-  async getOrdersByGuestId(guestId: string): Promise<IOrder[]> {
-    const response = await axiosClient.get(`/order/guest/${guestId}`);
+  async getOrdersByGuestId(
+    guestId: string,
+    params?: { page?: number; limit?: number; status?: string },
+  ): Promise<OrderPageResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", params.page.toString());
+    if (params?.limit) query.set("limit", params.limit.toString());
+    if (params?.status && params.status !== "ALL")
+      query.set("status", params.status);
+    const qs = query.toString();
+    const response = await axiosClient.get(
+      `/order/guest/${guestId}${qs ? `?${qs}` : ""}`,
+    );
     return response.data;
   }
 

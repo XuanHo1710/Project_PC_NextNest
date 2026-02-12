@@ -3,15 +3,6 @@ import axiosClient from "@/config/axiosClient";
 export interface VerifyPaymentRequest {
   orderCode: number;
   status: string;
-  customerEmail: string;
-  orderItems: Array<{
-    productVariant: string;
-    productName?: string;
-    combination?: Record<string, string>;
-    quantity: number;
-    price: number;
-    subtotal: number;
-  }>;
 }
 
 export interface VerifyPaymentResponse {

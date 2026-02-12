@@ -15,6 +15,7 @@ import useAuthUser from '@/hooks/useAuthUser';
 import { orderClientService, CreateOrderResponse } from '@/services/client/order.client.service';
 import { DynamicMetadata } from '@/components/common/DynamicMetadata';
 import ProfileSidebar from '@/components/client/ProfileSidebar/ProfileSidebar';
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 import { toast } from 'react-toastify';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -36,14 +37,29 @@ export default function PendingPaymentPage() {
 
     const retryPaymentMutation = useMutation({
         mutationFn: (orderId: string) => orderClientService.retryPayment(orderId),
-        onSuccess: (result: CreateOrderResponse) => {
+        onSuccess: (result: CreateOrderResponse, orderId: string) => {
             if (result.url) {
-                // Save order info to sessionStorage for the return page
+                // Find the order to save full data to sessionStorage
+                const order = orders.find(o => o._id === orderId);
                 sessionStorage.setItem(
                     'pendingOrder',
                     JSON.stringify({
                         orderId: result.orderId,
                         orderCode: result.orderCode,
+                        orderData: order ? {
+                            customerInfo: order.customerInfo,
+                            orderDetail: order.orderDetail.map(item => ({
+                                productVariant: {
+                                    _id: item.variantId,
+                                    combination: item.combination || {},
+                                },
+                                product: { name: item.productName },
+                                quantity: item.quantity,
+                                price: item.price,
+                                subtotal: item.subtotal,
+                            })),
+                            totalAmount: order.totalAmount,
+                        } : undefined,
                     })
                 );
                 window.location.href = result.url;
@@ -113,18 +129,11 @@ export default function PendingPaymentPage() {
                 keywords="đơn chờ thanh toán, thanh toán online"
             />
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
-                <div className="mx-5 xl:mx-32 content-header flex items-center flex-wrap">
-                    <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">
-                        Trang chủ
-                    </Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <Link href="/profile/detail" className="font-medium text-lg text-stone-500 dark:text-white mr-3">
-                        Hồ sơ người dùng
-                    </Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <h3 className="font-medium text-lg text-blue-400 dark:text-white mr-3">
-                        Đơn chờ thanh toán
-                    </h3>
+                <div className='mx-5 xl:mx-32'>
+                    <Breadcrumb items={[
+                        { label: 'Hồ sơ người dùng', href: '/profile/detail' },
+                        { label: 'Đơn chờ thanh toán' },
+                    ]} />
                 </div>
 
                 <div className="mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9">

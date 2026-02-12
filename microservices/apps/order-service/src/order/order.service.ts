@@ -203,12 +203,34 @@ export class OrderService {
     return order;
   }
 
-  async getAllOrdersByGuestId(guestId: string) {
-    const orders = await this.orderModel
-      .find({ 'customerInfo.guestId': new Types.ObjectId(guestId) })
-      .sort({ createdAt: -1 });
+  async getAllOrdersByGuestId(
+    guestId: string,
+    page = 1,
+    limit = 10,
+    status?: string,
+  ) {
+    const query: any = { 'customerInfo.guestId': new Types.ObjectId(guestId) };
+    if (status && status !== 'ALL') {
+      query.status = status;
+    }
 
-    return orders;
+    const totalItems = await this.orderModel.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / limit);
+    const skip = (page - 1) * limit;
+
+    const items = await this.orderModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return {
+      items,
+      totalItems,
+      totalPages,
+      currentPage: page,
+      limit,
+    };
   }
 
   async updateOrderStatus(id: string, updateOrderDto: UpdateOrderDto) {

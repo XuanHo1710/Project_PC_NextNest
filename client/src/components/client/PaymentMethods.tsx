@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { IOrderData } from '@/types/order';
 import { useMutation } from '@tanstack/react-query';
 import { orderClientService } from '@/services/client/order.client.service';
+import useCartStore from '@/hooks/useCart';
 
 const { Title, Text } = Typography;
 
@@ -35,6 +36,8 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
                 // COD - order created successfully
                 toast.success('Đặt hàng thành công!');
                 sessionStorage.removeItem('orderData');
+                // Clear cart
+                useCartStore.getState().clearCart();
 
                 // Redirect to success page with order info
                 const params = new URLSearchParams({

@@ -13,6 +13,7 @@ import { CategoryPageSkeleton } from "@/components/Skeletons";
 import { ICategory } from "@/types/category";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import { getDefaultCartVariant } from "@/utils/productHelpers";
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 
 import { FiShoppingCart } from "react-icons/fi";
 import {
@@ -263,12 +264,10 @@ export default function CategoryClient() {
                 </Button>
             </Drawer>
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-white">
-                <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
-                    <Link href="/home" className="font-medium text-lg text-stone-500 mr-3 header-nav">Trang chủ</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    {dataCategory &&
-                        <h3 className="font-medium text-lg dark:text-white text-blue-500 mr-3 active">{dataCategory.name}</h3>
-                    }
+                <div className='mx-5 xl:mx-32'>
+                    <Breadcrumb items={[
+                        ...(dataCategory ? [{ label: dataCategory.name }] : []),
+                    ]} />
                 </div>
                 <h1 className='mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3 font-bold text-xl lg:text-3xl uppercase text-blue-500'>
                     {dataCategory && dataCategory.name}

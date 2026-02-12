@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Card, Tag, Image, Empty, Tabs } from 'antd';
+import React, { useState } from 'react';
+import { Card, Tag, Image, Empty, Tabs, Pagination } from 'antd';
 import Link from 'next/link';
 import {
     OrderPageSkeleton,
@@ -10,9 +10,10 @@ import {
 import { IOrder } from '@/types/order';
 import { useQuery } from '@tanstack/react-query';
 import useAuthUser from '@/hooks/useAuthUser';
-import { orderClientService } from '@/services/client/order.client.service';
+import { orderClientService, OrderPageResponse } from '@/services/client/order.client.service';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import ProfileSidebar from '@/components/client/ProfileSidebar/ProfileSidebar';
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 
 type OrderStatus = 'ALL' | 'PENDING' | 'SHIPPING' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED';
 
@@ -31,28 +32,31 @@ const PAYMENT_LABELS: Record<string, string> = {
     CARD: 'Trực tuyến',
 };
 
+const PAGE_SIZE = 10;
+
 export default function OrderPage() {
     const [activeTab, setActiveTab] = useState<OrderStatus>('ALL');
+    const [currentPage, setCurrentPage] = useState(1);
     const { user } = useAuthUser();
 
-    const { data: orders = [], isLoading } = useQuery<IOrder[]>({
-        queryKey: ['get-order-by-guest-id', user?.id],
-        queryFn: () => orderClientService.getOrdersByGuestId(user?.id as string),
+    const { data, isLoading } = useQuery<OrderPageResponse>({
+        queryKey: ['get-order-by-guest-id', user?.id, activeTab, currentPage],
+        queryFn: () => orderClientService.getOrdersByGuestId(user?.id as string, {
+            page: currentPage,
+            limit: PAGE_SIZE,
+            status: activeTab,
+        }),
         enabled: !!user?.id,
     });
 
-    const filteredOrders = useMemo(() => {
-        if (activeTab === 'ALL') return orders;
-        return orders.filter(order => order.status === activeTab);
-    }, [orders, activeTab]);
+    const orders = data?.items ?? [];
+    const totalItems = data?.totalItems ?? 0;
+    const totalPages = data?.totalPages ?? 0;
 
-    const statusCounts = useMemo(() => {
-        const counts: Record<string, number> = { ALL: orders.length };
-        for (const order of orders) {
-            counts[order.status] = (counts[order.status] || 0) + 1;
-        }
-        return counts;
-    }, [orders]);
+    const handleTabChange = (key: string) => {
+        setActiveTab(key as OrderStatus);
+        setCurrentPage(1); // Reset page when switching tabs
+    };
 
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -69,14 +73,14 @@ export default function OrderPage() {
     };
 
     const tabItems = [
-        { key: 'ALL', label: `Tất cả (${statusCounts['ALL'] || 0})` },
+        { key: 'ALL', label: `Tất cả` },
         ...Object.entries(STATUS_CONFIG).map(([key, config]) => ({
             key,
-            label: `${config.label} (${statusCounts[key] || 0})`,
+            label: config.label,
         })),
     ];
 
-    if (isLoading) {
+    if (isLoading && currentPage === 1) {
         return (
             <ProfilePageSkeleton>
                 <OrderPageSkeleton />
@@ -87,46 +91,68 @@ export default function OrderPage() {
     return (
         <>
             <DynamicMetadata
-                title={`Quản lý đơn hàng (${orders.length} đơn) - Project PC`}
+                title={`Quản lý đơn hàng (${totalItems} đơn) - Project PC`}
                 description="Theo dõi và quản lý đơn hàng của bạn tại Project PC."
                 keywords="quản lý đơn hàng, theo dõi đơn hàng, lịch sử mua hàng"
             />
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
-                <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
-                    <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">Trang chủ</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <Link href="/profile/detail" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Hồ sơ người dùng</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <h3 className="font-medium text-lg text-blue-400 dark:text-white mr-3">Quản lý đơn hàng</h3>
+                <div className='mx-5 xl:mx-32'>
+                    <Breadcrumb items={[
+                        { label: 'Hồ sơ người dùng', href: '/profile/detail' },
+                        { label: 'Quản lý đơn hàng' },
+                    ]} />
                 </div>
 
                 <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
                     <ProfileSidebar user={user} activePage="order" />
 
-                    <div className='col-span-12 lg:col-span-9 p-6 bg-white rounded-2xl shadow-xl dark:bg-gray-800 dark:text-white'>
-                        <h2 className='text-xl font-bold pb-3 border-solid border-b-2 border-blue-200 dark:border-slate-900 dark:text-white mb-4'>
-                            Quản lý đơn hàng
-                        </h2>
+                    <div className='col-span-12 lg:col-span-9 p-4 md:p-6 bg-white rounded-2xl shadow-xl dark:bg-gray-800 dark:text-white'>
+                        <div className="flex flex-wrap justify-between items-center pb-3 border-solid border-b-2 border-blue-200 dark:border-slate-900 mb-4 gap-2">
+                            <h2 className='text-xl font-bold dark:text-white'>
+                                Quản lý đơn hàng
+                            </h2>
+                            {totalItems > 0 && (
+                                <span className="text-sm text-gray-500">
+                                    Tổng {totalItems} đơn hàng
+                                </span>
+                            )}
+                        </div>
 
                         {/* Status Tabs */}
                         <Tabs
                             activeKey={activeTab}
-                            onChange={(key) => setActiveTab(key as OrderStatus)}
+                            onChange={handleTabChange}
                             items={tabItems}
                             className="mb-4"
                         />
 
                         {/* Orders List */}
                         <div className="space-y-4">
-                            {filteredOrders.length > 0 ? (
-                                filteredOrders.map((order) => (
-                                    <OrderCard
-                                        key={order._id}
-                                        order={order}
-                                        formatCurrency={formatCurrency}
-                                        formatDate={formatDate}
-                                    />
-                                ))
+                            {orders.length > 0 ? (
+                                <>
+                                    {orders.map((order) => (
+                                        <OrderCard
+                                            key={order._id}
+                                            order={order}
+                                            formatCurrency={formatCurrency}
+                                            formatDate={formatDate}
+                                        />
+                                    ))}
+
+                                    {/* Pagination */}
+                                    {totalPages > 1 && (
+                                        <div className="flex justify-center pt-4">
+                                            <Pagination
+                                                current={currentPage}
+                                                total={totalItems}
+                                                pageSize={PAGE_SIZE}
+                                                onChange={(page) => setCurrentPage(page)}
+                                                showSizeChanger={false}
+                                                showTotal={(total) => `Tổng ${total} đơn hàng`}
+                                            />
+                                        </div>
+                                    )}
+                                </>
                             ) : (
                                 <div className="py-16">
                                     <Empty description="Chưa có đơn hàng nào" />

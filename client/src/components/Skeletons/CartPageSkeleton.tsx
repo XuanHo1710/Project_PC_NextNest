@@ -4,10 +4,10 @@ import React from 'react';
 const CartPageSkeleton = () => {
     return (
         <div className="md:pt-3 pt-52 dark:bg-slate-900 animate-pulse">
-            <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
-                <Skeleton.Input style={{ width: 100 }} active />
-                <i className="fa-solid fa-chevron-right text-stone-500 mx-3"></i>
-                <Skeleton.Input style={{ width: 150 }} active />
+            <div className='mx-5 xl:mx-32 flex items-center gap-2 py-3'>
+                <Skeleton.Input style={{ width: 80, height: 18 }} active />
+                <span className="text-gray-300">/</span>
+                <Skeleton.Input style={{ width: 100, height: 18 }} active />
             </div>
             <h1 className='mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3'>
                 <Skeleton.Input style={{ width: 250, height: 40 }} active />

@@ -4,6 +4,7 @@ import { Button, Form, Input, Select, message, Avatar, Upload, Image } from "ant
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { UserOutlined, CameraOutlined } from '@ant-design/icons';
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 import type { UploadProps } from 'antd';
 import {
     DetailPageSkeleton,
@@ -145,12 +146,11 @@ export default function ProfileDetail() {
                 ogDescription="Cập nhật và quản lý thông tin cá nhân của bạn"
             />
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
-                <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
-                    <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">Trang chủ</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <Link href="/profile/detail" className="font-medium text-lg text-stone-500 dark:text-white mr-3">Hồ sơ người dùng</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <h3 className="font-medium text-lg text-blue-400 dark:text-white mr-3">Thông tin chi tiết</h3>
+                <div className='mx-5 xl:mx-32'>
+                    <Breadcrumb items={[
+                        { label: 'Hồ sơ người dùng', href: '/profile/detail' },
+                        { label: 'Thông tin chi tiết' },
+                    ]} />
                 </div>
 
                 <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>

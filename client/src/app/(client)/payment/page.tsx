@@ -5,6 +5,7 @@ import { Card, Divider, Tag, Empty } from 'antd';
 import PaymentMethods from '@/components/client/PaymentMethods';
 import Link from 'next/link';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 import { IOrderData } from '@/types';
 import { useRouter } from 'next/navigation';
 
@@ -59,12 +60,11 @@ const PaymentPage = () => {
             />
             <div className="min-h-screen my-5 bg-slate-50 dark:bg-gray-900 dark:text-white pt-3">
                 {/* Breadcrumb */}
-                <div className='rounded-lg mx-5 xl:mx-32 content-header flex items-center flex-wrap mb-6'>
-                    <Link href="/home" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">Trang chủ</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 mr-3"></i>
-                    <Link href="/cart" className="font-medium text-lg text-stone-500 dark:text-white mr-3 header-nav active">Giỏ hàng</Link>
-                    <i className="fa-solid fa-chevron-right text-stone-500 dark:text-gray-400 mr-3"></i>
-                    <h3 className="font-medium text-lg text-blue-500 dark:text-white mr-3">Thanh toán</h3>
+                <div className='mx-5 xl:mx-32 mb-6'>
+                    <Breadcrumb items={[
+                        { label: 'Giỏ hàng', href: '/cart' },
+                        { label: 'Thanh toán' },
+                    ]} />
                 </div>
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

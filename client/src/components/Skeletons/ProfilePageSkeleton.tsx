@@ -4,12 +4,12 @@ import React from 'react';
 const ProfilePageSkeleton = ({ children }: { children: React.ReactNode }) => {
     return (
         <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 animate-pulse">
-            <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
-                <Skeleton.Input style={{ width: 100, height: 24 }} active />
-                <i className="fa-solid fa-chevron-right text-stone-500 mx-3"></i>
-                <Skeleton.Input style={{ width: 120, height: 24 }} active />
-                <i className="fa-solid fa-chevron-right text-stone-500 mx-3"></i>
-                <Skeleton.Input style={{ width: 150, height: 24 }} active />
+            <div className='mx-5 xl:mx-32 flex items-center gap-2 py-3'>
+                <Skeleton.Input style={{ width: 80, height: 18 }} active />
+                <span className="text-gray-300">/</span>
+                <Skeleton.Input style={{ width: 120, height: 18 }} active />
+                <span className="text-gray-300">/</span>
+                <Skeleton.Input style={{ width: 140, height: 18 }} active />
             </div>
 
             <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>

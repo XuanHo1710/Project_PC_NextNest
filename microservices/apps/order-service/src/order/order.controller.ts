@@ -18,8 +18,21 @@ export class OrderController {
   }
 
   @MessagePattern('order.getAllByGuestId')
-  getAllOrdersByGuestId(@Payload() data: { guestId: string }) {
-    return this.orderService.getAllOrdersByGuestId(data.guestId);
+  getAllOrdersByGuestId(
+    @Payload()
+    data: {
+      guestId: string;
+      page?: number;
+      limit?: number;
+      status?: string;
+    },
+  ) {
+    return this.orderService.getAllOrdersByGuestId(
+      data.guestId,
+      data.page,
+      data.limit,
+      data.status,
+    );
   }
 
   @MessagePattern('order.getPendingOnline')

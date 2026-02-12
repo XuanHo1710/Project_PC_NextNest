@@ -27,8 +27,18 @@ export class OrderController {
   }
 
   @Get('/guest/:guestId')
-  getOrdersByGuestId(@Param('guestId') guestId: string) {
-    return this.orderService.send('order.getAllByGuestId', { guestId });
+  getOrdersByGuestId(
+    @Param('guestId') guestId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.orderService.send('order.getAllByGuestId', {
+      guestId,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 10,
+      status: status || undefined,
+    });
   }
 
   @Get('/pending-online/:guestId')

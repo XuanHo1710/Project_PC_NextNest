@@ -11,6 +11,7 @@ import { productClientService } from "@/services/client";
 import { IProductCard } from "@/types/product";
 import { PaginatedResponse } from "@/types";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 
 const PAGE_SIZE = 20;
 
@@ -125,12 +126,8 @@ export default function SearchPage() {
 
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 min-h-screen">
                 {/* Breadcrumb */}
-                <div className="mx-5 xl:mx-32 flex items-center gap-2 py-3">
-                    <Link href="/home" className="font-medium text-sm text-stone-500 hover:text-blue-500 transition-colors">
-                        Trang chủ
-                    </Link>
-                    <span className="text-stone-400">/</span>
-                    <span className="font-medium text-sm text-blue-500">Tìm kiếm</span>
+                <div className="mx-5 xl:mx-32">
+                    <Breadcrumb items={[{ label: 'Tìm kiếm' }]} />
                 </div>
 
                 {/* Search Header */}

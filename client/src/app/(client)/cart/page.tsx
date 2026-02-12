@@ -17,6 +17,7 @@ import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import { accountGuestService } from "@/services/client";
 import { formatCurrencyVND } from "@/utils/productHelpers";
 import { District, IOrderData, Province, Ward } from "@/types";
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 
 interface OrderFormData {
     fullname: string;
@@ -277,11 +278,7 @@ export default function CartClient() {
             <div className="md:pt-4 pt-52 pb-10 dark:bg-slate-900 min-h-screen bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     {/* Breadcrumb */}
-                    <nav className="flex items-center gap-2 text-sm py-3">
-                        <Link href="/home" className="text-gray-500 hover:text-blue-500 transition-colors">Trang chủ</Link>
-                        <span className="text-gray-300">/</span>
-                        <span className="text-blue-500 font-medium">Giỏ hàng</span>
-                    </nav>
+                    <Breadcrumb items={[{ label: 'Giỏ hàng' }]} />
 
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">

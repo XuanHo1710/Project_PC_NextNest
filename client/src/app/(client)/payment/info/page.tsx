@@ -17,6 +17,7 @@ import {
 import { paymentClientService, VerifyPaymentResponse } from '@/services/client/payment.client.service';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import useCartStore from '@/hooks/useCart';
 
 interface PendingOrder {
     orderId: string;
@@ -83,24 +84,10 @@ export default function PaymentInfoPage() {
                 return;
             }
 
-            if (!orderInfo) {
-                setStatus('failed');
-                return;
-            }
-
             try {
                 const result = await paymentClientService.verifyPayment({
                     orderCode: parseInt(orderCode),
                     status: payosStatus || 'PAID',
-                    customerEmail: orderInfo.orderData.customerInfo.email,
-                    orderItems: orderInfo.orderData.orderDetail.map((item) => ({
-                        productVariant: item.productVariant._id,
-                        productName: item.product?.name || '',
-                        combination: item.productVariant?.combination || {},
-                        quantity: item.quantity,
-                        price: item.price,
-                        subtotal: item.subtotal,
-                    })),
                 });
 
                 setVerifyResult(result);
@@ -108,6 +95,8 @@ export default function PaymentInfoPage() {
                     setStatus('success');
                     sessionStorage.removeItem('pendingOrder');
                     sessionStorage.removeItem('orderData');
+                    // Clear cart in Zustand + localStorage
+                    useCartStore.getState().clearCart();
                 } else {
                     setStatus('failed');
                 }

@@ -19,6 +19,7 @@ import {
 import { WishlistSkeleton } from '@/components/Skeletons/WishlistSkeleton';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import ProfileSidebar from '@/components/client/ProfileSidebar/ProfileSidebar';
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 import {
     HeartFilled,
     ShoppingCartOutlined,
@@ -93,12 +94,11 @@ export default function WishlistPage() {
     };
 
     const breadcrumb = (
-        <div className="flex items-center gap-2 mt-3 mx-5 xl:mx-32 text-sm">
-            <Link href="/home" className="text-gray-500 hover:text-blue-500 transition-colors">Trang chủ</Link>
-            <span className="text-gray-300">/</span>
-            <Link href="/profile/detail" className="text-gray-500 hover:text-blue-500 transition-colors">Hồ sơ</Link>
-            <span className="text-gray-300">/</span>
-            <span className="text-blue-500 font-medium">Yêu thích</span>
+        <div className="mx-5 xl:mx-32">
+            <Breadcrumb items={[
+                { label: 'Hồ sơ', href: '/profile/detail' },
+                { label: 'Yêu thích' },
+            ]} />
         </div>
     );
 

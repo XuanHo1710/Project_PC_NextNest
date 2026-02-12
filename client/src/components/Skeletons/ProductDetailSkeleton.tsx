@@ -7,16 +7,12 @@ const ProductDetailSkeleton = () => {
     return (
         <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 dark:text-white">
             {/* Breadcrumb skeleton */}
-            <div className='rounded-lg mx-5 xl:mx-32 content-header flex items-center flex-wrap mb-4'>
-                <Skeleton width={80} height={24} className="mr-3" />
-                <div className="mx-2">
-                    <Skeleton width={10} height={16} />
-                </div>
-                <Skeleton width={120} height={24} className="mr-3" />
-                <div className="mx-2">
-                    <Skeleton width={10} height={16} />
-                </div>
-                <Skeleton width={200} height={24} />
+            <div className='mx-5 xl:mx-32 flex items-center gap-2 py-3'>
+                <Skeleton width={80} height={18} />
+                <span className="text-gray-300">/</span>
+                <Skeleton width={120} height={18} />
+                <span className="text-gray-300">/</span>
+                <Skeleton width={200} height={18} />
             </div>
 
             {/* Product info section skeleton */}

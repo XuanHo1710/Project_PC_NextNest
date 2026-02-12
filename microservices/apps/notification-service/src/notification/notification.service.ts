@@ -394,15 +394,10 @@ export class NotificationService {
               <!-- Info -->
               <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 0 0 24px;">
                 <p style="margin: 0; color: #475569; font-size: 14px; line-height: 1.6;">
-                  ⏱️ <strong>Link kích hoạt có hiệu lực trong 24 giờ.</strong><br>
+                  <strong>Link kích hoạt có hiệu lực trong 24 giờ.</strong><br>
                   Nếu bạn không đăng ký tài khoản này, vui lòng bỏ qua email này.
                 </p>
               </div>
-
-              <p style="margin: 0; color: #94a3b8; font-size: 13px; line-height: 1.6; text-align: center;">
-                Nếu nút không hoạt động, hãy copy và paste link sau vào trình duyệt:<br>
-                <a href="${verifyUrl}" style="color: #3b82f6; word-break: break-all; font-size: 12px;">${verifyUrl}</a>
-              </p>
             </td>
           </tr>
 

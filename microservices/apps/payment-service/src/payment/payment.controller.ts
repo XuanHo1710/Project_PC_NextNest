@@ -20,22 +20,13 @@ export class PaymentController {
     data: {
       orderCode: number;
       status: string;
-      customerEmail: string;
-      orderItems: Array<{
-        productVariant: string;
-        productName?: string;
-        combination?: Record<string, string>;
-        quantity: number;
-        price: number;
-        subtotal: number;
-      }>;
+      guestId: string | null;
     },
   ) {
     return this.vnpayService.verifyPayment(
       data.orderCode,
       data.status,
-      data.customerEmail,
-      data.orderItems,
+      data.guestId,
     );
   }
 

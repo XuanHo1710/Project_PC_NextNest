@@ -4,7 +4,7 @@ import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
 import { IProductCard, IProductWithPagination, IProductVariant } from "@/types/product";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Carousel, Rate, Tag, Tabs, message, Breadcrumb, Divider, Badge, Image } from "antd";
+import { Button, Carousel, Rate, Tag, Tabs, message, Divider, Badge, Image } from "antd";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ProductDetailSkeleton } from "@/components/Skeletons";
@@ -37,6 +37,7 @@ import {
 import Swal from "sweetalert2";
 import useAuthUser from '@/hooks/useAuthUser';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import BreadcrumbNav from '@/components/client/Breadcrumb/Breadcrumb';
 
 // Extended product type from findBySlug (includes variants + allowValues)
 interface ProductDetail extends IProductCard {
@@ -235,13 +236,10 @@ export default function ProductDetailClient() {
             <div className="pt-3 bg-slate-50 dark:bg-gray-900 dark:text-white min-h-screen">
                 {/* Breadcrumb */}
                 <div className="mx-5 xl:mx-32 mb-4">
-                    <Breadcrumb
-                        items={[
-                            { title: <Link href="/home" className="flex items-center gap-1"><HomeOutlined /> Trang chủ</Link> },
-                            ...(product.category ? [{ title: <Link href={`/collection/${product.category.slug}`}>{product.category.name}</Link> }] : []),
-                            { title: <span className="text-blue-600 font-medium">{product.name}</span> },
-                        ]}
-                    />
+                    <BreadcrumbNav items={[
+                        ...(product.category ? [{ label: product.category.name, href: `/collection/${product.category.slug}` }] : []),
+                        { label: product.name },
+                    ]} />
                 </div>
 
                 {/* Main Product Card */}

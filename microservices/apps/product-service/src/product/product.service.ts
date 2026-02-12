@@ -638,13 +638,47 @@ export class ProductService {
   }
 
   // ============= PRODUCT VARIANT CRUD =============
+
+  /**
+   * Recompute minPrice/maxPrice on the parent Product from its active variants.
+   * The "price" used is the effective (discounted) price: price * (1 - discount/100)
+   */
+  private async recomputeProductPrices(productId: string) {
+    const variants = await this.productVariantModel
+      .find({ product: new Types.ObjectId(productId), isDeleted: false })
+      .select('price discount')
+      .lean()
+      .exec();
+
+    if (variants.length === 0) {
+      await this.productModel.updateOne(
+        { _id: new Types.ObjectId(productId) },
+        { $set: { minPrice: 0, maxPrice: 0 } },
+      );
+      return;
+    }
+
+    const effectivePrices = variants.map((v) =>
+      Math.round(v.price * (1 - (v.discount || 0) / 100)),
+    );
+    const minPrice = Math.min(...effectivePrices);
+    const maxPrice = Math.max(...effectivePrices);
+
+    await this.productModel.updateOne(
+      { _id: new Types.ObjectId(productId) },
+      { $set: { minPrice, maxPrice } },
+    );
+  }
+
   async createProductVariant(createProductVariantDto: CreateProductVariantDto) {
     const payload = {
       ...createProductVariantDto,
       product: new Types.ObjectId(createProductVariantDto.product),
     };
     const variant = new this.productVariantModel(payload);
-    return await variant.save();
+    const saved = await variant.save();
+    await this.recomputeProductPrices(createProductVariantDto.product);
+    return saved;
   }
 
   async createBulkProductVariants(variants: CreateProductVariantDto[]) {
@@ -658,6 +692,10 @@ export class ProductService {
       const variantSaved = (await variant.save()).toObject();
       results.push(variantSaved);
     }
+    // Recompute prices for the parent product
+    if (variants.length > 0) {
+      await this.recomputeProductPrices(variants[0].product);
+    }
     return results;
   }
 
@@ -668,6 +706,14 @@ export class ProductService {
     for (const update of updates) {
       const result = await this.updateProductVariant(update.id, update.data);
       results.push(result);
+    }
+    // Recompute prices — get productId from first updated variant
+    if (results.length > 0 && results[0]?.product) {
+      const pid =
+        typeof results[0].product === 'object'
+          ? results[0].product._id?.toString()
+          : results[0].product.toString();
+      if (pid) await this.recomputeProductPrices(pid);
     }
     return results;
   }
@@ -697,7 +743,10 @@ export class ProductService {
       .exec();
 
     // Create new variants
-    if (!newVariants || newVariants.length === 0) return [];
+    if (!newVariants || newVariants.length === 0) {
+      await this.recomputeProductPrices(productId);
+      return [];
+    }
 
     const results = await this.productVariantModel.insertMany(
       newVariants.map((dto) => ({
@@ -705,6 +754,7 @@ export class ProductService {
         product: new Types.ObjectId(productId),
       })),
     );
+    await this.recomputeProductPrices(productId);
     return results;
   }
 
@@ -773,6 +823,12 @@ export class ProductService {
     if (!variant) {
       throw new NotFoundException(`Product variant with ID ${id} not found`);
     }
+    // Recompute parent product prices
+    const pid =
+      typeof variant.product === 'object'
+        ? (variant.product as any)._id?.toString()
+        : variant.product;
+    if (pid) await this.recomputeProductPrices(pid);
     return variant;
   }
 
@@ -790,6 +846,10 @@ export class ProductService {
 
     if (!variant) {
       throw new NotFoundException(`Product variant with ID ${id} not found`);
+    }
+    // Recompute parent product prices after soft-delete
+    if (variant.product) {
+      await this.recomputeProductPrices(variant.product.toString());
     }
     return { message: 'Product variant deleted successfully', data: variant };
   }

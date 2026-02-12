@@ -25,6 +25,8 @@ export class VnpayService {
     private readonly productService: ClientProxy,
     @Inject(MICROSERVICE.ORDER_SERVICE)
     private readonly orderService: ClientProxy,
+    @Inject(MICROSERVICE.CART_SERVICE)
+    private readonly cartService: ClientProxy,
   ) {
     this.clientID = this.configService.get<string>('PAYOS_CLIENTID') || '';
     this.apiKey = this.configService.get<string>('PAYOS_APIKEY') || '';
@@ -145,19 +147,12 @@ export class VnpayService {
   /**
    * Verify payment from PayOS return URL
    * On success: update payment + order status, decrement stock, send email
+   * Fetches order details from order-service instead of relying on client data
    */
   async verifyPayment(
     orderCode: number,
     status: string,
-    customerEmail: string,
-    orderItems: Array<{
-      productVariant: string;
-      productName?: string;
-      combination?: Record<string, string>;
-      quantity: number;
-      price: number;
-      subtotal: number;
-    }>,
+    guestId: string | null,
   ) {
     try {
       const payos = this.createPayOS();
@@ -175,6 +170,36 @@ export class VnpayService {
           message: 'Không tìm thấy thông tin thanh toán',
         };
       }
+
+      // Fetch order details from order-service
+      let order: any = null;
+      try {
+        order = await firstValueFrom(
+          this.orderService.send('order.getById', {
+            orderId: payment.order.toString(),
+          }),
+        );
+      } catch (err) {
+        console.error('Failed to fetch order:', err);
+      }
+
+      // Build orderItems and customerEmail from the order record
+      const orderItems: Array<{
+        productVariant: string;
+        productName?: string;
+        combination?: Record<string, string>;
+        quantity: number;
+        price: number;
+        subtotal: number;
+      }> = (order?.orderDetail || []).map((item: any) => ({
+        productVariant: item.variantId || '',
+        productName: item.productName || '',
+        combination: item.combination || {},
+        quantity: item.quantity || 0,
+        price: item.price || 0,
+        subtotal: item.subtotal || 0,
+      }));
+      const customerEmail: string = order?.customerInfo?.email || '';
 
       if (paymentLinkInfo.status === 'PAID') {
         // Update payment status to PAID
@@ -199,6 +224,18 @@ export class VnpayService {
           );
         } catch (err) {
           console.error('Failed to update order status:', err);
+        }
+
+        // Clear the guest's cart after successful payment
+        if (guestId) {
+          this.cartService
+            .send('cart.update', {
+              id: guestId,
+              updateCartDto: { guestId, cartItems: [], total: 0 },
+            })
+            .subscribe({
+              error: (err) => console.error('Cart clear error:', err),
+            });
         }
 
         // Send email notification (fire and forget, don't block the response)

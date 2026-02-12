@@ -15,6 +15,7 @@ import { CategoryPageSkeleton } from "@/components/Skeletons";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import { PaginatedResponse } from "@/types";
 import { getDefaultCartVariant } from "@/utils/productHelpers";
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 import { FiShoppingCart } from "react-icons/fi";
 import {
     getProductDisplayPrice,
@@ -254,14 +255,10 @@ export default function CollectionPage() {
 
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
                 {/* Breadcrumb */}
-                <div className="mx-5 xl:mx-32 flex items-center flex-wrap gap-2 py-3">
-                    <Link href="/home" className="font-medium text-sm text-stone-500 hover:text-blue-500 transition-colors">
-                        Trang chủ
-                    </Link>
-                    <span className="text-stone-400">/</span>
-                    {collectionName && (
-                        <span className="font-medium text-sm text-blue-500">{collectionName}</span>
-                    )}
+                <div className="mx-5 xl:mx-32">
+                    <Breadcrumb items={[
+                        ...(collectionName ? [{ label: collectionName }] : []),
+                    ]} />
                 </div>
 
                 {/* Page Title */}

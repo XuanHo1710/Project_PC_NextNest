@@ -7,12 +7,10 @@ const CategoryPageSkeleton = () => {
     return (
         <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-white">
             {/* Breadcrumb skeleton */}
-            <div className='mx-5 xl:mx-32 content-header flex items-center flex-wrap'>
-                <Skeleton width={80} height={24} className="mr-3" />
-                <div className="mr-3">
-                    <Skeleton width={10} height={16} />
-                </div>
-                <Skeleton width={160} height={24} className="mr-3" />
+            <div className='mx-5 xl:mx-32 flex items-center gap-2 py-3'>
+                <Skeleton width={80} height={18} />
+                <span className="text-gray-300">/</span>
+                <Skeleton width={140} height={18} />
             </div>
 
             {/* Category title skeleton */}
