@@ -17,13 +17,6 @@ interface VerifyResponse {
 }
 
 class PaymentClientService {
-  async createVnpayPayment(
-    data: CreatePaymentRequest,
-  ): Promise<PaymentResponse> {
-    const response = await axiosClient.post("/payment/create-vnpay-url", data);
-    return response.data;
-  }
-
   async verifyVnpayReturn(
     queryParams: URLSearchParams,
   ): Promise<VerifyResponse> {

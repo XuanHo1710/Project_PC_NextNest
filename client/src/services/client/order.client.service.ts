@@ -2,7 +2,12 @@ import axiosClient from "@/config/axiosClient";
 import { IOrderData } from "@/types/order";
 
 class OrderClientService {
-  async createOrder(data: IOrderData): Promise<IOrderData> {
+  async createOrderWithCARD(data: IOrderData): Promise<{ url: string }> {
+    const response = await axiosClient.post("/order", data);
+    return response.data;
+  }
+
+  async createOrderWithCOD(data: IOrderData): Promise<IOrderData> {
     const response = await axiosClient.post("/order", data);
     return response.data;
   }

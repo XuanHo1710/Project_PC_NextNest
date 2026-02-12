@@ -16,7 +16,7 @@ import { ICartItemOrder } from "@/types/order";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import { accountGuestService } from "@/services/client";
 import { formatCurrencyVND } from "@/utils/productHelpers";
-import { District, IOrderDataCreate, Province, Ward } from "@/types";
+import { District, IOrderData, Province, Ward } from "@/types";
 
 interface OrderFormData {
     fullname: string;
@@ -233,7 +233,7 @@ export default function CartClient() {
         const fullAddress = `${data.detailAddress}, ${wardName}, ${districtName}, ${provinceName}`;
 
         // Prepare order data
-        const orderData: IOrderDataCreate = {
+        const orderData: IOrderData = {
             customerInfo: {
                 guestId: user?.id || "",
                 fullname: data.fullname,
@@ -244,8 +244,9 @@ export default function CartClient() {
             },
             orderDetail: cart.cartItems.map(item => {
                 return {
+                    product: item.product,
                     price: item.price,
-                    productVariant: { _id: item.variant._id },
+                    productVariant: item.variant,
                     quantity: item.quantity,
                     subtotal: item.subtotal
                 } as ICartItemOrder
@@ -254,11 +255,10 @@ export default function CartClient() {
             status: 'PENDING'
         };
 
-        console.log("Order Data:", orderData);
 
-        // sessionStorage.setItem("orderData", JSON.stringify(orderData));
+        sessionStorage.setItem("orderData", JSON.stringify(orderData));
 
-        // router.push('/payment');
+        router.push('/payment');
     };
 
     if (isLoadingProfile) {

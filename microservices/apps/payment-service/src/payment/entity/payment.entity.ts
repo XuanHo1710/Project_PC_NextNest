@@ -6,6 +6,9 @@ export type PaymentDocument = HydratedDocument<Payment>;
 export class Payment {
   _id: Types.ObjectId;
 
+  @Prop({ required: true, unique: true })
+  paymentCode: number;
+
   @Prop({ required: true, ref: 'AccountGuest' })
   guest: Types.ObjectId;
 

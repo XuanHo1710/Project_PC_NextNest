@@ -76,7 +76,7 @@ export type { IBrand } from "./brand";
 export type { IDiscount } from "./discount";
 
 // Order & Cart
-export type { ICartItem, ICart, IOrderDataCreate } from "./order";
+export type { ICartItem, ICart, IOrderData } from "./order";
 
 // Interaction
 export type {

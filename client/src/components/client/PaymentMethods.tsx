@@ -23,28 +23,28 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
 
     const createOrderMutation = useMutation({
         mutationFn: async (newOrderData: IOrderData) => {
-            return await orderClientService.createOrder(newOrderData);
+            return await orderClientService.createOrderWithCARD(newOrderData);
         },
         onSuccess: (data) => {
             toast.success('Đơn hàng đã được tạo thành công!');
             // Tạo thông tin đơn hàng mẫu để chuyển đến trang success
-            const orderInfo = {
-                orderId: data._id || "",
-                customerName: data.customerInfo.fullname,
-                phone: data.customerInfo.phone,
-                address: data.customerInfo.address,
-                total: data.totalAmount.toString() || "0"
-            };
+            // const orderInfo = {
+            //     orderId: data._id || "",
+            //     customerName: data.customerInfo.fullname,
+            //     phone: data.customerInfo.phone,
+            //     address: data.customerInfo.address,
+            //     total: data.totalAmount.toString() || "0"
+            // };
 
             // Chuyển hướng đến trang order-success với thông tin đơn hàng
-            const params = new URLSearchParams(orderInfo);
+            // const params = new URLSearchParams(orderInfo);
             if (sessionStorage.getItem('orderData'))
                 sessionStorage.removeItem('orderData');
 
             // Xóa giỏ hàng
             clearCart();
 
-            router.push(`${pathClientRoutes.orderSuccess}?${params.toString()}`);
+            // router.push(`${pathClientRoutes.orderSuccess}?${params.toString()}`);
             return;
         },
         onError: () => {
@@ -65,15 +65,21 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
         if (paymentMethod === 'vnpay' && orderData) {
             try {
                 setLoading(true);
-                const paymentUrl = await paymentClientService.createVnpayPayment({
-                    orderId: `DH${Date.now().toString().slice(-6)}`,
-                    orderDescription: `Thanh toan don hang`,
-                    ...orderData
+                const paymentUrl = await orderClientService.createOrderWithCARD({
+                    customerInfo: orderData.customerInfo,
+                    orderDetail: orderData.orderDetail,
+                    totalAmount: orderData.totalAmount,
+                    payment: {
+                        isCheckout: true,
+                        type: 'CARD'
+                    },
                 });
 
+                console.log("VNPay Payment URL:", paymentUrl);
 
-                if (paymentUrl && paymentUrl?.vnpayResponse) {
-                    window.location.href = paymentUrl?.vnpayResponse as string || "";
+
+                if (paymentUrl) {
+                    window.location.href = paymentUrl.url || "";
                 }
 
                 // Chuyển hướng đến trang thanh toán VNPay

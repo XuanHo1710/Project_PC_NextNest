@@ -72,7 +72,7 @@ export class OrderService {
           order: order._id.toString(),
           amount: order.totalAmount,
         };
-        this.paymentService.emit('payment.create', {
+        return this.paymentService.send('payment.create', {
           createPaymentDto: createPaymentDto,
           ip: ip,
         });
@@ -82,12 +82,10 @@ export class OrderService {
           order: order._id.toString(),
           amount: order.totalAmount,
         };
-        this.paymentService.emit('payment.createForCashOnDelivery', {
+        return this.paymentService.send('payment.createForCashOnDelivery', {
           createPaymentDto: createPaymentDto,
         });
       }
-
-      return order;
     } catch (error) {
       // Xử lý lỗi tại đây (gửi cái message lỗi cho bên service khác biết)
       console.error('Error creating order:', error);

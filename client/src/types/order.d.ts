@@ -23,8 +23,15 @@ export interface ICartItem {
 }
 
 export interface ICartItemOrder {
+  product: IProductCard; // Product info for display (name, slug, brand, category)
   productVariant: {
     _id: string;
+    sku: string;
+    price: number;
+    discount: number;
+    stock: number;
+    images: string[];
+    combination: Record<string, string>;
   };
   quantity: number;
   subtotal: number;
@@ -46,7 +53,7 @@ export interface IServerCartItem {
   price: number;
 }
 
-export interface IOrderDataCreate {
+export interface IOrderData {
   _id?: string;
   customerInfo: {
     guestId: string;
@@ -65,4 +72,8 @@ export interface IOrderDataCreate {
     | "COMPLETED"
     | "CANCELLED"
     | "REFUNDED";
+  payment?: {
+    isCheckout: boolean;
+    type: string;
+  };
 }

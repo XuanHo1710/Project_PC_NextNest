@@ -1,29 +1,15 @@
 "use client";
 
 import React from 'react';
-import { Card, Divider } from 'antd';
+import { Card, Divider, Tag } from 'antd';
 import PaymentMethods from '@/components/client/PaymentMethods';
 import Link from 'next/link';
-import { IOrderData } from '@/types/order';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
+import { IOrderData } from '@/types';
 
 const PaymentPage = () => {
-    // Dữ liệu đơn hàng mẫu
+    // Dữ liệu đơn hàng
     const orderData: IOrderData = sessionStorage.getItem("orderData") ? JSON.parse(sessionStorage.getItem("orderData") || "") : {}
-    let orderInfo = { products: [{ name: '', quantity: 0, price: 0 }], shipping: 0, discount: 0 };
-    if (Object.keys(orderData).length > 0) {
-        orderInfo = {
-            products: orderData.orderDetail.map(item => {
-                return {
-                    name: item.product.name,
-                    quantity: item.quantity,
-                    price: item.price
-                }
-            }),
-            shipping: 200000,
-            discount: 50
-        };
-    }
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -69,14 +55,17 @@ const PaymentPage = () => {
 
                                 <div className="space-y-4">
                                     <div style={{ scrollbarWidth: 'none' }} className='max-h-72 min-h-72 overflow-y-scroll'>
-                                        {orderInfo.products.map((product, index) => (
+                                        {orderData.orderDetail.map((item, index) => (
                                             <div className='flex border-[1px] border-blue-300 p-3 rounded-md my-3 justify-between' key={index}>
                                                 <div className="flex-1">
-                                                    <p className="font-medium text-gray-800 line-clamp-2">{product.name}</p>
-                                                    <p className="text-sm mt-2 text-gray-600">Số lượng: {product.quantity}</p>
+                                                    <p className="font-medium text-gray-800 line-clamp-2">{item.product.name}</p>
+                                                    <Tag color="blue" className="!text-xs !m-0 !rounded-md mt-1">
+                                                        {Object.entries(item.productVariant.combination).map(([key, val]) => (`${key}: ${val} `))}
+                                                    </Tag>
+                                                    <p className="text-sm mt-2 text-gray-600">Số lượng: {item.quantity}</p>
                                                 </div>
                                                 <p className="font-semibold text-blue-500 ml-4">
-                                                    {formatCurrency(product.price * product.quantity)}
+                                                    {formatCurrency(item.price * item.quantity)}
                                                 </p>
                                             </div>
                                         ))}
@@ -91,12 +80,12 @@ const PaymentPage = () => {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Phí vận chuyển:</span>
-                                            <span className="font-medium">{formatCurrency(orderInfo.shipping)}</span>
+                                            <span className="font-medium">Free shipping</span>
                                         </div>
-                                        <div className="flex justify-between text-green-600">
+                                        {/* <div className="flex justify-between text-green-600">
                                             <span>Giảm giá:</span>
-                                            <span className="font-medium">-{formatCurrency(orderInfo.discount)}</span>
-                                        </div>
+                                            <span className="font-medium">-{formatCurrency(orderData.orderDetail.reduce((acc, item) => acc + item.productVariant.discount, 0))}</span>
+                                        </div> */}
 
                                         <Divider className="my-3" />
 
@@ -109,7 +98,7 @@ const PaymentPage = () => {
 
                                 <div className="mt-6 p-3 bg-blue-50 rounded-lg">
                                     <p className="text-xs text-blue-800 text-center">
-                                        🔒 Giao dịch được bảo mật với công nghệ mã hóa SSL
+                                        Giao dịch được bảo mật với công nghệ mã hóa SSL
                                     </p>
                                 </div>
                             </Card>

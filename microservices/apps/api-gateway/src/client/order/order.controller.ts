@@ -20,8 +20,9 @@ export class OrderController {
     private readonly orderService: ClientProxy,
   ) {}
 
-  @Post('/create')
+  @Post()
   createOrder(@Body() createOrderDto: CreateOrderDto, @Req() req: Request) {
+    console.log('CreateOrderDto received at API Gateway:', createOrderDto);
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     return this.orderService.send('order.create', { createOrderDto, ip });
   }

@@ -33,17 +33,14 @@ export class PaymentController {
     return this.vnpayService.createPaymentUrl(data.createPaymentDto, data.ip);
   }
 
-  @MessagePattern('payment.verify')
-  handleVnpayReturn(@Payload() data: { query: any; guestId: string }) {
-    return this.vnpayService.verifyReturnUrl(data.query, data.guestId);
-  }
+  // @MessagePattern('payment.verify')
+  // handleVnpayReturn(@Payload() data: { query: any; guestId: string }) {
+  //   return this.vnpayService.verifyReturnUrl(data.query, data.guestId);
+  // }
 
   @MessagePattern('payment.createForCashOnDelivery')
-  createPaymentForCOD(
-    @Payload() data: { guestId: string; orderId: string; amount: number },
-  ) {
+  createPaymentForCOD(@Payload() data: { orderId: string; amount: number }) {
     return this.vnpayService.createPaymentForCashOnDelivery(
-      data.guestId,
       data.orderId,
       data.amount,
     );
