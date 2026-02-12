@@ -12,29 +12,11 @@ import useAuthUser from "@/hooks/useAuthUser";
 import { IAccountGuest } from "@/types/account-guest";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { IOrderData } from "@/types/order";
+import { ICartItemOrder } from "@/types/order";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import { accountGuestService } from "@/services/client";
 import { formatCurrencyVND } from "@/utils/productHelpers";
-
-
-
-interface Province {
-    code: number;
-    name: string;
-    districts: District[];
-}
-
-interface District {
-    code: number;
-    name: string;
-    wards: Ward[];
-}
-
-interface Ward {
-    code: number;
-    name: string;
-}
+import { District, IOrderDataCreate, Province, Ward } from "@/types";
 
 interface OrderFormData {
     fullname: string;
@@ -251,24 +233,32 @@ export default function CartClient() {
         const fullAddress = `${data.detailAddress}, ${wardName}, ${districtName}, ${provinceName}`;
 
         // Prepare order data
-        const orderData: IOrderData = {
-            guestId: user?.id || "guest",
+        const orderData: IOrderDataCreate = {
             customerInfo: {
+                guestId: user?.id || "",
                 fullname: data.fullname,
                 phone: data.phone,
                 email: data.email,
                 address: fullAddress,
                 note: data.note || ''
             },
-            orderDetail: cart.cartItems,
+            orderDetail: cart.cartItems.map(item => {
+                return {
+                    price: item.price,
+                    productVariant: { _id: item.variant._id },
+                    quantity: item.quantity,
+                    subtotal: item.subtotal
+                } as ICartItemOrder
+            }),
             totalAmount: totalAmount,
-            orderDate: new Date(),
             status: 'PENDING'
         };
 
-        sessionStorage.setItem("orderData", JSON.stringify(orderData));
+        console.log("Order Data:", orderData);
 
-        router.push('/payment');
+        // sessionStorage.setItem("orderData", JSON.stringify(orderData));
+
+        // router.push('/payment');
     };
 
     if (isLoadingProfile) {

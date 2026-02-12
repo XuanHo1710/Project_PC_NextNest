@@ -54,14 +54,9 @@ export class PaymentController {
     @Payload()
     data: {
       orderId: string;
-      guestId: string;
       status: 'PENDING' | 'PAID' | 'UNPAID';
     },
   ) {
-    return this.vnpayService.updatePaymentStatus(
-      data.orderId,
-      data.guestId,
-      data.status,
-    );
+    return this.vnpayService.updatePaymentStatus(data.orderId, data.status);
   }
 }

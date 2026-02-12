@@ -65,6 +65,7 @@ export type {
   ICreateProductDto,
   IUpdateProductDto,
   ICreateProductVariantDto,
+  IProductVariantPopulated,
 } from "./product";
 
 // Category & Brand
@@ -75,7 +76,7 @@ export type { IBrand } from "./brand";
 export type { IDiscount } from "./discount";
 
 // Order & Cart
-export type { ICartItem, ICart, IOrderData } from "./order";
+export type { ICartItem, ICart, IOrderDataCreate } from "./order";
 
 // Interaction
 export type {
@@ -100,3 +101,5 @@ export type { IPaymentTransaction } from "./payment";
 
 // Table (admin utils)
 export type { DataType, SelectedContextType } from "./table";
+
+export type { District, Province, Ward } from "./address";

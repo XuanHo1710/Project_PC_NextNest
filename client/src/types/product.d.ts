@@ -58,6 +58,22 @@ export interface IProductVariant {
   deletedAt?: string;
 }
 
+export interface IProductVariantPopulated {
+  _id: string;
+  sku: string;
+  subDescription?: string;
+  product: IProduct;
+  price: number;
+  stock: number;
+  discount: number; // 0 -> 100%
+  combination: Record<string, string>;
+  images: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
+}
+
 // ============== PRODUCT (Main Entity) ==============
 export interface IProduct {
   _id: string;

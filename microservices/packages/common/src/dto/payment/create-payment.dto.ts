@@ -1,8 +1,5 @@
 import { IsNotEmpty, IsNumber } from "class-validator";
 export class CreatePaymentDto {
-  @IsNotEmpty({ message: "Khách hàng không được để trống" })
-  guest: string;
-
   @IsNotEmpty({ message: "Đơn hàng không được để trống" })
   order: string;
 

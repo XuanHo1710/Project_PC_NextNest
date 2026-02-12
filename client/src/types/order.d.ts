@@ -1,6 +1,10 @@
 // ============== ORDER & CART ==============
 
-import type { IProductCard, IProductVariant } from "./product";
+import type {
+  IProductCard,
+  IProductVariant,
+  IProductVariantPopulated,
+} from "./product";
 
 export interface ICartItem {
   product: IProductCard; // Product info for display (name, slug, brand, category)
@@ -12,6 +16,15 @@ export interface ICartItem {
     stock: number;
     images: string[];
     combination: Record<string, string>;
+  };
+  quantity: number;
+  subtotal: number;
+  price: number; // Unit price after discount
+}
+
+export interface ICartItemOrder {
+  productVariant: {
+    _id: string;
   };
   quantity: number;
   subtotal: number;
@@ -33,19 +46,18 @@ export interface IServerCartItem {
   price: number;
 }
 
-export interface IOrderData {
+export interface IOrderDataCreate {
   _id?: string;
-  guestId: string;
   customerInfo: {
+    guestId: string;
     fullname: string;
     phone: string;
     email: string;
     address: string;
     note: string;
   };
-  orderDetail: ICartItem[];
+  orderDetail: ICartItemOrder[];
   totalAmount: number;
-  orderDate: Date;
   status?:
     | "PENDING"
     | "SHIPPING"

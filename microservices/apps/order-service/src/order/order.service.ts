@@ -69,7 +69,6 @@ export class OrderService {
       if (createOrderDto.payment.type === 'CARD') {
         // Đã tạo đơn hàng thành công, tiếp tục tạo payment
         const createPaymentDto = {
-          guest: order.customerInfo.guestId.toString(),
           order: order._id.toString(),
           amount: order.totalAmount,
         };
@@ -80,7 +79,6 @@ export class OrderService {
       } else {
         // Khách hàng chọn thanh toán khi nhận hàng (COD)
         const createPaymentDto = {
-          guest: order.customerInfo.guestId.toString(),
           order: order._id.toString(),
           amount: order.totalAmount,
         };

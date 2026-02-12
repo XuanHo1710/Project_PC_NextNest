@@ -35,9 +35,8 @@ export class VnpayService {
     amount: number,
   ) {
     // Tạo payment cho hình thức thanh toán khi nhận hàng (COD)
-    const paymentPayload: CreatePaymentDto = {
-      guest: guestId,
-      order: orderId,
+    const paymentPayload = {
+      order: new Types.ObjectId(orderId),
       amount: amount,
       status: 'PENDING',
       transactionId: '',
@@ -47,13 +46,11 @@ export class VnpayService {
 
   async updatePaymentStatus(
     orderId: string,
-    guestId: string,
     status: 'PENDING' | 'PAID' | 'UNPAID',
   ) {
     return await this.paymentModel.findOneAndUpdate(
       {
         order: new Types.ObjectId(orderId),
-        guest: new Types.ObjectId(guestId),
       },
       { status: status },
     );
@@ -100,9 +97,8 @@ export class VnpayService {
   }
 
   async verifyReturnUrl(vnpParams: any, guestId: string) {
-    const paymentPayload: CreatePaymentDto = {
-      guest: guestId,
-      order: vnpParams['vnp_TxnRef'],
+    const paymentPayload = {
+      order: new Types.ObjectId(vnpParams['vnp_TxnRef']),
       amount: parseInt(vnpParams['vnp_Amount']) || 0,
       status: 'PENDING',
       transactionId: vnpParams['vnp_TransactionNo'] || '',
