@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 import { Order, OrderSchema } from 'src/order/entities/order.entity';
 import { OrderController } from 'src/order/order.controller';
 import { OrderService } from 'src/order/order.service';
@@ -13,6 +14,7 @@ import {
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: Order.name, schema: OrderSchema },
       { name: ProductVariant.name, schema: ProductVariantSchema },

@@ -65,6 +65,7 @@ export class Order {
       'COMPLETED',
       'CANCELLED',
       'REFUNDED',
+      'EXPIRED',
     ],
     default: 'PENDING',
   })
@@ -72,6 +73,9 @@ export class Order {
 
   @Prop({ type: Date, default: Date.now })
   orderDate: Date;
+
+  @Prop({ type: Date, default: null })
+  expireAt: Date;
 
   @Prop(
     raw({

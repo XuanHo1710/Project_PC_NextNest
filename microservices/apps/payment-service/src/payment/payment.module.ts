@@ -24,6 +24,13 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
           port: MICROSERVICE_PORT.PRODUCT_SERVICE,
         },
       },
+      {
+        name: MICROSERVICE.ORDER_SERVICE,
+        transport: Transport.TCP,
+        options: {
+          port: MICROSERVICE_PORT.ORDER_SERVICE,
+        },
+      },
     ]),
     MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }]),
     ConfigModule,

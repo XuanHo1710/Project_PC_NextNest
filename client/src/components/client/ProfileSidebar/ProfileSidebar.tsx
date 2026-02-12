@@ -6,12 +6,13 @@ import { IClientUser } from '@/types/auth';
 
 interface ProfileSidebarProps {
     user: IClientUser | null;
-    activePage: 'detail' | 'order' | 'wishlist' | 'address' | 'password';
+    activePage: 'detail' | 'order' | 'pending-payment' | 'wishlist' | 'address' | 'password';
 }
 
 const menuItems = [
     { key: 'detail', href: '/profile/detail', icon: 'fa-regular fa-user', label: 'Thông tin tài khoản' },
     { key: 'order', href: '/profile/order', icon: 'far fa-list-alt', label: 'Tra cứu đơn hàng' },
+    { key: 'pending-payment', href: '/profile/pending-payment', icon: 'fa-solid fa-credit-card', label: 'Đơn chờ thanh toán' },
     { key: 'wishlist', href: '/profile/wishlist', icon: 'fa-solid fa-heart', label: 'Danh sách yêu thích' },
     { key: 'address', href: '/profile/address', icon: 'fa-solid fa-location-dot', label: 'Quản lý địa chỉ' },
     { key: 'password', href: '/profile/password', icon: 'fas fa-lock', label: 'Thay đổi mật khẩu' },
@@ -36,8 +37,8 @@ export default function ProfileSidebar({ user, activePage }: ProfileSidebarProps
                     <Link
                         key={item.key}
                         className={`font-medium block my-3 py-3 px-5 rounded-lg ${activePage === item.key
-                                ? 'bg-blue-400 text-white'
-                                : 'hover:bg-blue-400 hover:text-white bg-stone-100 text-stone-600'
+                            ? 'bg-blue-400 text-white'
+                            : 'hover:bg-blue-400 hover:text-white bg-stone-100 text-stone-600'
                             }`}
                         href={item.href}
                     >

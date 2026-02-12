@@ -9,6 +9,7 @@ import {
 import { Order } from 'src/order/entities/order.entity';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class OrderService {
@@ -24,7 +25,9 @@ export class OrderService {
 
   async createOrder(createOrderDto: CreateOrderDto, ip: string) {
     try {
-      const dataCreate = {
+      const isOnlinePayment = createOrderDto.payment.type === 'CARD';
+
+      const dataCreate: any = {
         customerInfo: {
           guestId: new Types.ObjectId(createOrderDto.customerInfo.guestId),
           fullname: createOrderDto.customerInfo.fullname,
@@ -51,10 +54,15 @@ export class OrderService {
         },
       };
 
+      // For CARD orders: set expireAt to 24 hours from now
+      if (isOnlinePayment) {
+        dataCreate.expireAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      }
+
       const order = await this.orderModel.create(dataCreate);
 
-      if (createOrderDto.payment.type === 'CARD') {
-        // Online payment: create PayOS payment link
+      if (isOnlinePayment) {
+        // Online payment: create PayOS payment link + payment record
         const createPaymentDto = {
           order: order._id.toString(),
           amount: order.totalAmount,
@@ -74,14 +82,8 @@ export class OrderService {
           paymentType: 'CARD',
         };
       } else {
-        // COD payment: create payment record and process immediately
-        const codPayment = await firstValueFrom(
-          this.paymentService.send('payment.createForCashOnDelivery', {
-            orderId: order._id.toString(),
-            amount: order.totalAmount,
-            guestId: createOrderDto.customerInfo.guestId,
-          }),
-        );
+        // COD payment: NO payment record created yet
+        // Payment record for COD is created when seller confirms money received
 
         // Update stock for COD orders immediately
         for (const item of createOrderDto.orderDetail) {
@@ -131,6 +133,65 @@ export class OrderService {
     }
   }
 
+  /**
+   * Retry payment for an existing PENDING/EXPIRED online order
+   * Creates a new payment record (new attempt) and returns new PayOS link
+   */
+  async retryPayment(orderId: string, ip: string) {
+    const order = await this.orderModel.findById(orderId);
+    if (!order) {
+      throw new Error('Đơn hàng không tồn tại');
+    }
+
+    if (order.payment.type !== 'CARD') {
+      throw new Error('Đơn hàng này không phải thanh toán online');
+    }
+
+    if (!['PENDING', 'EXPIRED'].includes(order.status)) {
+      throw new Error('Đơn hàng không ở trạng thái cho phép thanh toán lại');
+    }
+
+    // Reset order status back to PENDING + extend expireAt
+    order.status = 'PENDING';
+    order.expireAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await order.save();
+
+    // Create new payment record (new attempt)
+    const createPaymentDto = {
+      order: order._id.toString(),
+      amount: order.totalAmount,
+      guestId: order.customerInfo.guestId.toString(),
+    };
+    const paymentResult = await firstValueFrom(
+      this.paymentService.send('payment.create', {
+        createPaymentDto,
+        ip,
+      }),
+    );
+
+    return {
+      orderId: order._id.toString(),
+      url: paymentResult.url,
+      orderCode: paymentResult.orderCode,
+      paymentType: 'CARD',
+    };
+  }
+
+  /**
+   * Get all PENDING online orders for a guest (awaiting payment)
+   */
+  async getPendingOnlineOrders(guestId: string) {
+    const orders = await this.orderModel
+      .find({
+        'customerInfo.guestId': new Types.ObjectId(guestId),
+        'payment.type': 'CARD',
+        status: { $in: ['PENDING', 'EXPIRED'] },
+      })
+      .populate('orderDetail.productVariant')
+      .sort({ createdAt: -1 });
+    return orders;
+  }
+
   async getOrderById(orderId: string) {
     const order = await this.orderModel
       .findById(orderId)
@@ -161,5 +222,53 @@ export class OrderService {
       { payment: updateOrderDto.payment },
       { new: true },
     );
+  }
+
+  /**
+   * Cron job: expire orders that have passed their expireAt time
+   * Runs every 5 minutes
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async handleExpiredOrders() {
+    try {
+      const now = new Date();
+
+      // Find all PENDING orders with expired expireAt
+      const expiredOrders = await this.orderModel.find({
+        status: 'PENDING',
+        expireAt: { $ne: null, $lte: now },
+      });
+
+      if (expiredOrders.length === 0) return;
+
+      const orderIds = expiredOrders.map((o) => o._id);
+
+      // Update all expired orders to EXPIRED status
+      await this.orderModel.updateMany(
+        { _id: { $in: orderIds } },
+        { status: 'EXPIRED' },
+      );
+
+      // Update all PENDING payments of these orders to EXPIRED
+      for (const orderId of orderIds) {
+        try {
+          await firstValueFrom(
+            this.paymentService.send('payment.expireByOrderId', {
+              orderId: orderId.toString(),
+            }),
+          );
+        } catch (err) {
+          console.error(
+            'Failed to expire payments for order:',
+            orderId.toString(),
+            err,
+          );
+        }
+      }
+
+      console.log(`Expired ${expiredOrders.length} orders`);
+    } catch (error) {
+      console.error('Error in handleExpiredOrders cron:', error);
+    }
   }
 }

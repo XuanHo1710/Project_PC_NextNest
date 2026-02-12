@@ -26,13 +26,24 @@ export class OrderController {
     return this.orderService.send('order.create', { createOrderDto, ip });
   }
 
+  @Get('/guest/:guestId')
+  getOrdersByGuestId(@Param('guestId') guestId: string) {
+    return this.orderService.send('order.getAllByGuestId', { guestId });
+  }
+
+  @Get('/pending-online/:guestId')
+  getPendingOnlineOrders(@Param('guestId') guestId: string) {
+    return this.orderService.send('order.getPendingOnline', { guestId });
+  }
+
   @Get('/:id')
   getOrderById(@Param('id') id: string) {
     return this.orderService.send('order.getById', { orderId: id });
   }
 
-  @Get('/guest/:guestId')
-  getOrdersByGuestId(@Param('guestId') guestId: string) {
-    return this.orderService.send('order.getAllByGuestId', { guestId });
+  @Post('/:id/retry-payment')
+  retryPayment(@Param('id') id: string, @Req() req: Request) {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    return this.orderService.send('order.retryPayment', { orderId: id, ip });
   }
 }

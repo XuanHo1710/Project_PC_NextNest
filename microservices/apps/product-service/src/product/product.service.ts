@@ -177,7 +177,7 @@ export class ProductService {
       throw new NotFoundException(`Product with slug "${slug}" not found`);
     }
     // Populate default variant
-    let defaultVariant = null;
+    let defaultVariant: any = null;
     if (product.defaultProductVariantId) {
       defaultVariant = await this.productVariantModel
         .findOne({

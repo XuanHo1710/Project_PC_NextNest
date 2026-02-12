@@ -71,7 +71,8 @@ export interface IOrderData {
     | "DELIVERED"
     | "COMPLETED"
     | "CANCELLED"
-    | "REFUNDED";
+    | "REFUNDED"
+    | "EXPIRED";
   payment?: {
     isCheckout: boolean;
     type: string;
@@ -115,8 +116,10 @@ export interface IOrder {
     | "DELIVERED"
     | "COMPLETED"
     | "CANCELLED"
-    | "REFUNDED";
+    | "REFUNDED"
+    | "EXPIRED";
   orderDate: string;
+  expireAt?: string;
   payment: {
     isCheckout: boolean;
     type: string;

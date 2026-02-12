@@ -12,7 +12,6 @@ import {
 } from '@ant-design/icons';
 import { paymentClientService, VerifyPaymentResponse } from '@/services/client/payment.client.service';
 import Link from 'next/link';
-import useCartStore from '@/hooks/useCart';
 import { motion } from 'framer-motion';
 
 const { Title, Text, Paragraph } = Typography;
@@ -45,7 +44,6 @@ type VerifyStatus = 'loading' | 'success' | 'failed' | 'cancelled';
 export default function PaymentInfoPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const { clearCart } = useCartStore();
     const [status, setStatus] = useState<VerifyStatus>('loading');
     const [verifyResult, setVerifyResult] = useState<VerifyPaymentResponse | null>(null);
     const [pendingOrder, setPendingOrder] = useState<PendingOrder | null>(null);
@@ -111,7 +109,6 @@ export default function PaymentInfoPage() {
 
                 if (result.success) {
                     setStatus('success');
-                    clearCart();
                     sessionStorage.removeItem('pendingOrder');
                     sessionStorage.removeItem('orderData');
                 } else {
@@ -124,7 +121,7 @@ export default function PaymentInfoPage() {
         };
 
         verify();
-    }, [searchParams, clearCart]);
+    }, [searchParams]);
 
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);

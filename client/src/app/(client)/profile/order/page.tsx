@@ -14,7 +14,7 @@ import { orderClientService } from '@/services/client/order.client.service';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import ProfileSidebar from '@/components/client/ProfileSidebar/ProfileSidebar';
 
-type OrderStatus = 'ALL' | 'PENDING' | 'SHIPPING' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED';
+type OrderStatus = 'ALL' | 'PENDING' | 'SHIPPING' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: string }> = {
     PENDING: { label: 'Chờ xác nhận', color: 'orange', textColor: 'text-orange-500' },
@@ -23,6 +23,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: s
     COMPLETED: { label: 'Hoàn thành', color: 'green', textColor: 'text-green-600' },
     CANCELLED: { label: 'Đã hủy', color: 'red', textColor: 'text-red-500' },
     REFUNDED: { label: 'Hoàn tiền', color: 'purple', textColor: 'text-purple-500' },
+    EXPIRED: { label: 'Hết hạn', color: 'default', textColor: 'text-gray-500' },
 };
 
 const PAYMENT_LABELS: Record<string, string> = {

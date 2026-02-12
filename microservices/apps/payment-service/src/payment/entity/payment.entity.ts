@@ -6,7 +6,7 @@ export type PaymentDocument = HydratedDocument<Payment>;
 export class Payment {
   _id: Types.ObjectId;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   paymentCode: number;
 
   @Prop({ required: true, ref: 'Order' })
@@ -17,13 +17,16 @@ export class Payment {
 
   @Prop({
     type: String,
-    enum: ['PENDING', 'PAID', 'UNPAID'],
+    enum: ['PENDING', 'PAID', 'UNPAID', 'EXPIRED'],
     default: 'PENDING',
   })
   status: string;
 
   @Prop({ default: '' })
-  transactionId: string; // Mã giao dịch từ cổng thanh toán;
+  transactionId: string; // Mã giao dịch từ cổng thanh toán
+
+  @Prop({ type: Number, default: 1 })
+  paymentAttempt: number; // Số lần thanh toán (đánh số thứ tự)
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);

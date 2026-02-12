@@ -22,6 +22,16 @@ export class OrderController {
     return this.orderService.getAllOrdersByGuestId(data.guestId);
   }
 
+  @MessagePattern('order.getPendingOnline')
+  getPendingOnlineOrders(@Payload() data: { guestId: string }) {
+    return this.orderService.getPendingOnlineOrders(data.guestId);
+  }
+
+  @MessagePattern('order.retryPayment')
+  retryPayment(@Payload() data: { orderId: string; ip: string }) {
+    return this.orderService.retryPayment(data.orderId, data.ip);
+  }
+
   @MessagePattern('order.updateStatus')
   updateOrderStatus(
     @Payload() data: { id: string; updateOrderDto: UpdateOrderDto },

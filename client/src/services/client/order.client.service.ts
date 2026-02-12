@@ -32,6 +32,16 @@ class OrderClientService {
     const response = await axiosClient.get(`/order/guest/${guestId}`);
     return response.data;
   }
+
+  async getPendingOnlineOrders(guestId: string): Promise<IOrder[]> {
+    const response = await axiosClient.get(`/order/pending-online/${guestId}`);
+    return response.data;
+  }
+
+  async retryPayment(orderId: string): Promise<CreateOrderResponse> {
+    const response = await axiosClient.post(`/order/${orderId}/retry-payment`);
+    return response.data;
+  }
 }
 
 export const orderClientService = new OrderClientService();

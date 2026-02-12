@@ -23,6 +23,8 @@ export class VnpayService {
     private readonly notificationService: ClientProxy,
     @Inject(MICROSERVICE.PRODUCT_SERVICE)
     private readonly productService: ClientProxy,
+    @Inject(MICROSERVICE.ORDER_SERVICE)
+    private readonly orderService: ClientProxy,
   ) {
     this.clientID = this.configService.get<string>('PAYOS_CLIENTID') || '';
     this.apiKey = this.configService.get<string>('PAYOS_APIKEY') || '';
@@ -38,14 +40,22 @@ export class VnpayService {
     });
   }
 
-  // Thanh toán khi nhận hàng (COD)
+  /**
+   * COD: Create payment record when seller confirms money received
+   */
   async createPaymentForCashOnDelivery(orderId: string, amount: number) {
+    // Count existing payment records for this order
+    const existingCount = await this.paymentModel.countDocuments({
+      order: new Types.ObjectId(orderId),
+    });
+
     const paymentPayload = {
       paymentCode: Date.now(),
       order: new Types.ObjectId(orderId),
       amount: amount,
-      status: 'PENDING',
+      status: 'PAID',
       transactionId: '',
+      paymentAttempt: existingCount + 1,
     };
     const payment = await this.paymentModel.create(paymentPayload);
     return payment;
@@ -53,19 +63,43 @@ export class VnpayService {
 
   async updatePaymentStatus(
     orderId: string,
-    status: 'PENDING' | 'PAID' | 'UNPAID',
+    status: 'PENDING' | 'PAID' | 'UNPAID' | 'EXPIRED',
   ) {
     return await this.paymentModel.findOneAndUpdate(
       {
         order: new Types.ObjectId(orderId),
+        status: 'PENDING',
       },
       { status: status },
-      { new: true },
+      { new: true, sort: { createdAt: -1 } },
     );
   }
 
+  /**
+   * Expire all PENDING payments for a given order
+   */
+  async expirePaymentsByOrderId(orderId: string) {
+    const result = await this.paymentModel.updateMany(
+      {
+        order: new Types.ObjectId(orderId),
+        status: 'PENDING',
+      },
+      { status: 'EXPIRED' },
+    );
+    return result;
+  }
+
+  /**
+   * Create payment link (online payment)
+   * Each call creates a NEW payment record (new attempt)
+   */
   async createPaymentUrl(createPaymentDto: CreatePaymentDto, ip: string) {
     const payos = this.createPayOS();
+
+    // Count existing payment records for this order to determine attempt number
+    const existingCount = await this.paymentModel.countDocuments({
+      order: new Types.ObjectId(createPaymentDto.order),
+    });
 
     const paymentCode: number = Date.now();
     const paymentLink = await payos.paymentRequests.create(
@@ -90,6 +124,7 @@ export class VnpayService {
       amount: createPaymentDto.amount,
       status: 'PENDING',
       transactionId: paymentLink.paymentLinkId || '',
+      paymentAttempt: existingCount + 1,
     });
 
     return {
@@ -98,7 +133,19 @@ export class VnpayService {
     };
   }
 
-  // Verify payment from PayOS return URL
+  /**
+   * Get all payments for an order
+   */
+  async getPaymentsByOrderId(orderId: string) {
+    return await this.paymentModel
+      .find({ order: new Types.ObjectId(orderId) })
+      .sort({ createdAt: -1 });
+  }
+
+  /**
+   * Verify payment from PayOS return URL
+   * On success: update payment + order status, decrement stock, send email
+   */
   async verifyPayment(
     orderCode: number,
     status: string,
@@ -139,6 +186,21 @@ export class VnpayService {
         // Update stock for each product variant
         await this.updateProductStock(orderItems);
 
+        // Update order status to COMPLETED (paid successfully)
+        try {
+          await firstValueFrom(
+            this.orderService.send('order.updateStatus', {
+              id: payment.order.toString(),
+              updateOrderDto: {
+                status: 'COMPLETED',
+                payment: { isCheckout: true, type: 'CARD' },
+              },
+            }),
+          );
+        } catch (err) {
+          console.error('Failed to update order status:', err);
+        }
+
         // Send email notification (fire and forget, don't block the response)
         this.sendOrderEmailNotification(
           customerEmail,
@@ -158,6 +220,7 @@ export class VnpayService {
             transactionId: payment.transactionId,
             paidAt:
               paymentLinkInfo.transactions?.[0]?.transactionDateTime || null,
+            orderId: payment.order.toString(),
           },
         };
       } else if (
@@ -177,6 +240,7 @@ export class VnpayService {
             paymentCode: payment.paymentCode,
             amount: payment.amount,
             status: payment.status,
+            orderId: payment.order.toString(),
           },
         };
       } else {
@@ -188,6 +252,7 @@ export class VnpayService {
             paymentCode: payment.paymentCode,
             amount: payment.amount,
             status: paymentLinkInfo.status,
+            orderId: payment.order.toString(),
           },
         };
       }

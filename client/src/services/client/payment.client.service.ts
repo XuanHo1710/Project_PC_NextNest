@@ -23,6 +23,7 @@ export interface VerifyPaymentResponse {
     status: string;
     transactionId?: string;
     paidAt?: string;
+    orderId?: string;
   };
 }
 

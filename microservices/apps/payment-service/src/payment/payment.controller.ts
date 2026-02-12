@@ -45,7 +45,6 @@ export class PaymentController {
     data: {
       orderId: string;
       amount: number;
-      guestId: string;
     },
   ) {
     return this.vnpayService.createPaymentForCashOnDelivery(
@@ -59,9 +58,29 @@ export class PaymentController {
     @Payload()
     data: {
       orderId: string;
-      status: 'PENDING' | 'PAID' | 'UNPAID';
+      status: 'PENDING' | 'PAID' | 'UNPAID' | 'EXPIRED';
     },
   ) {
     return this.vnpayService.updatePaymentStatus(data.orderId, data.status);
+  }
+
+  @MessagePattern('payment.expireByOrderId')
+  expirePaymentsByOrderId(
+    @Payload()
+    data: {
+      orderId: string;
+    },
+  ) {
+    return this.vnpayService.expirePaymentsByOrderId(data.orderId);
+  }
+
+  @MessagePattern('payment.getByOrderId')
+  getPaymentsByOrderId(
+    @Payload()
+    data: {
+      orderId: string;
+    },
+  ) {
+    return this.vnpayService.getPaymentsByOrderId(data.orderId);
   }
 }
