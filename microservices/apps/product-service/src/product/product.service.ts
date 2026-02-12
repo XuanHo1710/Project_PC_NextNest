@@ -881,6 +881,32 @@ export class ProductService {
     return variant;
   }
 
+  // Increment stock for a product variant (saga compensation / rollback)
+  async incrementVariantStock(variantId: string, quantity: number) {
+    if (!Types.ObjectId.isValid(variantId)) {
+      throw new NotFoundException(`Invalid product variant ID: ${variantId}`);
+    }
+
+    const variant = await this.productVariantModel
+      .findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(variantId),
+          isDeleted: false,
+        },
+        { $inc: { stock: quantity } },
+        { new: true },
+      )
+      .exec();
+
+    if (!variant) {
+      throw new NotFoundException(
+        `Product variant ${variantId} not found for stock restoration`,
+      );
+    }
+
+    return variant;
+  }
+
   // ============= PRODUCT ATTRIBUTE CRUD =============
   async createProductAttribute(
     createProductAttributeDto: CreateProductAttributeDto,

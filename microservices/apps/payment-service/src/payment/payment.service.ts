@@ -295,6 +295,25 @@ export class VnpayService {
       }
     } catch (error) {
       console.error('Payment verification error:', error);
+
+      // Update payment status to UNPAID on verification failure
+      // so it doesn't stay PENDING forever
+      try {
+        const failedPayment = await this.paymentModel.findOne({
+          paymentCode: orderCode,
+          status: 'PENDING',
+        });
+        if (failedPayment) {
+          failedPayment.status = 'UNPAID';
+          await failedPayment.save();
+          console.log(
+            `Payment ${orderCode} marked as UNPAID due to verification error`,
+          );
+        }
+      } catch (updateErr) {
+        console.error('Failed to update payment status on error:', updateErr);
+      }
+
       return {
         success: false,
         message: 'Lỗi xác thực thanh toán',

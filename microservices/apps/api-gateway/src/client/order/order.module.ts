@@ -13,6 +13,13 @@ import { OrderController } from 'client/order/order.controller';
           port: MICROSERVICE_PORT.ORDER_SERVICE,
         },
       },
+      {
+        name: MICROSERVICE.SAGA_ORCHESTRATOR_SERVICE,
+        transport: Transport.TCP,
+        options: {
+          port: MICROSERVICE_PORT.SAGA_ORCHESTRATOR_SERVICE,
+        },
+      },
     ]),
   ],
   controllers: [OrderController],

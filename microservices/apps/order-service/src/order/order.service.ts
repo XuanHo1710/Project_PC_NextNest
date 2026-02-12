@@ -141,6 +141,66 @@ export class OrderService {
   }
 
   /**
+   * Saga pattern: Create ONLY the order record in DB.
+   * No payment creation, no stock decrement, no notification.
+   * Called by Saga Orchestrator Service.
+   */
+  async createRecord(createOrderDto: CreateOrderDto) {
+    const isOnlinePayment = createOrderDto.payment.type === 'CARD';
+
+    const dataCreate: any = {
+      customerInfo: {
+        guestId: new Types.ObjectId(createOrderDto.customerInfo.guestId),
+        fullname: createOrderDto.customerInfo.fullname,
+        address: createOrderDto.customerInfo.address,
+        email: createOrderDto.customerInfo.email,
+        phone: createOrderDto.customerInfo.phone,
+        note: createOrderDto.customerInfo.note,
+      },
+      orderDetail: createOrderDto.orderDetail.map((item: any) => ({
+        variantId: item.productVariant._id || '',
+        sku: item.productVariant?.sku || '',
+        variantPrice: item.productVariant?.price || 0,
+        discount: item.productVariant?.discount || 0,
+        images: item.productVariant?.images || [],
+        combination: item.productVariant?.combination || {},
+        productName: item.product?.name || '',
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.subtotal,
+      })),
+      totalAmount: createOrderDto.orderDetail.reduce(
+        (sum, item) => sum + item.subtotal,
+        0,
+      ),
+      payment: {
+        isCheckout: createOrderDto.payment.isCheckout,
+        type: createOrderDto.payment.type,
+      },
+    };
+
+    if (isOnlinePayment) {
+      dataCreate.expireAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    }
+
+    const order = await this.orderModel.create(dataCreate);
+    return order;
+  }
+
+  /**
+   * Saga compensation: Cancel an order (set status to CANCELLED).
+   * Called by Saga Orchestrator when a subsequent step fails.
+   */
+  async cancelOrder(orderId: string) {
+    const order = await this.orderModel.findByIdAndUpdate(
+      orderId,
+      { status: 'CANCELLED' },
+      { new: true },
+    );
+    return order;
+  }
+
+  /**
    * Retry payment for an existing PENDING/EXPIRED online order
    * Creates a new payment record (new attempt) and returns new PayOS link
    */

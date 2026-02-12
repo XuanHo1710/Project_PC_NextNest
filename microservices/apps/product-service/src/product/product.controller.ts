@@ -207,6 +207,16 @@ export class ProductController {
     );
   }
 
+  @MessagePattern('product.variant.incrementStock')
+  incrementVariantStock(
+    @Payload() data: { variantId: string; quantity: number },
+  ) {
+    return this.productService.incrementVariantStock(
+      data.variantId,
+      data.quantity,
+    );
+  }
+
   // ============= PRODUCT ATTRIBUTE ENDPOINTS =============
   @MessagePattern('product.attribute.create')
   createProductAttribute(

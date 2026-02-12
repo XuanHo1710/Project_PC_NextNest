@@ -18,12 +18,22 @@ export class OrderController {
   constructor(
     @Inject(MICROSERVICE.ORDER_SERVICE)
     private readonly orderService: ClientProxy,
+    @Inject(MICROSERVICE.SAGA_ORCHESTRATOR_SERVICE)
+    private readonly sagaService: ClientProxy,
   ) {}
 
+  /**
+   * Create order via Saga Orchestrator.
+   * The saga handles: order creation → payment/stock → notification
+   * with compensating transactions on failure.
+   */
   @Post()
   createOrder(@Body() createOrderDto: CreateOrderDto, @Req() req: Request) {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    return this.orderService.send('order.create', { createOrderDto, ip });
+    return this.sagaService.send('saga.order.create', {
+      createOrderDto,
+      ip,
+    });
   }
 
   @Get('/guest/:guestId')

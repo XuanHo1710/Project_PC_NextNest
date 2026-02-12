@@ -7,9 +7,31 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
+  /**
+   * Legacy: creates order + handles payment/stock/notification (tightly coupled).
+   * Kept for backward compatibility. New flow uses saga.order.create via Saga Orchestrator.
+   */
   @MessagePattern('order.create')
   createOrder(@Payload() data: { createOrderDto: CreateOrderDto; ip: string }) {
     return this.orderService.createOrder(data.createOrderDto, data.ip);
+  }
+
+  /**
+   * Saga pattern: creates ONLY the order record in DB (no payment/stock/notification).
+   * Called by Saga Orchestrator Service.
+   */
+  @MessagePattern('order.createRecord')
+  createRecord(@Payload() data: { createOrderDto: CreateOrderDto }) {
+    return this.orderService.createRecord(data.createOrderDto);
+  }
+
+  /**
+   * Saga compensation: cancel an order (set status to CANCELLED).
+   * Called by Saga Orchestrator when a subsequent step fails.
+   */
+  @MessagePattern('order.cancel')
+  cancelOrder(@Payload() data: { orderId: string }) {
+    return this.orderService.cancelOrder(data.orderId);
   }
 
   @MessagePattern('order.getById')
