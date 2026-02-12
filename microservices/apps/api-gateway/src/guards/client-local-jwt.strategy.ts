@@ -26,6 +26,15 @@ export class ClientLocalStrategy extends PassportStrategy(
     if (!account) {
       throw new UnauthorizedException('Wrong Email or Password');
     }
+
+    // If account requires verification, throw with the message
+    if (account.requireVerification) {
+      throw new UnauthorizedException(
+        account.message ||
+          'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt.',
+      );
+    }
+
     return account;
   }
 }

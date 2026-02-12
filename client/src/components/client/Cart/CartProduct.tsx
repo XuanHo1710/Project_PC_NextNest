@@ -15,6 +15,42 @@ interface CartProductProps {
 
 const CartProduct = ({ cartItem, handle }: CartProductProps) => {
     const { product, variant, quantity, price, subtotal } = cartItem;
+
+    // Handle deleted/non-existent variant
+    if (!variant || !variant._id) {
+        return (
+            <div className="group relative flex gap-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-100 flex items-center justify-center">
+                    <DeleteOutlined className="text-2xl text-gray-300" />
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm md:text-base font-medium text-red-500">
+                                Sản phẩm này hiện không tồn tại
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                                Sản phẩm đã bị xóa hoặc không còn bán. Vui lòng xóa khỏi giỏ hàng.
+                            </p>
+                        </div>
+                        <Popconfirm
+                            title="Xóa sản phẩm"
+                            description="Xóa sản phẩm không tồn tại khỏi giỏ hàng?"
+                            onConfirm={() => handle.removeFromCart(cartItem?.variant?._id || '')}
+                            okText="Xóa"
+                            cancelText="Hủy"
+                            okButtonProps={{ danger: true }}
+                        >
+                            <Button danger size="small" icon={<DeleteOutlined />} className="flex-shrink-0">
+                                Xóa
+                            </Button>
+                        </Popconfirm>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     const displayImage = variant.images?.[0] || "/placeholder-product.png";
     const originalPrice = variant.price;
     const hasDiscount = variant.discount > 0;

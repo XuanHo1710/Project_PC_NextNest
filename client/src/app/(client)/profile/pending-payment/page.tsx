@@ -207,8 +207,8 @@ function PendingOrderCard({
     return (
         <Card
             className={`shadow-sm hover:shadow-md transition-shadow border ${isExpired
-                    ? 'border-gray-300 bg-gray-50 dark:bg-gray-900'
-                    : 'border-orange-200 bg-orange-50/30 dark:bg-orange-900/10'
+                ? 'border-gray-300 bg-gray-50 dark:bg-gray-900'
+                : 'border-orange-200 bg-orange-50/30 dark:bg-orange-900/10'
                 }`}
             styles={{ body: { padding: '16px 20px' } }}
         >
@@ -249,12 +249,9 @@ function PendingOrderCard({
             {/* Order Items */}
             <div className="py-3 space-y-3">
                 {order.orderDetail.map((item, idx) => {
-                    const variantImage = item.productVariant?.images?.[0];
-                    const combination =
-                        item.combination && Object.keys(item.combination).length > 0
-                            ? item.combination
-                            : item.productVariant?.combination;
-                    const combinationText = combination
+                    const variantImage = item.images?.[0];
+                    const combination = item.combination;
+                    const combinationText = combination && Object.keys(combination).length > 0
                         ? Object.entries(combination)
                             .map(([k, v]) => `${k}: ${v}`)
                             .join(' | ')
@@ -274,7 +271,7 @@ function PendingOrderCard({
                             <div className="flex-1 min-w-0">
                                 <p className="font-medium text-gray-800 dark:text-gray-200 line-clamp-1 text-sm">
                                     {item.productName ||
-                                        `SP #${item.productVariant?._id?.slice(-6)?.toUpperCase()}`}
+                                        `SP #${item.variantId?.slice(-6)?.toUpperCase()}`}
                                 </p>
                                 {combinationText && (
                                     <p className="text-xs text-gray-400 mt-0.5">{combinationText}</p>

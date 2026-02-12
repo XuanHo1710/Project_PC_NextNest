@@ -37,8 +37,9 @@ export class CartService {
    * Upsert cart theo guestId — luôn chỉ tạo 1 cart duy nhất cho mỗi guest.
    * Nếu chưa có → tạo mới, nếu đã có → cập nhật.
    */
-  async update(_id: string, updateCartDto: UpdateCartDto) {
-    const guestId = new Types.ObjectId(updateCartDto.guestId);
+  async update(guestIdParam: string, updateCartDto: UpdateCartDto) {
+    // Use guestId from URL param as authoritative source
+    const guestId = new Types.ObjectId(guestIdParam);
 
     const cartItems = (updateCartDto.cartItems || []).map((item) => ({
       product: new Types.ObjectId(item.product?._id),
@@ -49,7 +50,7 @@ export class CartService {
 
     const result = await this.cartModel.findOneAndUpdate(
       { guestId },
-      { guestId, cartItems, total: updateCartDto.total },
+      { $set: { guestId, cartItems, total: updateCartDto.total } },
       { upsert: true, new: true },
     );
 

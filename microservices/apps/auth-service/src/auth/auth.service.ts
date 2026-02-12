@@ -13,6 +13,7 @@ import { MICROSERVICE } from '@project-pc/common';
 import Redis from 'ioredis';
 import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
 import { AccountEmployeeService } from 'src/account-employee/account-employee.service';
+import { ClientProxy } from '@nestjs/microservices';
 const ms = require('ms');
 @Injectable()
 export class ClientAuthService {
@@ -24,6 +25,8 @@ export class ClientAuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     @Inject(MICROSERVICE.REDIS_SERVICE) private readonly redisClient: Redis,
+    @Inject(MICROSERVICE.NOTIFICATION_SERVICE)
+    private readonly notificationService: ClientProxy,
   ) {}
 
   async signIn(email: string, password: string) {
@@ -39,11 +42,29 @@ export class ClientAuthService {
     if (!guest) return null;
 
     const isCorrect = compareSync(password, guest.password || '');
-    if (guest && isCorrect) {
-      return guest;
-    } else {
-      return null;
+    if (!isCorrect) return null;
+
+    // Check if email is verified
+    if (!guest.isEmailVerified) {
+      // Regenerate token and resend verification email
+      const { token, fullname } =
+        await this.accountGuestService.regenerateVerificationToken(email);
+
+      // Send verification email
+      this.notificationService.emit('notification.sendVerificationEmail', {
+        email: guest.email,
+        fullname,
+        verificationToken: token,
+      });
+
+      return {
+        requireVerification: true,
+        message:
+          'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt tài khoản.',
+      };
     }
+
+    return guest;
   }
 
   async googleLogin(googleUser: any): Promise<any> {
@@ -190,7 +211,20 @@ export class ClientAuthService {
       avatar: '',
     });
 
-    return result;
+    // Send verification email
+    if (result && (result as any).emailVerificationToken) {
+      this.notificationService.emit('notification.sendVerificationEmail', {
+        email,
+        fullname,
+        verificationToken: (result as any).emailVerificationToken,
+      });
+    }
+
+    return {
+      message:
+        'Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.',
+      requireVerification: true,
+    };
   }
 
   async verifyEmail(token: string) {

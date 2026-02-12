@@ -6,7 +6,7 @@ export type CartDocument = HydratedDocument<Cart>;
 export class Cart {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Guest', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Guest', required: true, unique: true })
   guestId: Types.ObjectId;
 
   @Prop({

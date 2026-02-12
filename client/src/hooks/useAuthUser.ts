@@ -72,7 +72,8 @@ const useAuthUser = create<AuthUserState>((set) => ({
 
       if (response.data.success) {
         toast.success(
-          response.data.message || "Đăng ký thành công! Vui lòng đăng nhập.",
+          "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.",
+          { autoClose: 6000 },
         );
         return true;
       }

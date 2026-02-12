@@ -691,12 +691,9 @@ export class ProductService {
       throw new BadRequestException(`Invalid product ID: ${productId}`);
     }
 
-    // soft delete existing variants
+    // Hard delete existing variants
     await this.productVariantModel
-      .updateMany(
-        { product: new Types.ObjectId(productId) },
-        { $set: { isDeleted: true, deletedAt: new Date() } },
-      )
+      .deleteMany({ product: new Types.ObjectId(productId) })
       .exec();
 
     // Create new variants

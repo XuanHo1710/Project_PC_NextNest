@@ -2,19 +2,21 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Card, Button, Spin, Typography, Divider } from 'antd';
+import { Button, Spin, Divider } from 'antd';
 import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     HomeOutlined,
     ShoppingOutlined,
     LoadingOutlined,
+    ExclamationCircleOutlined,
+    CreditCardOutlined,
+    ClockCircleOutlined,
+    MailOutlined,
 } from '@ant-design/icons';
 import { paymentClientService, VerifyPaymentResponse } from '@/services/client/payment.client.service';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-
-const { Title, Text, Paragraph } = Typography;
 
 interface PendingOrder {
     orderId: string;
@@ -41,6 +43,9 @@ interface PendingOrder {
 
 type VerifyStatus = 'loading' | 'success' | 'failed' | 'cancelled';
 
+const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+
 export default function PaymentInfoPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -54,37 +59,30 @@ export default function PaymentInfoPage() {
         hasVerified.current = true;
 
         const verify = async () => {
-            // Read PayOS return params
             const code = searchParams.get('code');
             const payosStatus = searchParams.get('status');
             const orderCode = searchParams.get('orderCode');
             const cancel = searchParams.get('cancel');
 
-            // Retrieved saved order data
             const savedOrder = sessionStorage.getItem('pendingOrder');
             let orderInfo: PendingOrder | null = null;
             if (savedOrder) {
                 try {
                     orderInfo = JSON.parse(savedOrder);
                     setPendingOrder(orderInfo);
-                } catch {
-                    // ignore parse error
-                }
+                } catch { /* ignore */ }
             }
 
-            // Cancelled by user
             if (cancel === 'true' || payosStatus === 'CANCELLED') {
                 setStatus('cancelled');
                 return;
             }
 
-            // Payment failed 
             if (code !== '00' || !orderCode) {
                 setStatus('failed');
                 return;
             }
 
-            // If status is PAID, verify with backend
             if (!orderInfo) {
                 setStatus('failed');
                 return;
@@ -106,7 +104,6 @@ export default function PaymentInfoPage() {
                 });
 
                 setVerifyResult(result);
-
                 if (result.success) {
                     setStatus('success');
                     sessionStorage.removeItem('pendingOrder');
@@ -123,273 +120,343 @@ export default function PaymentInfoPage() {
         verify();
     }, [searchParams]);
 
-    const formatCurrency = (amount: number) =>
-        new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-
-    // Loading state
+    // ==================== LOADING ====================
     if (status === 'loading') {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
-                <Card className="text-center p-12 shadow-2xl border-0 rounded-2xl max-w-md w-full mx-4">
-                    <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
-                    <Title level={3} className="!mt-6 !mb-2 text-gray-800">
-                        Đang xác thực thanh toán...
-                    </Title>
-                    <Paragraph className="text-gray-500 !mb-0">
-                        Vui lòng không đóng trang này
-                    </Paragraph>
-                </Card>
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4 }}
+                    className="bg-white rounded-2xl shadow-xl p-12 text-center max-w-md w-full mx-4 border border-gray-100"
+                >
+                    <div className="relative inline-block mb-6">
+                        <Spin indicator={<LoadingOutlined style={{ fontSize: 52, color: '#3b82f6' }} spin />} />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-800 mb-2">Đang xác thực thanh toán</h2>
+                    <p className="text-gray-400 text-sm">Vui lòng không đóng trang này trong quá trình xác thực...</p>
+                    <div className="mt-6 flex justify-center gap-1">
+                        {[0, 1, 2].map((i) => (
+                            <motion.div
+                                key={i}
+                                className="w-2 h-2 rounded-full bg-blue-400"
+                                animate={{ opacity: [0.3, 1, 0.3] }}
+                                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                            />
+                        ))}
+                    </div>
+                </motion.div>
             </div>
         );
     }
 
-    // Success state
+    // ==================== SUCCESS ====================
     if (status === 'success') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-12">
+            <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 py-8 md:py-16">
                 <div className="max-w-2xl mx-auto px-4">
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
                     >
-                        <Card className="shadow-2xl border-0 rounded-2xl overflow-hidden">
-                            {/* Green header bar */}
-                            <div className="bg-gradient-to-r from-green-500 to-emerald-500 -mx-6 -mt-6 px-6 py-8 mb-6">
-                                <div className="text-center">
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
-                                        className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-full mb-4"
-                                    >
-                                        <CheckCircleOutlined className="!text-5xl text-white" />
-                                    </motion.div>
-                                    <Title level={2} className="!text-white !mb-1">
-                                        Thanh toán thành công!
-                                    </Title>
-                                    <Text className="text-green-100 text-lg">
-                                        Đơn hàng đã được xác nhận
-                                    </Text>
-                                </div>
+                        {/* Success Header */}
+                        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 px-6 py-10 text-center relative overflow-hidden">
+                                {/* Decorative circles */}
+                                <div className="absolute top-0 left-0 w-40 h-40 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
+                                <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3" />
+
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.3 }}
+                                    className="relative z-10"
+                                >
+                                    <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-4 border-2 border-white/30">
+                                        <CheckCircleOutlined className="!text-5xl !text-white" />
+                                    </div>
+                                </motion.div>
+                                <h1 className="text-2xl md:text-3xl font-bold text-white mb-1 relative z-10">
+                                    Thanh toán thành công!
+                                </h1>
+                                <p className="text-green-100 text-base relative z-10">
+                                    Đơn hàng của bạn đã được xác nhận và đang được xử lý
+                                </p>
                             </div>
 
-                            {/* Transaction details */}
-                            {verifyResult?.data && (
-                                <div className="space-y-4 mb-6">
-                                    <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <Text className="text-gray-500">Mã thanh toán:</Text>
-                                            <Text strong className="text-blue-600">
-                                                #{verifyResult.data.paymentCode}
-                                            </Text>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <Text className="text-gray-500">Số tiền:</Text>
-                                            <Text strong className="text-green-600 text-lg">
-                                                {formatCurrency(verifyResult.data.amount)}
-                                            </Text>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <Text className="text-gray-500">Trạng thái:</Text>
-                                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                                                {verifyResult.data.status === 'COMPLETED' ? 'Đã thanh toán' : verifyResult.data.status}
-                                            </span>
-                                        </div>
-                                        {verifyResult.data.transactionId && (
-                                            <div className="flex justify-between items-center">
-                                                <Text className="text-gray-500">Mã giao dịch:</Text>
-                                                <Text className="font-mono text-sm">
-                                                    {verifyResult.data.transactionId}
-                                                </Text>
-                                            </div>
-                                        )}
-                                        {verifyResult.data.paidAt && (
-                                            <div className="flex justify-between items-center">
-                                                <Text className="text-gray-500">Thời gian:</Text>
-                                                <Text>
-                                                    {new Date(verifyResult.data.paidAt).toLocaleString('vi-VN')}
-                                                </Text>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Order items summary */}
-                            {pendingOrder && (
-                                <>
-                                    <Divider />
+                            {/* Transaction Info */}
+                            <div className="p-6">
+                                {verifyResult?.data && (
                                     <div className="mb-6">
-                                        <Title level={5} className="!mb-3 text-gray-700">
-                                            Chi tiết đơn hàng
-                                        </Title>
-                                        <div className="space-y-2">
-                                            {pendingOrder.orderData.orderDetail.map((item, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg"
-                                                >
-                                                    <div className="flex-1 min-w-0">
-                                                        <Text className="font-medium line-clamp-1">
-                                                            {item.product.name}
-                                                        </Text>
-                                                        {item.productVariant?.combination && Object.keys(item.productVariant.combination).length > 0 && (
-                                                            <Text className="text-gray-400 text-xs block">
-                                                                {Object.entries(item.productVariant.combination).map(([key, val]) => `${key}: ${val}`).join(' | ')}
-                                                            </Text>
-                                                        )}
-                                                        <Text className="text-gray-400 text-xs block">
-                                                            x{item.quantity} - {formatCurrency(item.price)}
-                                                        </Text>
-                                                    </div>
-                                                    <Text strong className="text-blue-600 ml-4 whitespace-nowrap">
-                                                        {formatCurrency(item.subtotal)}
-                                                    </Text>
+                                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                            <CreditCardOutlined /> Thông tin giao dịch
+                                        </h3>
+                                        <div className="bg-gray-50 rounded-xl divide-y divide-gray-100">
+                                            <div className="flex justify-between items-center px-4 py-3">
+                                                <span className="text-gray-500 text-sm">Mã thanh toán</span>
+                                                <span className="font-bold text-blue-600 font-mono">
+                                                    #{verifyResult.data.paymentCode}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center px-4 py-3">
+                                                <span className="text-gray-500 text-sm">Số tiền</span>
+                                                <span className="font-bold text-emerald-600 text-lg">
+                                                    {formatCurrency(verifyResult.data.amount)}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center px-4 py-3">
+                                                <span className="text-gray-500 text-sm">Trạng thái</span>
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold border border-emerald-200">
+                                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                                    {verifyResult.data.status === 'COMPLETED' ? 'Đã thanh toán' : verifyResult.data.status}
+                                                </span>
+                                            </div>
+                                            {verifyResult.data.transactionId && (
+                                                <div className="flex justify-between items-center px-4 py-3">
+                                                    <span className="text-gray-500 text-sm">Mã giao dịch</span>
+                                                    <span className="font-mono text-sm text-gray-700">
+                                                        {verifyResult.data.transactionId}
+                                                    </span>
                                                 </div>
-                                            ))}
-                                        </div>
-                                        <Divider className="!my-3" />
-                                        <div className="flex justify-between items-center px-3">
-                                            <Text strong className="text-lg">Tổng cộng:</Text>
-                                            <Text strong className="text-xl text-red-500">
-                                                {formatCurrency(pendingOrder.orderData.totalAmount)}
-                                            </Text>
+                                            )}
+                                            {verifyResult.data.paidAt && (
+                                                <div className="flex justify-between items-center px-4 py-3">
+                                                    <span className="text-gray-500 text-sm flex items-center gap-1">
+                                                        <ClockCircleOutlined className="text-xs" /> Thời gian
+                                                    </span>
+                                                    <span className="text-sm text-gray-700">
+                                                        {new Date(verifyResult.data.paidAt).toLocaleString('vi-VN')}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </>
-                            )}
+                                )}
 
-                            {/* Notification */}
-                            <div className="bg-blue-50 rounded-xl p-4 mb-6 text-center">
-                                <Text className="text-blue-700 text-sm">
-                                    Email xác nhận đơn hàng đã được gửi đến{' '}
-                                    <strong>{pendingOrder?.orderData.customerInfo.email}</strong>
-                                </Text>
-                            </div>
+                                {/* Order Items Summary */}
+                                {pendingOrder && (
+                                    <>
+                                        <Divider className="!my-4" />
+                                        <div className="mb-6">
+                                            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                                <ShoppingOutlined /> Chi tiết đơn hàng
+                                            </h3>
+                                            <div className="space-y-2">
+                                                {pendingOrder.orderData.orderDetail.map((item, idx) => (
+                                                    <div key={idx} className="flex justify-between items-start py-2.5 px-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                                        <div className="flex-1 min-w-0 mr-3">
+                                                            <p className="font-medium text-gray-800 line-clamp-1 text-sm">
+                                                                {item.product.name}
+                                                            </p>
+                                                            {item.productVariant?.combination && Object.keys(item.productVariant.combination).length > 0 && (
+                                                                <p className="text-gray-400 text-xs mt-0.5">
+                                                                    {Object.entries(item.productVariant.combination).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                                                                </p>
+                                                            )}
+                                                            <p className="text-gray-400 text-xs mt-0.5">
+                                                                x{item.quantity} × {formatCurrency(item.price)}
+                                                            </p>
+                                                        </div>
+                                                        <span className="font-semibold text-blue-600 text-sm whitespace-nowrap">
+                                                            {formatCurrency(item.subtotal)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
+                                                <span className="text-base font-semibold text-gray-700">Tổng cộng</span>
+                                                <span className="text-xl font-bold text-red-500">
+                                                    {formatCurrency(pendingOrder.orderData.totalAmount)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
 
-                            {/* Action buttons */}
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <Link href="/home" className="flex-1">
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        icon={<HomeOutlined />}
-                                        className="w-full h-12 text-base font-semibold"
-                                    >
-                                        Về trang chủ
-                                    </Button>
-                                </Link>
-                                <Link href="/profile/order" className="flex-1">
-                                    <Button
-                                        size="large"
-                                        icon={<ShoppingOutlined />}
-                                        className="w-full h-12 text-base font-semibold"
-                                    >
-                                        Xem đơn hàng
-                                    </Button>
-                                </Link>
+                                {/* Email notification */}
+                                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex items-center gap-3">
+                                    <MailOutlined className="text-blue-500 text-lg flex-shrink-0" />
+                                    <p className="text-blue-700 text-sm">
+                                        Email xác nhận đã được gửi đến{' '}
+                                        <strong>{pendingOrder?.orderData.customerInfo.email}</strong>
+                                    </p>
+                                </div>
+
+                                {/* Delivery timeline */}
+                                <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-6">
+                                    <p className="text-amber-800 text-sm font-medium mb-1">
+                                        📦 Đơn hàng sẽ được giao trong 1-3 ngày làm việc
+                                    </p>
+                                    <p className="text-amber-600 text-xs">
+                                        Bạn sẽ nhận được thông báo khi đơn hàng được vận chuyển
+                                    </p>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <Link href="/home" className="flex-1">
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            icon={<HomeOutlined />}
+                                            className="w-full h-12 text-base font-semibold rounded-xl !bg-emerald-500 hover:!bg-emerald-600 border-emerald-500"
+                                        >
+                                            Về trang chủ
+                                        </Button>
+                                    </Link>
+                                    <Link href="/profile/order" className="flex-1">
+                                        <Button
+                                            size="large"
+                                            icon={<ShoppingOutlined />}
+                                            className="w-full h-12 text-base font-semibold rounded-xl"
+                                        >
+                                            Xem đơn hàng
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
-                        </Card>
+                        </div>
                     </motion.div>
                 </div>
             </div>
         );
     }
 
-    // Cancelled state
+    // ==================== CANCELLED ====================
     if (status === 'cancelled') {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 py-12">
+            <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-8 md:py-16">
                 <div className="max-w-lg mx-auto px-4">
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
                     >
-                        <Card className="shadow-2xl border-0 rounded-2xl text-center py-8">
-                            <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 rounded-full mb-4">
-                                <CloseCircleOutlined className="!text-5xl text-orange-500" />
+                        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                            <div className="bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-400 px-6 py-10 text-center relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-1/3 -translate-y-1/3" />
+                                <motion.div
+                                    initial={{ scale: 0, rotate: -180 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+                                >
+                                    <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-4 border-2 border-white/30">
+                                        <ExclamationCircleOutlined className="!text-5xl !text-white" />
+                                    </div>
+                                </motion.div>
+                                <h1 className="text-2xl font-bold text-white mb-1">Thanh toán đã bị hủy</h1>
+                                <p className="text-orange-100">Giao dịch chưa được xử lý</p>
                             </div>
-                            <Title level={2} className="!mb-2 text-gray-800">
-                                Thanh toán đã bị hủy
-                            </Title>
-                            <Paragraph className="text-gray-500 text-lg mb-8">
-                                Bạn đã hủy giao dịch thanh toán. Đơn hàng chưa được xử lý.
-                            </Paragraph>
-                            <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-                                <Link href="/cart" className="flex-1">
-                                    <Button
-                                        type="primary"
-                                        size="large"
-                                        className="w-full h-12 text-base font-semibold bg-orange-500 hover:bg-orange-600 border-orange-500"
-                                    >
-                                        Quay lại giỏ hàng
-                                    </Button>
-                                </Link>
-                                <Link href="/home" className="flex-1">
-                                    <Button
-                                        size="large"
-                                        icon={<HomeOutlined />}
-                                        className="w-full h-12 text-base font-semibold"
-                                    >
-                                        Về trang chủ
-                                    </Button>
-                                </Link>
+
+                            <div className="p-6 text-center">
+                                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-6">
+                                    <p className="text-orange-700 text-sm">
+                                        Bạn đã hủy giao dịch thanh toán. Đơn hàng vẫn được giữ lại và bạn có thể thanh toán lại bất cứ lúc nào.
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <Link href="/profile/pending-payment" className="flex-1">
+                                        <Button
+                                            type="primary"
+                                            size="large"
+                                            className="w-full h-12 text-base font-semibold rounded-xl !bg-orange-500 hover:!bg-orange-600 border-orange-500"
+                                        >
+                                            Thanh toán lại
+                                        </Button>
+                                    </Link>
+                                    <Link href="/home" className="flex-1">
+                                        <Button
+                                            size="large"
+                                            icon={<HomeOutlined />}
+                                            className="w-full h-12 text-base font-semibold rounded-xl"
+                                        >
+                                            Về trang chủ
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
-                        </Card>
+                        </div>
                     </motion.div>
                 </div>
             </div>
         );
     }
 
-    // Failed state
+    // ==================== FAILED ====================
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 via-pink-50 to-rose-50 py-12">
+        <div className="min-h-screen bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 py-8 md:py-16">
             <div className="max-w-lg mx-auto px-4">
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
                 >
-                    <Card className="shadow-2xl border-0 rounded-2xl text-center py-8">
-                        <div className="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-full mb-4">
-                            <CloseCircleOutlined className="!text-5xl text-red-500" />
+                    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div className="bg-gradient-to-r from-red-500 via-rose-500 to-pink-500 px-6 py-10 text-center relative overflow-hidden">
+                            <div className="absolute bottom-0 left-0 w-36 h-36 bg-white/5 rounded-full -translate-x-1/2 translate-y-1/2" />
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+                            >
+                                <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-4 border-2 border-white/30">
+                                    <CloseCircleOutlined className="!text-5xl !text-white" />
+                                </div>
+                            </motion.div>
+                            <h1 className="text-2xl font-bold text-white mb-1">Thanh toán thất bại</h1>
+                            <p className="text-red-100">Giao dịch không thể hoàn tất</p>
                         </div>
-                        <Title level={2} className="!mb-2 text-gray-800">
-                            Thanh toán thất bại
-                        </Title>
-                        <Paragraph className="text-gray-500 text-lg mb-2">
-                            Giao dịch không thành công. Vui lòng thử lại.
-                        </Paragraph>
-                        {verifyResult?.message && (
-                            <Text type="secondary" className="block mb-8">
-                                {verifyResult.message}
-                            </Text>
-                        )}
-                        <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-                            <Link href="/payment" className="flex-1">
-                                <Button
-                                    type="primary"
-                                    danger
-                                    size="large"
-                                    className="w-full h-12 text-base font-semibold"
-                                >
-                                    Thử lại
-                                </Button>
-                            </Link>
-                            <Link href="/home" className="flex-1">
-                                <Button
-                                    size="large"
-                                    icon={<HomeOutlined />}
-                                    className="w-full h-12 text-base font-semibold"
-                                >
-                                    Về trang chủ
-                                </Button>
-                            </Link>
+
+                        <div className="p-6 text-center">
+                            {verifyResult?.message && (
+                                <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-4">
+                                    <p className="text-red-600 text-sm">{verifyResult.message}</p>
+                                </div>
+                            )}
+
+                            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 mb-6">
+                                <p className="text-gray-600 text-sm mb-2">Có thể do một số nguyên nhân:</p>
+                                <ul className="text-gray-500 text-xs text-left space-y-1.5 pl-4">
+                                    <li className="flex items-start gap-2">
+                                        <span className="mt-0.5">•</span>
+                                        <span>Số dư tài khoản không đủ</span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="mt-0.5">•</span>
+                                        <span>Giao dịch bị từ chối bởi ngân hàng</span>
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="mt-0.5">•</span>
+                                        <span>Lỗi kết nối trong quá trình thanh toán</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <Link href="/profile/pending-payment" className="flex-1">
+                                    <Button
+                                        type="primary"
+                                        danger
+                                        size="large"
+                                        className="w-full h-12 text-base font-semibold rounded-xl"
+                                    >
+                                        Thử lại
+                                    </Button>
+                                </Link>
+                                <Link href="/home" className="flex-1">
+                                    <Button
+                                        size="large"
+                                        icon={<HomeOutlined />}
+                                        className="w-full h-12 text-base font-semibold rounded-xl"
+                                    >
+                                        Về trang chủ
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
-                    </Card>
+                    </div>
                 </motion.div>
             </div>
         </div>

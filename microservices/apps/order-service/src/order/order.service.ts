@@ -37,12 +37,19 @@ export class OrderService {
           note: createOrderDto.customerInfo.note,
         },
         orderDetail: createOrderDto.orderDetail.map((item: any) => ({
-          productVariant: new Types.ObjectId(item.productVariant._id),
-          productName: item.product?.name || '',
+          // Snapshot variant info (lưu trực tiếp)
+          variantId: item.productVariant._id || '',
+          sku: item.productVariant?.sku || '',
+          variantPrice: item.productVariant?.price || 0,
+          discount: item.productVariant?.discount || 0,
+          images: item.productVariant?.images || [],
           combination: item.productVariant?.combination || {},
+          // Product info
+          productName: item.product?.name || '',
+          // Order item info
           quantity: item.quantity,
-          subtotal: item.subtotal,
           price: item.price,
+          subtotal: item.subtotal,
         })),
         totalAmount: createOrderDto.orderDetail.reduce(
           (sum, item) => sum + item.subtotal,
@@ -187,22 +194,18 @@ export class OrderService {
         'payment.type': 'CARD',
         status: { $in: ['PENDING', 'EXPIRED'] },
       })
-      .populate('orderDetail.productVariant')
       .sort({ createdAt: -1 });
     return orders;
   }
 
   async getOrderById(orderId: string) {
-    const order = await this.orderModel
-      .findById(orderId)
-      .populate('orderDetail.productVariant');
+    const order = await this.orderModel.findById(orderId);
     return order;
   }
 
   async getAllOrdersByGuestId(guestId: string) {
     const orders = await this.orderModel
       .find({ 'customerInfo.guestId': new Types.ObjectId(guestId) })
-      .populate('orderDetail.productVariant')
       .sort({ createdAt: -1 });
 
     return orders;

@@ -16,6 +16,7 @@ import {
   UpdateAccountGuestDto,
 } from '@project-pc/common';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AccountGuestService {
@@ -68,16 +69,16 @@ export class AccountGuestService {
     }
 
     // Generate email verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
     const otpCodeForEmail = Math.floor(100000 + Math.random() * 900000);
     const emailVerificationExpires = new Date();
     emailVerificationExpires.setHours(emailVerificationExpires.getHours() + 24); // 24 hours
-
-    // Send mail to verify email in here (send emit comment to notification service)
 
     const accountData = {
       ...createAccountGuestDto,
       password: hashedPassword,
       otpCodeForEmail,
+      emailVerificationToken,
       emailVerificationExpires,
       accountStatus: 'PENDING',
     };
@@ -273,9 +274,37 @@ export class AccountGuestService {
 
     account.isEmailVerified = true;
     account.accountStatus = 'ACTIVE';
+    account.emailVerificationToken = undefined;
     account.emailVerificationExpires = undefined;
 
     return account.save();
+  }
+
+  async regenerateVerificationToken(
+    email: string,
+  ): Promise<{ token: string; fullname: string }> {
+    const account = await this.accountGuestModel.findOne({
+      email,
+      deletedAt: { $exists: false },
+    });
+
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+
+    if (account.isEmailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    const newToken = crypto.randomBytes(32).toString('hex');
+    const expires = new Date();
+    expires.setHours(expires.getHours() + 24);
+
+    account.emailVerificationToken = newToken;
+    account.emailVerificationExpires = expires;
+    await account.save();
+
+    return { token: newToken, fullname: account.fullname };
   }
 
   async updateLoginInfo(id: string): Promise<void> {

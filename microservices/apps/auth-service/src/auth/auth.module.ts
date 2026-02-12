@@ -12,6 +12,8 @@ import {
 import { AccountGuestModule } from 'src/account-guest/account-guest.module';
 import { RedisModule } from 'src/redis/redis.module';
 import { AccountEmployeeModule } from 'src/account-employee/account-employee.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
 
 @Module({
   imports: [
@@ -22,6 +24,16 @@ import { AccountEmployeeModule } from 'src/account-employee/account-employee.mod
     AccountGuestModule,
     AccountEmployeeModule,
     RedisModule,
+    ClientsModule.register([
+      {
+        name: MICROSERVICE.NOTIFICATION_SERVICE,
+        transport: Transport.TCP,
+        options: {
+          host: 'localhost',
+          port: MICROSERVICE_PORT.NOTIFICATION_SERVICE,
+        },
+      },
+    ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

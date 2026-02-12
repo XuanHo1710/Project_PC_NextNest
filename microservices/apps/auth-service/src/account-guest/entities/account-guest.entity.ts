@@ -45,6 +45,9 @@ export class AccountGuest {
   @Prop({ default: null })
   otpCodeForEmail?: number;
 
+  @Prop({ default: null })
+  emailVerificationToken?: string;
+
   @Prop({ type: Array, default: [] })
   loginInformation: [
     {

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Divider, Form, Image, Input, Modal } from 'antd';
+import { Button, Divider, Form, Image, Input, Modal, Result } from 'antd';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { IRegisterDto } from '@/types/auth';
 import useAuthUser from '@/hooks/useAuthUser';
+import { MailOutlined } from '@ant-design/icons';
 
 interface RegisterModalProps {
     isOpen: boolean;
@@ -26,6 +27,8 @@ export default function RegisterModal({ isOpen, onClose, switchToLogin }: Regist
     const [loading, setLoading] = useState(false);
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+    const [registered, setRegistered] = useState(false);
+    const [registeredEmail, setRegisteredEmail] = useState('');
     const { register, loginWithGoogle } = useAuthUser();
 
     const onFinish = async (values: RegisterFormValues) => {
@@ -41,11 +44,9 @@ export default function RegisterModal({ isOpen, onClose, switchToLogin }: Regist
 
 
             if (success) {
-                // Reset form sau khi đăng ký thành công
+                setRegisteredEmail(values.email);
+                setRegistered(true);
                 form.resetFields();
-                // Đóng modal và chuyển sang modal đăng nhập
-                onClose();
-                switchToLogin();
             }
         } catch (error) {
             console.error('Lỗi đăng ký:', error);
@@ -54,15 +55,67 @@ export default function RegisterModal({ isOpen, onClose, switchToLogin }: Regist
         }
     };
 
+    const handleClose = () => {
+        setRegistered(false);
+        setRegisteredEmail('');
+        onClose();
+    };
+
+    const handleSwitchToLogin = () => {
+        setRegistered(false);
+        setRegisteredEmail('');
+        switchToLogin();
+    };
+
     const handleGoogleRegister = () => {
-        onClose(); // Đóng modal trước khi redirect
+        onClose();
         loginWithGoogle();
     };
+
+    // Show verification success screen
+    if (registered) {
+        return (
+            <Modal
+                open={isOpen}
+                onCancel={handleClose}
+                footer={null}
+                width={500}
+                centered
+            >
+                <div className="py-6 text-center">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-50 rounded-full mb-4">
+                        <MailOutlined className="!text-4xl text-blue-500" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-800 mb-2">Kiểm tra email của bạn</h2>
+                    <p className="text-gray-500 mb-1">
+                        Chúng tôi đã gửi email kích hoạt đến:
+                    </p>
+                    <p className="text-blue-600 font-semibold text-lg mb-4">{registeredEmail}</p>
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 mx-4">
+                        <p className="text-blue-700 text-sm">
+                            Vui lòng mở email và bấm vào liên kết kích hoạt để hoàn tất đăng ký. Link có hiệu lực trong 24 giờ.
+                        </p>
+                    </div>
+                    <Button
+                        type="primary"
+                        size="large"
+                        onClick={handleSwitchToLogin}
+                        className="h-12 px-8 text-base font-semibold"
+                    >
+                        Đã kích hoạt? Đăng nhập ngay
+                    </Button>
+                    <p className="text-gray-400 text-xs mt-4">
+                        Không nhận được email? Kiểm tra thư mục spam hoặc thử đăng nhập để gửi lại.
+                    </p>
+                </div>
+            </Modal>
+        );
+    }
 
     return (
         <Modal
             open={isOpen}
-            onCancel={onClose}
+            onCancel={handleClose}
             title={<h2 className="text-xl font-bold">Đăng ký tài khoản</h2>}
             footer={[]}
             width={550}
@@ -198,7 +251,7 @@ export default function RegisterModal({ isOpen, onClose, switchToLogin }: Regist
             </button>
 
             <p className="text-center mt-5 text-base">
-                Bạn đã có tài khoản? <span onClick={switchToLogin} className="text-blue-500 cursor-pointer hover:underline font-medium">Đăng nhập ngay!</span>
+                Bạn đã có tài khoản? <span onClick={handleSwitchToLogin} className="text-blue-500 cursor-pointer hover:underline font-medium">Đăng nhập ngay!</span>
             </p>
         </Modal>
     );

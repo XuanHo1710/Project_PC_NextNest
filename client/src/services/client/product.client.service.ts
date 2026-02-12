@@ -37,7 +37,7 @@ class ProductClientService {
     sortOrder?: "asc" | "desc";
   }): Promise<PaginatedResponse<IProductCard>> {
     const response = await axiosClient.get(this.baseURL, { params });
-    return response as unknown as PaginatedResponse<IProductCard>;
+    return response.data;
   }
 
   /**

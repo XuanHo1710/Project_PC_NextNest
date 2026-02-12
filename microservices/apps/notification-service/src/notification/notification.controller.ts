@@ -79,4 +79,36 @@ export class NotificationController {
       data.transactionId,
     );
   }
+
+  @EventPattern('notification.sendVerificationEmail')
+  handleSendVerificationEmail(
+    @Payload()
+    data: {
+      email: string;
+      fullname: string;
+      verificationToken: string;
+    },
+  ) {
+    return this.notificationService.sendVerificationEmail(
+      data.email,
+      data.fullname,
+      data.verificationToken,
+    );
+  }
+
+  @MessagePattern('notification.sendVerificationEmail')
+  sendVerificationEmail(
+    @Payload()
+    data: {
+      email: string;
+      fullname: string;
+      verificationToken: string;
+    },
+  ) {
+    return this.notificationService.sendVerificationEmail(
+      data.email,
+      data.fullname,
+      data.verificationToken,
+    );
+  }
 }

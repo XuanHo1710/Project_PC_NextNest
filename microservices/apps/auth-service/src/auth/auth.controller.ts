@@ -6,7 +6,7 @@ import { AccountEmployee } from 'src/account-employee/entities/account-employee.
 
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: ClientAuthService) { }
+  constructor(private readonly authService: ClientAuthService) {}
 
   @MessagePattern('auth.signIn')
   async signIn(@Payload() data: { email: string; password: string }) {
@@ -72,6 +72,11 @@ export class AuthController {
     return this.authService.logout(data.id);
   }
 
+  @MessagePattern('auth.verifyEmail')
+  async verifyEmail(@Payload() data: { token: string }) {
+    return this.authService.verifyEmail(data.token);
+  }
+
   // Admin service handlers
   @MessagePattern('auth.loginAdmin')
   async loginAdmin(@Payload() data: { accountAdmin: AccountEmployee }) {
@@ -99,7 +104,7 @@ export class AuthController {
   }
 
   @MessagePattern('auth.changePasswordAdmin')
-  async changePasswordAdmin(@Payload() data: { id: string, body: any }) {
+  async changePasswordAdmin(@Payload() data: { id: string; body: any }) {
     return this.authService.changePasswordAdmin(data.id, data.body);
   }
 }

@@ -28,30 +28,35 @@ export class Order {
   @Prop({
     type: [
       {
-        productVariant: {
-          type: Types.ObjectId,
-          ref: 'ProductVariant',
-          required: true,
-        },
-        productName: { type: String, default: '' },
+        // Snapshot variant data (không ref ObjectId — lưu trực tiếp để tránh stale data)
+        variantId: { type: String, default: '' },
+        sku: { type: String, default: '' },
+        variantPrice: { type: Number, default: 0 },
+        discount: { type: Number, default: 0 },
+        images: { type: [String], default: [] },
         combination: { type: Object, default: {} },
+        // Product info
+        productName: { type: String, default: '' },
+        // Order item info
         quantity: { type: Number, default: 1 },
-        subtotal: { type: Number, default: 0 },
         price: { type: Number, default: 0 },
+        subtotal: { type: Number, default: 0 },
       },
     ],
     default: [],
   })
-  orderDetail: [
-    {
-      productVariant: Types.ObjectId;
-      productName: string;
-      combination: Record<string, string>;
-      quantity: number;
-      subtotal: number;
-      price: number;
-    },
-  ];
+  orderDetail: Array<{
+    variantId: string;
+    sku: string;
+    variantPrice: number;
+    discount: number;
+    images: string[];
+    combination: Record<string, string>;
+    productName: string;
+    quantity: number;
+    price: number;
+    subtotal: number;
+  }>;
 
   @Prop({ type: Number, default: 0 })
   totalAmount: number;

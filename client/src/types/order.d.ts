@@ -79,19 +79,15 @@ export interface IOrderData {
   };
 }
 
-// Order detail item as returned from API (populated productVariant + snapshot fields)
+// Order detail item as returned from API (snapshot — no ObjectId ref)
 export interface IOrderDetailItem {
-  productVariant: {
-    _id: string;
-    sku: string;
-    price: number;
-    discount: number;
-    stock: number;
-    images: string[];
-    combination: Record<string, string>;
-  };
-  productName: string;
+  variantId: string;
+  sku: string;
+  variantPrice: number;
+  discount: number;
+  images: string[];
   combination: Record<string, string>;
+  productName: string;
   quantity: number;
   subtotal: number;
   price: number;

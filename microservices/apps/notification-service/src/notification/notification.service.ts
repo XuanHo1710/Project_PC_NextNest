@@ -319,6 +319,114 @@ export class NotificationService {
   }
 
   /**
+   * Send verification email for account activation
+   */
+  async sendVerificationEmail(
+    email: string,
+    fullname: string,
+    verificationToken: string,
+  ): Promise<boolean> {
+    const clientUrl =
+      this.configService.get<string>('CLIENT_URL') || 'http://localhost:3000';
+    const apiUrl =
+      this.configService.get<string>('API_URL') ||
+      'http://localhost:8080/api/v1';
+    const verifyUrl = `${apiUrl}/client/auth/verify-email?token=${verificationToken}`;
+
+    const htmlContent = this.generateVerificationEmailTemplate(
+      fullname,
+      verifyUrl,
+    );
+
+    return this.sendEmail({
+      to: email,
+      subject: 'Kích hoạt tài khoản - Project PC',
+      htmlContent,
+    });
+  }
+
+  /**
+   * Generate verification email template
+   */
+  private generateVerificationEmailTemplate(
+    fullname: string,
+    verifyUrl: string,
+  ): string {
+    return `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kích hoạt tài khoản</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f0f9ff; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
+        <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%); border-radius: 16px 16px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: 0.5px;">Project PC</h1>
+              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.85); font-size: 15px; font-weight: 400;">Xác thực tài khoản</p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <p style="margin: 0 0 16px; color: #1e293b; font-size: 18px; font-weight: 600;">
+                Xin chào ${fullname},
+              </p>
+
+              <p style="margin: 0 0 24px; color: #64748b; font-size: 16px; line-height: 1.7;">
+                Cảm ơn bạn đã đăng ký tài khoản tại <strong style="color: #2563eb;">Project PC</strong>. Để bắt đầu sử dụng tài khoản, vui lòng bấm nút bên dưới để kích hoạt:
+              </p>
+
+              <!-- CTA Button -->
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${verifyUrl}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 12px; font-size: 16px; font-weight: 700; letter-spacing: 0.3px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);">
+                  Kích hoạt tài khoản
+                </a>
+              </div>
+
+              <!-- Info -->
+              <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 0 0 24px;">
+                <p style="margin: 0; color: #475569; font-size: 14px; line-height: 1.6;">
+                  ⏱️ <strong>Link kích hoạt có hiệu lực trong 24 giờ.</strong><br>
+                  Nếu bạn không đăng ký tài khoản này, vui lòng bỏ qua email này.
+                </p>
+              </div>
+
+              <p style="margin: 0; color: #94a3b8; font-size: 13px; line-height: 1.6; text-align: center;">
+                Nếu nút không hoạt động, hãy copy và paste link sau vào trình duyệt:<br>
+                <a href="${verifyUrl}" style="color: #3b82f6; word-break: break-all; font-size: 12px;">${verifyUrl}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 40px; background-color: #f8fafc; border-radius: 0 0 16px 16px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 8px; color: #64748b; font-size: 14px;">
+                Cảm ơn bạn đã lựa chọn Project PC!
+              </p>
+              <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                &copy; ${new Date().getFullYear()} Project PC. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+  }
+
+  /**
    * Send order confirmation email
    */
   async sendOrderConfirmationEmail(
