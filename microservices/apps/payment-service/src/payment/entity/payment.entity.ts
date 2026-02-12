@@ -9,9 +9,6 @@ export class Payment {
   @Prop({ required: true, unique: true })
   paymentCode: number;
 
-  @Prop({ required: true, ref: 'AccountGuest' })
-  guest: Types.ObjectId;
-
   @Prop({ required: true, ref: 'Order' })
   order: Types.ObjectId;
 

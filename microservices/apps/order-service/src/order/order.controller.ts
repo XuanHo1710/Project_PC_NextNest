@@ -12,6 +12,11 @@ export class OrderController {
     return this.orderService.createOrder(data.createOrderDto, data.ip);
   }
 
+  @MessagePattern('order.getById')
+  getOrderById(@Payload() data: { orderId: string }) {
+    return this.orderService.getOrderById(data.orderId);
+  }
+
   @MessagePattern('order.getAllByGuestId')
   getAllOrdersByGuestId(@Payload() data: { guestId: string }) {
     return this.orderService.getAllOrdersByGuestId(data.guestId);

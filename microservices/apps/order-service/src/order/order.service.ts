@@ -8,6 +8,7 @@ import {
 } from '@project-pc/common';
 import { Order } from 'src/order/entities/order.entity';
 import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class OrderService {
@@ -15,28 +16,13 @@ export class OrderService {
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @Inject(MICROSERVICE.PAYMENT_SERVICE)
     private readonly paymentService: ClientProxy,
+    @Inject(MICROSERVICE.NOTIFICATION_SERVICE)
+    private readonly notificationService: ClientProxy,
+    @Inject(MICROSERVICE.PRODUCT_SERVICE)
+    private readonly productService: ClientProxy,
   ) {}
 
   async createOrder(createOrderDto: CreateOrderDto, ip: string) {
-    // Luồng đặt hàng
-    // 1. Tạo đơn hàng mới với trạng thái "pending"
-    // 2.1 Tạo payment nếu khách hàng chọn thanh toán online => thành công => cập nhật payment thành PAID. Nếu fail thì quay lại bước 1
-    //  payment: {
-    //   isCheckout: true;
-    //   type: 'CARD';
-    // };
-    // 2.2 Tạo payment nếu khách hàng chọn thanh toán khi nhận hàng => cập nhật payment thành UNPAID. Nếu fail thì quay lại bước 1
-    //  payment: {
-    //   isCheckout: false;
-    //   type: 'CASH';
-    // };
-    // 3. Gửi thông báo qua email cho khách hàng (Notification Service). Nếu fail thì quay lại bước 2
-    // 4. Cập nhật số lượng tồn kho. Nếu fail thì quay lại bước 3
-    // 5. Cập nhật trạng thái đơn hàng thành "SHIPPING". Nếu fail thì quay lại bước 4
-    //
-    //
-    // 6. Cập nhật trạng thái đơn hàng thành "DELIVERED" khi khách hàng nhận được hàng
-    // và cập nhật payment thành PAID nếu khách hàng thanh toán khi nhận hàng
     try {
       const dataCreate = {
         customerInfo: {
@@ -65,43 +51,111 @@ export class OrderService {
 
       const order = await this.orderModel.create(dataCreate);
 
-      // Nếu khách hàng chọn thanh toán online thì tạo payment
       if (createOrderDto.payment.type === 'CARD') {
-        // Đã tạo đơn hàng thành công, tiếp tục tạo payment
+        // Online payment: create PayOS payment link
         const createPaymentDto = {
           order: order._id.toString(),
           amount: order.totalAmount,
+          guestId: createOrderDto.customerInfo.guestId,
         };
-        return this.paymentService.send('payment.create', {
-          createPaymentDto: createPaymentDto,
-          ip: ip,
-        });
+        const paymentResult = await firstValueFrom(
+          this.paymentService.send('payment.create', {
+            createPaymentDto,
+            ip,
+          }),
+        );
+
+        return {
+          orderId: order._id.toString(),
+          url: paymentResult.url,
+          orderCode: paymentResult.orderCode,
+          paymentType: 'CARD',
+        };
       } else {
-        // Khách hàng chọn thanh toán khi nhận hàng (COD)
-        const createPaymentDto = {
-          order: order._id.toString(),
+        // COD payment: create payment record and process immediately
+        const codPayment = await firstValueFrom(
+          this.paymentService.send('payment.createForCashOnDelivery', {
+            orderId: order._id.toString(),
+            amount: order.totalAmount,
+            guestId: createOrderDto.customerInfo.guestId,
+          }),
+        );
+
+        // Update stock for COD orders immediately
+        for (const item of createOrderDto.orderDetail) {
+          try {
+            await firstValueFrom(
+              this.productService.send('product.variant.decrementStock', {
+                variantId: item.productVariant._id,
+                quantity: item.quantity,
+              }),
+            );
+          } catch (err) {
+            console.error(
+              'Stock update error for variant:',
+              item.productVariant._id,
+              err,
+            );
+          }
+        }
+
+        // Send COD order confirmation email (fire and forget)
+        this.notificationService.emit('notification.sendOrderConfirmation', {
+          email: createOrderDto.customerInfo.email,
+          orderId: order._id.toString(),
           amount: order.totalAmount,
-        };
-        return this.paymentService.send('payment.createForCashOnDelivery', {
-          createPaymentDto: createPaymentDto,
+          orderItems: createOrderDto.orderDetail.map((item) => ({
+            productVariant: item.productVariant._id,
+            quantity: item.quantity,
+            price: item.price,
+            subtotal: item.subtotal,
+          })),
+          paymentMethod: 'COD',
+          customerName: createOrderDto.customerInfo.fullname,
         });
+
+        return {
+          orderId: order._id.toString(),
+          paymentType: 'COD',
+          totalAmount: order.totalAmount,
+          customerInfo: order.customerInfo,
+        };
       }
     } catch (error) {
-      // Xử lý lỗi tại đây (gửi cái message lỗi cho bên service khác biết)
       console.error('Error creating order:', error);
+      throw error;
     }
+  }
+
+  async getOrderById(orderId: string) {
+    const order = await this.orderModel
+      .findById(orderId)
+      .populate('orderDetail.productVariant');
+    return order;
   }
 
   async getAllOrdersByGuestId(guestId: string) {
     const orders = await this.orderModel
-      .find({ guestId: guestId })
+      .find({ 'customerInfo.guestId': new Types.ObjectId(guestId) })
       .populate('orderDetail.productVariant')
       .sort({ createdAt: -1 });
 
     return orders;
   }
 
-  async updateOrderStatus(id: string, updateOrderDto: UpdateOrderDto) {}
+  async updateOrderStatus(id: string, updateOrderDto: UpdateOrderDto) {
+    return await this.orderModel.findByIdAndUpdate(
+      id,
+      { status: updateOrderDto.status },
+      { new: true },
+    );
+  }
 
-  async updateOrderPayment(id: string, updateOrderDto: UpdateOrderDto) {}
+  async updateOrderPayment(id: string, updateOrderDto: UpdateOrderDto) {
+    return await this.orderModel.findByIdAndUpdate(
+      id,
+      { payment: updateOrderDto.payment },
+      { new: true },
+    );
+  }
 }

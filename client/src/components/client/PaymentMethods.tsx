@@ -3,10 +3,8 @@
 import React, { useState } from 'react';
 import { Radio, Button, Card, Space, Typography, RadioChangeEvent } from 'antd';
 import { CreditCardOutlined, DeliveredProcedureOutlined } from '@ant-design/icons';
-import { paymentClientService } from '@/services/client/payment.client.service';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/navigation';
-import { pathClientRoutes } from '@/config/route';
 import { IOrderData } from '@/types/order';
 import { useMutation } from '@tanstack/react-query';
 import { orderClientService } from '@/services/client/order.client.service';
@@ -22,73 +20,64 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
     const { clearCart } = useCartStore();
 
     const createOrderMutation = useMutation({
-        mutationFn: async (newOrderData: IOrderData) => {
-            return await orderClientService.createOrderWithCARD(newOrderData);
+        mutationFn: async (data: IOrderData) => {
+            return await orderClientService.createOrder(data);
         },
-        onSuccess: (data) => {
-            toast.success('Đơn hàng đã được tạo thành công!');
-            // Tạo thông tin đơn hàng mẫu để chuyển đến trang success
-            // const orderInfo = {
-            //     orderId: data._id || "",
-            //     customerName: data.customerInfo.fullname,
-            //     phone: data.customerInfo.phone,
-            //     address: data.customerInfo.address,
-            //     total: data.totalAmount.toString() || "0"
-            // };
-
-            // Chuyển hướng đến trang order-success với thông tin đơn hàng
-            // const params = new URLSearchParams(orderInfo);
-            if (sessionStorage.getItem('orderData'))
+        onSuccess: (result) => {
+            if (result.paymentType === 'CARD' && result.url) {
+                // Save order info to sessionStorage for the return page
+                sessionStorage.setItem('pendingOrder', JSON.stringify({
+                    orderId: result.orderId,
+                    orderCode: result.orderCode,
+                    orderData: orderData,
+                }));
+                // Redirect to PayOS payment page
+                window.location.href = result.url;
+            } else {
+                // COD - order created successfully
+                toast.success('Đặt hàng thành công!');
                 sessionStorage.removeItem('orderData');
+                clearCart();
 
-            // Xóa giỏ hàng
-            clearCart();
-
-            // router.push(`${pathClientRoutes.orderSuccess}?${params.toString()}`);
-            return;
+                // Redirect to success page with order info
+                const params = new URLSearchParams({
+                    orderId: result.orderId || '',
+                    customerName: orderData.customerInfo.fullname,
+                    phone: orderData.customerInfo.phone,
+                    address: orderData.customerInfo.address,
+                    total: (result.totalAmount || orderData.totalAmount).toString(),
+                    method: 'COD',
+                });
+                router.push(`/order-success?${params.toString()}`);
+            }
         },
         onError: () => {
             toast.error('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.');
         }
-    })
+    });
 
     const handlePaymentMethodChange = (e: RadioChangeEvent) => {
         setPaymentMethod(e.target.value);
     };
 
     const handlePayment = async () => {
-        if (paymentMethod === 'cod') {
-            // Xử lý thanh toán khi nhận hàng
-            createOrderMutation.mutate(orderData);
-        }
+        if (!orderData) return;
 
-        if (paymentMethod === 'vnpay' && orderData) {
-            try {
-                setLoading(true);
-                const paymentUrl = await orderClientService.createOrderWithCARD({
-                    customerInfo: orderData.customerInfo,
-                    orderDetail: orderData.orderDetail,
-                    totalAmount: orderData.totalAmount,
-                    payment: {
-                        isCheckout: true,
-                        type: 'CARD'
-                    },
-                });
+        setLoading(true);
+        try {
+            const paymentConfig = paymentMethod === 'cod'
+                ? { isCheckout: false, type: 'COD' as const }
+                : { isCheckout: true, type: 'CARD' as const };
 
-                console.log("VNPay Payment URL:", paymentUrl);
-
-
-                if (paymentUrl) {
-                    window.location.href = paymentUrl.url || "";
-                }
-
-                // Chuyển hướng đến trang thanh toán VNPay
-            } catch (error) {
-                console.error('Lỗi tạo thanh toán VNPay:', error);
-                toast.error('Có lỗi xảy ra khi tạo thanh toán VNPay');
-            } finally {
-                setLoading(false);
-            }
+            createOrderMutation.mutate({
+                ...orderData,
+                payment: paymentConfig,
+            });
+        } catch (error) {
+            console.error('Payment error:', error);
+            toast.error('Có lỗi xảy ra. Vui lòng thử lại.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -109,8 +98,8 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
                         },
                         {
                             key: 'vnpay',
-                            title: 'Thanh toán trực tuyến',
-                            desc: 'Thanh toán qua VNPay (ATM, Visa, MasterCard)',
+                            title: 'Thanh toán trực tuyến (PayOS)',
+                            desc: 'Thanh toán qua QR Code, chuyển khoản ngân hàng',
                             icon: <CreditCardOutlined className="!text-2xl !text-blue-500" />,
                         },
                     ].map((method) => (
@@ -147,11 +136,11 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
                     type="primary"
                     size="large"
                     onClick={handlePayment}
-                    loading={loading}
+                    loading={loading || createOrderMutation.isPending}
                     className="w-full h-12 text-lg font-semibold hover:border-blue-500 hover:shadow-lg transition-all duration-200"
                     disabled={!orderData}
                 >
-                    {paymentMethod === 'cod' ? 'Đặt hàng' : 'Thanh toán ngay'}
+                    {paymentMethod === 'cod' ? 'Đặt hàng (COD)' : 'Thanh toán ngay'}
                 </Button>
 
                 {!orderData && (
@@ -160,8 +149,6 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
                     </Text>
                 )}
             </Space>
-
-
         </Card>
     );
 }

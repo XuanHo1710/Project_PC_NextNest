@@ -206,17 +206,17 @@ export default function CartClient() {
 
         // Validate tổng tiền phải > 0 và >= đơn hàng tối thiểu
         const totalAmount = calculateTotal();
-        const minOrderAmount = 100000; // 100k VND
+        // const minOrderAmount = 100000; // 100k VND
 
-        if (totalAmount <= 0) {
-            toast.error("Tổng tiền đơn hàng không hợp lệ!");
-            return;
-        }
+        // if (totalAmount <= 0) {
+        //     toast.error("Tổng tiền đơn hàng không hợp lệ!");
+        //     return;
+        // }
 
-        if (totalAmount < minOrderAmount) {
-            toast.error(`Đơn hàng tối thiểu ${minOrderAmount.toLocaleString()}đ! Hiện tại: ${totalAmount.toLocaleString()}đ`);
-            return;
-        }
+        // if (totalAmount < minOrderAmount) {
+        //     toast.error(`Đơn hàng tối thiểu ${minOrderAmount.toLocaleString()}đ! Hiện tại: ${totalAmount.toLocaleString()}đ`);
+        //     return;
+        // }
 
         // Validate địa chỉ đầy đủ
         if (!data.province || !data.district || !data.ward || !data.detailAddress) {
@@ -337,11 +337,11 @@ export default function CartClient() {
                                                 )}
                                             </div>
                                         </div>
-                                        {calculateTotal() < 100000 && (
+                                        {/* {calculateTotal() < 100000 && (
                                             <div className="mt-2 text-xs text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-3 py-1.5 rounded-md">
                                                 Đơn hàng tối thiểu 100.000đ. Thêm {formatCurrencyVND(100000 - calculateTotal())} nữa để đặt hàng.
                                             </div>
-                                        )}
+                                        )} */}
                                     </div>
                                 </div>
 
@@ -621,13 +621,15 @@ export default function CartClient() {
                                                 block
                                                 size="large"
                                                 className="!h-14 !rounded-lg !font-bold !text-base"
-                                                disabled={!cart || cart.cartItems.length === 0 || calculateTotal() < 100000}
+                                                // disabled={!cart || cart.cartItems.length === 0 || calculateTotal() < 100000}
+                                                disabled={!cart || cart.cartItems.length === 0}
+
                                             >
                                                 {(!cart || cart.cartItems.length === 0)
                                                     ? 'Giỏ hàng trống'
-                                                    : calculateTotal() < 100000
-                                                        ? `Thêm ${formatCurrencyVND(100000 - calculateTotal())} để đặt hàng`
-                                                        : 'ĐẶT HÀNG NGAY'
+                                                    // : calculateTotal() < 100000
+                                                    //     ? `Thêm ${formatCurrencyVND(100000 - calculateTotal())} để đặt hàng`
+                                                    : 'ĐẶT HÀNG NGAY'
                                                 }
                                             </Button>
                                             <p className="text-center text-xs text-gray-400 mt-2">

@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Payment, PaymentSchema } from 'src/payment/entity/payment.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+
 @Module({
   imports: [
     ClientsModule.register([
@@ -14,6 +15,13 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         transport: Transport.TCP,
         options: {
           port: MICROSERVICE_PORT.NOTIFICATION_SERVICE,
+        },
+      },
+      {
+        name: MICROSERVICE.PRODUCT_SERVICE,
+        transport: Transport.TCP,
+        options: {
+          port: MICROSERVICE_PORT.PRODUCT_SERVICE,
         },
       },
     ]),

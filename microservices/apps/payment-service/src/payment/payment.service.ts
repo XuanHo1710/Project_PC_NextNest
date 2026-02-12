@@ -5,9 +5,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { CreatePaymentDto, MICROSERVICE } from '@project-pc/common';
 import { PayOS } from '@payos/node';
 
-import moment from 'moment';
 import { Payment } from 'src/payment/entity/payment.entity';
 import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+
 @Injectable()
 export class VnpayService {
   private clientID: string;
@@ -20,6 +21,8 @@ export class VnpayService {
     @InjectModel(Payment.name) private paymentModel: Model<Payment>,
     @Inject(MICROSERVICE.NOTIFICATION_SERVICE)
     private readonly notificationService: ClientProxy,
+    @Inject(MICROSERVICE.PRODUCT_SERVICE)
+    private readonly productService: ClientProxy,
   ) {
     this.clientID = this.configService.get<string>('PAYOS_CLIENTID') || '';
     this.apiKey = this.configService.get<string>('PAYOS_APIKEY') || '';
@@ -27,9 +30,16 @@ export class VnpayService {
     this.returnUrl = this.configService.get<string>('RETURN_URL') || '';
   }
 
+  private createPayOS() {
+    return new PayOS({
+      clientId: this.clientID,
+      apiKey: this.apiKey,
+      checksumKey: this.checkSum,
+    });
+  }
+
   // Thanh toán khi nhận hàng (COD)
   async createPaymentForCashOnDelivery(orderId: string, amount: number) {
-    // Tạo payment cho hình thức thanh toán khi nhận hàng (COD)
     const paymentPayload = {
       paymentCode: Date.now(),
       order: new Types.ObjectId(orderId),
@@ -37,7 +47,8 @@ export class VnpayService {
       status: 'PENDING',
       transactionId: '',
     };
-    return await this.paymentModel.create(paymentPayload);
+    const payment = await this.paymentModel.create(paymentPayload);
+    return payment;
   }
 
   async updatePaymentStatus(
@@ -49,112 +60,188 @@ export class VnpayService {
         order: new Types.ObjectId(orderId),
       },
       { status: status },
+      { new: true },
     );
   }
 
   async createPaymentUrl(createPaymentDto: CreatePaymentDto, ip: string) {
-    // Tạo đối tượng PayOS
-    const payos = new PayOS({
-      clientId: this.clientID,
-      apiKey: this.apiKey,
-      checksumKey: this.checkSum,
-      logLevel: 'info',
-      // ... other options
-    });
+    const payos = this.createPayOS();
 
-    const paymentCode: number = Date.now(); // Sử dụng timestamp làm mã đơn hàng duy nhất
+    const paymentCode: number = Date.now();
     const paymentLink = await payos.paymentRequests.create(
       {
         orderCode: paymentCode,
         amount: createPaymentDto.amount,
         expiredAt: Math.floor(Date.now() / 1000) + 15 * 60,
-        description: 'Đơn hàng #' + paymentCode,
+        description: 'Don hang ' + paymentCode,
         returnUrl: this.returnUrl,
         cancelUrl: this.returnUrl,
       },
       {
-        maxRetries: 5, // Override default max retries
-        timeout: 10000, // Override default timeout
+        maxRetries: 5,
+        timeout: 10000,
       },
     );
 
+    // Save payment record with PENDING status
+    await this.paymentModel.create({
+      paymentCode: paymentCode,
+      order: new Types.ObjectId(createPaymentDto.order),
+      amount: createPaymentDto.amount,
+      status: 'PENDING',
+      transactionId: paymentLink.paymentLinkId || '',
+    });
+
     return {
       url: paymentLink.checkoutUrl,
+      orderCode: paymentCode,
     };
   }
 
-  // async verifyReturnUrl(vnpParams: any, guestId: string) {
-  //   const paymentPayload = {
-  //     order: new Types.ObjectId(vnpParams['vnp_TxnRef']),
-  //     amount: parseInt(vnpParams['vnp_Amount']) || 0,
-  //     status: 'PENDING',
-  //     transactionId: vnpParams['vnp_TransactionNo'] || '',
-  //   };
-  //   try {
-  //     // Tạo đối tượng VNPay với config giống như khi tạo payment
-  //     const vnpay = new VNPay({
-  //       // Cấu hình bắt buộc
-  //       tmnCode: this.tmnCode,
-  //       secureSecret: this.secretKey,
-  //       vnpayHost: this.vnpUrl,
+  // Verify payment from PayOS return URL
+  async verifyPayment(
+    orderCode: number,
+    status: string,
+    customerEmail: string,
+    orderItems: Array<{
+      productVariant: string;
+      quantity: number;
+      price: number;
+      subtotal: number;
+    }>,
+  ) {
+    try {
+      const payos = this.createPayOS();
 
-  //       // Cấu hình tùy chọn
-  //       testMode: true, // chỉ bật khi chạy test
-  //       hashAlgorithm: HashAlgorithm.SHA512, // Thuật toán mã hóa
-  //       enableLog: true, // Bật/tắt log
-  //       loggerFn: ignoreLogger, // Custom logger
-  //     });
-  //     // Sử dụng thư viện VNPay để verify
-  //     const verify = vnpay.verifyReturnUrl(vnpParams);
+      // Get payment link info from PayOS to verify the actual status
+      const paymentLinkInfo = await payos.paymentRequests.get(orderCode);
 
-  //     // // Tạo transactionData từ vnpParams
-  //     // const transactionData: Record<string, string> = {
-  //     //   orderId: vnpParams['vnp_TxnRef'] || '',
-  //     //   totalAmount: vnpParams['vnp_Amount'] || '',
-  //     //   orderInfo: vnpParams['vnp_OrderInfo'] || '',
-  //     //   responseCode: vnpParams['vnp_ResponseCode'] || '',
-  //     //   transactionNo: vnpParams['vnp_TransactionNo'] || '',
-  //     //   bankCode: vnpParams['vnp_BankCode'] || '',
-  //     //   bankTranNo: vnpParams['vnp_BankTranNo'] || '',
-  //     //   cardType: vnpParams['vnp_CardType'] || '',
-  //     //   payDate: vnpParams['vnp_PayDate'] || '',
-  //     //   transactionStatus: vnpParams['vnp_TransactionStatus'] || '',
-  //     // };
-  //     if (verify) {
-  //       const responseCode = vnpParams['vnp_ResponseCode'];
-  //       if (responseCode === '00') {
-  //         // Tạo payment thành công
-  //         paymentPayload.status = 'PAID';
+      const payment = await this.paymentModel.findOne({
+        paymentCode: orderCode,
+      });
 
-  //         const paymentCreated = await this.paymentModel.create(paymentPayload);
+      if (!payment) {
+        return {
+          success: false,
+          message: 'Không tìm thấy thông tin thanh toán',
+        };
+      }
 
-  //         // Gửi thông báo thành công về giao dịch qua email (Notification Service)
-  //         this.notificationService.emit('notification.sendPaymentSuccess', {
-  //           guestId: guestId,
-  //           orderId: paymentPayload.order,
-  //           amount: paymentPayload.amount,
-  //         });
+      if (paymentLinkInfo.status === 'PAID') {
+        // Update payment status to PAID
+        payment.status = 'PAID';
+        payment.transactionId =
+          paymentLinkInfo.transactions?.[0]?.reference || payment.transactionId;
+        await payment.save();
 
-  //         return paymentCreated;
-  //       } else {
-  //         return {
-  //           message: 'Giao dịch thất bại',
-  //         };
-  //       }
-  //     } else {
-  //       return {
-  //         message: 'Chữ ký không hợp lệ',
-  //       };
-  //     }
-  //   } catch (error) {
-  //     console.error('VNPay verification error:', error);
+        // Update stock for each product variant
+        await this.updateProductStock(orderItems);
 
-  //     //  Xử lý lỗi ở dưới này....
+        // Send email notification (fire and forget, don't block the response)
+        this.sendOrderEmailNotification(
+          customerEmail,
+          payment.order.toString(),
+          payment.amount,
+          orderItems,
+        ).catch((err) => console.error('Email notification error:', err));
 
-  //     return {
-  //       isValid: false,
-  //       message: 'Lỗi xác thực giao dịch',
-  //     };
-  //   }
-  // }
+        return {
+          success: true,
+          message: 'Thanh toán thành công',
+          data: {
+            paymentCode: payment.paymentCode,
+            amount: payment.amount,
+            status: payment.status,
+            transactionId: payment.transactionId,
+            paidAt:
+              paymentLinkInfo.transactions?.[0]?.transactionDateTime || null,
+          },
+        };
+      } else if (
+        paymentLinkInfo.status === 'CANCELLED' ||
+        paymentLinkInfo.status === 'EXPIRED'
+      ) {
+        payment.status = 'UNPAID';
+        await payment.save();
+
+        return {
+          success: false,
+          message:
+            paymentLinkInfo.status === 'CANCELLED'
+              ? 'Thanh toán đã bị hủy'
+              : 'Thanh toán đã hết hạn',
+          data: {
+            paymentCode: payment.paymentCode,
+            amount: payment.amount,
+            status: payment.status,
+          },
+        };
+      } else {
+        // PENDING or PROCESSING
+        return {
+          success: false,
+          message: 'Thanh toán đang được xử lý',
+          data: {
+            paymentCode: payment.paymentCode,
+            amount: payment.amount,
+            status: paymentLinkInfo.status,
+          },
+        };
+      }
+    } catch (error) {
+      console.error('Payment verification error:', error);
+      return {
+        success: false,
+        message: 'Lỗi xác thực thanh toán',
+      };
+    }
+  }
+
+  // Update stock for product variants after successful payment
+  private async updateProductStock(
+    orderItems: Array<{
+      productVariant: string;
+      quantity: number;
+    }>,
+  ) {
+    try {
+      for (const item of orderItems) {
+        await firstValueFrom(
+          this.productService.send('product.variant.decrementStock', {
+            variantId: item.productVariant,
+            quantity: item.quantity,
+          }),
+        );
+      }
+    } catch (error) {
+      console.error('Stock update error:', error);
+    }
+  }
+
+  // Send order confirmation email
+  private async sendOrderEmailNotification(
+    email: string,
+    orderId: string,
+    amount: number,
+    orderItems: Array<{
+      productVariant: string;
+      quantity: number;
+      price: number;
+      subtotal: number;
+    }>,
+  ) {
+    try {
+      await firstValueFrom(
+        this.notificationService.send('notification.sendOrderConfirmation', {
+          email,
+          orderId,
+          amount,
+          orderItems,
+          paymentMethod: 'CARD',
+        }),
+      );
+    } catch (error) {
+      console.error('Send email error:', error);
+    }
+  }
 }

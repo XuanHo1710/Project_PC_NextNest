@@ -1,7 +1,7 @@
-import { Controller, Get, Query, Inject } from '@nestjs/common';
+import { Controller, Post, Body, Inject } from '@nestjs/common';
 import { MICROSERVICE } from '@project-pc/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { Guest } from 'decorators/customize';
+import { Guest, Public } from 'decorators/customize';
 
 @Controller('/client/payment')
 export class PaymentController {
@@ -10,11 +10,28 @@ export class PaymentController {
     private readonly paymentService: ClientProxy,
   ) {}
 
-  @Get('/verify-vnpay')
-  verifyVnpay(@Query() query: any, @Guest() guest: any) {
+  @Post('/verify')
+  verifyPayment(
+    @Body()
+    body: {
+      orderCode: number;
+      status: string;
+      customerEmail: string;
+      orderItems: Array<{
+        productVariant: string;
+        quantity: number;
+        price: number;
+        subtotal: number;
+      }>;
+    },
+    @Guest() guest: any,
+  ) {
     return this.paymentService.send('payment.verify', {
-      query: query,
+      orderCode: body.orderCode,
+      status: body.status,
       guestId: guest._id,
+      customerEmail: body.customerEmail,
+      orderItems: body.orderItems,
     });
   }
 }

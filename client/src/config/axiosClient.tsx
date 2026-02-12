@@ -90,7 +90,7 @@ axiosClient.interceptors.response.use(
             // Update Zustand store with new access_token
             const { setAccessToken, setUser } = useAuthUser.getState();
             setAccessToken(refreshResponse.data.data.access_token);
-            
+
             // Update user data from payload if available
             const payload = refreshResponse.data.data.payload;
             if (payload) {

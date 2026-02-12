@@ -790,6 +790,33 @@ export class ProductService {
     return { message: 'Product variant deleted successfully', data: variant };
   }
 
+  // Decrement stock for a product variant (used after successful payment)
+  async decrementVariantStock(variantId: string, quantity: number) {
+    if (!Types.ObjectId.isValid(variantId)) {
+      throw new NotFoundException(`Invalid product variant ID: ${variantId}`);
+    }
+
+    const variant = await this.productVariantModel
+      .findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(variantId),
+          isDeleted: false,
+          stock: { $gte: quantity },
+        },
+        { $inc: { stock: -quantity } },
+        { new: true },
+      )
+      .exec();
+
+    if (!variant) {
+      throw new BadRequestException(
+        `Không thể trừ tồn kho cho variant ${variantId}. Có thể hết hàng.`,
+      );
+    }
+
+    return variant;
+  }
+
   // ============= PRODUCT ATTRIBUTE CRUD =============
   async createProductAttribute(
     createProductAttributeDto: CreateProductAttributeDto,

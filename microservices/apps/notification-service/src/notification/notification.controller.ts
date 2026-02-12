@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from '@project-pc/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller()
 export class NotificationController {
@@ -15,6 +15,60 @@ export class NotificationController {
       data.email,
       data.orderId,
       data.description,
+    );
+  }
+
+  @MessagePattern('notification.sendOrderConfirmation')
+  sendOrderConfirmation(
+    @Payload()
+    data: {
+      email: string;
+      orderId: string;
+      amount: number;
+      orderItems: Array<{
+        productVariant: string;
+        quantity: number;
+        price: number;
+        subtotal: number;
+      }>;
+      paymentMethod: string;
+      customerName?: string;
+    },
+  ) {
+    return this.notificationService.sendOrderConfirmationEmail(
+      data.email,
+      data.orderId,
+      data.amount,
+      data.orderItems,
+      data.paymentMethod,
+      data.customerName,
+    );
+  }
+
+  @EventPattern('notification.sendOrderConfirmation')
+  handleOrderConfirmationEvent(
+    @Payload()
+    data: {
+      email: string;
+      orderId: string;
+      amount: number;
+      orderItems: Array<{
+        productVariant: string;
+        quantity: number;
+        price: number;
+        subtotal: number;
+      }>;
+      paymentMethod: string;
+      customerName?: string;
+    },
+  ) {
+    return this.notificationService.sendOrderConfirmationEmail(
+      data.email,
+      data.orderId,
+      data.amount,
+      data.orderItems,
+      data.paymentMethod,
+      data.customerName,
     );
   }
 }

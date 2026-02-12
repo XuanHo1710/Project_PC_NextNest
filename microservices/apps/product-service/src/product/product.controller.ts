@@ -197,6 +197,16 @@ export class ProductController {
     return this.productService.removeProductVariant(data.id);
   }
 
+  @MessagePattern('product.variant.decrementStock')
+  decrementVariantStock(
+    @Payload() data: { variantId: string; quantity: number },
+  ) {
+    return this.productService.decrementVariantStock(
+      data.variantId,
+      data.quantity,
+    );
+  }
+
   // ============= PRODUCT ATTRIBUTE ENDPOINTS =============
   @MessagePattern('product.attribute.create')
   createProductAttribute(

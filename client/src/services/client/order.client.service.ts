@@ -1,14 +1,30 @@
 import axiosClient from "@/config/axiosClient";
 import { IOrderData } from "@/types/order";
 
+export interface CreateOrderResponse {
+  orderId: string;
+  url?: string;
+  orderCode?: number;
+  paymentType: string;
+  totalAmount?: number;
+  customerInfo?: {
+    guestId: string;
+    fullname: string;
+    address: string;
+    email: string;
+    phone: string;
+    note: string;
+  };
+}
+
 class OrderClientService {
-  async createOrderWithCARD(data: IOrderData): Promise<{ url: string }> {
+  async createOrder(data: IOrderData): Promise<CreateOrderResponse> {
     const response = await axiosClient.post("/order", data);
     return response.data;
   }
 
-  async createOrderWithCOD(data: IOrderData): Promise<IOrderData> {
-    const response = await axiosClient.post("/order", data);
+  async getOrderById(orderId: string): Promise<IOrderData> {
+    const response = await axiosClient.get(`/order/${orderId}`);
     return response.data;
   }
 

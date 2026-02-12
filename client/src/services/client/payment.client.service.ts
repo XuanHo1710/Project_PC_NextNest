@@ -1,28 +1,34 @@
 import axiosClient from "@/config/axiosClient";
-import { IOrderData } from "@/types/order";
 
-export interface CreatePaymentRequest extends IOrderData {
-  orderId: string;
-  orderDescription: string;
+export interface VerifyPaymentRequest {
+  orderCode: number;
+  status: string;
+  customerEmail: string;
+  orderItems: Array<{
+    productVariant: string;
+    quantity: number;
+    price: number;
+    subtotal: number;
+  }>;
 }
 
-interface PaymentResponse {
-  vnpayResponse: string;
-}
-
-interface VerifyResponse {
-  isValid: boolean;
-  transactionData: Record<string, string>;
+export interface VerifyPaymentResponse {
+  success: boolean;
   message: string;
+  data?: {
+    paymentCode: number;
+    amount: number;
+    status: string;
+    transactionId?: string;
+    paidAt?: string;
+  };
 }
 
 class PaymentClientService {
-  async verifyVnpayReturn(
-    queryParams: URLSearchParams,
-  ): Promise<VerifyResponse> {
-    const response = await axiosClient.get(
-      `/payment/vnpay-return?${queryParams.toString()}`,
-    );
+  async verifyPayment(
+    payload: VerifyPaymentRequest,
+  ): Promise<VerifyPaymentResponse> {
+    const response = await axiosClient.post("/payment/verify", payload);
     return response.data;
   }
 }

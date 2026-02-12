@@ -21,7 +21,8 @@ export default function OrderSuccessPage() {
         customerName: '',
         phoneNumber: '',
         address: '',
-        totalAmount: 0
+        totalAmount: 0,
+        method: 'COD',
     });
 
     useEffect(() => {
@@ -31,13 +32,15 @@ export default function OrderSuccessPage() {
         const phoneNumber = searchParams.get('phone') || '';
         const address = searchParams.get('address') || '';
         const totalAmount = parseInt(searchParams.get('total') || '0');
+        const method = searchParams.get('method') || 'COD';
 
         setOrderInfo({
             orderId,
             customerName,
             phoneNumber,
             address,
-            totalAmount
+            totalAmount,
+            method,
         });
     }, [searchParams]);
 
@@ -208,7 +211,7 @@ export default function OrderSuccessPage() {
 
                             <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
                                 <Text strong className="text-yellow-800 dark:text-yellow-300">
-                                    💰 Phương thức thanh toán: Thanh toán bằng tiền mặt (COD)
+                                    💰 Phương thức thanh toán: {orderInfo.method === 'COD' ? 'Thanh toán bằng tiền mặt (COD)' : 'Thanh toán trực tuyến (PayOS)'}
                                 </Text>
                             </div>
                         </Card>
@@ -242,7 +245,7 @@ export default function OrderSuccessPage() {
                                     <div className="text-2xl mb-2">✅</div>
                                     <Text strong className="block dark:text-white">Giao hàng thành công</Text>
                                     <Text className="text-sm text-gray-500 dark:text-gray-400">
-                                        Thanh toán COD
+                                        {orderInfo.method === 'COD' ? 'Thanh toán COD' : 'Đã thanh toán online'}
                                     </Text>
                                 </div>
                             </div>
