@@ -327,12 +327,15 @@ export class NotificationService {
     amount: number,
     orderItems: Array<{
       productVariant: string;
+      productName?: string;
+      combination?: Record<string, string>;
       quantity: number;
       price: number;
       subtotal: number;
     }>,
     paymentMethod: string,
     customerName?: string,
+    transactionId?: string,
   ): Promise<boolean> {
     const htmlContent = this.generateOrderConfirmationTemplate(
       orderId,
@@ -340,11 +343,12 @@ export class NotificationService {
       orderItems,
       paymentMethod,
       customerName,
+      transactionId,
     );
 
     return this.sendEmail({
       to: email,
-      subject: `[Project PC] Xác nhận đơn hàng #${orderId.slice(-8).toUpperCase()}`,
+      subject: `Xác nhận đơn hàng #${orderId.slice(-8).toUpperCase()} - Project PC`,
       htmlContent,
     });
   }
@@ -357,12 +361,15 @@ export class NotificationService {
     amount: number,
     orderItems: Array<{
       productVariant: string;
+      productName?: string;
+      combination?: Record<string, string>;
       quantity: number;
       price: number;
       subtotal: number;
     }>,
     paymentMethod: string,
     customerName?: string,
+    transactionId?: string,
   ): string {
     const formatCurrency = (value: number) =>
       new Intl.NumberFormat('vi-VN', {
@@ -370,25 +377,51 @@ export class NotificationService {
         currency: 'VND',
       }).format(value);
 
+    const orderDate = new Date();
+    const formattedDate = orderDate.toLocaleString('vi-VN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+
+    const displayOrderCode = transactionId || orderId.slice(-8).toUpperCase();
+
     const itemsHtml = orderItems
-      .map(
-        (item, index) => `
-        <tr style="border-bottom: 1px solid #e9ecef;">
-          <td style="padding: 12px 16px; color: #495057; font-size: 14px;">${index + 1}</td>
-          <td style="padding: 12px 16px; color: #495057; font-size: 14px;">${item.productVariant.slice(-8).toUpperCase()}</td>
-          <td style="padding: 12px 16px; color: #495057; font-size: 14px; text-align: center;">${item.quantity}</td>
-          <td style="padding: 12px 16px; color: #495057; font-size: 14px; text-align: right;">${formatCurrency(item.price)}</td>
-          <td style="padding: 12px 16px; color: #1877f2; font-size: 14px; font-weight: 600; text-align: right;">${formatCurrency(item.subtotal)}</td>
-        </tr>`,
-      )
+      .map((item, index) => {
+        const combinationText = item.combination
+          ? Object.entries(item.combination)
+              .map(([key, val]) => `${key}: ${val}`)
+              .join(', ')
+          : '';
+        const productDisplay =
+          item.productName || item.productVariant.slice(-8).toUpperCase();
+        return `
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 14px 16px; color: #4a5568; font-size: 14px; text-align: center;">${index + 1}</td>
+          <td style="padding: 14px 16px; font-size: 14px;">
+            <div style="color: #2d3748; font-weight: 500;">${productDisplay}</div>
+            ${combinationText ? `<div style="color: #a0aec0; font-size: 12px; margin-top: 4px;">${combinationText}</div>` : ''}
+          </td>
+          <td style="padding: 14px 16px; color: #4a5568; font-size: 14px; text-align: center;">${item.quantity}</td>
+          <td style="padding: 14px 16px; color: #4a5568; font-size: 14px; text-align: right;">${formatCurrency(item.price)}</td>
+          <td style="padding: 14px 16px; color: #2b6cb0; font-size: 14px; font-weight: 600; text-align: right;">${formatCurrency(item.subtotal)}</td>
+        </tr>`;
+      })
       .join('');
 
     const paymentMethodText =
       paymentMethod === 'CARD'
-        ? 'Thanh toán trực tuyến (Đã thanh toán)'
+        ? 'Thanh toán trực tuyến'
         : 'Thanh toán khi nhận hàng (COD)';
 
-    const paymentBadgeColor = paymentMethod === 'CARD' ? '#28a745' : '#fd7e14';
+    const paymentBadgeColor = paymentMethod === 'CARD' ? '#38a169' : '#dd6b20';
+    const paymentStatusSuffix =
+      paymentMethod === 'CARD' ? ' - Đã thanh toán' : '';
 
     return `
 <!DOCTYPE html>
@@ -396,72 +429,68 @@ export class NotificationService {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xác nhận đơn hàng</title>
+  <title>Xác nhận đơn hàng - Project PC</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f7fafc; -webkit-font-smoothing: antialiased;">
   <table role="presentation" style="width: 100%; border-collapse: collapse;">
     <tr>
-      <td align="center" style="padding: 40px 0;">
-        <table role="presentation" style="width: 100%; max-width: 650px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
+      <td align="center" style="padding: 32px 16px;">
+        <table role="presentation" style="width: 100%; max-width: 640px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #1877f2 0%, #00c6ff 100%); border-radius: 16px 16px 0 0;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">Project PC</h1>
-              <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Xác nhận đơn hàng</p>
+            <td style="padding: 32px 40px; text-align: center; background-color: #2b6cb0; border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">Project PC</h1>
+              <p style="margin: 8px 0 0; color: #bee3f8; font-size: 14px; font-weight: 400;">Xác nhận đơn hàng</p>
             </td>
           </tr>
 
-          <!-- Success Icon -->
+          <!-- Greeting -->
           <tr>
-            <td style="padding: 30px 40px 10px; text-align: center;">
-              <div style="width: 70px; height: 70px; background-color: #d4edda; border-radius: 50%; margin: 0 auto 15px; line-height: 70px;">
-                <span style="font-size: 36px;">✅</span>
-              </div>
-              <h2 style="margin: 0 0 10px; color: #28a745; font-size: 24px; font-weight: 700;">
-                Đặt hàng thành công!
-              </h2>
-              <p style="margin: 0; color: #606770; font-size: 16px;">
-                ${customerName ? `Xin chào <strong>${customerName}</strong>, c` : 'C'}ảm ơn bạn đã đặt hàng tại Project PC
+            <td style="padding: 32px 40px 16px;">
+              <p style="margin: 0 0 8px; color: #2d3748; font-size: 16px; line-height: 1.6;">
+                ${customerName ? `Xin chào <strong>${customerName}</strong>,` : 'Xin chào,'}
+              </p>
+              <p style="margin: 0; color: #718096; font-size: 15px; line-height: 1.6;">
+                Cảm ơn bạn đã đặt hàng tại Project PC. Đơn hàng của bạn đã được tiếp nhận và đang được xử lý.
               </p>
             </td>
           </tr>
 
           <!-- Order Info -->
           <tr>
-            <td style="padding: 20px 40px;">
-              <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px;">
-                <table style="width: 100%; border-collapse: collapse;">
-                  <tr>
-                    <td style="padding: 8px 0; color: #606770; font-size: 14px;">Mã đơn hàng:</td>
-                    <td style="padding: 8px 0; color: #1877f2; font-size: 16px; font-weight: 700; text-align: right; letter-spacing: 1px;">#${orderId.slice(-8).toUpperCase()}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; color: #606770; font-size: 14px;">Phương thức thanh toán:</td>
-                    <td style="padding: 8px 0; text-align: right;">
-                      <span style="background-color: ${paymentBadgeColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${paymentMethodText}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; color: #606770; font-size: 14px;">Ngày đặt hàng:</td>
-                    <td style="padding: 8px 0; color: #1c1e21; font-size: 14px; font-weight: 500; text-align: right;">${new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
-                  </tr>
-                </table>
-              </div>
+            <td style="padding: 16px 40px;">
+              <table style="width: 100%; border-collapse: collapse; background-color: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <tr>
+                  <td style="padding: 14px 20px; color: #718096; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Mã đơn hàng</td>
+                  <td style="padding: 14px 20px; color: #2b6cb0; font-size: 15px; font-weight: 700; text-align: right; border-bottom: 1px solid #e2e8f0; letter-spacing: 0.5px;">#${displayOrderCode}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 20px; color: #718096; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Phương thức thanh toán</td>
+                  <td style="padding: 14px 20px; text-align: right; border-bottom: 1px solid #e2e8f0;">
+                    <span style="background-color: ${paymentBadgeColor}; color: #ffffff; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">${paymentMethodText}${paymentStatusSuffix}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 20px; color: #718096; font-size: 14px;">Ngày đặt hàng</td>
+                  <td style="padding: 14px 20px; color: #2d3748; font-size: 14px; font-weight: 500; text-align: right;">${formattedDate}</td>
+                </tr>
+              </table>
             </td>
           </tr>
 
-          <!-- Order Items -->
+          <!-- Order Items Table -->
           <tr>
-            <td style="padding: 10px 40px 20px;">
-              <h3 style="margin: 0 0 15px; color: #1c1e21; font-size: 18px; font-weight: 600;">Chi tiết đơn hàng</h3>
-              <table style="width: 100%; border-collapse: collapse; border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden;">
+            <td style="padding: 24px 40px 16px;">
+              <h3 style="margin: 0 0 12px; color: #2d3748; font-size: 16px; font-weight: 600;">Chi tiết đơn hàng</h3>
+              <table style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <thead>
-                  <tr style="background-color: #f8f9fa;">
-                    <th style="padding: 12px 16px; color: #495057; font-size: 13px; text-align: left; font-weight: 600;">#</th>
-                    <th style="padding: 12px 16px; color: #495057; font-size: 13px; text-align: left; font-weight: 600;">Mã SP</th>
-                    <th style="padding: 12px 16px; color: #495057; font-size: 13px; text-align: center; font-weight: 600;">SL</th>
-                    <th style="padding: 12px 16px; color: #495057; font-size: 13px; text-align: right; font-weight: 600;">Đơn giá</th>
-                    <th style="padding: 12px 16px; color: #495057; font-size: 13px; text-align: right; font-weight: 600;">Thành tiền</th>
+                  <tr style="background-color: #edf2f7;">
+                    <th style="padding: 12px 16px; color: #4a5568; font-size: 12px; text-align: center; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">#</th>
+                    <th style="padding: 12px 16px; color: #4a5568; font-size: 12px; text-align: left; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Sản phẩm</th>
+                    <th style="padding: 12px 16px; color: #4a5568; font-size: 12px; text-align: center; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">SL</th>
+                    <th style="padding: 12px 16px; color: #4a5568; font-size: 12px; text-align: right; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Đơn giá</th>
+                    <th style="padding: 12px 16px; color: #4a5568; font-size: 12px; text-align: right; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Thành tiền</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -473,20 +502,26 @@ export class NotificationService {
 
           <!-- Total -->
           <tr>
-            <td style="padding: 0 40px 30px;">
-              <div style="background: linear-gradient(135deg, #1877f2 0%, #00c6ff 100%); border-radius: 12px; padding: 20px; text-align: center;">
-                <p style="margin: 0 0 5px; color: rgba(255,255,255,0.8); font-size: 14px;">Tổng thanh toán</p>
-                <p style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">${formatCurrency(amount)}</p>
-              </div>
+            <td style="padding: 0 40px 24px;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 16px 20px; text-align: right;">
+                    <span style="color: #718096; font-size: 14px; margin-right: 16px;">Tổng thanh toán:</span>
+                    <span style="color: #e53e3e; font-size: 24px; font-weight: 700;">${formatCurrency(amount)}</span>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
-          <!-- Shipping Info -->
+          <!-- Shipping Notice -->
           <tr>
-            <td style="padding: 0 40px 20px;">
-              <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; padding: 15px 20px;">
-                <p style="margin: 0; color: #856404; font-size: 14px;">
-                  🚚 <strong>Đơn hàng sẽ được xử lý và giao đến bạn trong 1-3 ngày làm việc.</strong><br>
+            <td style="padding: 0 40px 24px;">
+              <div style="background-color: #fffbeb; border-left: 3px solid #d69e2e; border-radius: 0 4px 4px 0; padding: 14px 18px;">
+                <p style="margin: 0 0 4px; color: #744210; font-size: 14px; font-weight: 600;">
+                  Đơn hàng sẽ được xử lý và giao đến bạn trong 1-3 ngày làm việc.
+                </p>
+                <p style="margin: 0; color: #975a16; font-size: 13px;">
                   Bạn sẽ nhận được thông báo khi đơn hàng được giao.
                 </p>
               </div>
@@ -495,14 +530,14 @@ export class NotificationService {
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 30px 40px; background-color: #f8f9fa; border-radius: 0 0 16px 16px; text-align: center;">
-              <p style="margin: 0 0 5px; color: #606770; font-size: 14px;">
-                Nếu có thắc mắc, vui lòng liên hệ hotline: <strong>1900-xxxx</strong>
+            <td style="padding: 24px 40px; background-color: #f7fafc; border-radius: 0 0 8px 8px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 4px; color: #718096; font-size: 13px;">
+                Nếu có thắc mắc, vui lòng liên hệ hotline: <strong style="color: #2d3748;">1900-xxxx</strong>
               </p>
-              <p style="margin: 0 0 10px; color: #606770; font-size: 14px;">
+              <p style="margin: 0 0 8px; color: #718096; font-size: 13px;">
                 Cảm ơn bạn đã mua sắm tại Project PC!
               </p>
-              <p style="margin: 0; color: #90949c; font-size: 12px;">
+              <p style="margin: 0; color: #a0aec0; font-size: 11px;">
                 &copy; ${new Date().getFullYear()} Project PC. All rights reserved.
               </p>
             </td>

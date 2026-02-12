@@ -177,31 +177,38 @@ export class ProductService {
       throw new NotFoundException(`Product with slug "${slug}" not found`);
     }
     // Populate default variant
+    let defaultVariant = null;
     if (product.defaultProductVariantId) {
-      const defaultVariant = await this.productVariantModel
+      defaultVariant = await this.productVariantModel
         .findOne({
           _id: new Types.ObjectId(product.defaultProductVariantId),
           isDeleted: false,
         })
         .exec();
-      if (defaultVariant) {
-        const obj = defaultVariant.toObject();
-
-        const responseVariant = {
-          ...obj,
-          combination:
-            obj.combination instanceof Map
-              ? Object.fromEntries(obj.combination)
-              : obj.combination,
-        };
-
-        product['defaultVariant'] = responseVariant;
-      }
     }
+
     // Fetch all variants for this product
     const variants = await this.productVariantModel
       .find({ product: new Types.ObjectId(product._id), isDeleted: false })
       .exec();
+
+    // If default variant was soft-deleted, fall back to first available variant
+    if (!defaultVariant && variants.length > 0) {
+      defaultVariant = variants[0];
+    }
+
+    if (defaultVariant) {
+      const obj = defaultVariant.toObject();
+      const responseVariant = {
+        ...obj,
+        combination:
+          obj.combination instanceof Map
+            ? Object.fromEntries(obj.combination)
+            : obj.combination,
+      };
+      product['defaultVariant'] = responseVariant;
+    }
+
     product['variants'] = variants;
     // Fetch allow values with populated attribute values
     const allowValues = await this.productAttributeAllowValueModel

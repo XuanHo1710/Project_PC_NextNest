@@ -27,12 +27,15 @@ export class NotificationController {
       amount: number;
       orderItems: Array<{
         productVariant: string;
+        productName?: string;
+        combination?: Record<string, string>;
         quantity: number;
         price: number;
         subtotal: number;
       }>;
       paymentMethod: string;
       customerName?: string;
+      transactionId?: string;
     },
   ) {
     return this.notificationService.sendOrderConfirmationEmail(
@@ -42,6 +45,7 @@ export class NotificationController {
       data.orderItems,
       data.paymentMethod,
       data.customerName,
+      data.transactionId,
     );
   }
 
@@ -54,12 +58,15 @@ export class NotificationController {
       amount: number;
       orderItems: Array<{
         productVariant: string;
+        productName?: string;
+        combination?: Record<string, string>;
         quantity: number;
         price: number;
         subtotal: number;
       }>;
       paymentMethod: string;
       customerName?: string;
+      transactionId?: string;
     },
   ) {
     return this.notificationService.sendOrderConfirmationEmail(
@@ -69,6 +76,7 @@ export class NotificationController {
       data.orderItems,
       data.paymentMethod,
       data.customerName,
+      data.transactionId,
     );
   }
 }

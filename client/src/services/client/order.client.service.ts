@@ -1,5 +1,5 @@
 import axiosClient from "@/config/axiosClient";
-import { IOrderData } from "@/types/order";
+import { IOrder, IOrderData } from "@/types/order";
 
 export interface CreateOrderResponse {
   orderId: string;
@@ -23,12 +23,12 @@ class OrderClientService {
     return response.data;
   }
 
-  async getOrderById(orderId: string): Promise<IOrderData> {
+  async getOrderById(orderId: string): Promise<IOrder> {
     const response = await axiosClient.get(`/order/${orderId}`);
     return response.data;
   }
 
-  async getOrdersByGuestId(guestId: string): Promise<IOrderData[]> {
+  async getOrdersByGuestId(guestId: string): Promise<IOrder[]> {
     const response = await axiosClient.get(`/order/guest/${guestId}`);
     return response.data;
   }

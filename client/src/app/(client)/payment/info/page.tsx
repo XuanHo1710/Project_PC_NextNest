@@ -99,6 +99,8 @@ export default function PaymentInfoPage() {
                     customerEmail: orderInfo.orderData.customerInfo.email,
                     orderItems: orderInfo.orderData.orderDetail.map((item) => ({
                         productVariant: item.productVariant._id,
+                        productName: item.product?.name || '',
+                        combination: item.productVariant?.combination || {},
                         quantity: item.quantity,
                         price: item.price,
                         subtotal: item.subtotal,
@@ -231,15 +233,20 @@ export default function PaymentInfoPage() {
                                                     key={idx}
                                                     className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg"
                                                 >
-                                                    <div className="flex-1">
+                                                    <div className="flex-1 min-w-0">
                                                         <Text className="font-medium line-clamp-1">
                                                             {item.product.name}
                                                         </Text>
+                                                        {item.productVariant?.combination && Object.keys(item.productVariant.combination).length > 0 && (
+                                                            <Text className="text-gray-400 text-xs block">
+                                                                {Object.entries(item.productVariant.combination).map(([key, val]) => `${key}: ${val}`).join(' | ')}
+                                                            </Text>
+                                                        )}
                                                         <Text className="text-gray-400 text-xs block">
-                                                            x{item.quantity}
+                                                            x{item.quantity} - {formatCurrency(item.price)}
                                                         </Text>
                                                     </div>
-                                                    <Text strong className="text-blue-600 ml-4">
+                                                    <Text strong className="text-blue-600 ml-4 whitespace-nowrap">
                                                         {formatCurrency(item.subtotal)}
                                                     </Text>
                                                 </div>
@@ -259,7 +266,7 @@ export default function PaymentInfoPage() {
                             {/* Notification */}
                             <div className="bg-blue-50 rounded-xl p-4 mb-6 text-center">
                                 <Text className="text-blue-700 text-sm">
-                                    📧 Email xác nhận đơn hàng đã được gửi đến{' '}
+                                    Email xác nhận đơn hàng đã được gửi đến{' '}
                                     <strong>{pendingOrder?.orderData.customerInfo.email}</strong>
                                 </Text>
                             </div>

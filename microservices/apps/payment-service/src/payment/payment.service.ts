@@ -105,6 +105,8 @@ export class VnpayService {
     customerEmail: string,
     orderItems: Array<{
       productVariant: string;
+      productName?: string;
+      combination?: Record<string, string>;
       quantity: number;
       price: number;
       subtotal: number;
@@ -143,6 +145,7 @@ export class VnpayService {
           payment.order.toString(),
           payment.amount,
           orderItems,
+          payment.transactionId,
         ).catch((err) => console.error('Email notification error:', err));
 
         return {
@@ -225,10 +228,13 @@ export class VnpayService {
     amount: number,
     orderItems: Array<{
       productVariant: string;
+      productName?: string;
+      combination?: Record<string, string>;
       quantity: number;
       price: number;
       subtotal: number;
     }>,
+    transactionId?: string,
   ) {
     try {
       await firstValueFrom(
@@ -238,6 +244,7 @@ export class VnpayService {
           amount,
           orderItems,
           paymentMethod: 'CARD',
+          transactionId,
         }),
       );
     } catch (error) {

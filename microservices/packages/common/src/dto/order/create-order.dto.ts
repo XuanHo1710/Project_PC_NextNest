@@ -13,8 +13,13 @@ export class CreateOrderDto {
   @IsNotEmpty({ message: "Đơn hàng không được để trống" })
   orderDetail: [
     {
+      product?: {
+        name?: string;
+        slug?: string;
+      };
       productVariant: {
         _id: string;
+        combination?: Record<string, string>;
       };
       quantity: number;
       subtotal: number;

@@ -33,6 +33,8 @@ export class Order {
           ref: 'ProductVariant',
           required: true,
         },
+        productName: { type: String, default: '' },
+        combination: { type: Object, default: {} },
         quantity: { type: Number, default: 1 },
         subtotal: { type: Number, default: 0 },
         price: { type: Number, default: 0 },
@@ -43,6 +45,8 @@ export class Order {
   orderDetail: [
     {
       productVariant: Types.ObjectId;
+      productName: string;
+      combination: Record<string, string>;
       quantity: number;
       subtotal: number;
       price: number;

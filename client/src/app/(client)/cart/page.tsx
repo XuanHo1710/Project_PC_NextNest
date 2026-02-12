@@ -378,6 +378,7 @@ export default function CartClient() {
                                                     {profile.avatar ?
                                                         <Avatar src={profile.avatar} />
                                                         :
+
                                                         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
                                                             {profile.fullname?.charAt(0).toUpperCase()}
                                                         </div>
@@ -621,15 +622,13 @@ export default function CartClient() {
                                                 block
                                                 size="large"
                                                 className="!h-14 !rounded-lg !font-bold !text-base"
-                                                // disabled={!cart || cart.cartItems.length === 0 || calculateTotal() < 100000}
-                                                disabled={!cart || cart.cartItems.length === 0}
-
+                                                disabled={!cart || cart.cartItems.length === 0 || calculateTotal() < 2000}
                                             >
                                                 {(!cart || cart.cartItems.length === 0)
                                                     ? 'Giỏ hàng trống'
-                                                    // : calculateTotal() < 100000
-                                                    //     ? `Thêm ${formatCurrencyVND(100000 - calculateTotal())} để đặt hàng`
-                                                    : 'ĐẶT HÀNG NGAY'
+                                                    : calculateTotal() < 2000
+                                                        ? `Thêm ${formatCurrencyVND(2000 - calculateTotal())} để đặt hàng`
+                                                        : 'ĐẶT HÀNG NGAY'
                                                 }
                                             </Button>
                                             <p className="text-center text-xs text-gray-400 mt-2">

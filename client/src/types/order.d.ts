@@ -77,3 +77,50 @@ export interface IOrderData {
     type: string;
   };
 }
+
+// Order detail item as returned from API (populated productVariant + snapshot fields)
+export interface IOrderDetailItem {
+  productVariant: {
+    _id: string;
+    sku: string;
+    price: number;
+    discount: number;
+    stock: number;
+    images: string[];
+    combination: Record<string, string>;
+  };
+  productName: string;
+  combination: Record<string, string>;
+  quantity: number;
+  subtotal: number;
+  price: number;
+}
+
+// Full order as returned from API
+export interface IOrder {
+  _id: string;
+  customerInfo: {
+    guestId: string;
+    fullname: string;
+    phone: string;
+    email: string;
+    address: string;
+    note: string;
+  };
+  orderDetail: IOrderDetailItem[];
+  totalAmount: number;
+  status:
+    | "PENDING"
+    | "SHIPPING"
+    | "DELIVERED"
+    | "COMPLETED"
+    | "CANCELLED"
+    | "REFUNDED";
+  orderDate: string;
+  payment: {
+    isCheckout: boolean;
+    type: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}

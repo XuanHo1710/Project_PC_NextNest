@@ -33,8 +33,10 @@ export class OrderService {
           phone: createOrderDto.customerInfo.phone,
           note: createOrderDto.customerInfo.note,
         },
-        orderDetail: createOrderDto.orderDetail.map((item) => ({
+        orderDetail: createOrderDto.orderDetail.map((item: any) => ({
           productVariant: new Types.ObjectId(item.productVariant._id),
+          productName: item.product?.name || '',
+          combination: item.productVariant?.combination || {},
           quantity: item.quantity,
           subtotal: item.subtotal,
           price: item.price,
@@ -104,8 +106,10 @@ export class OrderService {
           email: createOrderDto.customerInfo.email,
           orderId: order._id.toString(),
           amount: order.totalAmount,
-          orderItems: createOrderDto.orderDetail.map((item) => ({
+          orderItems: createOrderDto.orderDetail.map((item: any) => ({
             productVariant: item.productVariant._id,
+            productName: item.product?.name || '',
+            combination: item.productVariant?.combination || {},
             quantity: item.quantity,
             price: item.price,
             subtotal: item.subtotal,

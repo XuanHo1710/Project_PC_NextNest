@@ -6,6 +6,8 @@ export interface VerifyPaymentRequest {
   customerEmail: string;
   orderItems: Array<{
     productVariant: string;
+    productName?: string;
+    combination?: Record<string, string>;
     quantity: number;
     price: number;
     subtotal: number;

@@ -23,6 +23,8 @@ export class PaymentController {
       customerEmail: string;
       orderItems: Array<{
         productVariant: string;
+        productName?: string;
+        combination?: Record<string, string>;
         quantity: number;
         price: number;
         subtotal: number;
