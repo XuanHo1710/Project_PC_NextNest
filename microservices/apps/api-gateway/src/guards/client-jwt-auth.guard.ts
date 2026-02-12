@@ -33,8 +33,6 @@ export class ClientJwtAuthGuard extends AuthGuard('client-jwt') {
     const targetPath = request?.route?.path;
     const targetMethod = request?.method;
 
-    console.log('ClientJwtAuthGuard - Target Path:', user);
-
     // // Allow access to certain client endpoints without strict validation
     // const publicClientPaths = [
     //   '/api/v1/client/auth/decode-access',

@@ -3,15 +3,15 @@
 import { Button, Form, Input, Select, Spin } from 'antd';
 import { useEffect } from 'react';
 import { IAccountEmployee } from '@/types/account-employee';
-import { useUpdateAccountEmployee, useEmployeesNoAccount, useRoles } from '@/hooks/admin';
+import { useUpdateAccountEmployee, useRoles } from '@/hooks/admin';
 
 
 
 export default function UpdateModalAccountEmployee({ dataAccountEmployee, setOpen }: { dataAccountEmployee: IAccountEmployee | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [form] = Form.useForm();
     const updateAccountEmployee = useUpdateAccountEmployee();
-    const { data: employees = [] } = useEmployeesNoAccount();
-    const { data: roles = [] } = useRoles();
+    const { data: rolesData } = useRoles();
+    const roles = rolesData?.data ?? [];
 
 
 

@@ -189,7 +189,7 @@ export default function AttributesPage() {
                 confirmLoading={createMutation.isPending || updateMutation.isPending}
                 okText={editingItem ? 'Cập nhật' : 'Tạo mới'}
                 cancelText="Hủy"
-                destroyOnClose
+                destroyOnHidden
             >
                 <Form form={form} layout="vertical" className="mt-4">
                     <Form.Item

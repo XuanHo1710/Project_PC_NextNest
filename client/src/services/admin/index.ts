@@ -10,4 +10,4 @@ export { productVariantService } from "./product-variant.service";
 export { productAttributeAllowValueService } from "./product-attribute-allow-value.service";
 export { brandService } from "./brand.service";
 export { accountGuestService } from "./account-guest.service";
-
+export { orderService } from "./order.service";

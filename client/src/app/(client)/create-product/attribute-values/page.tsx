@@ -323,7 +323,7 @@ export default function AttributeValuesPage() {
                 confirmLoading={createMutation.isPending}
                 okText="Tạo mới"
                 cancelText="Hủy"
-                destroyOnClose
+                destroyOnHidden
                 width={520}
             >
                 <Form form={form} layout="vertical" className="mt-4">

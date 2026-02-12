@@ -398,7 +398,7 @@ export default function ProfileAddress() {
                     onCancel={handleCancel}
                     footer={null}
                     width={600}
-                    destroyOnClose={false}
+                    destroyOnHidden={false}
                     maskClosable={false}
                 >
                     <Form

@@ -7,7 +7,8 @@ import { useRoles, useRole } from "@/hooks/admin";
 
 export default function SelectRole() {
     const { accountLogin } = useAuthEmployee();
-    const { data: roles = [] } = useRoles();
+    const { data: rolesData } = useRoles();
+    const roles = rolesData?.data ?? [];
     const [selectedRoleId, setSelectedRoleId] = useState<string>("");
     const { data: roleSelected } = useRole(selectedRoleId);
 

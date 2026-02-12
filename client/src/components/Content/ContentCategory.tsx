@@ -119,7 +119,7 @@ export default function ContentCategory() {
 
     // Build data table - parentId is already populated from backend
     let dataTable: DataType<CategoryWithParent>[] = [];
-    if (!loading && result.data.length > 0) {
+    if (!loading && result?.data && result.data.length > 0) {
         dataTable = result.data.map((item: ICategory, index: number) => {
             const row: DataType<CategoryWithParent> = {
                 key: index.toString(),

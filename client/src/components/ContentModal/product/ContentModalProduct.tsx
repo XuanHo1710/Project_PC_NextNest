@@ -22,7 +22,8 @@ export default function ContentModalProduct() {
 
     // Use TanStack Query hooks
     const addProduct = useCreateProduct();
-    const { data: categorys = [] } = useCategories();
+    const { data: categorysData } = useCategories();
+    const categorys = categorysData?.data ?? [];
 
     const [form] = Form.useForm();
 

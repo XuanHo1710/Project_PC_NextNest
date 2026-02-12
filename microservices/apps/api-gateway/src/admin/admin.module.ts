@@ -15,6 +15,7 @@ import { BrandModule } from 'admin/brand/brand.module';
 import { ProductModule } from 'admin/product/product.module';
 import { HistoryLogInterceptor } from 'admin/interceptors/history-log.interceptor';
 import { HistoryModule } from 'admin/history/history.module';
+import { OrderModule } from 'admin/order/order.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { HistoryModule } from 'admin/history/history.module';
     BrandModule,
     ProductModule,
     HistoryModule,
+    OrderModule,
     JwtModule.register({}),
     ClientsModule.register([
       {
@@ -50,4 +52,4 @@ import { HistoryModule } from 'admin/history/history.module';
     JwtStrategy,
   ],
 })
-export class AdminModule { }
+export class AdminModule {}

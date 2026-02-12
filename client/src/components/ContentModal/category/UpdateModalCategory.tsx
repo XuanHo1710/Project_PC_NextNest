@@ -11,7 +11,8 @@ import { useUpdateCategory, useCategoriesAll } from '@/hooks/admin';
 export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCategory: ICategory | null, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [form] = Form.useForm();
     const updateCategory = useUpdateCategory();
-    const { data: categories = [] } = useCategoriesAll();
+    const { data: categoriesData } = useCategoriesAll();
+    const categories = categoriesData?.data ?? [];
 
     useEffect(() => {
         if (dataCategory !== null) {
@@ -66,7 +67,8 @@ export default function UpdateModalCategory({ dataCategory, setOpen }: { dataCat
 
         categoriesCopy.forEach(cat => {
             if (cat.parentId) {
-                const parent = idToNodeMap.get(cat.parentId);
+                const parentKey = typeof cat.parentId === 'string' ? cat.parentId : cat.parentId._id;
+                const parent = idToNodeMap.get(parentKey);
                 if (parent) {
                     parent.children = parent.children || [];
                     parent.children.push(cat);

@@ -19,7 +19,8 @@ export const employeeKeys = {
 export const useEmployees = (queryParams: string = "") => {
   return useQuery({
     queryKey: employeeKeys.list(queryParams),
-    queryFn: () => accountEmployeeService.getAll(queryParams ? `?${queryParams}` : ""),
+    queryFn: () =>
+      accountEmployeeService.getAll(queryParams ? `?${queryParams}` : ""),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
@@ -29,14 +30,6 @@ export const useEmployee = (id: string) => {
     queryKey: employeeKeys.detail(id),
     queryFn: () => accountEmployeeService.getById(id),
     enabled: !!id,
-  });
-};
-
-export const useEmployeesNoAccount = () => {
-  return useQuery({
-    queryKey: employeeKeys.noAccount(),
-    queryFn: () => accountEmployeeService.getEmployeesNoAccount(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

@@ -241,7 +241,7 @@ export default function ContentProductAttributeValue() {
                 okText={editingRecord ? 'Cập nhật' : 'Tạo mới'}
                 cancelText="Hủy"
                 confirmLoading={createMutation.isPending || updateMutation.isPending}
-                destroyOnClose
+                destroyOnHidden
                 width={520}
             >
                 <Form form={form} layout="vertical" className="mt-4">

@@ -189,31 +189,32 @@ export class SagaService {
         });
 
         // ──────────────────────────────────────────────────────
-        //  COD FLOW — STEP 3: Send Notification (non-critical)
+        //  COD FLOW — STEP 3: Send Notification (tracked in saga)
         // ──────────────────────────────────────────────────────
         await this.executeStep(
           saga,
           'SEND_NOTIFICATION',
           async () => {
-            this.notificationService.emit(
-              'notification.sendOrderConfirmation',
-              {
-                email: createOrderDto.customerInfo.email,
-                orderId,
-                amount: order.totalAmount,
-                orderItems: createOrderDto.orderDetail.map((item: any) => ({
-                  productVariant: item.productVariant._id,
-                  productName: item.product?.name || '',
-                  combination: item.productVariant?.combination || {},
-                  quantity: item.quantity,
-                  price: item.price,
-                  subtotal: item.subtotal,
-                })),
-                paymentMethod: 'COD',
-                customerName: createOrderDto.customerInfo.fullname,
-              },
+            return await firstValueFrom(
+              this.notificationService.send(
+                'notification.sendOrderConfirmation',
+                {
+                  email: createOrderDto.customerInfo.email,
+                  orderId,
+                  amount: order.totalAmount,
+                  orderItems: createOrderDto.orderDetail.map((item: any) => ({
+                    productVariant: item.productVariant._id,
+                    productName: item.product?.name || '',
+                    combination: item.productVariant?.combination || {},
+                    quantity: item.quantity,
+                    price: item.price,
+                    subtotal: item.subtotal,
+                  })),
+                  paymentMethod: 'COD',
+                  customerName: createOrderDto.customerInfo.fullname,
+                },
+              ),
             );
-            return { sent: true };
           },
           true, // non-critical — don't fail saga if notification fails
         );

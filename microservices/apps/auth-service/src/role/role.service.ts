@@ -7,7 +7,7 @@ import { Role } from 'src/role/entities/role.entity';
 
 @Injectable()
 export class RoleService {
-  constructor(@InjectModel(Role.name) private roleModel: Model<Role>) { }
+  constructor(@InjectModel(Role.name) private roleModel: Model<Role>) {}
 
   async create(createRoleDto: CreateRoleDto) {
     const role = await this.roleModel.create(createRoleDto);
@@ -24,9 +24,7 @@ export class RoleService {
 
     if (filter.search) {
       const keyword = filter.search;
-      filterRole['$or'] = [
-        { name: { $regex: keyword, $options: 'i' } },
-      ];
+      filterRole['$or'] = [{ name: { $regex: keyword, $options: 'i' } }];
     }
 
     if (filter.sort) {
@@ -81,7 +79,11 @@ export class RoleService {
   }
 
   async update(id: string, updateRoleDto: UpdateRoleDto) {
-    return await this.roleModel.updateOne({ _id: new Types.ObjectId(id) }, updateRoleDto);
+    console.log('updateRoleDto', updateRoleDto);
+    return await this.roleModel.updateOne(
+      { _id: new Types.ObjectId(id) },
+      updateRoleDto,
+    );
   }
 
   async remove(id: string) {

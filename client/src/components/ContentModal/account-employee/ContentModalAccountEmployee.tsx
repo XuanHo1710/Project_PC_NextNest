@@ -7,7 +7,8 @@ import { useCreateAccountEmployee, useRoles } from '@/hooks/admin';
 
 export default function ContentModalAccountEmployee() {
     const addAccountEmployee = useCreateAccountEmployee();
-    const { data: roles = [] } = useRoles();
+    const { data: rolesData } = useRoles();
+    const roles = rolesData?.data ?? [];
 
     const [form] = Form.useForm();
 

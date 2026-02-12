@@ -30,6 +30,7 @@ export class BaseService<T> {
     data: Partial<T>,
   ): Promise<{ data: T; status: number }> {
     const response = await axiosInstance.patch(`${this.baseUrl}/${id}`, data);
+    console.log("PAYLOAD UPDATE RESPONSE:", data);
     return { data: response.data, status: response.status };
   }
 

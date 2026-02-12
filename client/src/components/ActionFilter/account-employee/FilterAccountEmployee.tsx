@@ -17,7 +17,8 @@ const FilterAccountEmployee = () => {
         { label: "Dừng hoạt động", value: "INACTIVE" },
     ];
 
-    const { data: roles = [] } = useRoles();
+    const { data: rolesData } = useRoles();
+    const roles = rolesData?.data ?? [];
 
 
     const handleSearch = (values: { search: string }) => {

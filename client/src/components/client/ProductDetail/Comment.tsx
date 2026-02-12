@@ -212,8 +212,8 @@ export default function CommentProduct({ product }: { product: IProductCard }) {
                 <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4">Đánh giá từ khách hàng</h3>
                 <div className="flex flex-col md:flex-row gap-8">
                     <div className="md:w-1/3 flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                        <div className="text-5xl font-bold text-yellow-500">{product.ratingAvg?.toFixed(2)}</div>
-                        <Rate disabled defaultValue={product.ratingAvg} className="text-lg mb-2" />
+                        <div className="text-5xl font-bold text-yellow-500">{product.avgRating?.toFixed(2)}</div>
+                        <Rate disabled defaultValue={product.avgRating} className="text-lg mb-2" />
                         <p className="text-gray-500 dark:text-gray-300">Dựa trên {product.totalRatings} đánh giá</p>
                     </div>
                     <div className="md:w-2/3">

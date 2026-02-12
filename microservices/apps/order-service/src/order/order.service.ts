@@ -263,6 +263,59 @@ export class OrderService {
     return order;
   }
 
+  /**
+   * Admin: Get all orders with pagination, status, payment type, and search filters.
+   */
+  async getAllOrders(params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    paymentType?: string;
+    search?: string;
+  }) {
+    const { page = 1, limit = 10, status, paymentType, search } = params;
+    const query: any = {};
+
+    if (status && status !== 'ALL') {
+      query.status = status;
+    }
+    if (paymentType && paymentType !== 'ALL') {
+      query['payment.type'] = paymentType;
+    }
+    if (search && search.trim()) {
+      const s = search.trim();
+      query.$or = [
+        { 'customerInfo.fullname': { $regex: s, $options: 'i' } },
+        { 'customerInfo.email': { $regex: s, $options: 'i' } },
+        { 'customerInfo.phone': { $regex: s, $options: 'i' } },
+      ];
+      // If search looks like an ObjectId, also search by _id
+      if (/^[0-9a-fA-F]{24}$/.test(s)) {
+        query.$or.push({ _id: new Types.ObjectId(s) });
+      }
+    }
+
+    const totalItems = await this.orderModel.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / limit);
+    const skip = (page - 1) * limit;
+
+    const items = await this.orderModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return {
+      data: items,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+      },
+    };
+  }
+
   async getAllOrdersByGuestId(
     guestId: string,
     page = 1,
@@ -285,17 +338,19 @@ export class OrderService {
       .limit(limit);
 
     return {
-      items,
-      totalItems,
-      totalPages,
-      currentPage: page,
-      limit,
+      data: items,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+      },
     };
   }
 
   async updateOrderStatus(id: string, updateOrderDto: UpdateOrderDto) {
     return await this.orderModel.findByIdAndUpdate(
-      id,
+      new Types.ObjectId(id),
       { status: updateOrderDto.status },
       { new: true },
     );
@@ -303,7 +358,7 @@ export class OrderService {
 
   async updateOrderPayment(id: string, updateOrderDto: UpdateOrderDto) {
     return await this.orderModel.findByIdAndUpdate(
-      id,
+      new Types.ObjectId(id),
       { payment: updateOrderDto.payment },
       { new: true },
     );
@@ -326,7 +381,7 @@ export class OrderService {
 
       if (expiredOrders.length === 0) return;
 
-      const orderIds = expiredOrders.map((o) => o._id);
+      const orderIds = expiredOrders.map((o) => new Types.ObjectId(o._id));
 
       // Update all expired orders to EXPIRED status
       await this.orderModel.updateMany(

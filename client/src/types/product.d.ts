@@ -84,7 +84,7 @@ export interface IProduct {
   category?: string;
   minPrice: number;
   maxPrice: number;
-  status: "ACTIVE" | "INACTIVE" | "STOPSOLD";
+  status: "PENDING" | "ACTIVE" | "INACTIVE" | "STOPSOLD";
   defaultProductVariantId?: string;
   totalRatings?: number;
   avgRating?: number;
@@ -109,7 +109,7 @@ export interface IProductPopulated {
   category?: ICategory;
   minPrice: number;
   maxPrice: number;
-  status: "ACTIVE" | "INACTIVE" | "STOPSOLD";
+  status: "PENDING" | "ACTIVE" | "INACTIVE" | "STOPSOLD";
   defaultProductVariantId?: IProductVariant;
   variants?: IProductVariant[];
   totalRatings?: number;
@@ -127,7 +127,7 @@ export interface IProductCard {
   description?: string;
   minPrice?: number;
   maxPrice?: number;
-  status?: "ACTIVE" | "INACTIVE" | "STOPSOLD";
+  status?: "PENDING" | "ACTIVE" | "INACTIVE" | "STOPSOLD";
   defaultVariant?: {
     _id: string;
     sku: string;

@@ -46,11 +46,11 @@ export default function ProfilePassword() {
 
         setLoading(true);
         try {
-            await accountGuestService.changePassword(
-                user.id,
-                values.currentPassword,
-                values.newPassword
-            );
+            await accountGuestService.changePassword({
+                currentPassword: values.currentPassword,
+                newPassword: values.newPassword,
+                confirmPassword: values.newPassword,
+            });
 
             message.success('Đổi mật khẩu thành công!');
             form.resetFields();

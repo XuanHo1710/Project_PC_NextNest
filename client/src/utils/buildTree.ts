@@ -19,8 +19,10 @@ export const buildCategoryTree = (flatCategories: ICategory[]): ICategory[] => {
   const tree: ICategory[] = [];
 
   categoriesCopy.forEach((cat) => {
-    if (cat.parent && cat.parent._id) {
-      const parent = idToNodeMap.get(cat.parent._id);
+    if (cat.parentId) {
+      const parentKey =
+        typeof cat.parentId === "string" ? cat.parentId : cat.parentId._id;
+      const parent = idToNodeMap.get(parentKey);
       if (parent) {
         parent.children = parent.children || [];
         parent.children.push(cat);

@@ -25,7 +25,8 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
 
     const [form] = Form.useForm();
     const updateProduct = useUpdateProduct();
-    const { data: categories = [] } = useCategories();
+    const { data: categoriesData } = useCategories();
+    const categories = categoriesData?.data ?? [];
 
 
     useEffect(() => {
@@ -148,7 +149,8 @@ export default function UpdateModalProduct({ dataProduct, setOpen }: { dataProdu
 
         categoriesCopy.forEach(cat => {
             if (cat.parentId) {
-                const parent = idToNodeMap.get(cat.parentId);
+                const parentKey = typeof cat.parentId === 'string' ? cat.parentId : cat.parentId._id;
+                const parent = idToNodeMap.get(parentKey);
                 if (parent) {
                     parent.children = parent.children || [];
                     parent.children.push(cat);

@@ -62,7 +62,7 @@ export default function DetailModalAccountEmployee({ isOpen, setOpen, data }: De
             width={900}
             onClose={() => setOpen(false)}
             open={isOpen}
-            destroyOnClose
+            destroyOnHidden
         >
             <Tabs defaultActiveKey="1" items={items} />
         </Drawer>

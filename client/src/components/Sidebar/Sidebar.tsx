@@ -86,7 +86,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/order"
                 ) ? {
                     key: 'order',
-                    label: 'Đơn hàng',
+                    label: <Link href={pathAdminRoutes.order}>Đơn hàng</Link>,
                     icon: <ShoppingCartOutlined />
                 } : null,
             ],

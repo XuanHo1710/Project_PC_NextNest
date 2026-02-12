@@ -38,9 +38,11 @@ export default function ContentDiscount() {
 
     // Use TanStack Query hooks
     const {
-        data: discounts = [],
+        data: discountsResult,
         isLoading: loading
     } = useDiscounts(queryParams.toString());
+
+    const discounts = discountsResult?.data ?? [];
 
     const deleteDiscount = useDeleteDiscount();
     const { accountLogin } = useAuthEmployee();

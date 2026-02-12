@@ -23,7 +23,8 @@ export default function ActionProduct({ ContentModal, EditSort, Filter, ConfigFi
     const [fileData, setFileData] = useState<DataType<IProduct>[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const addProduct = useCreateProduct();
-    const { data: products = [] } = useProducts();
+    const { data: productsData } = useProducts();
+    const products = productsData?.data ?? [];
     const { accountLogin } = useAuthEmployee();
 
 

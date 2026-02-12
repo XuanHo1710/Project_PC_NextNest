@@ -4,6 +4,7 @@ import { Button, Collapse, Switch } from "antd";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useUpdateRole } from "@/hooks/admin";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface IProp {
     name?: string;
@@ -86,6 +87,8 @@ const ContextCollapse = (prop: IProp) => {
                         </div>
                     </div>
                 </div>
+
+                {/* For account employee */}
                 {prop.path === "account-employee" && (
                     <div className="col-span-6 p-4 rounded-2xl border border-solid border-slate-200">
                         <div className="flex gap-4 items-center">
@@ -101,6 +104,23 @@ const ContextCollapse = (prop: IProp) => {
                         </div>
                     </div>
                 )}
+
+                {/* For order */}
+                {prop.path === "order" && (
+                    <div className="col-span-6 p-4 rounded-2xl border border-solid border-slate-200">
+                        <div className="flex gap-4 items-center">
+                            <Switch
+                                checked={prop.selected.some(
+                                    (p) => p.method === "PATCH" && p.path === "/api/v1/admin/" + prop.path + "/:id/status"
+                                )} onChange={(isSelected) => prop.handleChange(isSelected, "PATCH", "/api/v1/admin/" + prop.path + "/:id/status")}
+                            />
+                            <div>
+                                <h3 className="font-semibold text-lg">Update Status {prop.name}</h3>
+                                <p className="text-slate-500"><span className="text-neutral-800 font-bold">PATCH</span>  /api/v1/admin/{prop.path}/:id</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
         </>
@@ -111,6 +131,8 @@ const ContextCollapse = (prop: IProp) => {
 
 export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) => {
     const [selected, setSelected] = useState<IPermission[]>([]);
+    const queryClient = useQueryClient();
+
     useEffect(() => {
         if (roleSelected !== null) {
             setSelected(roleSelected.permission);
@@ -146,7 +168,16 @@ export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) 
         try {
             await updateRole.mutateAsync({
                 id: roleSelected._id,
-                data: { permission: selected }
+                data: {
+                    permission: selected,
+                    _id: roleSelected._id,
+                    name: roleSelected.name,
+                    description: roleSelected.description
+                }
+            });
+            // Refetch role data to update UI
+            await queryClient.refetchQueries({
+                queryKey: ["roles", "detail", roleSelected._id]
             });
             toast.success("Cập nhật quyền vai trò thành công !!");
         } catch (err) {

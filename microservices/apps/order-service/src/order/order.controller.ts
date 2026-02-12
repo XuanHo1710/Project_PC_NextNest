@@ -39,6 +39,23 @@ export class OrderController {
     return this.orderService.getOrderById(data.orderId);
   }
 
+  /**
+   * Admin: Get all orders with pagination and filters.
+   */
+  @MessagePattern('order.getAll')
+  getAllOrders(
+    @Payload()
+    data: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      paymentType?: string;
+      search?: string;
+    },
+  ) {
+    return this.orderService.getAllOrders(data);
+  }
+
   @MessagePattern('order.getAllByGuestId')
   getAllOrdersByGuestId(
     @Payload()
@@ -71,6 +88,7 @@ export class OrderController {
   updateOrderStatus(
     @Payload() data: { id: string; updateOrderDto: UpdateOrderDto },
   ) {
+    console.log(data.updateOrderDto);
     return this.orderService.updateOrderStatus(data.id, data.updateOrderDto);
   }
 

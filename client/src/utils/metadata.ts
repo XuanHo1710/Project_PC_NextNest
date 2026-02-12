@@ -5,7 +5,7 @@ import {
   getProductOriginalPrice,
   getProductDiscount,
   getProductImage,
-  getProductSoldCount,
+  getProductStock,
 } from "./productHelpers";
 
 export const generateProductMetadata = (product: IProductCard) => {
@@ -13,14 +13,14 @@ export const generateProductMetadata = (product: IProductCard) => {
   const originalPrice = getProductOriginalPrice(product);
   const discount = getProductDiscount(product);
   const image = getProductImage(product);
-  const soldCount = getProductSoldCount(product);
+  const stock = getProductStock(product);
 
   return {
     title: `${product.name} - Giá ${displayPrice.toLocaleString()}đ | PC Store`,
-    description: `Mua ${product.name} chính hãng giá ${displayPrice.toLocaleString()}đ (Giảm ${discount.toFixed(0)}% từ ${originalPrice.toLocaleString()}đ). ${product.description || "Bảo hành chính hãng, giao hàng nhanh, trả góp 0%."} ⭐ Đánh giá ${product.ratingAvg?.toFixed(1)}/5 (${product.totalRatings} đánh giá). Đã bán ${soldCount}+ sản phẩm.`,
+    description: `Mua ${product.name} chính hãng giá ${displayPrice.toLocaleString()}đ (Giảm ${discount.toFixed(0)}% từ ${originalPrice.toLocaleString()}đ). ${product.description || "Bảo hành chính hãng, giao hàng nhanh, trả góp 0%."} ⭐ Đánh giá ${product.avgRating?.toFixed(1)}/5 (${product.totalRatings} đánh giá). Còn ${stock} sản phẩm.`,
     keywords: `${product.name}, mua ${product.name}, ${product.name} giá rẻ, ${product.name} chính hãng, ${product.category?.name || "pc gaming"}, linh kiện máy tính`,
     ogTitle: `${product.name} - Sale ${discount.toFixed(0)}% còn ${displayPrice.toLocaleString()}đ`,
-    ogDescription: `⭐ ${product.ratingAvg?.toFixed(1)}/5 (${product.totalRatings} đánh giá) | Đã bán ${soldCount}+ | ${product.description || "Bảo hành chính hãng, giao hàng nhanh"}`,
+    ogDescription: `⭐ ${product.avgRating?.toFixed(1)}/5 (${product.totalRatings} đánh giá) | Còn ${stock} | ${product.description || "Bảo hành chính hãng, giao hàng nhanh"}`,
     ogImage: image || "/logo.jpg",
   };
 };
