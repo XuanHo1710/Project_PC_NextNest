@@ -38,12 +38,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("New access token received from backend", data);
-
     const res = NextResponse.json({
       success: true,
       data: {
         access_token: data.access_token,
+        payload: data.payload,
       },
     });
 

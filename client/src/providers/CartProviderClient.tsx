@@ -48,7 +48,8 @@ export function CartProvider({ children }: CartProviderProps) {
 
     useEffect(() => {
         const initializeCart = async () => {
-            if (user === null) return;
+            // Only fetch cart when user is fully authenticated with a valid id
+            if (!user || !user.id) return;
             const guestId = user.id;
 
             // 1. Fetch server cart

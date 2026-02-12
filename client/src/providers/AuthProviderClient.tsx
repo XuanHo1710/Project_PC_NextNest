@@ -67,8 +67,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 } else {
                     resetAuth();
                 }
-            } catch {
-                resetAuth();
+            } catch (err: unknown) {
+                const axiosErr = err as { response?: { status?: number } };
+                // If 401, try refresh token before giving up
+                if (axiosErr.response?.status === 401) {
+                    try {
+                        const refreshRes = await axios.post('/api/client/auth/refresh', {});
+                        if (refreshRes.data.success && refreshRes.data.data?.access_token) {
+                            const payload = refreshRes.data.data.payload;
+                            if (payload) {
+                                setUser({
+                                    _id: payload._id || payload.id,
+                                    id: payload._id || payload.id,
+                                    email: payload.email,
+                                    fullname: payload.fullname,
+                                    avatar: payload.avatar,
+                                    authProvider: payload.authProvider,
+                                    accountStatus: payload.accountStatus,
+                                    isEmailVerified: payload.isEmailVerified,
+                                    phone: payload.phone,
+                                    gender: payload.gender,
+                                });
+                            }
+                            setAccessToken(refreshRes.data.data.access_token);
+                        } else {
+                            resetAuth();
+                        }
+                    } catch {
+                        resetAuth();
+                    }
+                } else {
+                    resetAuth();
+                }
             } finally {
                 setIsLoading(false);
             }
