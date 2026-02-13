@@ -74,4 +74,14 @@ export class PaymentController {
   ) {
     return this.vnpayService.getPaymentsByOrderId(data.orderId);
   }
+
+  @MessagePattern('payment.refund')
+  refundPayment(
+    @Payload()
+    data: {
+      orderId: string;
+    },
+  ) {
+    return this.vnpayService.refundPayment(data.orderId);
+  }
 }

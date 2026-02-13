@@ -63,9 +63,24 @@ export class VnpayService {
     return payment;
   }
 
+  /**
+   * Refund payment: update the latest PAID payment for an order to REFUND status
+   */
+  async refundPayment(orderId: string) {
+    const payment = await this.paymentModel.findOneAndUpdate(
+      {
+        order: new Types.ObjectId(orderId),
+        status: 'PAID',
+      },
+      { status: 'REFUND' },
+      { new: true, sort: { createdAt: -1 } },
+    );
+    return payment;
+  }
+
   async updatePaymentStatus(
     orderId: string,
-    status: 'PENDING' | 'PAID' | 'UNPAID' | 'EXPIRED',
+    status: 'PENDING' | 'PAID' | 'UNPAID' | 'EXPIRED' | 'REFUND',
   ) {
     return await this.paymentModel.findOneAndUpdate(
       {

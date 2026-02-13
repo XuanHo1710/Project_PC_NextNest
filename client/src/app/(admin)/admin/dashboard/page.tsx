@@ -22,7 +22,7 @@ export default function Home() {
         <div className="my-3">
           <h2 className="text-xl font-semibold flex items-center">
             <RxDashboard className="mr-2 text-blue-500" />
-            Statistic
+            Thống kê
           </h2>
         </div>
         <div className="grid grid-flow-row grid-cols-12 gap-6">
@@ -41,14 +41,14 @@ export default function Home() {
         <div className="my-3">
           <h2 className="text-xl font-semibold flex items-center">
             <RxDashboard className="mr-2 text-blue-500" />
-            Report
+            Báo cáo
           </h2>
         </div>
         {/* Recent Orders */}
-        <h2 className="font-semibold my-5">Recent Orders</h2>
+        <h2 className="font-semibold my-5">Đơn hàng gần đây</h2>
         <TableReport />
         {/* Sales Report */}
-        <h2 className="font-semibold my-5">Sales Report</h2>
+        <h2 className="font-semibold my-5">Doanh thu theo tháng</h2>
         {/* Sales chart */}
         <SaleChartStatistic />
       </div>

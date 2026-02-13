@@ -362,11 +362,34 @@ export class OrderService {
       updateData.reason = updateOrderDto.reason;
     }
 
-    // COD orders: mark payment as checked out when delivered
+    // COD orders: mark payment as checked out when delivered + create payment record
     if (updateOrderDto.status === 'DELIVERED') {
       const order = await this.orderModel.findById(new Types.ObjectId(id));
       if (order && order.payment?.type === 'COD') {
         updateData['payment.isCheckout'] = true;
+        // Create an actual payment record for COD
+        try {
+          await firstValueFrom(
+            this.paymentService.send('payment.createForCashOnDelivery', {
+              orderId: id,
+              amount: order.totalAmount,
+            }),
+          );
+        } catch (err) {
+          console.error('Failed to create COD payment record:', err);
+        }
+      }
+    }
+
+    // REFUNDED: mark payment as refund
+    if (updateOrderDto.status === 'REFUNDED') {
+      updateData['payment.isCheckout'] = false;
+      try {
+        await firstValueFrom(
+          this.paymentService.send('payment.refund', { orderId: id }),
+        );
+      } catch (err) {
+        console.error('Failed to refund payment:', err);
       }
     }
 
@@ -516,10 +539,25 @@ export class OrderService {
    * - platformRevenue: 5% of totalIncome (platform fee)
    */
   async getOrderStats() {
-    const [totalOrders, paidStats, recentOrders] = await Promise.all([
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const last90Days = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+    const [
+      totalOrders,
+      paidStats,
+      recentOrders,
+      statusCounts,
+      monthlyRevenue,
+      dailyOrders,
+      weeklyRevenue,
+    ] = await Promise.all([
+      // Total orders (excluding PENDING, EXPIRED)
       this.orderModel.countDocuments({
         status: { $nin: ['PENDING', 'EXPIRED'] },
       }),
+
+      // Paid stats - only count PAID payment status orders
       this.orderModel.aggregate([
         {
           $match: {
@@ -535,14 +573,154 @@ export class OrderService {
           },
         },
       ]),
+
+      // Recent orders
       this.orderModel
         .find({ status: { $nin: ['PENDING', 'EXPIRED'] } })
         .sort({ createdAt: -1 })
         .limit(10)
         .lean(),
+
+      // Order counts by status
+      this.orderModel.aggregate([
+        {
+          $match: { status: { $nin: ['PENDING', 'EXPIRED'] } },
+        },
+        {
+          $group: { _id: '$status', count: { $sum: 1 } },
+        },
+      ]),
+
+      // Monthly revenue (this year) - only PAID
+      this.orderModel.aggregate([
+        {
+          $match: {
+            'payment.isCheckout': true,
+            status: { $nin: ['CANCELLED', 'REFUNDED', 'EXPIRED'] },
+            createdAt: { $gte: startOfYear },
+          },
+        },
+        {
+          $group: {
+            _id: { $month: '$createdAt' },
+            income: { $sum: '$totalAmount' },
+            orders: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+
+      // Daily orders (last 90 days) for area chart
+      this.orderModel.aggregate([
+        {
+          $match: {
+            status: { $nin: ['PENDING', 'EXPIRED'] },
+            createdAt: { $gte: last90Days },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+            },
+            orders: { $sum: 1 },
+            revenue: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ['$payment.isCheckout', true] },
+                      {
+                        $not: {
+                          $in: [
+                            '$status',
+                            ['CANCELLED', 'REFUNDED', 'EXPIRED'],
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  '$totalAmount',
+                  0,
+                ],
+              },
+            },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+
+      // Weekly revenue (last 7 days by day)
+      (() => {
+        const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return this.orderModel.aggregate([
+          {
+            $match: {
+              'payment.isCheckout': true,
+              status: { $nin: ['CANCELLED', 'REFUNDED', 'EXPIRED'] },
+              createdAt: { $gte: last7Days },
+            },
+          },
+          {
+            $group: {
+              _id: { $dayOfWeek: '$createdAt' },
+              revenue: { $sum: '$totalAmount' },
+              orders: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ]);
+      })(),
     ]);
 
     const stats = paidStats[0] || { totalIncome: 0, paidOrders: 0 };
+
+    // Build status counts map
+    const statusMap: Record<string, number> = {};
+    statusCounts.forEach((s: { _id: string; count: number }) => {
+      statusMap[s._id] = s.count;
+    });
+
+    // Build monthly revenue array (12 months)
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const monthlyData = monthNames.map((month, idx) => {
+      const found = monthlyRevenue.find(
+        (m: { _id: number }) => m._id === idx + 1,
+      );
+      return {
+        month,
+        income: found ? found.income : 0,
+        orders: found ? found.orders : 0,
+      };
+    });
+
+    // Build weekly revenue array
+    const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    const weeklyData = dayNames.map((day, idx) => {
+      const found = weeklyRevenue.find(
+        (w: { _id: number }) => w._id === idx + 1,
+      );
+      return {
+        day,
+        revenue: found ? found.revenue : 0,
+        orders: found ? found.orders : 0,
+      };
+    });
+
+    const weeklyTotal = weeklyData.reduce((sum, d) => sum + d.revenue, 0);
 
     return {
       totalOrders,
@@ -550,6 +728,11 @@ export class OrderService {
       totalIncome: stats.totalIncome,
       platformRevenue: Math.round(stats.totalIncome * 0.05),
       recentOrders,
+      statusCounts: statusMap,
+      monthlyRevenue: monthlyData,
+      dailyOrders,
+      weeklyRevenue: weeklyData,
+      weeklyTotal,
     };
   }
 

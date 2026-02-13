@@ -17,7 +17,7 @@ export class Payment {
 
   @Prop({
     type: String,
-    enum: ['PENDING', 'PAID', 'UNPAID', 'EXPIRED'],
+    enum: ['PENDING', 'PAID', 'UNPAID', 'EXPIRED', 'REFUND'],
     default: 'PENDING',
   })
   status: string;

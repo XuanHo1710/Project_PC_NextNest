@@ -2,49 +2,62 @@
 
 import { Bar, BarChart, ResponsiveContainer, YAxis, CartesianGrid, XAxis, Tooltip } from "recharts"
 import { useState } from "react"
-import { Card, Checkbox, Select, Typography } from "antd"
+import { Card, Checkbox, Spin, Typography } from "antd"
+import { useOrderStats } from "@/hooks/admin/useOrder"
 
 const { Text } = Typography
 
-const chartDataCol = [
-    { month: "Jan", income: 180, costOfSales: 120 },
-    { month: "Feb", income: 90, costOfSales: 45 },
-    { month: "Mar", income: 135, costOfSales: 78 },
-    { month: "Apr", income: 115, costOfSales: 152 },
-    { month: "May", income: 120, costOfSales: 168 },
-    { month: "Jun", income: 145, costOfSales: 100 },
-    { month: "Jul", income: 170, costOfSales: 180 },
-    { month: "Aug", income: 200, costOfSales: 220 },
-    { month: "Sep", income: 175, costOfSales: 180 },
-    { month: "Oct", income: 240, costOfSales: 210 },
-    { month: "Nov", income: 210, costOfSales: 220 },
-    { month: "Dec", income: 180, costOfSales: 200 },
-]
+const formatCurrency = (num: number) => {
+    if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)} tỷ`;
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}tr`;
+    if (num >= 1_000) return `${(num / 1_000).toFixed(0)}K`;
+    return num.toLocaleString();
+};
 
 export const SaleChartStatistic = () => {
     const [showIncome, setShowIncome] = useState(true)
-    const [showCostOfSales, setShowCostOfSales] = useState(true)
+    const [showOrders, setShowOrders] = useState(true)
+    const { data: stats, isLoading } = useOrderStats()
+
+    const monthlyData = stats?.monthlyRevenue || []
+    const totalYearlyIncome = monthlyData.reduce((sum: number, m: { income: number }) => sum + m.income, 0)
+    const platformRevenue = Math.round(totalYearlyIncome * 0.05)
+
+    if (isLoading) {
+        return (
+            <Card>
+                <div className="flex items-center justify-center py-20">
+                    <Spin size="large" />
+                </div>
+            </Card>
+        )
+    }
+
+    // Determine Y-axis domain dynamically
+    const maxIncome = Math.max(...monthlyData.map((m: { income: number }) => m.income), 0)
+    const maxOrders = Math.max(...monthlyData.map((m: { orders: number }) => m.orders), 0)
+    const yMax = Math.max(maxIncome, maxOrders * 10000) * 1.2 || 1000
 
     return (
         <Card>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                 <div>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Net Profit</Text>
-                    <Text style={{ fontSize: 30, fontWeight: 600 }}>$1560</Text>
+                    <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Tổng doanh thu năm nay</Text>
+                    <Text style={{ fontSize: 30, fontWeight: 600 }}>{formatCurrency(totalYearlyIncome)}đ</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: 14 }}>
+                        Phí nền tảng (5%): <Text strong style={{ color: '#1890ff' }}>{formatCurrency(platformRevenue)}đ</Text>
+                    </Text>
                 </div>
-                <Select defaultValue="this-year" style={{ width: 120 }}>
-                    <Select.Option value="this-year">This Year</Select.Option>
-                    <Select.Option value="last-year">Last Year</Select.Option>
-                </Select>
             </div>
 
             {/* Interactive Legend with Checkboxes */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 24, marginBottom: 16 }}>
                 <Checkbox checked={showIncome} onChange={(e) => setShowIncome(e.target.checked)}>
-                    Income
+                    Doanh thu
                 </Checkbox>
-                <Checkbox checked={showCostOfSales} onChange={(e) => setShowCostOfSales(e.target.checked)}>
-                    Cost of Sales
+                <Checkbox checked={showOrders} onChange={(e) => setShowOrders(e.target.checked)}>
+                    Số đơn hàng
                 </Checkbox>
             </div>
 
@@ -52,8 +65,8 @@ export const SaleChartStatistic = () => {
             <div style={{ width: '100%', height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                        key={`${showIncome}-${showCostOfSales}`}
-                        data={chartDataCol}
+                        key={`${showIncome}-${showOrders}`}
+                        data={monthlyData}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         barCategoryGap="20%"
                     >
@@ -63,10 +76,14 @@ export const SaleChartStatistic = () => {
                             axisLine={false}
                             tickLine={false}
                             tick={{ fontSize: 12, fill: "#666" }}
-                            domain={[0, 260]}
-                            ticks={[0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240]}
+                            tickFormatter={(value) => formatCurrency(value)}
                         />
-                        <Tooltip />
+                        <Tooltip
+                            formatter={(value: number, name: string) => {
+                                if (name === 'income') return [formatCurrency(value) + 'đ', 'Doanh thu'];
+                                return [value, 'Số đơn'];
+                            }}
+                        />
                         {showIncome && (
                             <Bar
                                 dataKey="income"
@@ -78,9 +95,9 @@ export const SaleChartStatistic = () => {
                                 animationEasing="ease-out"
                             />
                         )}
-                        {showCostOfSales && (
+                        {showOrders && (
                             <Bar
-                                dataKey="costOfSales"
+                                dataKey="orders"
                                 fill="#3b82f6"
                                 radius={[2, 2, 0, 0]}
                                 maxBarSize={40}

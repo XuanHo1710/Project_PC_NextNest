@@ -5,6 +5,7 @@ import { Button, Image, Input, Spin } from "antd";
 import { BiCategory } from "react-icons/bi";
 import { MdOutlineNotListedLocation } from "react-icons/md";
 import { MdOutlineShoppingCart } from "react-icons/md";
+import { MdOutlineChatBubbleOutline } from "react-icons/md";
 import { FaRegUserCircle, FaUserPlus } from "react-icons/fa";
 import { FaStore } from "react-icons/fa";
 import { IoDocumentOutline } from "react-icons/io5";
@@ -404,6 +405,14 @@ export default function HeaderClient() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Chat Button */}
+                        <Link
+                            href="/chat"
+                            className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] font-medium px-3 py-2 rounded-md transition-all whitespace-nowrap hover:bg-gray-50"
+                        >
+                            <MdOutlineChatBubbleOutline className="text-xl" />
+                        </Link>
 
                         {/* Auth Section */}
                         <AuthSection

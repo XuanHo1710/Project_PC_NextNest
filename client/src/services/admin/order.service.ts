@@ -69,6 +69,11 @@ class OrderService {
     totalIncome: number;
     platformRevenue: number;
     recentOrders: any[];
+    statusCounts: Record<string, number>;
+    monthlyRevenue: { month: string; income: number; orders: number }[];
+    dailyOrders: { _id: string; orders: number; revenue: number }[];
+    weeklyRevenue: { day: string; revenue: number; orders: number }[];
+    weeklyTotal: number;
   }> {
     const response = await axiosInstance.get(`${this.baseUrl}/stats`);
     return response.data;

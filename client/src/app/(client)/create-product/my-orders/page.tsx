@@ -5,7 +5,7 @@ import {
     Card, Tag, Image, Empty, Tabs, Pagination, Button, Modal, Input, message, Space, Badge,
 } from 'antd';
 import {
-    SearchOutlined, TruckOutlined, CloseCircleOutlined, ReloadOutlined,
+    SearchOutlined, TruckOutlined, CloseCircleOutlined, ReloadOutlined, MessageOutlined, DollarOutlined,
 } from '@ant-design/icons';
 import { IOrder, IOrderDetailItem } from '@/types/order';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -98,6 +98,17 @@ export default function SellerOrdersPage() {
         });
     };
 
+    const handleRefundOrder = (orderId: string) => {
+        Modal.confirm({
+            title: 'Hoàn tiền cho đơn hàng',
+            content: 'Bạn xác nhận hoàn tiền cho đơn hàng này? Trạng thái thanh toán sẽ chuyển sang REFUND.',
+            okText: 'Xác nhận hoàn tiền',
+            okButtonProps: { danger: true },
+            cancelText: 'Hủy',
+            onOk: () => statusMutation.mutate({ orderId, status: 'REFUNDED' }),
+        });
+    };
+
     const handleSearch = () => {
         setSearch(searchInput.trim());
         setCurrentPage(1);
@@ -177,6 +188,7 @@ export default function SellerOrdersPage() {
                             formatDate={formatDate}
                             onShipOrder={handleShipOrder}
                             onRejectOrder={handleRejectOrder}
+                            onRefundOrder={handleRefundOrder}
                             isUpdating={statusMutation.isPending}
                         />
                     ))}
@@ -209,6 +221,7 @@ function SellerOrderCard({
     formatDate,
     onShipOrder,
     onRejectOrder,
+    onRefundOrder,
     isUpdating,
 }: {
     order: IOrder;
@@ -216,6 +229,7 @@ function SellerOrderCard({
     formatDate: (date: string) => string;
     onShipOrder: (orderId: string) => void;
     onRejectOrder: (orderId: string) => void;
+    onRefundOrder: (orderId: string) => void;
     isUpdating: boolean;
 }) {
     const statusConfig = STATUS_CONFIG[order.status] || { label: order.status, color: 'default' };
@@ -340,8 +354,29 @@ function SellerOrderCard({
                             </Button>
                         </>
                     )}
-                    {/* Show reason if cancelled */}
-                    {order.reason && order.status === 'CANCELLED' && (
+                    {/* DELIVERED: seller can refund */}
+                    {order.status === 'DELIVERED' && (
+                        <Button
+                            danger
+                            size="small"
+                            icon={<DollarOutlined />}
+                            onClick={() => onRefundOrder(order._id)}
+                            loading={isUpdating}
+                        >
+                            Hoàn tiền
+                        </Button>
+                    )}
+                    {/* Chat with buyer */}
+                    <a href={`/chat?sellerId=${order.customerInfo?.guestId || ''}&sellerName=${encodeURIComponent(order.customerInfo?.fullname || 'Người mua')}`}>
+                        <Button
+                            size="small"
+                            icon={<MessageOutlined />}
+                        >
+                            Chat
+                        </Button>
+                    </a>
+                    {/* Show reason if cancelled or refunded */}
+                    {order.reason && (order.status === 'CANCELLED' || order.status === 'REFUNDED') && (
                         <span className="text-xs text-gray-400 italic">Lý do: {order.reason}</span>
                     )}
                 </div>

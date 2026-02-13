@@ -3,12 +3,11 @@
 import { createContext, useContext, useState } from 'react';
 import {
     Table, Tag, Button, Input, Select, Card, Space, Modal,
-    Descriptions, Divider, Typography, Tooltip, Image
+    Descriptions, Divider, Typography, Image
 } from 'antd';
 import {
-    SearchOutlined, EyeOutlined, CheckCircleOutlined,
+    SearchOutlined, CheckCircleOutlined,
     CloseCircleOutlined, DeleteOutlined, ReloadOutlined,
-    EditOutlined
 } from '@ant-design/icons';
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useProducts, useUpdateProduct, useUpdateManyProducts } from "@/hooks/admin";
@@ -160,66 +159,60 @@ export default function ContentProduct() {
             width: 240,
             render: (_: unknown, record: IProduct) => (
                 <Space size={10} wrap>
-                    <Tooltip title="Xem chi tiết">
+                    <span title="Xem chi tiết" className="inline-flex">
                         <FaEye
                             onClick={() => setDetailModal(record)}
                             className='hover:text-green-500 cursor-pointer text-lg'
-                            title="Xem chi tiết"
                         />
-                    </Tooltip>
+                    </span>
 
                     {/* Approve PENDING → ACTIVE */}
                     {record.status === 'PENDING' && hasPermission('PATCH', '/api/v1/admin/product/:id') && (
-                        <Tooltip title="Duyệt sản phẩm">
+                        <span title="Duyệt sản phẩm" className="inline-flex">
                             <FiCheckCircle
                                 className='hover:text-yellow-500 cursor-pointer text-lg'
-                                title="Duyệt sản phẩm"
                                 onClick={() => handleStatusUpdate(record._id, 'ACTIVE', 'Duyệt sản phẩm')}
                             />
-                        </Tooltip>
+                        </span>
                     )}
 
                     {/* Reject PENDING → INACTIVE */}
                     {record.status === 'PENDING' && hasPermission('PATCH', '/api/v1/admin/product/:id') && (
-                        <Tooltip title="Từ chối sản phẩm">
+                        <span title="Từ chối sản phẩm" className="inline-flex">
                             <HiOutlineXCircle
                                 className='hover:text-yellow-500 cursor-pointer text-lg'
-                                title="Từ chối sản phẩm"
                                 onClick={() => handleStatusUpdate(record._id, 'INACTIVE', 'Từ chối sản phẩm')}
                             />
-                        </Tooltip>
+                        </span>
                     )}
 
                     {/* Toggle ACTIVE ↔ INACTIVE */}
                     {record.status === 'ACTIVE' && hasPermission('PATCH', '/api/v1/admin/product/:id') && (
-                        <Tooltip title="Tạm ẩn">
+                        <span title="Tạm ẩn" className="inline-flex">
                             <FiEyeOff
                                 className='hover:text-yellow-500 cursor-pointer text-lg'
-                                title="Tạm ẩn sản phẩm"
                                 onClick={() => handleStatusUpdate(record._id, 'INACTIVE', 'Tạm ẩn sản phẩm')}
                             />
-                        </Tooltip>
+                        </span>
                     )}
                     {record.status === 'INACTIVE' && hasPermission('PATCH', '/api/v1/admin/product/:id') && (
-                        <Tooltip title="Kích hoạt lại">
+                        <span title="Kích hoạt lại" className="inline-flex">
                             <HiOutlineRefresh
                                 className='hover:text-yellow-500 cursor-pointer text-lg'
-                                title="Kích hoạt lại sản phẩm"
                                 onClick={() => handleStatusUpdate(record._id, 'ACTIVE', 'Kích hoạt sản phẩm')}
                             />
-                        </Tooltip>
+                        </span>
                     )}
 
                     {/* Soft delete */}
                     {hasPermission('DELETE', '/api/v1/admin/product/:id') && (
-                        <Tooltip title="Xóa">
+                        <span title="Xóa" className="inline-flex">
                             <FaTrashAlt onClick={() => {
                                 setDeleteTarget(record._id);
                                 setDeleteReason('');
                                 setDeleteModalOpen(true);
                             }} className='hover:text-red-500 cursor-pointer' />
-
-                        </Tooltip>
+                        </span>
                     )}
                 </Space>
             ),

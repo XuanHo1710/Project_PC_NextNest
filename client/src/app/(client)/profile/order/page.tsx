@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Card, Tag, Image, Empty, Tabs, Pagination, Button, Modal, Input, message } from 'antd';
 import Link from 'next/link';
+import { MessageOutlined } from '@ant-design/icons';
 import {
     OrderPageSkeleton,
     ProfilePageSkeleton
@@ -81,6 +82,33 @@ export default function OrderPage() {
             okButtonProps: { danger: true },
             cancelText: 'Đóng',
             onOk: () => statusMutation.mutate({ orderId, status: 'CANCELLED', reason }),
+        });
+    };
+
+    const handleRefundRequest = (orderId: string) => {
+        let reason = '';
+        Modal.confirm({
+            title: 'Yêu cầu hoàn tiền',
+            content: (
+                <div>
+                    <p className="mb-2">Bạn có chắc chắn muốn yêu cầu hoàn tiền cho đơn hàng này?</p>
+                    <Input.TextArea
+                        placeholder="Lý do yêu cầu hoàn tiền (bắt buộc)"
+                        rows={3}
+                        onChange={(e) => { reason = e.target.value; }}
+                    />
+                </div>
+            ),
+            okText: 'Gửi yêu cầu hoàn tiền',
+            okButtonProps: { danger: true },
+            cancelText: 'Đóng',
+            onOk: () => {
+                if (!reason.trim()) {
+                    message.warning('Vui lòng nhập lý do hoàn tiền');
+                    return Promise.reject();
+                }
+                return statusMutation.mutateAsync({ orderId, status: 'REFUNDED', reason });
+            },
         });
     };
 
@@ -183,6 +211,7 @@ export default function OrderPage() {
                                                 formatDate={formatDate}
                                                 onConfirmReceived={handleConfirmReceived}
                                                 onCancelOrder={handleCancelOrder}
+                                                onRefundRequest={handleRefundRequest}
                                                 isUpdating={statusMutation.isPending}
                                             />
                                         ))}
@@ -222,6 +251,7 @@ function OrderCard({
     formatDate,
     onConfirmReceived,
     onCancelOrder,
+    onRefundRequest,
     isUpdating,
 }: {
     order: IOrder;
@@ -229,6 +259,7 @@ function OrderCard({
     formatDate: (date: string) => string;
     onConfirmReceived: (orderId: string) => void;
     onCancelOrder: (orderId: string) => void;
+    onRefundRequest: (orderId: string) => void;
     isUpdating: boolean;
 }) {
     const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
@@ -319,6 +350,16 @@ function OrderCard({
                             Đã nhận được hàng
                         </Button>
                     )}
+                    {order.status === 'DELIVERED' && (
+                        <Button
+                            danger
+                            size="small"
+                            onClick={() => onRefundRequest(order._id)}
+                            loading={isUpdating}
+                        >
+                            Yêu cầu hoàn tiền
+                        </Button>
+                    )}
                     {order.status === 'COMPLETED' && order.payment?.type === 'COD' && (
                         <Button
                             danger
@@ -329,7 +370,15 @@ function OrderCard({
                             Hủy đơn hàng
                         </Button>
                     )}
-                    {order.reason && order.status === 'CANCELLED' && (
+                    <Link href={`/chat?sellerId=${order._id}&sellerName=Người bán`}>
+                        <Button
+                            size="small"
+                            icon={<MessageOutlined />}
+                        >
+                            Chat
+                        </Button>
+                    </Link>
+                    {order.reason && (order.status === 'CANCELLED' || order.status === 'REFUNDED') && (
                         <span className="text-xs text-gray-400 italic">Lý do: {order.reason}</span>
                     )}
                 </div>
