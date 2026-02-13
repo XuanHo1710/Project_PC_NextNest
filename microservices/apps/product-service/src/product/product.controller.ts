@@ -380,4 +380,9 @@ export class ProductController {
   removeProductAttributeAllowValue(@Payload() data: { id: string }) {
     return this.productService.removeProductAttributeAllowValue(data.id);
   }
+
+  @MessagePattern('product.getVariantIdsByCreator')
+  getVariantIdsByCreator(@Payload() data: { createdBy: string }) {
+    return this.productService.getVariantIdsByCreator(data.createdBy);
+  }
 }

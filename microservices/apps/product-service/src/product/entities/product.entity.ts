@@ -45,6 +45,9 @@ export class Product {
   @Prop({ default: 0 })
   avgRating: number;
 
+  @Prop({ default: 0 })
+  totalStock: number;
+
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'AccountGuest' })
   createdBy: Types.ObjectId;
 

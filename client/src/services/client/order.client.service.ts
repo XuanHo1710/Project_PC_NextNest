@@ -54,6 +54,39 @@ class OrderClientService {
     const response = await axiosClient.post(`/order/${orderId}/retry-payment`);
     return response.data;
   }
+
+  async updateOrderStatus(
+    orderId: string,
+    status: string,
+    reason?: string,
+  ): Promise<IOrder> {
+    const body: any = { status };
+    if (reason) body.reason = reason;
+    const response = await axiosClient.patch(`/order/${orderId}/status`, body);
+    return response.data;
+  }
+
+  async getSellerOrders(
+    sellerId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      search?: string;
+    },
+  ): Promise<PaginatedResponse<IOrder>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", params.page.toString());
+    if (params?.limit) query.set("limit", params.limit.toString());
+    if (params?.status && params.status !== "ALL")
+      query.set("status", params.status);
+    if (params?.search) query.set("search", params.search);
+    const qs = query.toString();
+    const response = await axiosClient.get(
+      `/order/seller-orders/${sellerId}${qs ? `?${qs}` : ""}`,
+    );
+    return response.data;
+  }
 }
 
 export const orderClientService = new OrderClientService();

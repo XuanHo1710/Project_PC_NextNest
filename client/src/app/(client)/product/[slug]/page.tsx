@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
-import { IProductCard, IProductWithPagination, IProductVariant } from "@/types/product";
+import { IProductCard, IProductWithPagination, IProductVariant, ICreatorInfo } from "@/types/product";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Carousel, Rate, Tag, Tabs, message, Divider, Badge, Image } from "antd";
 import Link from "next/link";
@@ -38,6 +38,7 @@ import Swal from "sweetalert2";
 import useAuthUser from '@/hooks/useAuthUser';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import BreadcrumbNav from '@/components/client/Breadcrumb/Breadcrumb';
+import { ICreatorInfo } from '@/types/product';
 
 // Extended product type from findBySlug (includes variants + allowValues)
 interface ProductDetail extends IProductCard {
@@ -385,6 +386,42 @@ export default function ProductDetailClient() {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Seller Info */}
+                            {product.createdBy && typeof product.createdBy === 'object' && (product.createdBy as ICreatorInfo).fullname && (
+                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 block">
+                                        Người đăng bán
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-sm overflow-hidden">
+                                            {(product.createdBy as ICreatorInfo).avatar ? (
+                                                <img src={(product.createdBy as ICreatorInfo).avatar} alt="avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                (product.createdBy as ICreatorInfo).fullname?.charAt(0)?.toUpperCase()
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-sm text-gray-800 dark:text-white truncate">
+                                                {(product.createdBy as ICreatorInfo).fullname}
+                                            </p>
+                                            <p className="text-xs text-gray-500 truncate">
+                                                {(product.createdBy as ICreatorInfo).email}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            icon={<CommentOutlined />}
+                                            className="!rounded-lg !text-blue-500 !border-blue-300 hover:!bg-blue-50"
+                                            onClick={() => {
+                                                const sellerId = (product.createdBy as ICreatorInfo)._id;
+                                                window.open(`/chat?sellerId=${sellerId}&sellerName=${encodeURIComponent((product.createdBy as ICreatorInfo).fullname)}`, '_blank');
+                                            }}
+                                        >
+                                            Chat với người bán
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Action Buttons */}
                             <div className="flex flex-wrap gap-3 pt-2">

@@ -105,18 +105,18 @@ const ContextCollapse = (prop: IProp) => {
                     </div>
                 )}
 
-                {/* For order */}
-                {prop.path === "order" && (
+                {/* For product variant */}
+                {prop.path === "product" && (
                     <div className="col-span-6 p-4 rounded-2xl border border-solid border-slate-200">
                         <div className="flex gap-4 items-center">
                             <Switch
                                 checked={prop.selected.some(
-                                    (p) => p.method === "PATCH" && p.path === "/api/v1/admin/" + prop.path + "/:id/status"
-                                )} onChange={(isSelected) => prop.handleChange(isSelected, "PATCH", "/api/v1/admin/" + prop.path + "/:id/status")}
+                                    (p) => p.method === "GET" && p.path === "/api/v1/admin/" + "product-variant"
+                                )} onChange={(isSelected) => prop.handleChange(isSelected, "GET", "/api/v1/admin/" + "product-variant")}
                             />
                             <div>
-                                <h3 className="font-semibold text-lg">Update Status {prop.name}</h3>
-                                <p className="text-slate-500"><span className="text-neutral-800 font-bold">PATCH</span>  /api/v1/admin/{prop.path}/:id</p>
+                                <h3 className="font-semibold text-lg">Get variant {prop.name}</h3>
+                                <p className="text-slate-500"><span className="text-neutral-800 font-bold">GET</span>  /api/v1/admin/product-variant</p>
                             </div>
                         </div>
                     </div>
@@ -283,19 +283,6 @@ export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) 
                     },
                     {
                         key: '8',
-                        label: <h2 className="text-md font-semibold">DISCOUNT</h2>,
-                        children: (
-                            <ContextCollapse
-                                originName="DISCOUNT"
-                                path="discount"
-                                name="Discount"
-                                handleChange={handleChange}
-                                selected={selected}
-                            />
-                        ),
-                    },
-                    {
-                        key: '9',
                         label: <h2 className="text-md font-semibold">ORDER</h2>,
                         children: (
                             <ContextCollapse
@@ -308,13 +295,13 @@ export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) 
                         ),
                     },
                     {
-                        key: '10',
+                        key: '9',
                         label: <h2 className="text-md font-semibold">BRAND</h2>,
                         children: (
                             <ContextCollapse
                                 originName="BRAND"
                                 path="brand"
-                                name="brand"
+                                name="Brand"
                                 handleChange={handleChange}
                                 selected={selected}
                             />

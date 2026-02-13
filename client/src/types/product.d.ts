@@ -4,6 +4,15 @@
 import type { IBrand } from "./brand";
 import type { ICategory } from "./category";
 
+// ============== CREATOR INFO ==============
+export interface ICreatorInfo {
+  _id: string;
+  fullname: string;
+  email: string;
+  avatar?: string;
+  phone?: string;
+}
+
 // ============== PRODUCT ATTRIBUTE ==============
 export interface IProductAttribute {
   _id: string;
@@ -88,7 +97,8 @@ export interface IProduct {
   defaultProductVariantId?: string;
   totalRatings?: number;
   avgRating?: number;
-  createdBy?: string;
+  createdBy?: string | ICreatorInfo;
+  totalStock?: number;
   createdAt?: string;
   updatedAt?: string;
   isDeleted?: boolean;
@@ -141,6 +151,7 @@ export interface IProductCard {
   category?: { _id: string; name: string; slug: string };
   avgRating?: number;
   totalRatings?: number;
+  createdBy?: string | ICreatorInfo;
   createdAt?: string;
   updatedAt?: string;
 }

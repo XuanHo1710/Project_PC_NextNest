@@ -92,6 +92,9 @@ export class Order {
     isCheckout: boolean;
     type: string;
   };
+
+  @Prop({ type: String, default: '' })
+  reason: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

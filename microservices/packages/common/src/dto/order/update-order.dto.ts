@@ -1,8 +1,10 @@
 export class UpdateOrderDto {
-  status: string;
+  status?: string;
 
-  payment: {
+  payment?: {
     isCheckout: boolean;
     type: string;
   };
+
+  reason?: string;
 }

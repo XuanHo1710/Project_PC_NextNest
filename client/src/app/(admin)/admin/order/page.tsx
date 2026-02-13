@@ -6,11 +6,11 @@ import {
     Descriptions, Divider, Typography, Tooltip, Badge
 } from 'antd';
 import {
-    SearchOutlined, EyeOutlined, TruckOutlined,
-    CheckCircleOutlined, DollarOutlined,
+    SearchOutlined, EyeOutlined,
+    DollarOutlined,
     ReloadOutlined
 } from '@ant-design/icons';
-import { useAdminOrders, useUpdateOrderStatus, useConfirmCodPayment } from '@/hooks/admin/useOrder';
+import { useAdminOrders, useConfirmCodPayment } from '@/hooks/admin/useOrder';
 import type { IOrder, IOrderDetailItem } from '@/types/order';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -56,7 +56,6 @@ export default function AdminOrderPage() {
         search: search || undefined,
     });
 
-    const updateStatus = useUpdateOrderStatus();
     const confirmCod = useConfirmCodPayment();
 
     const orders = ordersData?.data ?? [];
@@ -67,33 +66,8 @@ export default function AdminOrderPage() {
         setSearch(searchInput.trim());
     };
 
-    const canTransitionTo = (order: IOrder, targetStatus: string): boolean => {
-        const { status, payment } = order;
-        if (targetStatus === 'SHIPPING') {
-            // COD PENDING → SHIPPING, or CARD COMPLETED (paid) → SHIPPING
-            if (status === 'PENDING' && payment.type === 'COD') return true;
-            if (status === 'COMPLETED' && payment.type === 'CARD' && payment.isCheckout) return true;
-            return false;
-        }
-        if (targetStatus === 'DELIVERED') {
-            return status === 'SHIPPING';
-        }
-        return false;
-    };
-
-    const handleStatusChange = (orderId: string, newStatus: string) => {
-        setConfirmModal({ type: 'status', orderId, newStatus });
-    };
-
     const handleConfirmCod = (order: IOrder) => {
         setConfirmModal({ type: 'cod', orderId: order._id, order });
-    };
-
-    const handleConfirmStatusChange = () => {
-        if (confirmModal.type === 'status' && confirmModal.newStatus) {
-            updateStatus.mutate({ id: confirmModal.orderId, status: confirmModal.newStatus });
-            setConfirmModal({ type: null, orderId: '' });
-        }
     };
 
     const handleConfirmCodPayment = () => {
@@ -177,7 +151,7 @@ export default function AdminOrderPage() {
         {
             title: 'Thao tác',
             key: 'actions',
-            width: 200,
+            width: 160,
             render: (_: unknown, record: IOrder) => (
                 <Space size={4} wrap>
                     <Tooltip title="Xem chi tiết">
@@ -187,32 +161,6 @@ export default function AdminOrderPage() {
                             onClick={() => setDetailModal(record)}
                         />
                     </Tooltip>
-                    {canTransitionTo(record, 'SHIPPING') && (
-                        <Tooltip title="Chuyển sang Đang giao">
-                            <Button
-                                size="small"
-                                type="primary"
-                                icon={<TruckOutlined />}
-                                onClick={() => handleStatusChange(record._id, 'SHIPPING')}
-                                loading={updateStatus.isPending && confirmModal.orderId === record._id}
-                            >
-                                Giao hàng
-                            </Button>
-                        </Tooltip>
-                    )}
-                    {canTransitionTo(record, 'DELIVERED') && (
-                        <Tooltip title="Xác nhận đã giao">
-                            <Button
-                                size="small"
-                                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
-                                icon={<CheckCircleOutlined />}
-                                onClick={() => handleStatusChange(record._id, 'DELIVERED')}
-                                loading={updateStatus.isPending && confirmModal.orderId === record._id}
-                            >
-                                Đã giao
-                            </Button>
-                        </Tooltip>
-                    )}
                     {record.payment.type === 'COD' && !record.payment.isCheckout && record.status === 'DELIVERED' && (
                         <Tooltip title="Xác nhận nhận tiền COD">
                             <Button
@@ -306,23 +254,6 @@ export default function AdminOrderPage() {
                 scroll={{ x: 1000 }}
                 size="middle"
             />
-
-            {/* Confirm Status Change Modal */}
-            <Modal
-                title="Xác nhận thay đổi trạng thái"
-                open={confirmModal.type === 'status'}
-                onOk={handleConfirmStatusChange}
-                onCancel={() => setConfirmModal({ type: null, orderId: '' })}
-                okText="Xác nhận"
-                cancelText="Hủy"
-                confirmLoading={updateStatus.isPending}
-                destroyOnHidden
-            >
-                <p>
-                    Bạn có chắc muốn chuyển trạng thái sang{' '}
-                    <strong>"{STATUS_CONFIG[confirmModal.newStatus || '']?.label}"</strong>?
-                </p>
-            </Modal>
 
             {/* Confirm COD Payment Modal */}
             <Modal

@@ -64,6 +64,9 @@ export class OrderService {
       // For CARD orders: set expireAt to 24 hours from now
       if (isOnlinePayment) {
         dataCreate.expireAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      } else {
+        // COD orders: set status to COMPLETED immediately
+        dataCreate.status = 'COMPLETED';
       }
 
       const order = await this.orderModel.create(dataCreate);
@@ -181,6 +184,9 @@ export class OrderService {
 
     if (isOnlinePayment) {
       dataCreate.expireAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    } else {
+      // COD orders: set status to COMPLETED immediately
+      dataCreate.status = 'COMPLETED';
     }
 
     const order = await this.orderModel.create(dataCreate);
@@ -349,11 +355,70 @@ export class OrderService {
   }
 
   async updateOrderStatus(id: string, updateOrderDto: UpdateOrderDto) {
+    const updateData: any = { status: updateOrderDto.status };
+    if (updateOrderDto.reason !== undefined) {
+      updateData.reason = updateOrderDto.reason;
+    }
     return await this.orderModel.findByIdAndUpdate(
       new Types.ObjectId(id),
-      { status: updateOrderDto.status },
+      updateData,
       { new: true },
     );
+  }
+
+  /**
+   * Get orders that contain specific variant IDs (for seller order management).
+   * Excludes PENDING and EXPIRED orders.
+   */
+  async getOrdersByVariantIds(
+    variantIds: string[],
+    page = 1,
+    limit = 10,
+    status?: string,
+    search?: string,
+  ) {
+    const query: any = {
+      'orderDetail.variantId': { $in: variantIds },
+      status: { $nin: ['PENDING', 'EXPIRED'] },
+    };
+
+    if (status && status !== 'ALL') {
+      query.status = status;
+    }
+
+    if (search && search.trim()) {
+      const s = search.trim();
+      const searchConditions: any[] = [
+        { 'customerInfo.fullname': { $regex: s, $options: 'i' } },
+        { 'customerInfo.email': { $regex: s, $options: 'i' } },
+        { 'customerInfo.phone': { $regex: s, $options: 'i' } },
+        { 'orderDetail.productName': { $regex: s, $options: 'i' } },
+      ];
+      if (/^[0-9a-fA-F]{24}$/.test(s)) {
+        searchConditions.push({ _id: new Types.ObjectId(s) });
+      }
+      query.$or = searchConditions;
+    }
+
+    const totalItems = await this.orderModel.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / limit);
+    const skip = (page - 1) * limit;
+
+    const items = await this.orderModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return {
+      data: items,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+      },
+    };
   }
 
   async updateOrderPayment(id: string, updateOrderDto: UpdateOrderDto) {

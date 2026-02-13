@@ -159,9 +159,31 @@ export class ProductService {
     }
     const product = await this.productModel
       .findOne({ _id: new Types.ObjectId(id), isDeleted: false })
+      .populate('brand', 'name slug logo')
+      .populate('category', 'name slug')
+      .lean()
       .exec();
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+    // Populate defaultVariant
+    if (product.defaultProductVariantId) {
+      const variant = await this.productVariantModel
+        .findOne({
+          _id: product.defaultProductVariantId,
+          isDeleted: false,
+        })
+        .lean()
+        .exec();
+      if (variant) {
+        product['defaultVariant'] = {
+          ...variant,
+          combination:
+            variant.combination instanceof Map
+              ? Object.fromEntries(variant.combination)
+              : variant.combination,
+        };
+      }
     }
     return product;
   }
@@ -171,6 +193,7 @@ export class ProductService {
       .findOne({ slug, isDeleted: false })
       .populate('brand')
       .populate('category')
+      .populate('createdBy', 'fullname email avatar phone')
       .lean()
       .exec();
     if (!product) {
@@ -646,14 +669,14 @@ export class ProductService {
   private async recomputeProductPrices(productId: string) {
     const variants = await this.productVariantModel
       .find({ product: new Types.ObjectId(productId), isDeleted: false })
-      .select('price discount')
+      .select('price discount stock')
       .lean()
       .exec();
 
     if (variants.length === 0) {
       await this.productModel.updateOne(
         { _id: new Types.ObjectId(productId) },
-        { $set: { minPrice: 0, maxPrice: 0 } },
+        { $set: { minPrice: 0, maxPrice: 0, totalStock: 0 } },
       );
       return;
     }
@@ -663,10 +686,11 @@ export class ProductService {
     );
     const minPrice = Math.min(...effectivePrices);
     const maxPrice = Math.max(...effectivePrices);
+    const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
 
     await this.productModel.updateOne(
       { _id: new Types.ObjectId(productId) },
-      { $set: { minPrice, maxPrice } },
+      { $set: { minPrice, maxPrice, totalStock } },
     );
   }
 
@@ -1246,5 +1270,36 @@ export class ProductService {
       message: 'Product attribute allow value deleted successfully',
       data: allowValue,
     };
+  }
+
+  // ============= SELLER HELPERS =============
+
+  /**
+   * Get all variant IDs for products created by a specific user (seller).
+   * Used to find orders containing seller's products.
+   */
+  async getVariantIdsByCreator(createdBy: string): Promise<string[]> {
+    const products = await this.productModel
+      .find({
+        createdBy: new Types.ObjectId(createdBy),
+        isDeleted: false,
+      })
+      .select('_id')
+      .lean()
+      .exec();
+
+    if (products.length === 0) return [];
+
+    const productIds = products.map((p) => p._id);
+    const variants = await this.productVariantModel
+      .find({
+        product: { $in: productIds },
+        isDeleted: false,
+      })
+      .select('_id')
+      .lean()
+      .exec();
+
+    return variants.map((v) => v._id.toString());
   }
 }

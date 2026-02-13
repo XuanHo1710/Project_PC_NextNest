@@ -12,7 +12,8 @@ import {
 } from '@ant-design/icons';
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useProducts, useUpdateProduct } from "@/hooks/admin";
-import type { IProduct } from "@/types/product";
+import { useProductVariantsByProduct } from "@/hooks/admin/useProductVariant";
+import type { IProduct, IProductVariant } from "@/types/product";
 import type { ColumnsType } from 'antd/es/table';
 
 import type { SelectedContextType } from '@/types/table.d';
@@ -295,44 +296,142 @@ export default function ContentProduct() {
                 open={!!detailModal}
                 onCancel={() => setDetailModal(null)}
                 footer={null}
-                width={700}
+                width={900}
                 destroyOnHidden
             >
                 {detailModal && (
-                    <div>
-                        <Descriptions bordered column={2} size="small">
-                            <Descriptions.Item label="Tên sản phẩm" span={2}>{detailModal.name}</Descriptions.Item>
-                            <Descriptions.Item label="Slug" span={2}>{detailModal.slug}</Descriptions.Item>
-                            <Descriptions.Item label="Trạng thái">
-                                <Tag color={STATUS_CONFIG[detailModal.status]?.color}>
-                                    {STATUS_CONFIG[detailModal.status]?.label}
-                                </Tag>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Giá">
-                                <Text strong className="text-red-500">
-                                    {detailModal.minPrice.toLocaleString()}đ
-                                    {detailModal.maxPrice > detailModal.minPrice && ` ~ ${detailModal.maxPrice.toLocaleString()}đ`}
-                                </Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Đánh giá">
-                                {detailModal.avgRating ? `${detailModal.avgRating.toFixed(1)} ⭐ (${detailModal.totalRatings} đánh giá)` : 'Chưa có'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Ngày tạo">
-                                {detailModal.createdAt ? new Date(detailModal.createdAt).toLocaleString('vi-VN') : '-'}
-                            </Descriptions.Item>
-                        </Descriptions>
-                        {detailModal.description && (
-                            <>
-                                <Divider />
-                                <div>
-                                    <h4 className="font-semibold mb-2">Mô tả</h4>
-                                    <p className="text-gray-600 whitespace-pre-wrap line-clamp-6">{detailModal.description}</p>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    <ProductDetailContent product={detailModal} />
                 )}
             </Modal>
+        </div>
+    );
+}
+
+// ============ Product Detail with Variants ============
+function ProductDetailContent({ product }: { product: IProduct }) {
+    const { data: variants, isLoading: loadingVariants } = useProductVariantsByProduct(product._id);
+
+    return (
+        <div>
+            <Descriptions bordered column={2} size="small">
+                <Descriptions.Item label="Tên sản phẩm" span={2}>{product.name}</Descriptions.Item>
+                <Descriptions.Item label="Slug" span={2}>{product.slug}</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                    <Tag color={STATUS_CONFIG[product.status]?.color}>
+                        {STATUS_CONFIG[product.status]?.label}
+                    </Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Giá">
+                    <Text strong className="text-red-500">
+                        {product.minPrice?.toLocaleString()}đ
+                        {product.maxPrice > product.minPrice && ` ~ ${product.maxPrice?.toLocaleString()}đ`}
+                    </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Đánh giá">
+                    {product.avgRating ? `${product.avgRating.toFixed(1)} ⭐ (${product.totalRatings} đánh giá)` : 'Chưa có'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tạo">
+                    {product.createdAt ? new Date(product.createdAt).toLocaleString('vi-VN') : '-'}
+                </Descriptions.Item>
+                {(product as any).totalStock !== undefined && (
+                    <Descriptions.Item label="Tổng tồn kho">
+                        <Text strong>{(product as any).totalStock}</Text>
+                    </Descriptions.Item>
+                )}
+            </Descriptions>
+
+            {product.description && (
+                <>
+                    <Divider orientation="vertical" className="!text-sm">Mô tả</Divider>
+                    <p className="text-gray-600 whitespace-pre-wrap line-clamp-6 text-sm">{product.description}</p>
+                </>
+            )}
+
+            {/* Variants Section */}
+            <Divider orientation="vertical" className="!text-sm">
+                Biến thể sản phẩm {variants && `(${variants.data.length})`}
+            </Divider>
+
+            {loadingVariants ? (
+                <div className="text-center py-4 text-gray-400">Đang tải biến thể...</div>
+            ) : variants && variants.data.length > 0 ? (
+                <div className="space-y-3">
+                    {variants.data.map((variant: IProductVariant) => {
+                        const comboText = variant.combination && Object.keys(variant.combination).length > 0
+                            ? Object.entries(variant.combination).map(([k, v]) => `${k}: ${v}`).join(' | ')
+                            : 'Mặc định';
+                        const discountedPrice = variant.discount > 0
+                            ? variant.price * (1 - variant.discount / 100)
+                            : variant.price;
+                        const isDefault = product.defaultProductVariantId === variant._id
+                            || (typeof product.defaultProductVariantId === 'object' && (product.defaultProductVariantId as any)?._id === variant._id);
+
+                        return (
+                            <div
+                                key={variant._id}
+                                className={`flex items-start gap-3 p-3 rounded-lg border ${isDefault ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50'
+                                    }`}
+                            >
+                                {/* Variant Images */}
+                                <div className="flex gap-1 shrink-0">
+                                    {variant.images && variant.images.length > 0 ? (
+                                        variant.images.slice(0, 3).map((img, i) => (
+                                            <Image
+                                                key={i}
+                                                src={img}
+                                                alt={`variant-${i}`}
+                                                width={56}
+                                                height={56}
+                                                className="!w-14 !h-14 object-cover rounded border"
+                                                fallback="/laptop.png"
+                                            />
+                                        ))
+                                    ) : (
+                                        <div className="w-14 h-14 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
+                                            No img
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Variant Info */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Text className="font-medium text-sm">{comboText}</Text>
+                                        {isDefault && <Tag color="blue" className="!text-xs">Mặc định</Tag>}
+                                    </div>
+                                    <div className="text-xs text-gray-500 mb-1">SKU: {variant.sku}</div>
+                                    <div className="flex items-center gap-3 text-sm">
+                                        <span>
+                                            Giá:{' '}
+                                            {variant.discount > 0 && (
+                                                <Text delete className="text-gray-400 mr-1 text-xs">
+                                                    {variant.price.toLocaleString()}đ
+                                                </Text>
+                                            )}
+                                            <Text strong className="text-red-500">
+                                                {Math.round(discountedPrice).toLocaleString()}đ
+                                            </Text>
+                                        </span>
+                                        {variant.discount > 0 && (
+                                            <Tag color="red" className="!text-xs">-{variant.discount}%</Tag>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Stock */}
+                                <div className="text-right shrink-0">
+                                    <div className="text-xs text-gray-500">Tồn kho</div>
+                                    <Text strong className={variant.stock > 0 ? 'text-green-600' : 'text-red-500'}>
+                                        {variant.stock}
+                                    </Text>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="text-center py-4 text-gray-400 text-sm">Chưa có biến thể nào</div>
+            )}
         </div>
     );
 }

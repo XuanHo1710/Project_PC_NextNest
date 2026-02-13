@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, Tag, Image, Empty, Tabs, Pagination } from 'antd';
+import { Card, Tag, Image, Empty, Tabs, Pagination, Button, Modal, Input, message } from 'antd';
 import Link from 'next/link';
 import {
     OrderPageSkeleton,
     ProfilePageSkeleton
 } from "@/components/Skeletons";
 import { IOrder } from '@/types/order';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import useAuthUser from '@/hooks/useAuthUser';
 import { orderClientService } from '@/services/client/order.client.service';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
@@ -39,6 +39,50 @@ export default function OrderPage() {
     const [activeTab, setActiveTab] = useState<OrderStatus>('ALL');
     const [currentPage, setCurrentPage] = useState(1);
     const { user } = useAuthUser();
+    const queryClient = useQueryClient();
+
+    const statusMutation = useMutation({
+        mutationFn: ({ orderId, status, reason }: { orderId: string; status: string; reason?: string }) =>
+            orderClientService.updateOrderStatus(orderId, status, reason),
+        onSuccess: () => {
+            message.success('Cập nhật trạng thái đơn hàng thành công');
+            queryClient.invalidateQueries({ queryKey: ['get-order-by-guest-id'] });
+        },
+        onError: () => {
+            message.error('Cập nhật trạng thái thất bại');
+        },
+    });
+
+    const handleConfirmReceived = (orderId: string) => {
+        Modal.confirm({
+            title: 'Xác nhận đã nhận hàng',
+            content: 'Bạn xác nhận đã nhận được đơn hàng này?',
+            okText: 'Đã nhận hàng',
+            cancelText: 'Hủy',
+            onOk: () => statusMutation.mutate({ orderId, status: 'DELIVERED' }),
+        });
+    };
+
+    const handleCancelOrder = (orderId: string) => {
+        let reason = '';
+        Modal.confirm({
+            title: 'Hủy đơn hàng',
+            content: (
+                <div>
+                    <p className="mb-2">Bạn có chắc chắn muốn hủy đơn hàng này?</p>
+                    <Input.TextArea
+                        placeholder="Lý do hủy đơn (không bắt buộc)"
+                        rows={3}
+                        onChange={(e) => { reason = e.target.value; }}
+                    />
+                </div>
+            ),
+            okText: 'Xác nhận hủy',
+            okButtonProps: { danger: true },
+            cancelText: 'Đóng',
+            onOk: () => statusMutation.mutate({ orderId, status: 'CANCELLED', reason }),
+        });
+    };
 
     const { data, isLoading } = useQuery<PaginatedResponse<IOrder>>({
         queryKey: ['get-order-by-guest-id', user?.id, activeTab, currentPage],
@@ -139,6 +183,9 @@ export default function OrderPage() {
                                                 order={order}
                                                 formatCurrency={formatCurrency}
                                                 formatDate={formatDate}
+                                                onConfirmReceived={handleConfirmReceived}
+                                                onCancelOrder={handleCancelOrder}
+                                                isUpdating={statusMutation.isPending}
                                             />
                                         ))}
 
@@ -175,10 +222,16 @@ function OrderCard({
     order,
     formatCurrency,
     formatDate,
+    onConfirmReceived,
+    onCancelOrder,
+    isUpdating,
 }: {
     order: IOrder;
     formatCurrency: (amount: number) => string;
     formatDate: (date: string) => string;
+    onConfirmReceived: (orderId: string) => void;
+    onCancelOrder: (orderId: string) => void;
+    isUpdating: boolean;
 }) {
     const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
 
@@ -258,7 +311,29 @@ function OrderCard({
                     </span>
                 </div>
                 <div className="flex items-center gap-2">
-                    {/* Future: add reorder / contact buttons */}
+                    {order.status === 'SHIPPING' && (
+                        <Button
+                            type="primary"
+                            size="small"
+                            onClick={() => onConfirmReceived(order._id)}
+                            loading={isUpdating}
+                        >
+                            Đã nhận được hàng
+                        </Button>
+                    )}
+                    {order.status === 'COMPLETED' && order.payment?.type === 'COD' && (
+                        <Button
+                            danger
+                            size="small"
+                            onClick={() => onCancelOrder(order._id)}
+                            loading={isUpdating}
+                        >
+                            Hủy đơn hàng
+                        </Button>
+                    )}
+                    {order.reason && order.status === 'CANCELLED' && (
+                        <span className="text-xs text-gray-400 italic">Lý do: {order.reason}</span>
+                    )}
                 </div>
             </div>
         </Card>

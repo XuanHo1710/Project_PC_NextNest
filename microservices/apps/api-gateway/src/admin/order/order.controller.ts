@@ -41,28 +41,6 @@ export class OrderController {
     return this.orderService.send('order.getById', { orderId: id });
   }
 
-  @Patch(':id/status')
-  updateStatus(
-    @Param('id') id: string,
-    @Body() updateOrderDto: UpdateOrderDto,
-  ) {
-    return this.orderService.send('order.updateStatus', {
-      id,
-      updateOrderDto,
-    });
-  }
-
-  @Patch(':id/payment')
-  updatePayment(
-    @Param('id') id: string,
-    @Body() updateOrderDto: UpdateOrderDto,
-  ) {
-    return this.orderService.send('order.updatePayment', {
-      id,
-      updateOrderDto,
-    });
-  }
-
   /**
    * Admin COD confirm: create a PAID payment record for COD order
    */

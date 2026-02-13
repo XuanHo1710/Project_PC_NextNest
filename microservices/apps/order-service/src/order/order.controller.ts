@@ -98,4 +98,24 @@ export class OrderController {
   ) {
     return this.orderService.updateOrderPayment(data.id, data.updateOrderDto);
   }
+
+  @MessagePattern('order.getByVariantIds')
+  getOrdersByVariantIds(
+    @Payload()
+    data: {
+      variantIds: string[];
+      page?: number;
+      limit?: number;
+      status?: string;
+      search?: string;
+    },
+  ) {
+    return this.orderService.getOrdersByVariantIds(
+      data.variantIds,
+      data.page,
+      data.limit,
+      data.status,
+      data.search,
+    );
+  }
 }

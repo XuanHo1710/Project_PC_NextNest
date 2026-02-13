@@ -120,6 +120,7 @@ export interface IOrder {
     isCheckout: boolean;
     type: string;
   };
+  reason?: string;
   createdAt: string;
   updatedAt: string;
 }

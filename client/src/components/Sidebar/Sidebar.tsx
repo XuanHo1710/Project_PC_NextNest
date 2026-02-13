@@ -41,25 +41,8 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/product"
                 ) ? {
                     key: 'products-group',
-                    label: 'Sản phẩm',
+                    label: <Link href={pathAdminRoutes.products}>Sản phẩm</Link>,
                     icon: <GiLaptop />,
-                    children: [
-                        {
-                            key: 'products',
-                            label: <Link href={pathAdminRoutes.products}>Danh sách SP</Link>,
-                            icon: <GiLaptop />,
-                        },
-                        {
-                            key: 'product-attribute',
-                            label: <Link href={pathAdminRoutes.productAttribute}>Thuộc tính SP</Link>,
-                            icon: <AiOutlineTags />,
-                        },
-                        {
-                            key: 'product-attribute-value',
-                            label: <Link href={pathAdminRoutes.productAttributeValue}>Giá trị thuộc tính</Link>,
-                            icon: <AiOutlineAppstore />,
-                        },
-                    ],
                 } : null,
                 accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
@@ -74,13 +57,6 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     key: 'brand',
                     label: <Link href={pathAdminRoutes.brand}>Thương hiệu</Link>,
                     icon: <TbBrandApple />
-                } : null,
-                accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "GET" && p.path === "/api/v1/admin/discount"
-                ) ? {
-                    key: 'discount',
-                    label: <Link href={pathAdminRoutes.discount}>Khuyến mãi</Link>,
-                    icon: <MoneyCollectOutlined />
                 } : null,
                 accountLogin && accountLogin.role && accountLogin.role.permission.some(
                     (p) => p.method === "GET" && p.path === "/api/v1/admin/order"
