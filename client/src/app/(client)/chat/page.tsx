@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { Input, Button, Avatar, Empty, Badge } from 'antd';
-import { SendOutlined, ArrowLeftOutlined, SmileOutlined, MessageOutlined, SearchOutlined } from '@ant-design/icons';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { Input, Button, Avatar, Empty, Badge, Spin } from 'antd';
+import { SendOutlined, ArrowLeftOutlined, SmileOutlined, MessageOutlined, SearchOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useSearchParams, useRouter } from 'next/navigation';
 import useAuthUser from '@/hooks/useAuthUser';
 import Link from 'next/link';
 import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 
 interface ChatMessage {
     id: string;
@@ -25,14 +26,27 @@ interface Conversation {
     role: 'seller' | 'buyer';
 }
 
+// Demo message history for simulation
+const DEMO_HISTORY: ChatMessage[] = [
+    { id: 'demo-1', text: 'Xin chào, tôi muốn hỏi về sản phẩm', sender: 'me', timestamp: new Date(Date.now() - 3600000 * 5) },
+    { id: 'demo-2', text: 'Chào bạn! Rất vui được hỗ trợ bạn. Bạn muốn hỏi về sản phẩm nào ạ?', sender: 'other', timestamp: new Date(Date.now() - 3600000 * 4.9) },
+    { id: 'demo-3', text: 'Sản phẩm laptop gaming có còn hàng không ạ?', sender: 'me', timestamp: new Date(Date.now() - 3600000 * 4.8) },
+    { id: 'demo-4', text: 'Dạ, sản phẩm vẫn còn hàng ạ. Bạn muốn xem cấu hình chi tiết không?', sender: 'other', timestamp: new Date(Date.now() - 3600000 * 4.7) },
+    { id: 'demo-5', text: 'Giá bao nhiêu vậy ạ?', sender: 'me', timestamp: new Date(Date.now() - 3600000 * 4) },
+    { id: 'demo-6', text: 'Hiện tại bên mình đang có chương trình khuyến mãi giảm 10% ạ.', sender: 'other', timestamp: new Date(Date.now() - 3600000 * 3.9) },
+    { id: 'demo-7', text: 'Nghe hay quá! Khi nào hết khuyến mãi vậy shop?', sender: 'me', timestamp: new Date(Date.now() - 3600000 * 3) },
+    { id: 'demo-8', text: 'Chương trình kéo dài đến cuối tháng này nha bạn.', sender: 'other', timestamp: new Date(Date.now() - 3600000 * 2.9) },
+];
+
 export default function ChatPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user } = useAuthUser();
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const virtuosoRef = useRef<VirtuosoHandle>(null);
     const [input, setInput] = useState('');
     const [messagesByConv, setMessagesByConv] = useState<Record<string, ChatMessage[]>>({});
     const [searchConv, setSearchConv] = useState('');
+    const [isLoadingOlder, setIsLoadingOlder] = useState(false);
 
     const sellerId = searchParams.get('sellerId');
     const sellerName = searchParams.get('sellerName') || 'Người bán';
@@ -53,7 +67,6 @@ export default function ChatPage() {
                 role: 'seller',
             });
         }
-        // In future: fetch real conversations from chat service
         return convs;
     }, [sellerId, sellerName, messagesByConv]);
 
@@ -64,15 +77,49 @@ export default function ChatPage() {
     const activeConv = conversations.find(c => c.id === activeConvId);
     const messages = activeConvId ? (messagesByConv[activeConvId] || []) : [];
 
+    // Initialize demo messages for conversation
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        if (sellerId && !messagesByConv[sellerId]) {
+            setMessagesByConv(prev => ({
+                ...prev,
+                [sellerId]: [...DEMO_HISTORY],
+            }));
+        }
+    }, [sellerId, messagesByConv]);
 
     useEffect(() => {
         if (sellerId && !activeConvId) {
             setActiveConvId(sellerId);
         }
     }, [sellerId, activeConvId]);
+
+    // Virtuoso firstItemIndex for prepending older messages
+    const START_INDEX = 10000;
+    const firstItemIndex = useMemo(() => {
+        return Math.max(0, START_INDEX - messages.length);
+    }, [messages.length]);
+
+    // Simulate loading older messages when scrolling to top
+    const handleStartReached = useCallback(() => {
+        if (isLoadingOlder || !activeConvId) return;
+        setIsLoadingOlder(true);
+
+        // Simulate fetching older messages (demo)
+        setTimeout(() => {
+            const olderMessages: ChatMessage[] = Array.from({ length: 5 }, (_, i) => ({
+                id: `older-${Date.now()}-${i}`,
+                text: `Tin nhắn cũ hơn #${i + 1} — đây là tin nhắn demo để test cuộn ngược.`,
+                sender: (i % 2 === 0 ? 'me' : 'other') as 'me' | 'other',
+                timestamp: new Date(Date.now() - 3600000 * (10 + i)),
+            }));
+
+            setMessagesByConv(prev => ({
+                ...prev,
+                [activeConvId]: [...olderMessages, ...(prev[activeConvId] || [])],
+            }));
+            setIsLoadingOlder(false);
+        }, 800);
+    }, [isLoadingOlder, activeConvId]);
 
     const handleSend = () => {
         if (!input.trim() || !activeConvId) return;
@@ -89,6 +136,14 @@ export default function ChatPage() {
             [activeConvId]: [...(prev[activeConvId] || []), newMessage],
         }));
         setInput('');
+
+        // Auto-scroll to bottom after sending
+        setTimeout(() => {
+            virtuosoRef.current?.scrollToIndex({
+                index: 'LAST',
+                behavior: 'smooth',
+            });
+        }, 50);
 
         // Simulated auto-reply
         setTimeout(() => {
@@ -116,6 +171,28 @@ export default function ChatPage() {
         if (diff < 86400_000) return formatTime(date);
         return date.toLocaleDateString('vi-VN');
     };
+
+    // Check if we should show date separator
+    const shouldShowDateSeparator = (index: number) => {
+        if (index === 0) return true;
+        const current = messages[index];
+        const prev = messages[index - 1];
+        if (!current || !prev) return false;
+        const currentDate = current.timestamp.toLocaleDateString('vi-VN');
+        const prevDate = prev.timestamp.toLocaleDateString('vi-VN');
+        return currentDate !== prevDate;
+    };
+
+    // Virtuoso Header component — shows loading spinner when fetching older messages
+    const VirtuosoHeader = () => (
+        <div className="flex justify-center py-3">
+            {isLoadingOlder ? (
+                <Spin indicator={<LoadingOutlined className="text-blue-500" />} size="small" />
+            ) : (
+                <span className="text-xs text-gray-400">Đầu cuộc trò chuyện</span>
+            )}
+        </div>
+    );
 
     if (!sellerId) {
         return (
@@ -236,38 +313,70 @@ export default function ChatPage() {
                                 </div>
                             </div>
 
-                            {/* Chat Messages */}
-                            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50 dark:bg-gray-900">
-                                {messages.length === 0 && (
+                            {/* Chat Messages — Virtuoso */}
+                            <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
+                                {messages.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
                                         <SmileOutlined className="text-4xl mb-3" />
                                         <p className="text-sm">Bắt đầu cuộc trò chuyện với {activeConv.name}</p>
                                         <p className="text-xs">Hãy gửi tin nhắn đầu tiên!</p>
                                     </div>
-                                )}
+                                ) : (
+                                    <Virtuoso
+                                        key={activeConvId}
+                                        ref={virtuosoRef}
+                                        style={{ height: '100%' }}
+                                        data={messages}
+                                        firstItemIndex={firstItemIndex}
+                                        initialTopMostItemIndex={messages.length - 1}
+                                        followOutput="smooth"
+                                        startReached={handleStartReached}
+                                        components={{
+                                            Header: VirtuosoHeader,
+                                        }}
+                                        itemContent={(index, msg) => {
+                                            const actualIndex = index - firstItemIndex;
+                                            const showDate = shouldShowDateSeparator(actualIndex);
 
-                                {messages.map((msg) => (
-                                    <div
-                                        key={msg.id}
-                                        className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-                                    >
-                                        <div className={`max-w-[75%] ${msg.sender === 'me' ? 'order-2' : ''}`}>
-                                            <div
-                                                className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.sender === 'me'
-                                                    ? 'bg-blue-500 text-white rounded-br-sm'
-                                                    : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-sm shadow-sm'
-                                                    }`}
-                                            >
-                                                {msg.text}
-                                            </div>
-                                            <p className={`text-[10px] text-gray-400 mt-1 ${msg.sender === 'me' ? 'text-right' : 'text-left'
-                                                }`}>
-                                                {formatTime(msg.timestamp)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                                <div ref={messagesEndRef} />
+                                            return (
+                                                <div className="px-4">
+                                                    {showDate && (
+                                                        <div className="flex items-center justify-center my-3">
+                                                            <div className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-[11px] px-3 py-1 rounded-full">
+                                                                {msg.timestamp.toLocaleDateString('vi-VN', {
+                                                                    weekday: 'long',
+                                                                    day: '2-digit',
+                                                                    month: '2-digit',
+                                                                    year: 'numeric'
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <div className={`flex mb-2 ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                                                        {msg.sender === 'other' && (
+                                                            <Avatar className="bg-blue-500 shrink-0 mt-1 mr-2" size={28}>
+                                                                {activeConv.name.charAt(0).toUpperCase()}
+                                                            </Avatar>
+                                                        )}
+                                                        <div className="max-w-[75%]">
+                                                            <div
+                                                                className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.sender === 'me'
+                                                                    ? 'bg-blue-500 text-white rounded-br-sm'
+                                                                    : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-sm shadow-sm'
+                                                                    }`}
+                                                            >
+                                                                {msg.text}
+                                                            </div>
+                                                            <p className={`text-[10px] text-gray-400 mt-1 ${msg.sender === 'me' ? 'text-right' : 'text-left'}`}>
+                                                                {formatTime(msg.timestamp)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }}
+                                    />
+                                )}
                             </div>
 
                             {/* Chat Input */}

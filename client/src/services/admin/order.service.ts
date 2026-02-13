@@ -78,6 +78,18 @@ class OrderService {
     const response = await axiosInstance.get(`${this.baseUrl}/stats`);
     return response.data;
   }
+
+  async handleRejection(
+    id: string,
+    action: "approve" | "reject",
+    refund?: boolean,
+  ): Promise<{ data: IOrder; status: number }> {
+    const response = await axiosInstance.patch(
+      `${this.baseUrl}/${id}/handle-rejection`,
+      { action, refund },
+    );
+    return { data: response.data, status: response.status };
+  }
 }
 
 export const orderService = new OrderService();

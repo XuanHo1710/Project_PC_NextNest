@@ -113,7 +113,8 @@ export interface IOrder {
     | "COMPLETED"
     | "CANCELLED"
     | "REFUNDED"
-    | "EXPIRED";
+    | "EXPIRED"
+    | "PENDING_REJECTION";
   orderDate: string;
   expireAt?: string;
   payment: {

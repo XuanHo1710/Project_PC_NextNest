@@ -16,6 +16,7 @@ import { ProductModule } from 'admin/product/product.module';
 import { HistoryLogInterceptor } from 'admin/interceptors/history-log.interceptor';
 import { HistoryModule } from 'admin/history/history.module';
 import { OrderModule } from 'admin/order/order.module';
+import { SettingsModule } from 'admin/settings/settings.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { OrderModule } from 'admin/order/order.module';
     ProductModule,
     HistoryModule,
     OrderModule,
+    SettingsModule,
     JwtModule.register({}),
     ClientsModule.register([
       {

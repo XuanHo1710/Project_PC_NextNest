@@ -362,6 +362,24 @@ export class OrderService {
       updateData.reason = updateOrderDto.reason;
     }
 
+    // Seller rejects CARD order → PENDING_REJECTION (needs admin approval)
+    if (updateOrderDto.status === 'CANCELLED') {
+      const order = await this.orderModel.findById(new Types.ObjectId(id));
+      if (
+        order &&
+        order.payment?.type === 'CARD' &&
+        order.status === 'COMPLETED'
+      ) {
+        // Online payment order → redirect to PENDING_REJECTION instead of direct cancel
+        updateData.status = 'PENDING_REJECTION';
+        return await this.orderModel.findByIdAndUpdate(
+          new Types.ObjectId(id),
+          updateData,
+          { new: true },
+        );
+      }
+    }
+
     // COD orders: mark payment as checked out when delivered + create payment record
     if (updateOrderDto.status === 'DELIVERED') {
       const order = await this.orderModel.findById(new Types.ObjectId(id));
@@ -398,6 +416,47 @@ export class OrderService {
       updateData,
       { new: true },
     );
+  }
+
+  /**
+   * Admin approves rejection → CANCELLED + refund payment
+   * Admin rejects the rejection → back to COMPLETED
+   */
+  async adminHandleRejection(
+    id: string,
+    action: 'approve' | 'reject',
+    refund: boolean = false,
+  ) {
+    const order = await this.orderModel.findById(new Types.ObjectId(id));
+    if (!order || order.status !== 'PENDING_REJECTION') {
+      throw new Error('Order not found or not in PENDING_REJECTION status');
+    }
+
+    if (action === 'approve') {
+      const updateData: any = { status: refund ? 'REFUNDED' : 'CANCELLED' };
+      if (refund) {
+        updateData['payment.isCheckout'] = false;
+        try {
+          await firstValueFrom(
+            this.paymentService.send('payment.refund', { orderId: id }),
+          );
+        } catch (err) {
+          console.error('Failed to refund payment:', err);
+        }
+      }
+      return await this.orderModel.findByIdAndUpdate(
+        new Types.ObjectId(id),
+        updateData,
+        { new: true },
+      );
+    } else {
+      // Reject the rejection → send order back to COMPLETED
+      return await this.orderModel.findByIdAndUpdate(
+        new Types.ObjectId(id),
+        { status: 'COMPLETED', reason: '' },
+        { new: true },
+      );
+    }
   }
 
   /**

@@ -29,6 +29,7 @@ interface CollectionResponse extends PaginatedResponse<IProductCard> {
     collectionInfo: {
         category: ICategory | null;
         brand: IBrand | null;
+        childCategories?: { _id: string; name: string; slug: string }[];
     };
 }
 
@@ -279,6 +280,26 @@ export default function CollectionPage() {
                             {collectionData.collectionInfo.brand.description && (
                                 <p className="text-sm text-gray-500">{collectionData.collectionInfo.brand.description}</p>
                             )}
+                        </div>
+                    )}
+                    {/* Child categories navigation */}
+                    {collectionData?.collectionInfo?.childCategories && collectionData.collectionInfo.childCategories.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            <Link
+                                href={`/collection/${slug}`}
+                                className="px-3 py-1.5 text-sm rounded-full bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors"
+                            >
+                                Tất cả
+                            </Link>
+                            {collectionData.collectionInfo.childCategories.map((child) => (
+                                <Link
+                                    key={child._id}
+                                    href={`/collection/${child.slug}`}
+                                    className="px-3 py-1.5 text-sm rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-800 hover:text-blue-600 transition-colors font-medium"
+                                >
+                                    {child.name}
+                                </Link>
+                            ))}
                         </div>
                     )}
                 </div>

@@ -17,7 +17,7 @@ import ProfileSidebar from '@/components/client/ProfileSidebar/ProfileSidebar';
 import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 import { PaginatedResponse } from '@/types';
 
-type OrderStatus = 'ALL' | 'PENDING' | 'SHIPPING' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED';
+type OrderStatus = 'ALL' | 'PENDING' | 'SHIPPING' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED' | 'PENDING_REJECTION';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: string }> = {
     PENDING: { label: 'Chờ xác nhận', color: 'orange', textColor: 'text-orange-500' },
@@ -27,6 +27,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: s
     CANCELLED: { label: 'Đã hủy', color: 'red', textColor: 'text-red-500' },
     REFUNDED: { label: 'Hoàn tiền', color: 'purple', textColor: 'text-purple-500' },
     EXPIRED: { label: 'Hết hạn', color: 'default', textColor: 'text-gray-500' },
+    PENDING_REJECTION: { label: 'Đang xử lý từ chối', color: 'volcano', textColor: 'text-orange-600' },
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -82,33 +83,6 @@ export default function OrderPage() {
             okButtonProps: { danger: true },
             cancelText: 'Đóng',
             onOk: () => statusMutation.mutate({ orderId, status: 'CANCELLED', reason }),
-        });
-    };
-
-    const handleRefundRequest = (orderId: string) => {
-        let reason = '';
-        Modal.confirm({
-            title: 'Yêu cầu hoàn tiền',
-            content: (
-                <div>
-                    <p className="mb-2">Bạn có chắc chắn muốn yêu cầu hoàn tiền cho đơn hàng này?</p>
-                    <Input.TextArea
-                        placeholder="Lý do yêu cầu hoàn tiền (bắt buộc)"
-                        rows={3}
-                        onChange={(e) => { reason = e.target.value; }}
-                    />
-                </div>
-            ),
-            okText: 'Gửi yêu cầu hoàn tiền',
-            okButtonProps: { danger: true },
-            cancelText: 'Đóng',
-            onOk: () => {
-                if (!reason.trim()) {
-                    message.warning('Vui lòng nhập lý do hoàn tiền');
-                    return Promise.reject();
-                }
-                return statusMutation.mutateAsync({ orderId, status: 'REFUNDED', reason });
-            },
         });
     };
 
@@ -211,7 +185,6 @@ export default function OrderPage() {
                                                 formatDate={formatDate}
                                                 onConfirmReceived={handleConfirmReceived}
                                                 onCancelOrder={handleCancelOrder}
-                                                onRefundRequest={handleRefundRequest}
                                                 isUpdating={statusMutation.isPending}
                                             />
                                         ))}
@@ -251,7 +224,6 @@ function OrderCard({
     formatDate,
     onConfirmReceived,
     onCancelOrder,
-    onRefundRequest,
     isUpdating,
 }: {
     order: IOrder;
@@ -259,7 +231,6 @@ function OrderCard({
     formatDate: (date: string) => string;
     onConfirmReceived: (orderId: string) => void;
     onCancelOrder: (orderId: string) => void;
-    onRefundRequest: (orderId: string) => void;
     isUpdating: boolean;
 }) {
     const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.PENDING;
@@ -348,16 +319,6 @@ function OrderCard({
                             loading={isUpdating}
                         >
                             Đã nhận được hàng
-                        </Button>
-                    )}
-                    {order.status === 'DELIVERED' && (
-                        <Button
-                            danger
-                            size="small"
-                            onClick={() => onRefundRequest(order._id)}
-                            loading={isUpdating}
-                        >
-                            Yêu cầu hoàn tiền
                         </Button>
                     )}
                     {order.status === 'COMPLETED' && order.payment?.type === 'COD' && (

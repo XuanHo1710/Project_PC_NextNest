@@ -4,10 +4,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HistoryModule } from './history/history.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
     HistoryModule,
+    SettingsModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -22,4 +24,4 @@ import { HistoryModule } from './history/history.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

@@ -311,3 +311,55 @@
   max-width: 500px;
   /* cho cân giữa, tuỳ bạn chỉnh */
 }
+
+/* ===== Fix AntD Tooltip/Popover/Modal không làm vỡ layout ===== */
+/* Prevent AntD injected wrappers from affecting layout */
+div[class*="ant-tooltip"],
+div[class*="ant-popover"],
+div[class*="ant-dropdown"] {
+  position: absolute !important;
+}
+
+/* AntD CSS-in-JS injects <style> tags that can shift layout */
+.ant-tooltip-hidden,
+.ant-popover-hidden {
+  display: none !important;
+}
+
+/* Prevent overflow shifts when AntD modal/tooltip opens */
+body.ant-scrolling-effect {
+  width: 100% !important;
+  overflow: auto !important;
+}
+
+/* Fix AntD tooltip wrapper causing extra spacing */
+.ant-tooltip {
+  max-width: 300px;
+  pointer-events: none;
+}
+
+/* Ensure AntD overlays don't cause reflow */
+.ant-modal-wrap,
+.ant-modal-mask,
+.ant-tooltip,
+.ant-popover,
+.ant-dropdown {
+  position: fixed !important;
+}
+
+/* Prevent scrollbar jump when modals open */
+.ant-modal-open {
+  overflow: hidden !important;
+  padding-right: 0 !important;
+  width: 100% !important;
+}
+
+/* Fix body margin/padding shift */
+body {
+  overflow-x: hidden;
+}
+
+/* Tránh AntD CSS-in-JS dynamic style injection gây thay đổi layout */
+:where(.css-dev-only-do-not-override-*) {
+  all: unset;
+}

@@ -550,7 +550,26 @@ export class ProductService {
 
     const query: any = { isDeleted: false, status: 'ACTIVE' };
     const conditions: any[] = [];
-    if (category) conditions.push({ category: category._id });
+
+    if (category) {
+      // Check if this is a parent category (has children)
+      const childCategories = await this.categoryModel
+        .find({ parentId: category._id, isDeleted: { $ne: true } })
+        .lean()
+        .exec();
+
+      if (childCategories.length > 0) {
+        // Parent category → include all children + self
+        const allCategoryIds = [
+          category._id,
+          ...childCategories.map((c) => c._id),
+        ];
+        conditions.push({ category: { $in: allCategoryIds } });
+      } else {
+        // Leaf (child) category → only this category
+        conditions.push({ category: category._id });
+      }
+    }
     if (brand) conditions.push({ brand: brand._id });
 
     if (conditions.length > 1) {
@@ -692,6 +711,13 @@ export class ProductService {
       collectionInfo: {
         category: category || null,
         brand: brand || null,
+        childCategories: category
+          ? await this.categoryModel
+              .find({ parentId: category._id, isDeleted: { $ne: true } })
+              .select('name slug')
+              .lean()
+              .exec()
+          : [],
       },
     };
   }

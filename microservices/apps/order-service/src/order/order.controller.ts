@@ -143,4 +143,20 @@ export class OrderController {
   getOrderStats() {
     return this.orderService.getOrderStats();
   }
+
+  @MessagePattern('order.adminHandleRejection')
+  adminHandleRejection(
+    @Payload()
+    data: {
+      id: string;
+      action: 'approve' | 'reject';
+      refund?: boolean;
+    },
+  ) {
+    return this.orderService.adminHandleRejection(
+      data.id,
+      data.action,
+      data.refund ?? false,
+    );
+  }
 }

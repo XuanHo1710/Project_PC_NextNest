@@ -8,9 +8,11 @@ import {
 import {
     SearchOutlined, EyeOutlined,
     DollarOutlined,
-    ReloadOutlined
+    ReloadOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
 } from '@ant-design/icons';
-import { useAdminOrders, useConfirmCodPayment } from '@/hooks/admin/useOrder';
+import { useAdminOrders, useConfirmCodPayment, useHandleRejection } from '@/hooks/admin/useOrder';
 import type { IOrder, IOrderDetailItem } from '@/types/order';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -24,6 +26,7 @@ const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
     CANCELLED: { color: 'red', label: 'Đã hủy' },
     REFUNDED: { color: 'purple', label: 'Hoàn tiền' },
     EXPIRED: { color: 'default', label: 'Hết hạn' },
+    PENDING_REJECTION: { color: 'volcano', label: 'Chờ duyệt từ chối' },
 };
 
 const PAYMENT_TYPE_CONFIG: Record<string, { color: string; label: string }> = {
@@ -57,6 +60,7 @@ export default function AdminOrderPage() {
     });
 
     const confirmCod = useConfirmCodPayment();
+    const handleRejection = useHandleRejection();
 
     const orders = ordersData?.data ?? [];
     const pagination = ordersData?.pagination;
@@ -151,7 +155,7 @@ export default function AdminOrderPage() {
         {
             title: 'Thao tác',
             key: 'actions',
-            width: 160,
+            width: 200,
             render: (_: unknown, record: IOrder) => (
                 <Space size={4} wrap>
                     <Tooltip title="Xem chi tiết">
@@ -173,6 +177,58 @@ export default function AdminOrderPage() {
                                 Nhận tiền
                             </Button>
                         </Tooltip>
+                    )}
+                    {record.status === 'PENDING_REJECTION' && (
+                        <>
+                            <Tooltip title="Duyệt từ chối + hoàn tiền">
+                                <Button
+                                    size="small"
+                                    type="primary"
+                                    danger
+                                    icon={<CheckCircleOutlined />}
+                                    onClick={() => {
+                                        Modal.confirm({
+                                            title: 'Duyệt yêu cầu từ chối đơn hàng',
+                                            content: (
+                                                <div>
+                                                    <p>Đơn hàng <strong>#{record._id.slice(-6).toUpperCase()}</strong></p>
+                                                    <p>Khách hàng: <strong>{record.customerInfo.fullname}</strong></p>
+                                                    <p>Tổng tiền: <strong>{record.totalAmount.toLocaleString()}đ</strong></p>
+                                                    {record.reason && <p>Lý do từ chối: <em>{record.reason}</em></p>}
+                                                    <Divider />
+                                                    <p className="text-orange-500 font-medium">Hoàn tiền cho khách hàng?</p>
+                                                </div>
+                                            ),
+                                            okText: 'Duyệt + Hoàn tiền',
+                                            cancelText: 'Duyệt không hoàn tiền',
+                                            onOk: () => handleRejection.mutate({ id: record._id, action: 'approve', refund: true }),
+                                            onCancel: () => handleRejection.mutate({ id: record._id, action: 'approve', refund: false }),
+                                        });
+                                    }}
+                                    loading={handleRejection.isPending}
+                                >
+                                    Duyệt
+                                </Button>
+                            </Tooltip>
+                            <Tooltip title="Từ chối yêu cầu (trả về Hoàn thành)">
+                                <Button
+                                    size="small"
+                                    icon={<CloseCircleOutlined />}
+                                    onClick={() => {
+                                        Modal.confirm({
+                                            title: 'Từ chối yêu cầu hủy đơn hàng',
+                                            content: 'Đơn hàng sẽ được đưa trở lại trạng thái "Hoàn thành". Người bán sẽ phải tiếp tục giao hàng.',
+                                            okText: 'Xác nhận',
+                                            cancelText: 'Hủy',
+                                            onOk: () => handleRejection.mutate({ id: record._id, action: 'reject' }),
+                                        });
+                                    }}
+                                    loading={handleRejection.isPending}
+                                >
+                                    Từ chối
+                                </Button>
+                            </Tooltip>
+                        </>
                     )}
                 </Space>
             ),
@@ -206,6 +262,7 @@ export default function AdminOrderPage() {
                             { value: 'DELIVERED', label: 'Đã giao' },
                             { value: 'COMPLETED', label: 'Hoàn thành' },
                             { value: 'CANCELLED', label: 'Đã hủy' },
+                            { value: 'PENDING_REJECTION', label: 'Chờ duyệt từ chối' },
                             { value: 'EXPIRED', label: 'Hết hạn' },
                         ]}
                     />
@@ -229,6 +286,9 @@ export default function AdminOrderPage() {
 
                     {/* Quick stat badges */}
                     <div className="ml-auto flex gap-2">
+                        <Badge count={orders.filter(o => o.status === 'PENDING_REJECTION').length} showZero>
+                            <Tag color="volcano">Chờ duyệt từ chối</Tag>
+                        </Badge>
                         <Badge count={orders.filter(o => o.status === 'PENDING' && o.payment.type === 'COD').length} showZero>
                             <Tag color="orange">COD chờ xử lý</Tag>
                         </Badge>
@@ -274,10 +334,40 @@ export default function AdminOrderPage() {
 
             {/* Order Detail Modal */}
             <Modal
-                title={`Chi tiết đơn hàng #${detailModal?._id?.slice(-6).toUpperCase() || ''}`}
+                title={
+                    <div className="flex items-center gap-2">
+                        <EyeOutlined className="text-blue-500" />
+                        <span>Chi tiết đơn hàng #{detailModal?._id?.slice(-6).toUpperCase() || ''}</span>
+                    </div>
+                }
                 open={!!detailModal}
                 onCancel={() => setDetailModal(null)}
-                footer={null}
+                footer={
+                    detailModal?.status === 'PENDING_REJECTION' ? (
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                danger
+                                type="primary"
+                                icon={<CheckCircleOutlined />}
+                                onClick={() => {
+                                    handleRejection.mutate({ id: detailModal._id, action: 'approve', refund: true });
+                                    setDetailModal(null);
+                                }}
+                            >
+                                Duyệt + Hoàn tiền
+                            </Button>
+                            <Button
+                                icon={<CloseCircleOutlined />}
+                                onClick={() => {
+                                    handleRejection.mutate({ id: detailModal._id, action: 'reject' });
+                                    setDetailModal(null);
+                                }}
+                            >
+                                Từ chối yêu cầu hủy
+                            </Button>
+                        </div>
+                    ) : null
+                }
                 width={800}
                 destroyOnHidden
             >
@@ -317,6 +407,11 @@ export default function AdminOrderPage() {
                             <Descriptions.Item label="Ngày đặt">
                                 {new Date(detailModal.createdAt).toLocaleString('vi-VN')}
                             </Descriptions.Item>
+                            {detailModal.reason && (
+                                <Descriptions.Item label="Lý do" span={2}>
+                                    <Text type="danger" italic>{detailModal.reason}</Text>
+                                </Descriptions.Item>
+                            )}
                         </Descriptions>
 
                         <Divider>Sản phẩm ({detailModal.orderDetail.length})</Divider>

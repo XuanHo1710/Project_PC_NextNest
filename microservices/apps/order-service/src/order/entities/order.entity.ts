@@ -73,6 +73,7 @@ export class Order {
       'CANCELLED',
       'REFUNDED',
       'EXPIRED',
+      'PENDING_REJECTION',
     ],
     default: 'PENDING',
   })

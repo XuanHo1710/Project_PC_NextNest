@@ -56,4 +56,31 @@ export class OrderController {
       amount: body.amount,
     });
   }
+
+  /**
+   * Admin handles seller rejection request for online payment orders.
+   * action: 'approve' (cancel + optionally refund) or 'reject' (back to COMPLETED)
+   */
+  @Patch(':id/handle-rejection')
+  handleRejection(
+    @Param('id') id: string,
+    @Body() body: { action: 'approve' | 'reject'; refund?: boolean },
+  ) {
+    return this.orderService.send('order.adminHandleRejection', {
+      id,
+      action: body.action,
+      refund: body.refund ?? false,
+    });
+  }
+
+  /**
+   * Admin updates order status directly
+   */
+  @Patch(':id/status')
+  updateOrderStatus(@Param('id') id: string, @Body() body: UpdateOrderDto) {
+    return this.orderService.send('order.updateStatus', {
+      id,
+      updateOrderDto: body,
+    });
+  }
 }

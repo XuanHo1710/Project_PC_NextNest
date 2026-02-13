@@ -13,7 +13,7 @@ import useAuthUser from '@/hooks/useAuthUser';
 import { orderClientService } from '@/services/client/order.client.service';
 import { PaginatedResponse } from '@/types';
 
-type OrderStatus = 'ALL' | 'COMPLETED' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED';
+type OrderStatus = 'ALL' | 'COMPLETED' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED' | 'PENDING_REJECTION';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
     COMPLETED: { label: 'Chờ giao hàng', color: 'green' },
@@ -21,6 +21,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
     DELIVERED: { label: 'Đã giao hàng', color: 'cyan' },
     CANCELLED: { label: 'Đã hủy', color: 'red' },
     REFUNDED: { label: 'Hoàn tiền', color: 'purple' },
+    PENDING_REJECTION: { label: 'Chờ admin duyệt từ chối', color: 'volcano' },
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -71,13 +72,19 @@ export default function SellerOrdersPage() {
         });
     };
 
-    const handleRejectOrder = (orderId: string) => {
+    const handleRejectOrder = (orderId: string, paymentType?: string) => {
         let reason = '';
+        const isCard = paymentType === 'CARD';
         Modal.confirm({
             title: 'Từ chối đơn hàng',
             content: (
                 <div>
                     <p className="mb-2">Bạn có chắc chắn muốn từ chối đơn hàng này?</p>
+                    {isCard && (
+                        <p className="mb-2 text-orange-500 text-sm font-medium">
+                            ⚠️ Đơn hàng thanh toán online — cần admin duyệt trước khi hủy/hoàn tiền.
+                        </p>
+                    )}
                     <Input.TextArea
                         placeholder="Lý do từ chối (bắt buộc)"
                         rows={3}
@@ -228,7 +235,7 @@ function SellerOrderCard({
     formatCurrency: (amount: number) => string;
     formatDate: (date: string) => string;
     onShipOrder: (orderId: string) => void;
-    onRejectOrder: (orderId: string) => void;
+    onRejectOrder: (orderId: string, paymentType?: string) => void;
     onRefundOrder: (orderId: string) => void;
     isUpdating: boolean;
 }) {
@@ -347,12 +354,18 @@ function SellerOrderCard({
                                 danger
                                 size="small"
                                 icon={<CloseCircleOutlined />}
-                                onClick={() => onRejectOrder(order._id)}
+                                onClick={() => onRejectOrder(order._id, order.payment?.type)}
                                 loading={isUpdating}
                             >
                                 Từ chối
                             </Button>
                         </>
+                    )}
+                    {/* PENDING_REJECTION: waiting for admin */}
+                    {order.status === 'PENDING_REJECTION' && (
+                        <Tag color="volcano" className="!text-xs">
+                            ⏳ Đang chờ admin xét duyệt từ chối
+                        </Tag>
                     )}
                     {/* DELIVERED: seller can refund */}
                     {order.status === 'DELIVERED' && (
@@ -376,7 +389,7 @@ function SellerOrderCard({
                         </Button>
                     </a>
                     {/* Show reason if cancelled or refunded */}
-                    {order.reason && (order.status === 'CANCELLED' || order.status === 'REFUNDED') && (
+                    {order.reason && (order.status === 'CANCELLED' || order.status === 'REFUNDED' || order.status === 'PENDING_REJECTION') && (
                         <span className="text-xs text-gray-400 italic">Lý do: {order.reason}</span>
                     )}
                 </div>

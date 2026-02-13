@@ -83,3 +83,31 @@ export const useOrderStats = () => {
     staleTime: 60 * 1000, // 1 minute
   });
 };
+
+// Admin handle rejection (approve/reject seller's rejection request)
+export const useHandleRejection = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      action,
+      refund,
+    }: {
+      id: string;
+      action: "approve" | "reject";
+      refund?: boolean;
+    }) => orderService.handleRejection(id, action, refund),
+    onSuccess: (_response, { action }) => {
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      if (action === "approve") {
+        toast.success("Đã duyệt từ chối đơn hàng!");
+      } else {
+        toast.success("Đã từ chối yêu cầu hủy — đơn hàng trở lại Hoàn thành!");
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Thao tác thất bại: ${error.message}`);
+    },
+  });
+};
