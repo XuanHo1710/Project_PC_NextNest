@@ -1,70 +1,95 @@
 'use client'
 
-import { Table, TableProps, Tag } from "antd"
+import { Table, Tag } from "antd"
+import { useOrderStats } from "@/hooks/admin/useOrder"
+import type { ColumnsType } from 'antd/es/table';
 
+const STATUS_MAP: Record<string, { color: string; label: string }> = {
+    PENDING: { color: 'orange', label: 'Chờ xử lý' },
+    SHIPPING: { color: 'blue', label: 'Đang giao' },
+    DELIVERED: { color: 'cyan', label: 'Đã giao' },
+    COMPLETED: { color: 'green', label: 'Hoàn thành' },
+    CANCELLED: { color: 'red', label: 'Đã hủy' },
+    REFUNDED: { color: 'purple', label: 'Hoàn tiền' },
+    EXPIRED: { color: 'default', label: 'Hết hạn' },
+};
 
-interface DataType {
-    key: string;
+interface RecentOrder {
     _id: string;
-    totalOther: number;
-    status: string;
     totalAmount: number;
+    status: string;
+    payment: { isCheckout: boolean; type: string };
+    createdAt: string;
+    customerInfo?: { fullname?: string };
 }
 
-
-const columns: TableProps<DataType>['columns'] = [
+const columns: ColumnsType<RecentOrder> = [
     {
-        title: 'Order Number',
+        title: 'Mã đơn',
         dataIndex: '_id',
         key: '_id',
-        sorter: (a, b) => a._id.localeCompare(b._id),
+        width: 200,
+        render: (id: string) => `#${id.slice(-8).toUpperCase()}`,
     },
     {
-        title: 'Total Order',
-        dataIndex: 'totalOther',
-        key: 'totalOther',
-        sorter: (a, b) => a.totalOther - b.totalOther,
+        title: 'Khách hàng',
+        key: 'customer',
+        width: 180,
+        render: (_: unknown, record: RecentOrder) => record.customerInfo?.fullname || '—',
     },
     {
-        title: 'Status',
+        title: 'Trạng thái',
         dataIndex: 'status',
         key: 'status',
-        render: (_: unknown, { status }) => {
-            return <Tag color="green" >{status}</Tag>
+        width: 120,
+        render: (status: string) => {
+            const cfg = STATUS_MAP[status] || { color: 'default', label: status };
+            return <Tag color={cfg.color}>{cfg.label}</Tag>;
         },
-        sorter: (a, b) => a.status.localeCompare(b.status),
     },
     {
-        title: 'Total Amount',
+        title: 'Thanh toán',
+        key: 'payment',
+        width: 120,
+        render: (_: unknown, record: RecentOrder) => (
+            <div>
+                <Tag color={record.payment?.type === 'CARD' ? 'blue' : 'gold'}>
+                    {record.payment?.type || 'COD'}
+                </Tag>
+                {record.payment?.isCheckout && <Tag color="green" className="!text-[10px]">Đã TT</Tag>}
+            </div>
+        ),
+    },
+    {
+        title: 'Tổng tiền',
         dataIndex: 'totalAmount',
         key: 'totalAmount',
+        width: 140,
+        align: 'right',
+        render: (amount: number) => `${(amount || 0).toLocaleString()}đ`,
         sorter: (a, b) => a.totalAmount - b.totalAmount,
     },
-];
-
-const data: DataType[] = [
     {
-        key: '1',
-        _id: '81782172',
-        totalOther: 12,
-        status: 'Pending',
-        totalAmount: 2000
+        title: 'Ngày đặt',
+        dataIndex: 'createdAt',
+        key: 'createdAt',
+        width: 160,
+        render: (date: string) => date ? new Date(date).toLocaleString('vi-VN') : '—',
     },
-    {
-        key: '2',
-        _id: '98618231',
-        totalOther: 21,
-        status: 'Approve',
-        totalAmount: 1200
-    }
 ];
 
 export const TableReport = () => {
+    const { data: stats, isLoading } = useOrderStats();
+    const recentOrders = (stats?.recentOrders || []) as RecentOrder[];
+
     return (
-        <>
-            <Table<DataType> columns={columns} dataSource={data} />
-        </>
-    )
+        <Table<RecentOrder>
+            columns={columns}
+            dataSource={recentOrders}
+            rowKey="_id"
+            loading={isLoading}
+            pagination={false}
+            size="middle"
+        />
+    );
 }
-
-

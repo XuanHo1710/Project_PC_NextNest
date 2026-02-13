@@ -62,6 +62,17 @@ class OrderService {
     );
     return { data: response.data, status: response.status };
   }
+
+  async getStats(): Promise<{
+    totalOrders: number;
+    paidOrders: number;
+    totalIncome: number;
+    platformRevenue: number;
+    recentOrders: any[];
+  }> {
+    const response = await axiosInstance.get(`${this.baseUrl}/stats`);
+    return response.data;
+  }
 }
 
 export const orderService = new OrderService();

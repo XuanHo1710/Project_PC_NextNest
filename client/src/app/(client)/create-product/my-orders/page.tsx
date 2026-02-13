@@ -222,7 +222,7 @@ function SellerOrderCard({
 
     return (
         <Card
-            className="shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
+            className="shadow-sm hover:shadow-md !my-5 transition-shadow border border-gray-100 dark:border-gray-700"
             styles={{ body: { padding: '16px 20px' } }}
         >
             {/* Order Header */}

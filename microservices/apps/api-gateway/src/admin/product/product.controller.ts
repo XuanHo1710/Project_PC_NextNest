@@ -48,6 +48,14 @@ export class ProductController {
     return this.productService.send('product.search', { searchDto });
   }
 
+  @Patch('updateMany')
+  updateManyProducts(@Body() body: { ids: string[]; typeUpdate: string }) {
+    return this.productService.send('product.updateMany', {
+      ids: body.ids,
+      typeUpdate: body.typeUpdate,
+    });
+  }
+
   @Get(':id')
   findOneProduct(@Param('id') id: string) {
     return this.productService.send('product.findOne', { id });

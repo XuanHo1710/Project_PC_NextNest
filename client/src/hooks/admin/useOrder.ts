@@ -11,6 +11,7 @@ export const orderKeys = {
   list: (params: string) => [...orderKeys.lists(), params] as const,
   details: () => [...orderKeys.all, "detail"] as const,
   detail: (id: string) => [...orderKeys.details(), id] as const,
+  stats: () => [...orderKeys.all, "stats"] as const,
 };
 
 // Get all orders with filters
@@ -71,5 +72,14 @@ export const useConfirmCodPayment = () => {
     onError: (error: Error) => {
       toast.error(`Xác nhận thất bại: ${error.message}`);
     },
+  });
+};
+
+// Get dashboard stats
+export const useOrderStats = () => {
+  return useQuery({
+    queryKey: orderKeys.stats(),
+    queryFn: () => orderService.getStats(),
+    staleTime: 60 * 1000, // 1 minute
   });
 };

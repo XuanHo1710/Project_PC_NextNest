@@ -1,6 +1,9 @@
+'use client';
+
 import { FallOutlined, RiseOutlined } from "@ant-design/icons"
-import { Tag } from "antd"
+import { Tag, Spin } from "antd"
 import { RxDashboard } from "react-icons/rx"
+import { useOrderStats } from "@/hooks/admin/useOrder"
 
 interface ICardReport {
     className: string,
@@ -30,8 +33,35 @@ const CardDashBoard = ({ className, title, value, type, percent, totalMade }: IC
     )
 }
 
+const formatNumber = (num: number) => {
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+    if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+    return num.toLocaleString();
+};
+
+const formatCurrency = (num: number) => {
+    if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)} tỷ`;
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)} triệu`;
+    if (num >= 1_000) return `${(num / 1_000).toFixed(0)}K`;
+    return num.toLocaleString();
+};
 
 export const HeaderDashboard = () => {
+    const { data: stats, isLoading } = useOrderStats();
+
+    if (isLoading) {
+        return (
+            <div className="my-3 text-center py-8">
+                <Spin size="large" />
+            </div>
+        );
+    }
+
+    const totalOrders = stats?.totalOrders ?? 0;
+    const paidOrders = stats?.paidOrders ?? 0;
+    const totalIncome = stats?.totalIncome ?? 0;
+    const platformRevenue = stats?.platformRevenue ?? 0;
+
     return (
         <>
             <div className="my-3">
@@ -41,10 +71,10 @@ export const HeaderDashboard = () => {
                 </h2>
             </div>
             <div className="grid grid-flow-row grid-cols-12 gap-6">
-                <CardDashBoard className="col-span-3" title="Total Page Views" value="2,000,000" type="up" percent={20.5} totalMade="20,000" />
-                <CardDashBoard className="col-span-3" title="Total Users" value="78,250" type="up" percent={50.5} totalMade="8,000" />
-                <CardDashBoard className="col-span-3" title="Total Order" value="18,250" type="down" percent={50.5} totalMade="8,000" />
-                <CardDashBoard className="col-span-3" title="Total Sales" value="78,250" type="down" percent={50.5} totalMade="8,000" />
+                <CardDashBoard className="col-span-3" title="Tổng đơn hàng" value={formatNumber(totalOrders)} type="up" percent={0} totalMade={`${totalOrders} đơn`} />
+                <CardDashBoard className="col-span-3" title="Đơn đã thanh toán" value={formatNumber(paidOrders)} type="up" percent={totalOrders > 0 ? Math.round(paidOrders / totalOrders * 100) : 0} totalMade={`${paidOrders} đơn đã TT`} />
+                <CardDashBoard className="col-span-3" title="Tổng doanh thu" value={formatCurrency(totalIncome) + 'đ'} type="up" percent={0} totalMade={formatCurrency(totalIncome) + 'đ'} />
+                <CardDashBoard className="col-span-3" title="Phí nền tảng (5%)" value={formatCurrency(platformRevenue) + 'đ'} type="up" percent={5} totalMade={formatCurrency(platformRevenue) + 'đ'} />
             </div>
         </>
     )

@@ -30,6 +30,7 @@ export class Order {
       {
         // Snapshot variant data (không ref ObjectId — lưu trực tiếp để tránh stale data)
         variantId: { type: String, default: '' },
+        productId: { type: String, default: '' },
         sku: { type: String, default: '' },
         variantPrice: { type: Number, default: 0 },
         discount: { type: Number, default: 0 },
@@ -47,6 +48,7 @@ export class Order {
   })
   orderDetail: Array<{
     variantId: string;
+    productId: string;
     sku: string;
     variantPrice: number;
     discount: number;

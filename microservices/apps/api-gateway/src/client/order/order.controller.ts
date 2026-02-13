@@ -91,7 +91,7 @@ export class OrderController {
 
   /**
    * Seller: Get orders containing seller's products.
-   * Requires guest authentication to identify the seller.
+   * Uses product IDs (stable) instead of variant IDs (can change on recreate).
    */
   @Get('/seller-orders/:sellerId')
   async getSellerOrders(
@@ -101,14 +101,14 @@ export class OrderController {
     @Query('status') status?: string,
     @Query('search') search?: string,
   ) {
-    // Step 1: Get all variant IDs for products created by this seller
-    const variantIds = await firstValueFrom(
-      this.productService.send('product.getVariantIdsByCreator', {
+    // Step 1: Get product IDs for products created by this seller
+    const productIds = await firstValueFrom(
+      this.productService.send('product.getProductIdsByCreator', {
         createdBy: sellerId,
       }),
     );
 
-    if (!variantIds || variantIds.length === 0) {
+    if (!productIds || productIds.length === 0) {
       return {
         data: [],
         pagination: {
@@ -120,9 +120,9 @@ export class OrderController {
       };
     }
 
-    // Step 2: Get orders containing those variant IDs
-    return this.orderService.send('order.getByVariantIds', {
-      variantIds,
+    // Step 2: Get orders containing those product IDs
+    return this.orderService.send('order.getByProductIds', {
+      productIds,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 10,
       status: status || undefined,

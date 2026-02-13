@@ -298,6 +298,42 @@ export class ProductService {
     return { message: 'Product deleted successfully', data: product };
   }
 
+  // ============= BULK UPDATE =============
+  async updateManyProducts(ids: string[], typeUpdate: string) {
+    const objectIds = ids.map((id) => new Types.ObjectId(id));
+    const updateData: any = {};
+
+    switch (typeUpdate) {
+      case 'ACTIVE':
+        updateData.status = 'ACTIVE';
+        break;
+      case 'INACTIVE':
+        updateData.status = 'INACTIVE';
+        break;
+      case 'STOPSOLD':
+        updateData.status = 'STOPSOLD';
+        break;
+      case 'DELETE':
+        updateData.isDeleted = true;
+        updateData.deletedAt = new Date();
+        break;
+      default:
+        throw new BadRequestException(`Invalid update type: ${typeUpdate}`);
+    }
+
+    const result = await this.productModel
+      .updateMany(
+        { _id: { $in: objectIds }, isDeleted: false },
+        { $set: updateData },
+      )
+      .exec();
+
+    return {
+      message: `Updated ${result.modifiedCount} products`,
+      modifiedCount: result.modifiedCount,
+    };
+  }
+
   // ============= MY PRODUCTS (Guest) =============
   async findMyProducts(
     createdBy: string,
@@ -778,6 +814,15 @@ export class ProductService {
         product: new Types.ObjectId(productId),
       })),
     );
+
+    // Update defaultProductVariantId to first new variant
+    if (results.length > 0) {
+      await this.productModel.updateOne(
+        { _id: new Types.ObjectId(productId) },
+        { $set: { defaultProductVariantId: results[0]._id } },
+      );
+    }
+
     await this.recomputeProductPrices(productId);
     return results;
   }
@@ -1301,5 +1346,22 @@ export class ProductService {
       .exec();
 
     return variants.map((v) => v._id.toString());
+  }
+
+  /**
+   * Get all product IDs created by a specific user (seller).
+   * More reliable for order queries since variant IDs can change.
+   */
+  async getProductIdsByCreator(createdBy: string): Promise<string[]> {
+    const products = await this.productModel
+      .find({
+        createdBy: new Types.ObjectId(createdBy),
+        isDeleted: false,
+      })
+      .select('_id')
+      .lean()
+      .exec();
+
+    return products.map((p) => p._id.toString());
   }
 }

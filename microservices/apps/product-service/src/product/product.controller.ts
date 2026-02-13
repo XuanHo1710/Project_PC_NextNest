@@ -56,6 +56,11 @@ export class ProductController {
     return this.productService.removeProduct(data.id, data.createdBy);
   }
 
+  @MessagePattern('product.updateMany')
+  updateManyProducts(@Payload() data: { ids: string[]; typeUpdate: string }) {
+    return this.productService.updateManyProducts(data.ids, data.typeUpdate);
+  }
+
   @MessagePattern('product.findMyProducts')
   findMyProducts(
     @Payload()
@@ -384,5 +389,10 @@ export class ProductController {
   @MessagePattern('product.getVariantIdsByCreator')
   getVariantIdsByCreator(@Payload() data: { createdBy: string }) {
     return this.productService.getVariantIdsByCreator(data.createdBy);
+  }
+
+  @MessagePattern('product.getProductIdsByCreator')
+  getProductIdsByCreator(@Payload() data: { createdBy: string }) {
+    return this.productService.getProductIdsByCreator(data.createdBy);
   }
 }

@@ -19,6 +19,11 @@ export class OrderController {
     private readonly paymentService: ClientProxy,
   ) {}
 
+  @Get('stats')
+  getOrderStats() {
+    return this.orderService.send('order.getStats', {});
+  }
+
   @Get()
   findAll(
     @Query('page') page?: string,

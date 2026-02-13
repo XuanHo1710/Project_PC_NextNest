@@ -11,12 +11,15 @@ import {
     EditOutlined
 } from '@ant-design/icons';
 import useAuthEmployee from "@/hooks/AuthEmployeeContext";
-import { useProducts, useUpdateProduct } from "@/hooks/admin";
+import { useProducts, useUpdateProduct, useUpdateManyProducts } from "@/hooks/admin";
 import { useProductVariantsByProduct } from "@/hooks/admin/useProductVariant";
 import type { IProduct, IProductVariant } from "@/types/product";
 import type { ColumnsType } from 'antd/es/table';
 
 import type { SelectedContextType } from '@/types/table.d';
+import { FaEye, FaTrashAlt } from 'react-icons/fa';
+import { FiCheckCircle, FiEyeOff } from 'react-icons/fi';
+import { HiOutlineRefresh, HiOutlineXCircle } from 'react-icons/hi';
 
 const { Text, Title } = Typography;
 
@@ -36,6 +39,7 @@ export default function ContentProduct() {
     const [search, setSearch] = useState('');
     const [searchInput, setSearchInput] = useState('');
     const [detailModal, setDetailModal] = useState<IProduct | null>(null);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
     // Soft-delete modal
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -51,6 +55,7 @@ export default function ContentProduct() {
 
     const { data: productsResponse, isLoading, refetch } = useProducts(queryParams.toString());
     const updateProduct = useUpdateProduct();
+    const updateManyProducts = useUpdateManyProducts();
 
     const products = (productsResponse?.data ?? []) as IProduct[];
     const pagination = productsResponse?.pagination;
@@ -70,6 +75,20 @@ export default function ContentProduct() {
             okText: 'Xác nhận',
             cancelText: 'Hủy',
             onOk: () => updateProduct.mutate({ id: productId, data: { status: newStatus } as Partial<IProduct> }),
+        });
+    };
+
+    const handleBulkUpdate = (typeUpdate: string, label: string) => {
+        if (selectedRows.length === 0) return;
+        Modal.confirm({
+            title: `${label} ${selectedRows.length} sản phẩm`,
+            content: `Bạn có chắc muốn ${label.toLowerCase()} ${selectedRows.length} sản phẩm đã chọn?`,
+            okText: 'Xác nhận',
+            cancelText: 'Hủy',
+            onOk: async () => {
+                await updateManyProducts.mutateAsync({ ids: selectedRows, typeUpdate });
+                setSelectedRows([]);
+            },
         });
     };
 
@@ -140,58 +159,52 @@ export default function ContentProduct() {
             key: 'actions',
             width: 240,
             render: (_: unknown, record: IProduct) => (
-                <Space size={4} wrap>
+                <Space size={10} wrap>
                     <Tooltip title="Xem chi tiết">
-                        <Button size="small" icon={<EyeOutlined />} onClick={() => setDetailModal(record)} />
+                        <FaEye
+                            onClick={() => setDetailModal(record)}
+                            className='hover:text-green-500 cursor-pointer text-lg'
+                            title="Xem chi tiết"
+                        />
                     </Tooltip>
 
                     {/* Approve PENDING → ACTIVE */}
                     {record.status === 'PENDING' && hasPermission('PATCH', '/api/v1/admin/product/:id') && (
                         <Tooltip title="Duyệt sản phẩm">
-                            <Button
-                                size="small"
-                                type="primary"
-                                icon={<CheckCircleOutlined />}
+                            <FiCheckCircle
+                                className='hover:text-yellow-500 cursor-pointer text-lg'
+                                title="Duyệt sản phẩm"
                                 onClick={() => handleStatusUpdate(record._id, 'ACTIVE', 'Duyệt sản phẩm')}
-                                loading={updateProduct.isPending}
-                            >
-                                Duyệt
-                            </Button>
+                            />
                         </Tooltip>
                     )}
 
                     {/* Reject PENDING → INACTIVE */}
                     {record.status === 'PENDING' && hasPermission('PATCH', '/api/v1/admin/product/:id') && (
                         <Tooltip title="Từ chối sản phẩm">
-                            <Button
-                                size="small"
-                                danger
-                                icon={<CloseCircleOutlined />}
+                            <HiOutlineXCircle
+                                className='hover:text-yellow-500 cursor-pointer text-lg'
+                                title="Từ chối sản phẩm"
                                 onClick={() => handleStatusUpdate(record._id, 'INACTIVE', 'Từ chối sản phẩm')}
-                                loading={updateProduct.isPending}
-                            >
-                                Từ chối
-                            </Button>
+                            />
                         </Tooltip>
                     )}
 
                     {/* Toggle ACTIVE ↔ INACTIVE */}
                     {record.status === 'ACTIVE' && hasPermission('PATCH', '/api/v1/admin/product/:id') && (
                         <Tooltip title="Tạm ẩn">
-                            <Button
-                                size="small"
-                                icon={<CloseCircleOutlined />}
+                            <FiEyeOff
+                                className='hover:text-yellow-500 cursor-pointer text-lg'
+                                title="Tạm ẩn sản phẩm"
                                 onClick={() => handleStatusUpdate(record._id, 'INACTIVE', 'Tạm ẩn sản phẩm')}
                             />
                         </Tooltip>
                     )}
                     {record.status === 'INACTIVE' && hasPermission('PATCH', '/api/v1/admin/product/:id') && (
                         <Tooltip title="Kích hoạt lại">
-                            <Button
-                                size="small"
-                                type="primary"
-                                ghost
-                                icon={<CheckCircleOutlined />}
+                            <HiOutlineRefresh
+                                className='hover:text-yellow-500 cursor-pointer text-lg'
+                                title="Kích hoạt lại sản phẩm"
                                 onClick={() => handleStatusUpdate(record._id, 'ACTIVE', 'Kích hoạt sản phẩm')}
                             />
                         </Tooltip>
@@ -200,16 +213,12 @@ export default function ContentProduct() {
                     {/* Soft delete */}
                     {hasPermission('DELETE', '/api/v1/admin/product/:id') && (
                         <Tooltip title="Xóa">
-                            <Button
-                                size="small"
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={() => {
-                                    setDeleteTarget(record._id);
-                                    setDeleteReason('');
-                                    setDeleteModalOpen(true);
-                                }}
-                            />
+                            <FaTrashAlt onClick={() => {
+                                setDeleteTarget(record._id);
+                                setDeleteReason('');
+                                setDeleteModalOpen(true);
+                            }} className='hover:text-red-500 cursor-pointer' />
+
                         </Tooltip>
                     )}
                 </Space>
@@ -218,98 +227,226 @@ export default function ContentProduct() {
     ];
 
     return (
-        <div>
-            {/* Filters */}
-            <Card className="mb-4">
-                <div className="flex flex-wrap gap-3 items-center">
-                    <Input
-                        placeholder="Tìm theo tên sản phẩm..."
-                        prefix={<SearchOutlined />}
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        onPressEnter={handleSearch}
-                        style={{ width: 280 }}
-                        allowClear
-                    />
-                    <Select
-                        placeholder="Trạng thái"
-                        allowClear
-                        style={{ width: 160 }}
-                        value={statusFilter}
-                        onChange={(val) => { setStatusFilter(val); setPage(1); }}
-                        options={[
-                            { value: 'PENDING', label: 'Chờ duyệt' },
-                            { value: 'ACTIVE', label: 'Hoạt động' },
-                            { value: 'INACTIVE', label: 'Tạm ẩn' },
-                            { value: 'STOPSOLD', label: 'Ngừng bán' },
-                        ]}
-                    />
-                    <Button icon={<SearchOutlined />} type="primary" onClick={handleSearch}>Tìm</Button>
-                    <Button icon={<ReloadOutlined />} onClick={() => refetch()}>Làm mới</Button>
-                </div>
-            </Card>
+        <SelectedProductContext.Provider value={{ selectedRows, setSelectedRows }}>
+            <div>
+                {/* Filters */}
+                <Card className="mb-4">
+                    <div className="flex flex-wrap gap-3 items-center">
+                        <Input
+                            placeholder="Tìm theo tên sản phẩm..."
+                            prefix={<SearchOutlined />}
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            onPressEnter={handleSearch}
+                            style={{ width: 280 }}
+                            allowClear
+                        />
+                        <Select
+                            placeholder="Trạng thái"
+                            allowClear
+                            style={{ width: 160 }}
+                            value={statusFilter}
+                            onChange={(val) => { setStatusFilter(val); setPage(1); }}
+                            options={[
+                                { value: 'PENDING', label: 'Chờ duyệt' },
+                                { value: 'ACTIVE', label: 'Hoạt động' },
+                                { value: 'INACTIVE', label: 'Tạm ẩn' },
+                                { value: 'STOPSOLD', label: 'Ngừng bán' },
+                            ]}
+                        />
+                        <Button icon={<SearchOutlined />} type="primary" onClick={handleSearch}>Tìm</Button>
+                        <Button icon={<ReloadOutlined />} onClick={() => refetch()}>Làm mới</Button>
+                    </div>
+                </Card>
 
-            {/* Table */}
-            <Table
-                columns={columns}
-                dataSource={products}
-                rowKey="_id"
-                loading={isLoading}
-                pagination={{
-                    current: page,
-                    pageSize: 10,
-                    total: pagination?.totalItems || 0,
-                    showTotal: (total) => `Tổng ${total} sản phẩm`,
-                    onChange: (p) => setPage(p),
-                }}
-                scroll={{ x: 900 }}
-                size="middle"
-            />
-
-            {/* Soft Delete Modal */}
-            <Modal
-                title="Xóa sản phẩm"
-                open={deleteModalOpen}
-                onCancel={() => { setDeleteModalOpen(false); setDeleteTarget(null); setDeleteReason(''); }}
-                onOk={handleSoftDelete}
-                okText="Xác nhận xóa"
-                cancelText="Hủy"
-                okButtonProps={{ danger: true, loading: updateProduct.isPending, disabled: !deleteReason.trim() }}
-                destroyOnHidden
-            >
-                <p className="mb-2 text-gray-600">
-                    Sản phẩm sẽ được đánh dấu là đã xóa. Vui lòng nhập lý do:
-                </p>
-                <Input.TextArea
-                    rows={3}
-                    placeholder="Nhập lý do xóa sản phẩm..."
-                    value={deleteReason}
-                    onChange={(e) => setDeleteReason(e.target.value)}
-                    maxLength={500}
-                    showCount
-                />
-            </Modal>
-
-            {/* Detail Modal */}
-            <Modal
-                title={`Chi tiết sản phẩm: ${detailModal?.name || ''}`}
-                open={!!detailModal}
-                onCancel={() => setDetailModal(null)}
-                footer={null}
-                width={900}
-                destroyOnHidden
-            >
-                {detailModal && (
-                    <ProductDetailContent product={detailModal} />
+                {/* Bulk Actions */}
+                {selectedRows.length > 0 && (
+                    <Card className="mb-4">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <Text className="text-sm">Đã chọn <Text strong>{selectedRows.length}</Text> sản phẩm</Text>
+                            <Button
+                                type="primary"
+                                size="small"
+                                icon={<CheckCircleOutlined />}
+                                onClick={() => handleBulkUpdate('ACTIVE', 'Duyệt')}
+                                loading={updateManyProducts.isPending}
+                            >
+                                Duyệt tất cả
+                            </Button>
+                            <Button
+                                size="small"
+                                danger
+                                icon={<CloseCircleOutlined />}
+                                onClick={() => handleBulkUpdate('INACTIVE', 'Tạm ẩn')}
+                                loading={updateManyProducts.isPending}
+                            >
+                                Tạm ẩn tất cả
+                            </Button>
+                            <Button
+                                size="small"
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleBulkUpdate('DELETE', 'Xóa')}
+                                loading={updateManyProducts.isPending}
+                            >
+                                Xóa tất cả
+                            </Button>
+                            <Button size="small" onClick={() => setSelectedRows([])}>Bỏ chọn</Button>
+                        </div>
+                    </Card>
                 )}
-            </Modal>
-        </div>
+
+                {/* Table */}
+                <Table
+                    columns={columns}
+                    dataSource={products}
+                    rowKey="_id"
+                    loading={isLoading}
+                    rowSelection={{
+                        selectedRowKeys: selectedRows,
+                        onChange: (keys) => setSelectedRows(keys as string[]),
+                    }}
+                    pagination={{
+                        current: page,
+                        pageSize: 10,
+                        total: pagination?.totalItems || 0,
+                        showTotal: (total) => `Tổng ${total} sản phẩm`,
+                        onChange: (p) => setPage(p),
+                    }}
+                    scroll={{ x: 900 }}
+                    size="middle"
+                />
+
+                {/* Soft Delete Modal */}
+                <Modal
+                    title="Xóa sản phẩm"
+                    open={deleteModalOpen}
+                    onCancel={() => { setDeleteModalOpen(false); setDeleteTarget(null); setDeleteReason(''); }}
+                    onOk={handleSoftDelete}
+                    okText="Xác nhận xóa"
+                    cancelText="Hủy"
+                    okButtonProps={{ danger: true, loading: updateProduct.isPending, disabled: !deleteReason.trim() }}
+                    destroyOnHidden
+                >
+                    <p className="mb-2 text-gray-600">
+                        Sản phẩm sẽ được đánh dấu là đã xóa. Vui lòng nhập lý do:
+                    </p>
+                    <Input.TextArea
+                        rows={3}
+                        placeholder="Nhập lý do xóa sản phẩm..."
+                        value={deleteReason}
+                        onChange={(e) => setDeleteReason(e.target.value)}
+                        maxLength={500}
+                        showCount
+                    />
+                </Modal>
+
+                {/* Detail Modal */}
+                <Modal
+                    title={`Chi tiết sản phẩm: ${detailModal?.name || ''}`}
+                    open={!!detailModal}
+                    onCancel={() => setDetailModal(null)}
+                    footer={null}
+                    width={900}
+                    destroyOnHidden
+                >
+                    {detailModal && (
+                        <ProductDetailContent product={detailModal} />
+                    )}
+                </Modal>
+            </div>
+        </SelectedProductContext.Provider>
     );
 }
 
 // ============ Product Detail with Variants ============
 function ProductDetailContent({ product }: { product: IProduct }) {
     const { data: variants, isLoading: loadingVariants } = useProductVariantsByProduct(product._id);
+
+    const variantColumns: ColumnsType<IProductVariant> = [
+        {
+            title: 'Ảnh',
+            key: 'images',
+            width: 80,
+            render: (_: unknown, record: IProductVariant) => (
+                record.images && record.images.length > 0 ? (
+                    <Image
+                        src={record.images[0]}
+                        alt="variant"
+                        width={48}
+                        height={48}
+                        className="!w-12 !h-12 object-cover rounded border"
+                        fallback="/laptop.png"
+                    />
+                ) : (
+                    <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-[10px]">
+                        No img
+                    </div>
+                )
+            ),
+        },
+        {
+            title: 'SKU',
+            dataIndex: 'sku',
+            key: 'sku',
+            width: 120,
+            render: (sku: string) => <Text className="text-xs">{sku}</Text>,
+        },
+        {
+            title: 'Phân loại',
+            key: 'combination',
+            width: 180,
+            render: (_: unknown, record: IProductVariant) => {
+                const isDefault = product.defaultProductVariantId === record._id
+                    || (typeof product.defaultProductVariantId === 'object' && (product.defaultProductVariantId as any)?._id === record._id);
+                const comboText = record.combination && Object.keys(record.combination).length > 0
+                    ? Object.entries(record.combination).map(([k, v]) => `${k}: ${v}`).join(' | ')
+                    : 'Mặc định';
+                return (
+                    <div>
+                        <Text className="text-xs">{comboText}</Text>
+                        {isDefault && <Tag color="blue" className="!text-[10px] ml-1">Mặc định</Tag>}
+                    </div>
+                );
+            },
+        },
+        {
+            title: 'Giá gốc',
+            dataIndex: 'price',
+            key: 'price',
+            width: 110,
+            align: 'right',
+            render: (price: number) => <Text className="text-xs">{price?.toLocaleString()}đ</Text>,
+        },
+        {
+            title: 'Giảm giá',
+            dataIndex: 'discount',
+            key: 'discount',
+            width: 80,
+            align: 'center',
+            render: (discount: number) => discount > 0 ? <Tag color="red" className="!text-xs">-{discount}%</Tag> : <Text className="text-xs text-gray-400">0%</Text>,
+        },
+        {
+            title: 'Giá sau giảm',
+            key: 'effectivePrice',
+            width: 120,
+            align: 'right',
+            render: (_: unknown, record: IProductVariant) => {
+                const effective = Math.round(record.price * (1 - (record.discount || 0) / 100));
+                return <Text strong className="text-red-500 text-xs">{effective.toLocaleString()}đ</Text>;
+            },
+        },
+        {
+            title: 'Tồn kho',
+            dataIndex: 'stock',
+            key: 'stock',
+            width: 80,
+            align: 'center',
+            render: (stock: number) => (
+                <Text strong className={stock > 0 ? 'text-green-600' : 'text-red-500'}>{stock}</Text>
+            ),
+        },
+    ];
 
     return (
         <div>
@@ -340,98 +477,37 @@ function ProductDetailContent({ product }: { product: IProduct }) {
                 )}
             </Descriptions>
 
+            {/* Description rendered as HTML with scroll */}
             {product.description && (
                 <>
-                    <Divider orientation="vertical" className="!text-sm">Mô tả</Divider>
-                    <p className="text-gray-600 whitespace-pre-wrap line-clamp-6 text-sm">{product.description}</p>
+                    <Divider className="!text-sm">Mô tả</Divider>
+                    <div
+                        className="text-gray-600 text-sm border border-gray-200 rounded-lg p-3 prose prose-sm max-w-none"
+                        style={{ maxHeight: 200, overflowY: 'auto' }}
+                        dangerouslySetInnerHTML={{ __html: product.description }}
+                    />
                 </>
             )}
 
-            {/* Variants Section */}
-            <Divider orientation="vertical" className="!text-sm">
+            {/* Variants Section - Paginated Table */}
+            <Divider className="!text-sm">
                 Biến thể sản phẩm {variants && `(${variants.data.length})`}
             </Divider>
 
-            {loadingVariants ? (
-                <div className="text-center py-4 text-gray-400">Đang tải biến thể...</div>
-            ) : variants && variants.data.length > 0 ? (
-                <div className="space-y-3">
-                    {variants.data.map((variant: IProductVariant) => {
-                        const comboText = variant.combination && Object.keys(variant.combination).length > 0
-                            ? Object.entries(variant.combination).map(([k, v]) => `${k}: ${v}`).join(' | ')
-                            : 'Mặc định';
-                        const discountedPrice = variant.discount > 0
-                            ? variant.price * (1 - variant.discount / 100)
-                            : variant.price;
-                        const isDefault = product.defaultProductVariantId === variant._id
-                            || (typeof product.defaultProductVariantId === 'object' && (product.defaultProductVariantId as any)?._id === variant._id);
-
-                        return (
-                            <div
-                                key={variant._id}
-                                className={`flex items-start gap-3 p-3 rounded-lg border ${isDefault ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50'
-                                    }`}
-                            >
-                                {/* Variant Images */}
-                                <div className="flex gap-1 shrink-0">
-                                    {variant.images && variant.images.length > 0 ? (
-                                        variant.images.slice(0, 3).map((img, i) => (
-                                            <Image
-                                                key={i}
-                                                src={img}
-                                                alt={`variant-${i}`}
-                                                width={56}
-                                                height={56}
-                                                className="!w-14 !h-14 object-cover rounded border"
-                                                fallback="/laptop.png"
-                                            />
-                                        ))
-                                    ) : (
-                                        <div className="w-14 h-14 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
-                                            No img
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Variant Info */}
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Text className="font-medium text-sm">{comboText}</Text>
-                                        {isDefault && <Tag color="blue" className="!text-xs">Mặc định</Tag>}
-                                    </div>
-                                    <div className="text-xs text-gray-500 mb-1">SKU: {variant.sku}</div>
-                                    <div className="flex items-center gap-3 text-sm">
-                                        <span>
-                                            Giá:{' '}
-                                            {variant.discount > 0 && (
-                                                <Text delete className="text-gray-400 mr-1 text-xs">
-                                                    {variant.price.toLocaleString()}đ
-                                                </Text>
-                                            )}
-                                            <Text strong className="text-red-500">
-                                                {Math.round(discountedPrice).toLocaleString()}đ
-                                            </Text>
-                                        </span>
-                                        {variant.discount > 0 && (
-                                            <Tag color="red" className="!text-xs">-{variant.discount}%</Tag>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Stock */}
-                                <div className="text-right shrink-0">
-                                    <div className="text-xs text-gray-500">Tồn kho</div>
-                                    <Text strong className={variant.stock > 0 ? 'text-green-600' : 'text-red-500'}>
-                                        {variant.stock}
-                                    </Text>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                <div className="text-center py-4 text-gray-400 text-sm">Chưa có biến thể nào</div>
-            )}
+            <Table
+                columns={variantColumns}
+                dataSource={variants?.data || []}
+                rowKey="_id"
+                loading={loadingVariants}
+                size="small"
+                pagination={{
+                    pageSize: 5,
+                    showTotal: (total) => `${total} biến thể`,
+                    size: 'small',
+                    hideOnSinglePage: true,
+                }}
+                scroll={{ x: 700 }}
+            />
         </div>
     );
 }

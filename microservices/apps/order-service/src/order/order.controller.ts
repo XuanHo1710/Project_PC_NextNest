@@ -118,4 +118,29 @@ export class OrderController {
       data.search,
     );
   }
+
+  @MessagePattern('order.getByProductIds')
+  getOrdersByProductIds(
+    @Payload()
+    data: {
+      productIds: string[];
+      page?: number;
+      limit?: number;
+      status?: string;
+      search?: string;
+    },
+  ) {
+    return this.orderService.getOrdersByProductIds(
+      data.productIds,
+      data.page,
+      data.limit,
+      data.status,
+      data.search,
+    );
+  }
+
+  @MessagePattern('order.getStats')
+  getOrderStats() {
+    return this.orderService.getOrderStats();
+  }
 }

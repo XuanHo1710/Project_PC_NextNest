@@ -39,6 +39,7 @@ export class OrderService {
         orderDetail: createOrderDto.orderDetail.map((item: any) => ({
           // Snapshot variant info (lưu trực tiếp)
           variantId: item.productVariant._id || '',
+          productId: item.product?._id || '',
           sku: item.productVariant?.sku || '',
           variantPrice: item.productVariant?.price || 0,
           discount: item.productVariant?.discount || 0,
@@ -162,6 +163,7 @@ export class OrderService {
       },
       orderDetail: createOrderDto.orderDetail.map((item: any) => ({
         variantId: item.productVariant._id || '',
+        productId: item.product?._id || '',
         sku: item.productVariant?.sku || '',
         variantPrice: item.productVariant?.price || 0,
         discount: item.productVariant?.discount || 0,
@@ -359,6 +361,15 @@ export class OrderService {
     if (updateOrderDto.reason !== undefined) {
       updateData.reason = updateOrderDto.reason;
     }
+
+    // COD orders: mark payment as checked out when delivered
+    if (updateOrderDto.status === 'DELIVERED') {
+      const order = await this.orderModel.findById(new Types.ObjectId(id));
+      if (order && order.payment?.type === 'COD') {
+        updateData['payment.isCheckout'] = true;
+      }
+    }
+
     return await this.orderModel.findByIdAndUpdate(
       new Types.ObjectId(id),
       updateData,
@@ -378,7 +389,75 @@ export class OrderService {
     search?: string,
   ) {
     const query: any = {
-      'orderDetail.variantId': { $in: variantIds },
+      $or: [
+        { 'orderDetail.variantId': { $in: variantIds } },
+        { 'orderDetail.productId': { $in: variantIds } },
+      ],
+      status: { $nin: ['PENDING', 'EXPIRED'] },
+    };
+
+    if (status && status !== 'ALL') {
+      query.status = status;
+      delete query.$or;
+      query['$and'] = [
+        {
+          $or: [
+            { 'orderDetail.variantId': { $in: variantIds } },
+            { 'orderDetail.productId': { $in: variantIds } },
+          ],
+        },
+      ];
+    }
+
+    if (search && search.trim()) {
+      const s = search.trim();
+      const searchConditions: any[] = [
+        { 'customerInfo.fullname': { $regex: s, $options: 'i' } },
+        { 'customerInfo.email': { $regex: s, $options: 'i' } },
+        { 'customerInfo.phone': { $regex: s, $options: 'i' } },
+        { 'orderDetail.productName': { $regex: s, $options: 'i' } },
+      ];
+      if (/^[0-9a-fA-F]{24}$/.test(s)) {
+        searchConditions.push({ _id: new Types.ObjectId(s) });
+      }
+      if (!query['$and']) query['$and'] = [];
+      query['$and'].push({ $or: searchConditions });
+    }
+
+    const totalItems = await this.orderModel.countDocuments(query);
+    const totalPages = Math.ceil(totalItems / limit);
+    const skip = (page - 1) * limit;
+
+    const items = await this.orderModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return {
+      data: items,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+      },
+    };
+  }
+
+  /**
+   * Get orders that contain products by specific product IDs.
+   * Used for seller order management (more reliable than variant IDs).
+   */
+  async getOrdersByProductIds(
+    productIds: string[],
+    page = 1,
+    limit = 10,
+    status?: string,
+    search?: string,
+  ) {
+    const query: any = {
+      'orderDetail.productId': { $in: productIds },
       status: { $nin: ['PENDING', 'EXPIRED'] },
     };
 
@@ -427,6 +506,51 @@ export class OrderService {
       { payment: updateOrderDto.payment },
       { new: true },
     );
+  }
+
+  /**
+   * Get dashboard statistics:
+   * - totalOrders: total non-expired/pending orders
+   * - paidOrders: orders with payment.isCheckout = true
+   * - totalIncome: sum of totalAmount from paid orders
+   * - platformRevenue: 5% of totalIncome (platform fee)
+   */
+  async getOrderStats() {
+    const [totalOrders, paidStats, recentOrders] = await Promise.all([
+      this.orderModel.countDocuments({
+        status: { $nin: ['PENDING', 'EXPIRED'] },
+      }),
+      this.orderModel.aggregate([
+        {
+          $match: {
+            'payment.isCheckout': true,
+            status: { $nin: ['CANCELLED', 'REFUNDED', 'EXPIRED'] },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalIncome: { $sum: '$totalAmount' },
+            paidOrders: { $sum: 1 },
+          },
+        },
+      ]),
+      this.orderModel
+        .find({ status: { $nin: ['PENDING', 'EXPIRED'] } })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean(),
+    ]);
+
+    const stats = paidStats[0] || { totalIncome: 0, paidOrders: 0 };
+
+    return {
+      totalOrders,
+      paidOrders: stats.paidOrders,
+      totalIncome: stats.totalIncome,
+      platformRevenue: Math.round(stats.totalIncome * 0.05),
+      recentOrders,
+    };
   }
 
   /**

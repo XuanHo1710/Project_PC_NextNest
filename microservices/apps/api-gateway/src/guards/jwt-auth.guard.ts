@@ -52,6 +52,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         targetPath !== '/api/v1/admin/auth/change-password' &&
         targetPath !== '/api/v1/admin/auth/profile-detail' &&
         targetPath !== '/api/v1/admin/history' &&
+        targetPath !== '/api/v1/admin/order/stats' &&
         targetPath !== '/api/v1/admin/auth/logout'
       ) {
         throw new ForbiddenException(

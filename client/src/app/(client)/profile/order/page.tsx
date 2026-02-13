@@ -94,8 +94,6 @@ export default function OrderPage() {
         enabled: !!user?.id,
     });
 
-    console.log('Order data:', data);
-
 
     const handleTabChange = (key: string) => {
         setActiveTab(key as OrderStatus);
@@ -237,7 +235,7 @@ function OrderCard({
 
     return (
         <Card
-            className="shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
+            className="shadow-sm !my-5 hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700"
             styles={{ body: { padding: '16px 20px' } }}
         >
             {/* Order Header */}
