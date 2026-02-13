@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, Tag, Image, Empty, Button, Tooltip, Modal } from 'antd';
 import {
     CreditCardOutlined,
@@ -10,7 +10,7 @@ import {
 import Link from 'next/link';
 import { OrderPageSkeleton, ProfilePageSkeleton } from '@/components/Skeletons';
 import { IOrder } from '@/types/order';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import useAuthUser from '@/hooks/useAuthUser';
 import { orderClientService, CreateOrderResponse } from '@/services/client/order.client.service';
 import { DynamicMetadata } from '@/components/common/DynamicMetadata';
@@ -25,7 +25,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 
 export default function PendingPaymentPage() {
     const { user } = useAuthUser();
-    const queryClient = useQueryClient();
     const [retryingOrderId, setRetryingOrderId] = useState<string | null>(null);
 
     const { data: orders = [], isLoading } = useQuery<IOrder[]>({

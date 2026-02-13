@@ -478,7 +478,7 @@ export default function MyProductsPage() {
             title: "Giá", key: "price", width: 200,
             render: (_, record) => (
                 <div className="text-[13px]">
-                    <span className="font-semibold text-red-500">{formatCurrencyVND(record.minPrice || 0)}</span>
+                    <span className="font-semibold text-red-500">{formatCurrencyVND(record.maxPrice || 0)}</span>
                     {record.minPrice !== record.maxPrice && (
                         <span className="text-gray-400"> — <span className="text-red-500 font-semibold">{formatCurrencyVND(record.maxPrice || 0)}</span></span>
                     )}

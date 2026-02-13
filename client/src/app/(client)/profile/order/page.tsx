@@ -10,10 +10,11 @@ import {
 import { IOrder } from '@/types/order';
 import { useQuery } from '@tanstack/react-query';
 import useAuthUser from '@/hooks/useAuthUser';
-import { orderClientService, OrderPageResponse } from '@/services/client/order.client.service';
+import { orderClientService } from '@/services/client/order.client.service';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import ProfileSidebar from '@/components/client/ProfileSidebar/ProfileSidebar';
 import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
+import { PaginatedResponse } from '@/types';
 
 type OrderStatus = 'ALL' | 'PENDING' | 'SHIPPING' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED';
 
@@ -39,7 +40,7 @@ export default function OrderPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const { user } = useAuthUser();
 
-    const { data, isLoading } = useQuery<OrderPageResponse>({
+    const { data, isLoading } = useQuery<PaginatedResponse<IOrder>>({
         queryKey: ['get-order-by-guest-id', user?.id, activeTab, currentPage],
         queryFn: () => orderClientService.getOrdersByGuestId(user?.id as string, {
             page: currentPage,
@@ -49,9 +50,8 @@ export default function OrderPage() {
         enabled: !!user?.id,
     });
 
-    const orders = data?.items ?? [];
-    const totalItems = data?.totalItems ?? 0;
-    const totalPages = data?.totalPages ?? 0;
+    console.log('Order data:', data);
+
 
     const handleTabChange = (key: string) => {
         setActiveTab(key as OrderStatus);
@@ -90,11 +90,13 @@ export default function OrderPage() {
 
     return (
         <>
-            <DynamicMetadata
-                title={`Quản lý đơn hàng (${totalItems} đơn) - Project PC`}
-                description="Theo dõi và quản lý đơn hàng của bạn tại Project PC."
-                keywords="quản lý đơn hàng, theo dõi đơn hàng, lịch sử mua hàng"
-            />
+            {!isLoading &&
+                <DynamicMetadata
+                    title={`Quản lý đơn hàng (${data?.pagination.totalItems ?? 0} đơn) - Project PC`}
+                    description="Theo dõi và quản lý đơn hàng của bạn tại Project PC."
+                    keywords="quản lý đơn hàng, theo dõi đơn hàng, lịch sử mua hàng"
+                />
+            }
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
                 <div className='mx-5 xl:mx-32'>
                     <Breadcrumb items={[
@@ -111,9 +113,9 @@ export default function OrderPage() {
                             <h2 className='text-xl font-bold dark:text-white'>
                                 Quản lý đơn hàng
                             </h2>
-                            {totalItems > 0 && (
+                            {data?.pagination.totalItems > 0 && (
                                 <span className="text-sm text-gray-500">
-                                    Tổng {totalItems} đơn hàng
+                                    Tổng {data?.pagination.totalItems} đơn hàng
                                 </span>
                             )}
                         </div>
@@ -127,38 +129,41 @@ export default function OrderPage() {
                         />
 
                         {/* Orders List */}
-                        <div className="space-y-4">
-                            {orders.length > 0 ? (
-                                <>
-                                    {orders.map((order) => (
-                                        <OrderCard
-                                            key={order._id}
-                                            order={order}
-                                            formatCurrency={formatCurrency}
-                                            formatDate={formatDate}
-                                        />
-                                    ))}
-
-                                    {/* Pagination */}
-                                    {totalPages > 1 && (
-                                        <div className="flex justify-center pt-4">
-                                            <Pagination
-                                                current={currentPage}
-                                                total={totalItems}
-                                                pageSize={PAGE_SIZE}
-                                                onChange={(page) => setCurrentPage(page)}
-                                                showSizeChanger={false}
-                                                showTotal={(total) => `Tổng ${total} đơn hàng`}
+                        {!isLoading && data.data.length > 0 &&
+                            <div className="space-y-4">
+                                {data.data.length > 0 ? (
+                                    <>
+                                        {data.data.map((order) => (
+                                            <OrderCard
+                                                key={order._id}
+                                                order={order}
+                                                formatCurrency={formatCurrency}
+                                                formatDate={formatDate}
                                             />
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <div className="py-16">
-                                    <Empty description="Chưa có đơn hàng nào" />
-                                </div>
-                            )}
-                        </div>
+                                        ))}
+
+                                        {/* Pagination */}
+                                        {data.pagination.totalPages > 1 && (
+                                            <div className="flex justify-center pt-4">
+                                                <Pagination
+                                                    current={currentPage}
+                                                    total={data.pagination.totalItems}
+                                                    pageSize={PAGE_SIZE}
+                                                    onChange={(page) => setCurrentPage(page)}
+                                                    showSizeChanger={false}
+                                                    showTotal={(total) => `Tổng ${total} đơn hàng`}
+                                                />
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="py-16">
+                                        <Empty description="Chưa có đơn hàng nào" />
+                                    </div>
+                                )}
+                            </div>
+
+                        }
                     </div>
                 </div>
             </div>

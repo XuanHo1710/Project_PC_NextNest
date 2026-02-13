@@ -1,4 +1,5 @@
 import axiosClient from "@/config/axiosClient";
+import { PaginatedResponse } from "@/types";
 import { IOrder, IOrderData } from "@/types/order";
 
 export interface CreateOrderResponse {
@@ -17,14 +18,6 @@ export interface CreateOrderResponse {
   };
 }
 
-export interface OrderPageResponse {
-  items: IOrder[];
-  totalItems: number;
-  totalPages: number;
-  currentPage: number;
-  limit: number;
-}
-
 class OrderClientService {
   async createOrder(data: IOrderData): Promise<CreateOrderResponse> {
     const response = await axiosClient.post("/order", data);
@@ -39,7 +32,7 @@ class OrderClientService {
   async getOrdersByGuestId(
     guestId: string,
     params?: { page?: number; limit?: number; status?: string },
-  ): Promise<OrderPageResponse> {
+  ): Promise<PaginatedResponse<IOrder>> {
     const query = new URLSearchParams();
     if (params?.page) query.set("page", params.page.toString());
     if (params?.limit) query.set("limit", params.limit.toString());
