@@ -1,5 +1,10 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { CreateOrderDto, MICROSERVICE } from '@project-pc/common';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -264,7 +269,32 @@ export class SagaService {
       saga.completedAt = new Date();
       this.logSagaResult(saga);
 
-      throw error;
+      // Extract meaningful error message from the failed step
+      const failedStep = saga.steps.find(
+        (s) => s.status === SagaStepStatus.FAILED,
+      );
+      let errorMessage = 'Đặt hàng thất bại. Vui lòng thử lại.';
+
+      if (failedStep) {
+        const stepError = failedStep.error || '';
+        // Map specific step failures to user-friendly messages
+        if (failedStep.name === 'DECREMENT_STOCK') {
+          errorMessage =
+            'Sản phẩm hiện đang hết hàng hoặc số lượng không đủ. Vui lòng kiểm tra lại giỏ hàng.';
+        } else if (failedStep.name === 'CREATE_PAYMENT') {
+          errorMessage =
+            'Không thể tạo liên kết thanh toán. Vui lòng thử lại sau.';
+        } else if (failedStep.name === 'CREATE_ORDER') {
+          errorMessage = 'Không thể tạo đơn hàng. Vui lòng thử lại sau.';
+        } else if (stepError) {
+          errorMessage = stepError;
+        }
+      }
+
+      throw new RpcException({
+        message: errorMessage,
+        statusCode: 400,
+      });
     }
   }
 

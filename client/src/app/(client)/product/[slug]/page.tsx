@@ -38,7 +38,8 @@ import Swal from "sweetalert2";
 import useAuthUser from '@/hooks/useAuthUser';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import BreadcrumbNav from '@/components/client/Breadcrumb/Breadcrumb';
-import { ICreatorInfo } from '@/types/product';
+import { useChatSocket } from '@/hooks/client/useChatSocket';
+import { timeAgo } from '@/utils/formatDateTime';
 
 // Extended product type from findBySlug (includes variants + allowValues)
 interface ProductDetail extends IProductCard {
@@ -69,6 +70,12 @@ export default function ProductDetailClient() {
     // Selected variant state
     const [selectedVariant, setSelectedVariant] = useState<IProductVariant | null>(null);
     const [selectedCombination, setSelectedCombination] = useState<Record<string, string>>({});
+
+    // Online status via chat socket
+    const { isUserOnline, getLastActive } = useChatSocket({
+        userId: user?._id,
+        activeConversationId: null,
+    });
 
     const { data: product, isLoading: isLoadingProduct } = useQuery<ProductDetail>({
         queryKey: ['product-slug', slug],
@@ -388,40 +395,53 @@ export default function ProductDetailClient() {
                             </div>
 
                             {/* Seller Info */}
-                            {product.createdBy && typeof product.createdBy === 'object' && (product.createdBy as ICreatorInfo).fullname && (
-                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 block">
-                                        Người đăng bán
-                                    </label>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-sm overflow-hidden">
-                                            {(product.createdBy as ICreatorInfo).avatar ? (
-                                                <img src={(product.createdBy as ICreatorInfo).avatar} alt="avatar" className="w-full h-full object-cover" />
-                                            ) : (
-                                                (product.createdBy as ICreatorInfo).fullname?.charAt(0)?.toUpperCase()
-                                            )}
+                            {product.createdBy && typeof product.createdBy === 'object' && (product.createdBy as ICreatorInfo).fullname && (() => {
+                                const creator = product.createdBy as ICreatorInfo;
+                                const sellerOnline = isUserOnline(creator._id);
+                                const sellerLastActive = getLastActive(creator._id);
+                                return (
+                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 block">
+                                            Người đăng bán
+                                        </label>
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative">
+                                                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-sm overflow-hidden">
+                                                    {creator.avatar ? (
+                                                        <img src={creator.avatar} alt="avatar" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        creator.fullname?.charAt(0)?.toUpperCase()
+                                                    )}
+                                                </div>
+                                                {sellerOnline && (
+                                                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-700 rounded-full" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-sm text-gray-800 dark:text-white truncate">
+                                                    {creator.fullname}
+                                                </p>
+                                                <p className={`text-xs truncate ${sellerOnline ? 'text-green-500' : 'text-gray-500'}`}>
+                                                    {sellerOnline
+                                                        ? 'Đang hoạt động'
+                                                        : sellerLastActive
+                                                            ? `Hoạt động ${timeAgo(sellerLastActive)}`
+                                                            : creator.email}
+                                                </p>
+                                            </div>
+                                            <Button
+                                                icon={<CommentOutlined />}
+                                                className="!rounded-lg !text-blue-500 !border-blue-300 hover:!bg-blue-50"
+                                                onClick={() => {
+                                                    window.open(`/chat?sellerId=${creator._id}&sellerName=${encodeURIComponent(creator.fullname)}`, '_blank');
+                                                }}
+                                            >
+                                                Chat với người bán
+                                            </Button>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-sm text-gray-800 dark:text-white truncate">
-                                                {(product.createdBy as ICreatorInfo).fullname}
-                                            </p>
-                                            <p className="text-xs text-gray-500 truncate">
-                                                {(product.createdBy as ICreatorInfo).email}
-                                            </p>
-                                        </div>
-                                        <Button
-                                            icon={<CommentOutlined />}
-                                            className="!rounded-lg !text-blue-500 !border-blue-300 hover:!bg-blue-50"
-                                            onClick={() => {
-                                                const sellerId = (product.createdBy as ICreatorInfo)._id;
-                                                window.open(`/chat?sellerId=${sellerId}&sellerName=${encodeURIComponent((product.createdBy as ICreatorInfo).fullname)}`, '_blank');
-                                            }}
-                                        >
-                                            Chat với người bán
-                                        </Button>
                                     </div>
-                                </div>
-                            )}
+                                );
+                            })()}
 
                             {/* Action Buttons */}
                             <div className="flex flex-wrap gap-3 pt-2">

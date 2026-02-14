@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import {
   Ctx,
   MessagePattern,
@@ -23,7 +23,28 @@ import { Channel, ConsumeMessage } from 'amqplib';
 
 @Controller()
 export class ProductController {
+  private readonly logger = new Logger(ProductController.name);
+
   constructor(private readonly productService: ProductService) {}
+
+  /**
+   * Shared RabbitMQ handler: ack on success, nack on error.
+   */
+  private async handleRmq<T>(
+    context: RmqContext,
+    handler: () => Promise<T>,
+  ): Promise<T> {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const result = await handler();
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
+  }
 
   // ============= PRODUCT ENDPOINTS =============
   @MessagePattern('product.create')
@@ -31,13 +52,9 @@ export class ProductController {
     @Payload() data: { createProductDto: CreateProductDto },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.createProduct(
-      data.createProductDto,
+    return this.handleRmq(context, () =>
+      this.productService.createProduct(data.createProductDto),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.findAll')
@@ -45,11 +62,9 @@ export class ProductController {
     @Payload() data: { searchDto?: SearchProductDto },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findAllProducts(data?.searchDto);
-    channel.ack(msg);
-    return result;
+    return this.handleRmq(context, () =>
+      this.productService.findAllProducts(data?.searchDto),
+    );
   }
 
   @MessagePattern('product.findOne')
@@ -57,11 +72,9 @@ export class ProductController {
     @Payload() data: { id: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findOneProduct(data.id);
-    channel.ack(msg);
-    return result;
+    return this.handleRmq(context, () =>
+      this.productService.findOneProduct(data.id),
+    );
   }
 
   @MessagePattern('product.update')
@@ -74,15 +87,13 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.updateProduct(
-      data.id,
-      data.updateProductDto,
-      data.createdBy,
+    return this.handleRmq(context, () =>
+      this.productService.updateProduct(
+        data.id,
+        data.updateProductDto,
+        data.createdBy,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.remove')
@@ -90,14 +101,9 @@ export class ProductController {
     @Payload() data: { id: string; createdBy?: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.removeProduct(
-      data.id,
-      data.createdBy,
+    return this.handleRmq(context, () =>
+      this.productService.removeProduct(data.id, data.createdBy),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.updateMany')
@@ -105,14 +111,9 @@ export class ProductController {
     @Payload() data: { ids: string[]; typeUpdate: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.updateManyProducts(
-      data.ids,
-      data.typeUpdate,
+    return this.handleRmq(context, () =>
+      this.productService.updateManyProducts(data.ids, data.typeUpdate),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.findMyProducts')
@@ -126,16 +127,14 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findMyProducts(
-      data.createdBy,
-      data.page,
-      data.limit,
-      data.search,
+    return this.handleRmq(context, () =>
+      this.productService.findMyProducts(
+        data.createdBy,
+        data.page,
+        data.limit,
+        data.search,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.search')
@@ -143,11 +142,9 @@ export class ProductController {
     @Payload() data: { searchDto: SearchProductDto },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findAllProducts(data.searchDto);
-    channel.ack(msg);
-    return result;
+    return this.handleRmq(context, () =>
+      this.productService.findAllProducts(data.searchDto),
+    );
   }
 
   @MessagePattern('product.findByCollection')
@@ -164,17 +161,15 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findByCollection(
-      data.slug,
-      data.page,
-      data.limit,
-      data.sort,
-      { cpu: data.cpu, ram: data.ram, storage: data.storage },
+    return this.handleRmq(context, () =>
+      this.productService.findByCollection(
+        data.slug,
+        data.page,
+        data.limit,
+        data.sort,
+        { cpu: data.cpu, ram: data.ram, storage: data.storage },
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.findAllClient')
@@ -182,14 +177,9 @@ export class ProductController {
     @Payload() data: { page?: number; limit?: number },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findAllClientProducts(
-      data?.page,
-      data?.limit,
+    return this.handleRmq(context, () =>
+      this.productService.findAllClientProducts(data?.page, data?.limit),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.topDiscount')
@@ -197,13 +187,9 @@ export class ProductController {
     @Payload() data: { limit?: number },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.getTopDiscountProducts(
-      data?.limit,
+    return this.handleRmq(context, () =>
+      this.productService.getTopDiscountProducts(data?.limit),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.findBySlug')
@@ -211,11 +197,9 @@ export class ProductController {
     @Payload() data: { slug: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findBySlug(data.slug);
-    channel.ack(msg);
-    return result;
+    return this.handleRmq(context, () =>
+      this.productService.findBySlug(data.slug),
+    );
   }
 
   // ============= PRODUCT VARIANT ENDPOINTS =============
@@ -224,13 +208,9 @@ export class ProductController {
     @Payload() data: { createProductVariantDto: CreateProductVariantDto },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.createProductVariant(
-      data.createProductVariantDto,
+    return this.handleRmq(context, () =>
+      this.productService.createProductVariant(data.createProductVariantDto),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.variant.createBulk')
@@ -238,13 +218,9 @@ export class ProductController {
     @Payload() data: { variants: CreateProductVariantDto[] },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.createBulkProductVariants(
-      data.variants,
+    return this.handleRmq(context, () =>
+      this.productService.createBulkProductVariants(data.variants),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.variant.updateBulk')
@@ -255,13 +231,9 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.updateBulkProductVariants(
-      data.updates,
+    return this.handleRmq(context, () =>
+      this.productService.updateBulkProductVariants(data.updates),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.variant.deleteAll')
@@ -269,13 +241,9 @@ export class ProductController {
     @Payload() data: { productId: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.deleteAllProductVariants(
-      data.productId,
+    return this.handleRmq(context, () =>
+      this.productService.deleteAllProductVariants(data.productId),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.variant.deleteAndRecreate')
@@ -287,14 +255,12 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.deleteAndRecreateProductVariants(
-      data.productId,
-      data.variants,
+    return this.handleRmq(context, () =>
+      this.productService.deleteAndRecreateProductVariants(
+        data.productId,
+        data.variants,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.variant.findAll')
@@ -302,15 +268,13 @@ export class ProductController {
     @Payload() data: { productId?: string; page?: number; limit?: number },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findAllProductVariants(
-      data?.productId,
-      data?.page,
-      data?.limit,
+    return this.handleRmq(context, () =>
+      this.productService.findAllProductVariants(
+        data?.productId,
+        data?.page,
+        data?.limit,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.variant.findOne')
@@ -318,11 +282,9 @@ export class ProductController {
     @Payload() data: { id: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findOneProductVariant(data.id);
-    channel.ack(msg);
-    return result;
+    return this.handleRmq(context, () =>
+      this.productService.findOneProductVariant(data.id),
+    );
   }
 
   @MessagePattern('product.variant.update')
@@ -334,14 +296,12 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.updateProductVariant(
-      data.id,
-      data.updateProductVariantDto,
+    return this.handleRmq(context, () =>
+      this.productService.updateProductVariant(
+        data.id,
+        data.updateProductVariantDto,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.variant.remove')
@@ -349,11 +309,9 @@ export class ProductController {
     @Payload() data: { id: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.removeProductVariant(data.id);
-    channel.ack(msg);
-    return result;
+    return this.handleRmq(context, () =>
+      this.productService.removeProductVariant(data.id),
+    );
   }
 
   @MessagePattern('product.variant.decrementStock')
@@ -430,13 +388,11 @@ export class ProductController {
     @Payload() data: { createProductAttributeDto: CreateProductAttributeDto },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.createProductAttribute(
-      data.createProductAttributeDto,
+    return this.handleRmq(context, () =>
+      this.productService.createProductAttribute(
+        data.createProductAttributeDto,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attribute.findAll')
@@ -450,16 +406,14 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findAllProductAttributes(
-      data?.page,
-      data?.limit,
-      data?.createdBy,
-      data?.search,
+    return this.handleRmq(context, () =>
+      this.productService.findAllProductAttributes(
+        data?.page,
+        data?.limit,
+        data?.createdBy,
+        data?.search,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attribute.findOne')
@@ -467,11 +421,9 @@ export class ProductController {
     @Payload() data: { id: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findOneProductAttribute(data.id);
-    channel.ack(msg);
-    return result;
+    return this.handleRmq(context, () =>
+      this.productService.findOneProductAttribute(data.id),
+    );
   }
 
   @MessagePattern('product.attribute.update')
@@ -484,15 +436,13 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.updateProductAttribute(
-      data.id,
-      data.updateProductAttributeDto,
-      data.createdBy,
+    return this.handleRmq(context, () =>
+      this.productService.updateProductAttribute(
+        data.id,
+        data.updateProductAttributeDto,
+        data.createdBy,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attribute.remove')
@@ -500,14 +450,9 @@ export class ProductController {
     @Payload() data: { id: string; createdBy?: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.removeProductAttribute(
-      data.id,
-      data.createdBy,
+    return this.handleRmq(context, () =>
+      this.productService.removeProductAttribute(data.id, data.createdBy),
     );
-    channel.ack(msg);
-    return result;
   }
 
   // ============= PRODUCT ATTRIBUTE VALUE ENDPOINTS =============
@@ -519,13 +464,11 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.createProductAttributeValue(
-      data.createProductAttributeValueDto,
+    return this.handleRmq(context, () =>
+      this.productService.createProductAttributeValue(
+        data.createProductAttributeValueDto,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attributeValue.findAll')
@@ -540,17 +483,15 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findAllProductAttributeValues(
-      data?.attributeId,
-      data?.page,
-      data?.limit,
-      data?.createdBy,
-      data?.search,
+    return this.handleRmq(context, () =>
+      this.productService.findAllProductAttributeValues(
+        data?.attributeId,
+        data?.page,
+        data?.limit,
+        data?.createdBy,
+        data?.search,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attributeValue.findOne')
@@ -558,13 +499,9 @@ export class ProductController {
     @Payload() data: { id: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findOneProductAttributeValue(
-      data.id,
+    return this.handleRmq(context, () =>
+      this.productService.findOneProductAttributeValue(data.id),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attributeValue.update')
@@ -576,14 +513,12 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.updateProductAttributeValue(
-      data.id,
-      data.updateProductAttributeValueDto,
+    return this.handleRmq(context, () =>
+      this.productService.updateProductAttributeValue(
+        data.id,
+        data.updateProductAttributeValueDto,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attributeValue.remove')
@@ -591,13 +526,9 @@ export class ProductController {
     @Payload() data: { id: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.removeProductAttributeValue(
-      data.id,
+    return this.handleRmq(context, () =>
+      this.productService.removeProductAttributeValue(data.id),
     );
-    channel.ack(msg);
-    return result;
   }
 
   // ============= PRODUCT ATTRIBUTE ALLOW VALUE ENDPOINTS =============
@@ -609,13 +540,11 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.createProductAttributeAllowValue(
-      data.createProductAttributeAllowValueDto,
+    return this.handleRmq(context, () =>
+      this.productService.createProductAttributeAllowValue(
+        data.createProductAttributeAllowValueDto,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attributeAllowValue.findAll')
@@ -628,15 +557,13 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findAllProductAttributeAllowValues(
-      data?.productId,
-      data?.page,
-      data?.limit,
+    return this.handleRmq(context, () =>
+      this.productService.findAllProductAttributeAllowValues(
+        data?.productId,
+        data?.page,
+        data?.limit,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attributeAllowValue.findOne')
@@ -644,13 +571,9 @@ export class ProductController {
     @Payload() data: { id: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.findOneProductAttributeAllowValue(
-      data.id,
+    return this.handleRmq(context, () =>
+      this.productService.findOneProductAttributeAllowValue(data.id),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attributeAllowValue.update')
@@ -662,14 +585,12 @@ export class ProductController {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.updateProductAttributeAllowValue(
-      data.id,
-      data.updateProductAttributeAllowValueDto,
+    return this.handleRmq(context, () =>
+      this.productService.updateProductAttributeAllowValue(
+        data.id,
+        data.updateProductAttributeAllowValueDto,
+      ),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.attributeAllowValue.remove')
@@ -677,13 +598,9 @@ export class ProductController {
     @Payload() data: { id: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.removeProductAttributeAllowValue(
-      data.id,
+    return this.handleRmq(context, () =>
+      this.productService.removeProductAttributeAllowValue(data.id),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.getVariantIdsByCreator')
@@ -691,13 +608,9 @@ export class ProductController {
     @Payload() data: { createdBy: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.getVariantIdsByCreator(
-      data.createdBy,
+    return this.handleRmq(context, () =>
+      this.productService.getVariantIdsByCreator(data.createdBy),
     );
-    channel.ack(msg);
-    return result;
   }
 
   @MessagePattern('product.getProductIdsByCreator')
@@ -705,12 +618,8 @@ export class ProductController {
     @Payload() data: { createdBy: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef() as Channel;
-    const msg = context.getMessage() as ConsumeMessage;
-    const result = await this.productService.getProductIdsByCreator(
-      data.createdBy,
+    return this.handleRmq(context, () =>
+      this.productService.getProductIdsByCreator(data.createdBy),
     );
-    channel.ack(msg);
-    return result;
   }
 }

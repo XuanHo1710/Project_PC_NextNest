@@ -51,8 +51,22 @@ export default function PaymentMethods({ orderData }: { orderData: IOrderData })
                 router.push(`/order-success?${params.toString()}`);
             }
         },
-        onError: () => {
-            toast.error('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.');
+        onError: (error: any) => {
+            // Extract specific error message from API response
+            const apiMessage =
+                error?.response?.data?.message ||
+                error?.message ||
+                '';
+
+            if (apiMessage.includes('hết hàng') || apiMessage.includes('số lượng không đủ') || apiMessage.includes('tồn kho')) {
+                toast.error('Sản phẩm hiện đang hết hàng hoặc số lượng không đủ. Vui lòng kiểm tra lại giỏ hàng.');
+            } else if (apiMessage.includes('thanh toán')) {
+                toast.error('Không thể tạo liên kết thanh toán. Vui lòng thử lại sau.');
+            } else if (apiMessage) {
+                toast.error(apiMessage);
+            } else {
+                toast.error('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.');
+            }
         }
     });
 

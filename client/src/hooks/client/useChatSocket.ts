@@ -6,8 +6,7 @@ import {
   IConversation,
 } from "@/services/client/chat.client.service";
 
-const SOCKET_URL =
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080") + "/chat";
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL + "/chat";
 
 interface UseChatSocketOptions {
   userId: string | undefined;
@@ -24,6 +23,9 @@ export function useChatSocket({
   const queryClient = useQueryClient();
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [typingUsers, setTypingUsers] = useState<Record<string, string[]>>({});
+  const [lastActiveMap, setLastActiveMap] = useState<Record<string, string>>(
+    {},
+  );
 
   // Connect socket
   useEffect(() => {
@@ -71,6 +73,10 @@ export function useChatSocket({
           next.delete(data.userId);
           return next;
         });
+        setLastActiveMap((prev) => ({
+          ...prev,
+          [data.userId]: data.lastActive,
+        }));
       },
     );
 
@@ -232,15 +238,22 @@ export function useChatSocket({
     [typingUsers],
   );
 
+  const getLastActive = useCallback(
+    (uid: string) => lastActiveMap[uid] || null,
+    [lastActiveMap],
+  );
+
   return {
     socket: socketRef.current,
     isConnected: socketRef.current?.connected ?? false,
     onlineUsers,
+    lastActiveMap,
     sendMessage,
     startTyping,
     stopTyping,
     markAsRead,
     isUserOnline,
     getTypingUsers,
+    getLastActive,
   };
 }

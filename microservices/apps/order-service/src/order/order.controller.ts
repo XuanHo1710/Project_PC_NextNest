@@ -92,34 +92,44 @@ export class OrderController {
    * Called by Saga Orchestrator when a subsequent step fails.
    */
   @MessagePattern('order.cancel')
-  cancelOrder(
+  async cancelOrder(
     @Payload() data: { orderId: string },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.cancelOrder(data.orderId);
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.cancelOrder(data.orderId);
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.getById')
-  getOrderById(
+  async getOrderById(
     @Payload() data: { orderId: string },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.getOrderById(data.orderId);
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.getOrderById(data.orderId);
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   /**
    * Admin: Get all orders with pagination and filters.
    */
   @MessagePattern('order.getAll')
-  getAllOrders(
+  async getAllOrders(
     @Payload()
     data: {
       page?: number;
@@ -132,13 +142,18 @@ export class OrderController {
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.getAllOrders(data);
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.getAllOrders(data);
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.getAllByGuestId')
-  getAllOrdersByGuestId(
+  async getAllOrdersByGuestId(
     @Payload()
     data: {
       guestId: string;
@@ -150,73 +165,102 @@ export class OrderController {
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.getAllOrdersByGuestId(
-      data.guestId,
-      data.page,
-      data.limit,
-      data.status,
-    );
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.getAllOrdersByGuestId(
+        data.guestId,
+        data.page,
+        data.limit,
+        data.status,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.getPendingOnline')
-  getPendingOnlineOrders(
+  async getPendingOnlineOrders(
     @Payload() data: { guestId: string },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.getPendingOnlineOrders(data.guestId);
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.getPendingOnlineOrders(
+        data.guestId,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.retryPayment')
-  retryPayment(
+  async retryPayment(
     @Payload() data: { orderId: string; ip: string },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.retryPayment(data.orderId, data.ip);
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.retryPayment(
+        data.orderId,
+        data.ip,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.updateStatus')
-  updateOrderStatus(
+  async updateOrderStatus(
     @Payload() data: { id: string; updateOrderDto: UpdateOrderDto },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    console.log(data.updateOrderDto);
-    const result = this.orderService.updateOrderStatus(
-      data.id,
-      data.updateOrderDto,
-    );
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.updateOrderStatus(
+        data.id,
+        data.updateOrderDto,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.updatePayment')
-  updateOrderPayment(
+  async updateOrderPayment(
     @Payload() data: { id: string; updateOrderDto: UpdateOrderDto },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.updateOrderPayment(
-      data.id,
-      data.updateOrderDto,
-    );
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.updateOrderPayment(
+        data.id,
+        data.updateOrderDto,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.getByVariantIds')
-  getOrdersByVariantIds(
+  async getOrdersByVariantIds(
     @Payload()
     data: {
       variantIds: string[];
@@ -229,19 +273,24 @@ export class OrderController {
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.getOrdersByVariantIds(
-      data.variantIds,
-      data.page,
-      data.limit,
-      data.status,
-      data.search,
-    );
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.getOrdersByVariantIds(
+        data.variantIds,
+        data.page,
+        data.limit,
+        data.status,
+        data.search,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.getByProductIds')
-  getOrdersByProductIds(
+  async getOrdersByProductIds(
     @Payload()
     data: {
       productIds: string[];
@@ -254,28 +303,38 @@ export class OrderController {
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.getOrdersByProductIds(
-      data.productIds,
-      data.page,
-      data.limit,
-      data.status,
-      data.search,
-    );
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.getOrdersByProductIds(
+        data.productIds,
+        data.page,
+        data.limit,
+        data.status,
+        data.search,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.getStats')
-  getOrderStats(@Ctx() context: RmqContext) {
+  async getOrderStats(@Ctx() context: RmqContext) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.getOrderStats();
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.getOrderStats();
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('order.adminHandleRejection')
-  adminHandleRejection(
+  async adminHandleRejection(
     @Payload()
     data: {
       id: string;
@@ -286,12 +345,17 @@ export class OrderController {
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.orderService.adminHandleRejection(
-      data.id,
-      data.action,
-      data.refund ?? false,
-    );
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.orderService.adminHandleRejection(
+        data.id,
+        data.action,
+        data.refund ?? false,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 }

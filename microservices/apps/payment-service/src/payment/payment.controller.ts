@@ -21,12 +21,12 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const verifyResult = this.vnpayService.createPaymentUrl(
+      const result = await this.vnpayService.createPaymentUrl(
         data.createPaymentDto,
         data.ip,
       );
       channel.ack(msg);
-      return verifyResult;
+      return result;
     } catch (error) {
       const xDeath = msg.properties.headers?.['x-death'];
       const retryCount =
@@ -42,11 +42,12 @@ export class PaymentController {
       } else {
         channel.nack(msg, false, false);
       }
+      throw error;
     }
   }
 
   @MessagePattern('payment.verify')
-  verifyPayment(
+  async verifyPayment(
     @Payload()
     data: {
       orderCode: number;
@@ -58,13 +59,13 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const verifyResult = this.vnpayService.verifyPayment(
+      const result = await this.vnpayService.verifyPayment(
         data.orderCode,
         data.status,
         data.guestId,
       );
       channel.ack(msg);
-      return verifyResult;
+      return result;
     } catch (error) {
       const xDeath = msg.properties.headers?.['x-death'];
       const retryCount =
@@ -80,11 +81,12 @@ export class PaymentController {
       } else {
         channel.nack(msg, false, false);
       }
+      throw error;
     }
   }
 
   @MessagePattern('payment.createForCashOnDelivery')
-  createPaymentForCOD(
+  async createPaymentForCOD(
     @Payload()
     data: {
       orderId: string;
@@ -95,7 +97,7 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const result = this.vnpayService.createPaymentForCashOnDelivery(
+      const result = await this.vnpayService.createPaymentForCashOnDelivery(
         data.orderId,
         data.amount,
       );
@@ -116,11 +118,12 @@ export class PaymentController {
       } else {
         channel.nack(msg, false, false);
       }
+      throw error;
     }
   }
 
   @MessagePattern('payment.updateStatus')
-  updatePaymentStatus(
+  async updatePaymentStatus(
     @Payload()
     data: {
       orderId: string;
@@ -130,16 +133,21 @@ export class PaymentController {
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.vnpayService.updatePaymentStatus(
-      data.orderId,
-      data.status,
-    );
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.vnpayService.updatePaymentStatus(
+        data.orderId,
+        data.status,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('payment.expireByOrderId')
-  expirePaymentsByOrderId(
+  async expirePaymentsByOrderId(
     @Payload()
     data: {
       orderId: string;
@@ -148,13 +156,20 @@ export class PaymentController {
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.vnpayService.expirePaymentsByOrderId(data.orderId);
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.vnpayService.expirePaymentsByOrderId(
+        data.orderId,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('payment.getByOrderId')
-  getPaymentsByOrderId(
+  async getPaymentsByOrderId(
     @Payload()
     data: {
       orderId: string;
@@ -163,13 +178,18 @@ export class PaymentController {
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.vnpayService.getPaymentsByOrderId(data.orderId);
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.vnpayService.getPaymentsByOrderId(data.orderId);
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 
   @MessagePattern('payment.refund')
-  refundPayment(
+  async refundPayment(
     @Payload()
     data: {
       orderId: string;
@@ -178,8 +198,13 @@ export class PaymentController {
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
-    const result = this.vnpayService.refundPayment(data.orderId);
-    channel.ack(msg);
-    return result;
+    try {
+      const result = await this.vnpayService.refundPayment(data.orderId);
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      channel.nack(msg, false, false);
+      throw error;
+    }
   }
 }

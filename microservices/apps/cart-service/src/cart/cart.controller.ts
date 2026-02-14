@@ -8,12 +8,12 @@ export class CartController {
   constructor(private readonly cartService: CartService) {}
 
   @MessagePattern('cart.findOne')
-  findOne(@Payload() data: { guestId: string }) {
-    return this.cartService.findOne(data.guestId);
+  async findOne(@Payload() data: { guestId: string }) {
+    return await this.cartService.findOne(data.guestId);
   }
 
   @MessagePattern('cart.update')
-  update(@Payload() data: { id: string; updateCartDto: UpdateCartDto }) {
-    return this.cartService.update(data.id, data.updateCartDto);
+  async update(@Payload() data: { id: string; updateCartDto: UpdateCartDto }) {
+    return await this.cartService.update(data.id, data.updateCartDto);
   }
 }

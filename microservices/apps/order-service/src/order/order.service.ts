@@ -362,14 +362,14 @@ export class OrderService {
       updateData.reason = updateOrderDto.reason;
     }
 
+    const order = await this.orderModel.findById(new Types.ObjectId(id));
+    if (!order) {
+      throw new Error('Đơn hàng không tồn tại');
+    }
+
     // Seller rejects CARD order → PENDING_REJECTION (needs admin approval)
     if (updateOrderDto.status === 'CANCELLED') {
-      const order = await this.orderModel.findById(new Types.ObjectId(id));
-      if (
-        order &&
-        order.payment?.type === 'CARD' &&
-        order.status === 'COMPLETED'
-      ) {
+      if (order.payment?.type === 'CARD' && order.status === 'COMPLETED') {
         // Online payment order → redirect to PENDING_REJECTION instead of direct cancel
         updateData.status = 'PENDING_REJECTION';
         return await this.orderModel.findByIdAndUpdate(
@@ -378,11 +378,31 @@ export class OrderService {
           { new: true },
         );
       }
+
+      // Restore stock for cancelled orders (only if still PENDING or COMPLETED with COD)
+      if (['PENDING', 'COMPLETED'].includes(order.status)) {
+        for (const item of order.orderDetail) {
+          if (item.variantId && item.quantity > 0) {
+            try {
+              await firstValueFrom(
+                this.productService.send('product.variant.incrementStock', {
+                  variantId: item.variantId,
+                  quantity: item.quantity,
+                }),
+              );
+            } catch (err) {
+              console.error(
+                `Failed to restore stock for variant ${item.variantId} on cancel:`,
+                err,
+              );
+            }
+          }
+        }
+      }
     }
 
     // COD orders: mark payment as checked out when delivered + create payment record
     if (updateOrderDto.status === 'DELIVERED') {
-      const order = await this.orderModel.findById(new Types.ObjectId(id));
       if (order && order.payment?.type === 'COD') {
         updateData['payment.isCheckout'] = true;
         // Create an actual payment record for COD
@@ -798,6 +818,7 @@ export class OrderService {
   /**
    * Cron job: expire orders that have passed their expireAt time
    * Runs every 5 minutes
+   * Also restores stock for all items in expired orders
    */
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handleExpiredOrders() {
@@ -837,7 +858,28 @@ export class OrderService {
         }
       }
 
-      console.log(`Expired ${expiredOrders.length} orders`);
+      // Restore stock for all items in expired orders
+      for (const order of expiredOrders) {
+        for (const item of order.orderDetail) {
+          if (item.variantId && item.quantity > 0) {
+            try {
+              await firstValueFrom(
+                this.productService.send('product.variant.incrementStock', {
+                  variantId: item.variantId,
+                  quantity: item.quantity,
+                }),
+              );
+            } catch (err) {
+              console.error(
+                `Failed to restore stock for variant ${item.variantId} in expired order ${order._id}:`,
+                err,
+              );
+            }
+          }
+        }
+      }
+
+      console.log(`Expired ${expiredOrders.length} orders and restored stock`);
     } catch (error) {
       console.error('Error in handleExpiredOrders cron:', error);
     }
