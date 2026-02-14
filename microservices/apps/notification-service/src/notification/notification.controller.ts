@@ -1,7 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from '@project-pc/common';
-import { EventPattern, MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  Ctx,
+  EventPattern,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
+import { Channel, ConsumeMessage } from 'amqplib';
 
 @Controller()
 export class NotificationController {
@@ -10,12 +17,34 @@ export class NotificationController {
   @MessagePattern('notification.sendMail')
   create(
     @Payload() data: { email: string; orderId: string; description: string },
+    @Ctx() context: RmqContext,
   ) {
-    return this.notificationService.sendMail(
-      data.email,
-      data.orderId,
-      data.description,
-    );
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const verifyResult = this.notificationService.sendMail(
+        data.email,
+        data.orderId,
+        data.description,
+      );
+      channel.ack(msg);
+      return verifyResult;
+    } catch (error) {
+      const xDeath = msg.properties.headers?.['x-death'];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'notification.retry')?.count || 0;
+      if (retryCount >= 5) {
+        channel.publish(
+          'notification.dlx.exchange',
+          'notification.dlq',
+          Buffer.from(JSON.stringify(data)),
+          { persistent: true },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   @MessagePattern('notification.sendOrderConfirmation')
@@ -37,16 +66,38 @@ export class NotificationController {
       customerName?: string;
       transactionId?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.notificationService.sendOrderConfirmationEmail(
-      data.email,
-      data.orderId,
-      data.amount,
-      data.orderItems,
-      data.paymentMethod,
-      data.customerName,
-      data.transactionId,
-    );
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const result = this.notificationService.sendOrderConfirmationEmail(
+        data.email,
+        data.orderId,
+        data.amount,
+        data.orderItems,
+        data.paymentMethod,
+        data.customerName,
+        data.transactionId,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      const xDeath = msg.properties.headers?.['x-death'];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'notification.retry')?.count || 0;
+      if (retryCount >= 5) {
+        channel.publish(
+          'notification.dlx.exchange',
+          'notification.dlq',
+          Buffer.from(JSON.stringify(data)),
+          { persistent: true },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   @EventPattern('notification.sendOrderConfirmation')
@@ -68,16 +119,38 @@ export class NotificationController {
       customerName?: string;
       transactionId?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.notificationService.sendOrderConfirmationEmail(
-      data.email,
-      data.orderId,
-      data.amount,
-      data.orderItems,
-      data.paymentMethod,
-      data.customerName,
-      data.transactionId,
-    );
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const result = this.notificationService.sendOrderConfirmationEmail(
+        data.email,
+        data.orderId,
+        data.amount,
+        data.orderItems,
+        data.paymentMethod,
+        data.customerName,
+        data.transactionId,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      const xDeath = msg.properties.headers?.['x-death'];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'notification.retry')?.count || 0;
+      if (retryCount >= 5) {
+        channel.publish(
+          'notification.dlx.exchange',
+          'notification.dlq',
+          Buffer.from(JSON.stringify(data)),
+          { persistent: true },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   @EventPattern('notification.sendVerificationEmail')
@@ -88,12 +161,17 @@ export class NotificationController {
       fullname: string;
       verificationToken: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.notificationService.sendVerificationEmail(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.notificationService.sendVerificationEmail(
       data.email,
       data.fullname,
       data.verificationToken,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('notification.sendVerificationEmail')
@@ -104,11 +182,16 @@ export class NotificationController {
       fullname: string;
       verificationToken: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.notificationService.sendVerificationEmail(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.notificationService.sendVerificationEmail(
       data.email,
       data.fullname,
       data.verificationToken,
     );
+    channel.ack(msg);
+    return result;
   }
 }

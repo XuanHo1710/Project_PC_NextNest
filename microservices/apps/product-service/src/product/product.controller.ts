@@ -1,5 +1,10 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  Ctx,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
 import { ProductService } from './product.service';
 import {
   CreateProductDto,
@@ -14,6 +19,7 @@ import {
   CreateProductAttributeAllowValueDto,
   UpdateProductAttributeAllowValueDto,
 } from '@project-pc/common';
+import { Channel, ConsumeMessage } from 'amqplib';
 
 @Controller()
 export class ProductController {
@@ -21,48 +27,96 @@ export class ProductController {
 
   // ============= PRODUCT ENDPOINTS =============
   @MessagePattern('product.create')
-  createProduct(@Payload() data: { createProductDto: CreateProductDto }) {
-    return this.productService.createProduct(data.createProductDto);
+  async createProduct(
+    @Payload() data: { createProductDto: CreateProductDto },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.createProduct(
+      data.createProductDto,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.findAll')
-  findAllProducts(@Payload() data: { searchDto?: SearchProductDto }) {
-    return this.productService.findAllProducts(data?.searchDto);
+  async findAllProducts(
+    @Payload() data: { searchDto?: SearchProductDto },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findAllProducts(data?.searchDto);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.findOne')
-  findOneProduct(@Payload() data: { id: string }) {
-    return this.productService.findOneProduct(data.id);
+  async findOneProduct(
+    @Payload() data: { id: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findOneProduct(data.id);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.update')
-  updateProduct(
+  async updateProduct(
     @Payload()
     data: {
       id: string;
       updateProductDto: UpdateProductDto;
       createdBy?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.updateProduct(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.updateProduct(
       data.id,
       data.updateProductDto,
       data.createdBy,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.remove')
-  removeProduct(@Payload() data: { id: string; createdBy?: string }) {
-    return this.productService.removeProduct(data.id, data.createdBy);
+  async removeProduct(
+    @Payload() data: { id: string; createdBy?: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.removeProduct(
+      data.id,
+      data.createdBy,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.updateMany')
-  updateManyProducts(@Payload() data: { ids: string[]; typeUpdate: string }) {
-    return this.productService.updateManyProducts(data.ids, data.typeUpdate);
+  async updateManyProducts(
+    @Payload() data: { ids: string[]; typeUpdate: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.updateManyProducts(
+      data.ids,
+      data.typeUpdate,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.findMyProducts')
-  findMyProducts(
+  async findMyProducts(
     @Payload()
     data: {
       createdBy: string;
@@ -70,22 +124,34 @@ export class ProductController {
       limit?: number;
       search?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.findMyProducts(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findMyProducts(
       data.createdBy,
       data.page,
       data.limit,
       data.search,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.search')
-  searchProducts(@Payload() data: { searchDto: SearchProductDto }) {
-    return this.productService.findAllProducts(data.searchDto);
+  async searchProducts(
+    @Payload() data: { searchDto: SearchProductDto },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findAllProducts(data.searchDto);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.findByCollection')
-  findByCollection(
+  async findByCollection(
     @Payload()
     data: {
       slug: string;
@@ -96,303 +162,555 @@ export class ProductController {
       ram?: string;
       storage?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.findByCollection(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findByCollection(
       data.slug,
       data.page,
       data.limit,
       data.sort,
       { cpu: data.cpu, ram: data.ram, storage: data.storage },
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.findAllClient')
-  findAllClientProducts(@Payload() data: { page?: number; limit?: number }) {
-    return this.productService.findAllClientProducts(data?.page, data?.limit);
+  async findAllClientProducts(
+    @Payload() data: { page?: number; limit?: number },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findAllClientProducts(
+      data?.page,
+      data?.limit,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.topDiscount')
-  getTopDiscountProducts(@Payload() data: { limit?: number }) {
-    return this.productService.getTopDiscountProducts(data?.limit);
+  async getTopDiscountProducts(
+    @Payload() data: { limit?: number },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.getTopDiscountProducts(
+      data?.limit,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.findBySlug')
-  findBySlug(@Payload() data: { slug: string }) {
-    return this.productService.findBySlug(data.slug);
+  async findBySlug(
+    @Payload() data: { slug: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findBySlug(data.slug);
+    channel.ack(msg);
+    return result;
   }
 
   // ============= PRODUCT VARIANT ENDPOINTS =============
   @MessagePattern('product.variant.create')
-  createProductVariant(
+  async createProductVariant(
     @Payload() data: { createProductVariantDto: CreateProductVariantDto },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.createProductVariant(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.createProductVariant(
       data.createProductVariantDto,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.variant.createBulk')
-  createBulkProductVariants(
+  async createBulkProductVariants(
     @Payload() data: { variants: CreateProductVariantDto[] },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.createBulkProductVariants(data.variants);
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.createBulkProductVariants(
+      data.variants,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.variant.updateBulk')
-  updateBulkProductVariants(
+  async updateBulkProductVariants(
     @Payload()
     data: {
       updates: { id: string; data: UpdateProductVariantDto }[];
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.updateBulkProductVariants(data.updates);
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.updateBulkProductVariants(
+      data.updates,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.variant.deleteAll')
-  deleteAllProductVariants(@Payload() data: { productId: string }) {
-    return this.productService.deleteAllProductVariants(data.productId);
+  async deleteAllProductVariants(
+    @Payload() data: { productId: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.deleteAllProductVariants(
+      data.productId,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.variant.deleteAndRecreate')
-  deleteAndRecreateProductVariants(
+  async deleteAndRecreateProductVariants(
     @Payload()
     data: {
       productId: string;
       variants: CreateProductVariantDto[];
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.deleteAndRecreateProductVariants(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.deleteAndRecreateProductVariants(
       data.productId,
       data.variants,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.variant.findAll')
-  findAllProductVariants(
-    @Payload() data?: { productId?: string; page?: number; limit?: number },
+  async findAllProductVariants(
+    @Payload() data: { productId?: string; page?: number; limit?: number },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.findAllProductVariants(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findAllProductVariants(
       data?.productId,
       data?.page,
       data?.limit,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.variant.findOne')
-  findOneProductVariant(@Payload() data: { id: string }) {
-    return this.productService.findOneProductVariant(data.id);
+  async findOneProductVariant(
+    @Payload() data: { id: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findOneProductVariant(data.id);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.variant.update')
-  updateProductVariant(
+  async updateProductVariant(
     @Payload()
     data: {
       id: string;
       updateProductVariantDto: UpdateProductVariantDto;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.updateProductVariant(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.updateProductVariant(
       data.id,
       data.updateProductVariantDto,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.variant.remove')
-  removeProductVariant(@Payload() data: { id: string }) {
-    return this.productService.removeProductVariant(data.id);
+  async removeProductVariant(
+    @Payload() data: { id: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.removeProductVariant(data.id);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.variant.decrementStock')
-  decrementVariantStock(
+  async decrementVariantStock(
     @Payload() data: { variantId: string; quantity: number },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.decrementVariantStock(
-      data.variantId,
-      data.quantity,
-    );
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const result = await this.productService.decrementVariantStock(
+        data.variantId,
+        data.quantity,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (err) {
+      const xDeath = msg.properties.headers?.['x-death'] || [];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'product.main')?.count || 0;
+      if (retryCount >= 5) {
+        channel.publish(
+          'product.dlx.exchange',
+          'product.dlq',
+          Buffer.from(JSON.stringify(data)),
+          {
+            persistent: true,
+          },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   @MessagePattern('product.variant.incrementStock')
-  incrementVariantStock(
+  async incrementVariantStock(
     @Payload() data: { variantId: string; quantity: number },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.incrementVariantStock(
-      data.variantId,
-      data.quantity,
-    );
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const result = await this.productService.incrementVariantStock(
+        data.variantId,
+        data.quantity,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (err) {
+      const xDeath = msg.properties.headers?.['x-death'] || [];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'product.main')?.count || 0;
+      if (retryCount >= 5) {
+        channel.publish(
+          'product.dlx.exchange',
+          'product.dlq',
+          Buffer.from(JSON.stringify(data)),
+          {
+            persistent: true,
+          },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   // ============= PRODUCT ATTRIBUTE ENDPOINTS =============
   @MessagePattern('product.attribute.create')
-  createProductAttribute(
+  async createProductAttribute(
     @Payload() data: { createProductAttributeDto: CreateProductAttributeDto },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.createProductAttribute(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.createProductAttribute(
       data.createProductAttributeDto,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attribute.findAll')
-  findAllProductAttributes(
+  async findAllProductAttributes(
     @Payload()
-    data?: {
+    data: {
       page?: number;
       limit?: number;
       createdBy?: string;
       search?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.findAllProductAttributes(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findAllProductAttributes(
       data?.page,
       data?.limit,
       data?.createdBy,
       data?.search,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attribute.findOne')
-  findOneProductAttribute(@Payload() data: { id: string }) {
-    return this.productService.findOneProductAttribute(data.id);
+  async findOneProductAttribute(
+    @Payload() data: { id: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findOneProductAttribute(data.id);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attribute.update')
-  updateProductAttribute(
+  async updateProductAttribute(
     @Payload()
     data: {
       id: string;
       updateProductAttributeDto: UpdateProductAttributeDto;
       createdBy?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.updateProductAttribute(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.updateProductAttribute(
       data.id,
       data.updateProductAttributeDto,
       data.createdBy,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attribute.remove')
-  removeProductAttribute(@Payload() data: { id: string; createdBy?: string }) {
-    return this.productService.removeProductAttribute(data.id, data.createdBy);
+  async removeProductAttribute(
+    @Payload() data: { id: string; createdBy?: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.removeProductAttribute(
+      data.id,
+      data.createdBy,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   // ============= PRODUCT ATTRIBUTE VALUE ENDPOINTS =============
   @MessagePattern('product.attributeValue.create')
-  createProductAttributeValue(
+  async createProductAttributeValue(
     @Payload()
     data: {
       createProductAttributeValueDto: CreateProductAttributeValueDto;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.createProductAttributeValue(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.createProductAttributeValue(
       data.createProductAttributeValueDto,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attributeValue.findAll')
-  findAllProductAttributeValues(
+  async findAllProductAttributeValues(
     @Payload()
-    data?: {
+    data: {
       attributeId?: string;
       page?: number;
       limit?: number;
       createdBy?: string;
       search?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.findAllProductAttributeValues(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findAllProductAttributeValues(
       data?.attributeId,
       data?.page,
       data?.limit,
       data?.createdBy,
       data?.search,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attributeValue.findOne')
-  findOneProductAttributeValue(@Payload() data: { id: string }) {
-    return this.productService.findOneProductAttributeValue(data.id);
+  async findOneProductAttributeValue(
+    @Payload() data: { id: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findOneProductAttributeValue(
+      data.id,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attributeValue.update')
-  updateProductAttributeValue(
+  async updateProductAttributeValue(
     @Payload()
     data: {
       id: string;
       updateProductAttributeValueDto: UpdateProductAttributeValueDto;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.updateProductAttributeValue(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.updateProductAttributeValue(
       data.id,
       data.updateProductAttributeValueDto,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attributeValue.remove')
-  removeProductAttributeValue(@Payload() data: { id: string }) {
-    return this.productService.removeProductAttributeValue(data.id);
+  async removeProductAttributeValue(
+    @Payload() data: { id: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.removeProductAttributeValue(
+      data.id,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   // ============= PRODUCT ATTRIBUTE ALLOW VALUE ENDPOINTS =============
   @MessagePattern('product.attributeAllowValue.create')
-  createProductAttributeAllowValue(
+  async createProductAttributeAllowValue(
     @Payload()
     data: {
       createProductAttributeAllowValueDto: CreateProductAttributeAllowValueDto;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.createProductAttributeAllowValue(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.createProductAttributeAllowValue(
       data.createProductAttributeAllowValueDto,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attributeAllowValue.findAll')
-  findAllProductAttributeAllowValues(
+  async findAllProductAttributeAllowValues(
     @Payload()
-    data?: {
+    data: {
       productId?: string;
       page?: number;
       limit?: number;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.findAllProductAttributeAllowValues(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findAllProductAttributeAllowValues(
       data?.productId,
       data?.page,
       data?.limit,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attributeAllowValue.findOne')
-  findOneProductAttributeAllowValue(@Payload() data: { id: string }) {
-    return this.productService.findOneProductAttributeAllowValue(data.id);
+  async findOneProductAttributeAllowValue(
+    @Payload() data: { id: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.findOneProductAttributeAllowValue(
+      data.id,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attributeAllowValue.update')
-  updateProductAttributeAllowValue(
+  async updateProductAttributeAllowValue(
     @Payload()
     data: {
       id: string;
       updateProductAttributeAllowValueDto: UpdateProductAttributeAllowValueDto;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.productService.updateProductAttributeAllowValue(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.updateProductAttributeAllowValue(
       data.id,
       data.updateProductAttributeAllowValueDto,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.attributeAllowValue.remove')
-  removeProductAttributeAllowValue(@Payload() data: { id: string }) {
-    return this.productService.removeProductAttributeAllowValue(data.id);
+  async removeProductAttributeAllowValue(
+    @Payload() data: { id: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.removeProductAttributeAllowValue(
+      data.id,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.getVariantIdsByCreator')
-  getVariantIdsByCreator(@Payload() data: { createdBy: string }) {
-    return this.productService.getVariantIdsByCreator(data.createdBy);
+  async getVariantIdsByCreator(
+    @Payload() data: { createdBy: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.getVariantIdsByCreator(
+      data.createdBy,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('product.getProductIdsByCreator')
-  getProductIdsByCreator(@Payload() data: { createdBy: string }) {
-    return this.productService.getProductIdsByCreator(data.createdBy);
+  async getProductIdsByCreator(
+    @Payload() data: { createdBy: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = await this.productService.getProductIdsByCreator(
+      data.createdBy,
+    );
+    channel.ack(msg);
+    return result;
   }
 }

@@ -14,6 +14,7 @@ import { CartModule } from 'client/cart/cart.module';
 import { PaymentModule } from 'client/payment/payment.module';
 import { OrderModule } from 'client/order/order.module';
 import { NotificationModule } from 'client/notification/notification.module';
+import { ChatModule } from 'client/chat/chat.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { NotificationModule } from 'client/notification/notification.module';
     PaymentModule,
     OrderModule,
     NotificationModule,
+    ChatModule,
     JwtModule.register({}),
   ],
   providers: [

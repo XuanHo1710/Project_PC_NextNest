@@ -11,6 +11,7 @@ import {
     ReloadOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
+    ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import { useAdminOrders, useConfirmCodPayment, useHandleRejection } from '@/hooks/admin/useOrder';
 import type { IOrder, IOrderDetailItem } from '@/types/order';
@@ -34,13 +35,6 @@ const PAYMENT_TYPE_CONFIG: Record<string, { color: string; label: string }> = {
     CARD: { color: 'geekblue', label: 'Thẻ/PayOS' },
 };
 
-interface ConfirmModalState {
-    type: 'status' | 'cod' | null;
-    orderId: string;
-    newStatus?: string;
-    order?: IOrder;
-}
-
 export default function AdminOrderPage() {
     const [page, setPage] = useState(1);
     const [limit] = useState(10);
@@ -49,7 +43,11 @@ export default function AdminOrderPage() {
     const [search, setSearch] = useState('');
     const [searchInput, setSearchInput] = useState('');
     const [detailModal, setDetailModal] = useState<IOrder | null>(null);
-    const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({ type: null, orderId: '' });
+
+    // Rejection approval modal state
+    const [rejectionModal, setRejectionModal] = useState<IOrder | null>(null);
+    // COD confirm modal state
+    const [codModal, setCodModal] = useState<IOrder | null>(null);
 
     const { data: ordersData, isLoading, refetch } = useAdminOrders({
         page,
@@ -68,17 +66,6 @@ export default function AdminOrderPage() {
     const handleSearch = () => {
         setPage(1);
         setSearch(searchInput.trim());
-    };
-
-    const handleConfirmCod = (order: IOrder) => {
-        setConfirmModal({ type: 'cod', orderId: order._id, order });
-    };
-
-    const handleConfirmCodPayment = () => {
-        if (confirmModal.type === 'cod' && confirmModal.order) {
-            confirmCod.mutate({ id: confirmModal.order._id, amount: confirmModal.order.totalAmount });
-            setConfirmModal({ type: null, orderId: '' });
-        }
     };
 
     const columns: ColumnsType<IOrder> = [
@@ -171,8 +158,8 @@ export default function AdminOrderPage() {
                                 size="small"
                                 style={{ backgroundColor: '#faad14', borderColor: '#faad14', color: '#fff' }}
                                 icon={<DollarOutlined />}
-                                onClick={() => handleConfirmCod(record)}
-                                loading={confirmCod.isPending && confirmModal.orderId === record._id}
+                                onClick={() => setCodModal(record)}
+                                loading={confirmCod.isPending}
                             >
                                 Nhận tiền
                             </Button>
@@ -180,54 +167,26 @@ export default function AdminOrderPage() {
                     )}
                     {record.status === 'PENDING_REJECTION' && (
                         <>
-                            <Tooltip title="Duyệt từ chối + hoàn tiền">
-                                <Button
-                                    size="small"
-                                    type="primary"
-                                    danger
-                                    icon={<CheckCircleOutlined />}
-                                    onClick={() => {
-                                        Modal.confirm({
-                                            title: 'Duyệt yêu cầu từ chối đơn hàng',
-                                            content: (
-                                                <div>
-                                                    <p>Đơn hàng <strong>#{record._id.slice(-6).toUpperCase()}</strong></p>
-                                                    <p>Khách hàng: <strong>{record.customerInfo.fullname}</strong></p>
-                                                    <p>Tổng tiền: <strong>{record.totalAmount.toLocaleString()}đ</strong></p>
-                                                    {record.reason && <p>Lý do từ chối: <em>{record.reason}</em></p>}
-                                                    <Divider />
-                                                    <p className="text-orange-500 font-medium">Hoàn tiền cho khách hàng?</p>
-                                                </div>
-                                            ),
-                                            okText: 'Duyệt + Hoàn tiền',
-                                            cancelText: 'Duyệt không hoàn tiền',
-                                            onOk: () => handleRejection.mutate({ id: record._id, action: 'approve', refund: true }),
-                                            onCancel: () => handleRejection.mutate({ id: record._id, action: 'approve', refund: false }),
-                                        });
-                                    }}
-                                    loading={handleRejection.isPending}
-                                >
-                                    Duyệt
-                                </Button>
-                            </Tooltip>
-                            <Tooltip title="Từ chối yêu cầu (trả về Hoàn thành)">
-                                <Button
-                                    size="small"
-                                    icon={<CloseCircleOutlined />}
-                                    onClick={() => {
-                                        Modal.confirm({
-                                            title: 'Từ chối yêu cầu hủy đơn hàng',
-                                            content: 'Đơn hàng sẽ được đưa trở lại trạng thái "Hoàn thành". Người bán sẽ phải tiếp tục giao hàng.',
-                                            okText: 'Xác nhận',
-                                            cancelText: 'Hủy',
-                                            onOk: () => handleRejection.mutate({ id: record._id, action: 'reject' }),
-                                        });
-                                    }}
-                                    loading={handleRejection.isPending}
-                                >
-                                    Từ chối
-                                </Button>
-                            </Tooltip>
+                            <Button
+                                size="small"
+                                type="primary"
+                                danger
+                                icon={<CheckCircleOutlined />}
+                                onClick={() => setRejectionModal(record)}
+                                loading={handleRejection.isPending}
+                            >
+                                Duyệt
+                            </Button>
+                            <Button
+                                size="small"
+                                icon={<CloseCircleOutlined />}
+                                onClick={() => {
+                                    handleRejection.mutate({ id: record._id, action: 'reject' });
+                                }}
+                                loading={handleRejection.isPending}
+                            >
+                                Từ chối
+                            </Button>
                         </>
                     )}
                 </Space>
@@ -318,18 +277,87 @@ export default function AdminOrderPage() {
             {/* Confirm COD Payment Modal */}
             <Modal
                 title="Xác nhận thanh toán COD"
-                open={confirmModal.type === 'cod'}
-                onOk={handleConfirmCodPayment}
-                onCancel={() => setConfirmModal({ type: null, orderId: '' })}
+                open={!!codModal}
+                onOk={() => {
+                    if (codModal) {
+                        confirmCod.mutate({ id: codModal._id, amount: codModal.totalAmount });
+                        setCodModal(null);
+                    }
+                }}
+                onCancel={() => setCodModal(null)}
                 okText="Xác nhận nhận tiền"
                 cancelText="Hủy"
                 confirmLoading={confirmCod.isPending}
                 destroyOnHidden
             >
-                <p>
-                    Xác nhận đã nhận <strong>{confirmModal.order?.totalAmount.toLocaleString()}đ</strong> tiền mặt
-                    cho đơn <strong>#{confirmModal.order?._id.slice(-6)}</strong>?
-                </p>
+                {codModal && (
+                    <p>
+                        Xác nhận đã nhận <strong>{codModal.totalAmount.toLocaleString()}đ</strong> tiền mặt
+                        cho đơn <strong>#{codModal._id.slice(-6).toUpperCase()}</strong>?
+                    </p>
+                )}
+            </Modal>
+
+            {/* Rejection Approval Modal — Duyệt (hoàn tiền) hoặc Từ chối */}
+            <Modal
+                title={
+                    <div className="flex items-center gap-2">
+                        <ExclamationCircleOutlined className="text-orange-500 text-xl" />
+                        <span>Duyệt yêu cầu từ chối đơn hàng</span>
+                    </div>
+                }
+                open={!!rejectionModal}
+                onCancel={() => setRejectionModal(null)}
+                footer={
+                    <div className="flex justify-end gap-2">
+                        <Button onClick={() => setRejectionModal(null)}>
+                            Đóng
+                        </Button>
+                        <Button
+                            icon={<CloseCircleOutlined />}
+                            onClick={() => {
+                                if (rejectionModal) {
+                                    handleRejection.mutate({ id: rejectionModal._id, action: 'reject' });
+                                    setRejectionModal(null);
+                                }
+                            }}
+                        >
+                            Từ chối yêu cầu
+                        </Button>
+                        <Button
+                            type="primary"
+                            danger
+                            icon={<CheckCircleOutlined />}
+                            loading={handleRejection.isPending}
+                            onClick={() => {
+                                if (rejectionModal) {
+                                    handleRejection.mutate({ id: rejectionModal._id, action: 'approve', refund: true });
+                                    setRejectionModal(null);
+                                }
+                            }}
+                        >
+                            Duyệt + Hoàn tiền
+                        </Button>
+                    </div>
+                }
+                destroyOnHidden
+                width={500}
+            >
+                {rejectionModal && (
+                    <div className="space-y-2 py-2">
+                        <p>Đơn hàng: <strong className="text-blue-600">#{rejectionModal._id.slice(-6).toUpperCase()}</strong></p>
+                        <p>Khách hàng: <strong>{rejectionModal.customerInfo.fullname}</strong></p>
+                        <p>Tổng tiền: <strong className="text-red-500">{rejectionModal.totalAmount.toLocaleString()}đ</strong></p>
+                        {rejectionModal.reason && (
+                            <p>Lý do từ chối: <em className="text-gray-500">{rejectionModal.reason}</em></p>
+                        )}
+                        <Divider className="!my-3" />
+                        <p className="text-sm text-gray-500">
+                            • <strong>Duyệt + Hoàn tiền</strong>: Hủy đơn hàng và hoàn tiền cho khách hàng.<br />
+                            • <strong>Từ chối yêu cầu</strong>: Đơn hàng quay lại trạng thái &quot;Hoàn thành&quot;.
+                        </p>
+                    </div>
+                )}
             </Modal>
 
             {/* Order Detail Modal */}
@@ -346,6 +374,15 @@ export default function AdminOrderPage() {
                     detailModal?.status === 'PENDING_REJECTION' ? (
                         <div className="flex justify-end gap-2">
                             <Button
+                                icon={<CloseCircleOutlined />}
+                                onClick={() => {
+                                    handleRejection.mutate({ id: detailModal._id, action: 'reject' });
+                                    setDetailModal(null);
+                                }}
+                            >
+                                Từ chối yêu cầu hủy
+                            </Button>
+                            <Button
                                 danger
                                 type="primary"
                                 icon={<CheckCircleOutlined />}
@@ -355,15 +392,6 @@ export default function AdminOrderPage() {
                                 }}
                             >
                                 Duyệt + Hoàn tiền
-                            </Button>
-                            <Button
-                                icon={<CloseCircleOutlined />}
-                                onClick={() => {
-                                    handleRejection.mutate({ id: detailModal._id, action: 'reject' });
-                                    setDetailModal(null);
-                                }}
-                            >
-                                Từ chối yêu cầu hủy
                             </Button>
                         </div>
                     ) : null

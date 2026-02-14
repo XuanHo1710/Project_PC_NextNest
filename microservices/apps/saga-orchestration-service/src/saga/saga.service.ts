@@ -47,8 +47,10 @@ export class SagaService {
    *
    * CARD payment:
    *   1. Create order record (compensation: cancel order)
-   *   2. Create payment link (compensation: expire payments)
-   *   → Return PayOS checkout URL
+   *   2. Decrement stock for each variant (compensation: increment stock)
+   *   3. Create payment link (compensation: expire payments)  → Return PayOS checkout URL
+   *   4. Send notification (non-critical, no compensation) → Return order confirmation
+   *
    *
    * COD payment:
    *   1. Create order record (compensation: cancel order)
@@ -98,9 +100,56 @@ export class SagaService {
         },
       });
 
+      // ──────────────────────────────────────────────────────
+      //  COD FLOW — STEP 2: Decrement Stock
+      // ──────────────────────────────────────────────────────
+      const decrementedVariants: Array<{
+        variantId: string;
+        quantity: number;
+      }> = [];
+
+      await this.executeStep(saga, 'DECREMENT_STOCK', async () => {
+        for (const item of createOrderDto.orderDetail) {
+          const variantId = (item.productVariant as any)._id;
+          const quantity = item.quantity;
+
+          await firstValueFrom(
+            this.productService.send('product.variant.decrementStock', {
+              variantId,
+              quantity,
+            }),
+          );
+
+          decrementedVariants.push({ variantId, quantity });
+        }
+        return { decrementedCount: decrementedVariants.length };
+      });
+
+      // Register compensation: restore stock for all decremented variants
+      compensations.push({
+        name: 'RESTORE_STOCK',
+        execute: async () => {
+          for (const dv of decrementedVariants) {
+            try {
+              await firstValueFrom(
+                this.productService.send('product.variant.incrementStock', {
+                  variantId: dv.variantId,
+                  quantity: dv.quantity,
+                }),
+              );
+            } catch (err) {
+              this.logger.error(
+                `[Saga ${sagaId}] ✖ CRITICAL: Failed to restore stock for variant ${dv.variantId}`,
+                err,
+              );
+            }
+          }
+        },
+      });
+
       if (isOnlinePayment) {
         // ──────────────────────────────────────────────────────
-        //  CARD FLOW — STEP 2: Create Payment Link
+        //  CARD FLOW — STEP 3.1: Create Payment Link
         // ──────────────────────────────────────────────────────
         const paymentResult = await this.executeStep(
           saga,
@@ -142,54 +191,7 @@ export class SagaService {
         };
       } else {
         // ──────────────────────────────────────────────────────
-        //  COD FLOW — STEP 2: Decrement Stock
-        // ──────────────────────────────────────────────────────
-        const decrementedVariants: Array<{
-          variantId: string;
-          quantity: number;
-        }> = [];
-
-        await this.executeStep(saga, 'DECREMENT_STOCK', async () => {
-          for (const item of createOrderDto.orderDetail) {
-            const variantId = (item.productVariant as any)._id;
-            const quantity = item.quantity;
-
-            await firstValueFrom(
-              this.productService.send('product.variant.decrementStock', {
-                variantId,
-                quantity,
-              }),
-            );
-
-            decrementedVariants.push({ variantId, quantity });
-          }
-          return { decrementedCount: decrementedVariants.length };
-        });
-
-        // Register compensation: restore stock for all decremented variants
-        compensations.push({
-          name: 'RESTORE_STOCK',
-          execute: async () => {
-            for (const dv of decrementedVariants) {
-              try {
-                await firstValueFrom(
-                  this.productService.send('product.variant.incrementStock', {
-                    variantId: dv.variantId,
-                    quantity: dv.quantity,
-                  }),
-                );
-              } catch (err) {
-                this.logger.error(
-                  `[Saga ${sagaId}] ✖ CRITICAL: Failed to restore stock for variant ${dv.variantId}`,
-                  err,
-                );
-              }
-            }
-          },
-        });
-
-        // ──────────────────────────────────────────────────────
-        //  COD FLOW — STEP 3: Send Notification (tracked in saga)
+        //  COD FLOW — STEP 3.2: Send Notification (tracked in saga)
         // ──────────────────────────────────────────────────────
         await this.executeStep(
           saga,

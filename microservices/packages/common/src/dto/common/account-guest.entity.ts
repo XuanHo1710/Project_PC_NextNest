@@ -137,7 +137,6 @@ export class AccountGuest {
 export const AccountGuestSchema = SchemaFactory.createForClass(AccountGuest);
 
 // Indexes for better performance
-AccountGuestSchema.index({ email: 1 });
 AccountGuestSchema.index({ googleId: 1 });
 AccountGuestSchema.index({ accountStatus: 1 });
 AccountGuestSchema.index({ isActive: 1 });

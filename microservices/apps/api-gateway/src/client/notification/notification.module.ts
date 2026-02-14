@@ -8,9 +8,17 @@ import { NotificationController } from 'client/notification/notification.control
     ClientsModule.register([
       {
         name: MICROSERVICE.NOTIFICATION_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          port: MICROSERVICE_PORT.NOTIFICATION_SERVICE,
+          urls: ['amqp://admin:admin@localhost:5673'],
+          queue: 'notification.main',
+          queueOptions: {
+            durable: true,
+            arguments: {
+              'x-dead-letter-exchange': 'notification.retry.exchange',
+              'x-dead-letter-routing-key': 'notification.retry',
+            },
+          },
         },
       },
     ]),

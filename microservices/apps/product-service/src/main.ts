@@ -1,28 +1,42 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { MICROSERVICE_PORT } from '@project-pc/common';
+import { AppModule } from 'src/app.module';
+import { setupProductRabbitMQ } from 'src/rabbitmq.product.setup';
 
 async function bootstrap() {
-  const productService =
-    await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-      transport: Transport.TCP,
-      options: {
-        port: MICROSERVICE_PORT.PRODUCT_SERVICE,
-      },
-    });
+  await setupProductRabbitMQ();
 
-  const redisService =
-    await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-      transport: Transport.REDIS,
-      options: {
-        host: process.env.REDIS_HOST,
-        port: Number(process.env.REDIS_PORT),
-        password: process.env.REDIS_PASSWORD,
-        db: Number(process.env.REDIS_DB),
-      },
-    });
+  const app = await NestFactory.create(AppModule);
 
-  await Promise.all([productService.listen(), redisService.listen()]);
+  // RMQ
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: ['amqp://admin:admin@localhost:5673'],
+      queue: 'product.main',
+      noAck: false,
+      prefetchCount: 10,
+      queueOptions: {
+        durable: true,
+        arguments: {
+          'x-dead-letter-exchange': 'product.retry.exchange',
+          'x-dead-letter-routing-key': 'product.retry',
+        },
+      },
+    },
+  });
+
+  // REDIS
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.REDIS,
+    options: {
+      host: process.env.REDIS_HOST,
+      port: Number(process.env.REDIS_PORT),
+      password: process.env.REDIS_PASSWORD,
+      db: Number(process.env.REDIS_DB),
+    },
+  });
+
+  await app.startAllMicroservices();
 }
 bootstrap();

@@ -22,23 +22,47 @@ import {
     ClientsModule.register([
       {
         name: MICROSERVICE.PAYMENT_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          port: MICROSERVICE_PORT.PAYMENT_SERVICE,
+          urls: ['amqp://admin:admin@localhost:5673'],
+          queue: 'payment.main',
+          queueOptions: {
+            durable: true,
+            arguments: {
+              'x-dead-letter-exchange': 'payment.retry.exchange',
+              'x-dead-letter-routing-key': 'payment.retry',
+            },
+          },
         },
       },
       {
         name: MICROSERVICE.NOTIFICATION_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          port: MICROSERVICE_PORT.NOTIFICATION_SERVICE,
+          urls: ['amqp://admin:admin@localhost:5673'],
+          queue: 'notification.main',
+          queueOptions: {
+            durable: true,
+            arguments: {
+              'x-dead-letter-exchange': 'notification.retry.exchange',
+              'x-dead-letter-routing-key': 'notification.retry',
+            },
+          },
         },
       },
       {
         name: MICROSERVICE.PRODUCT_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          port: MICROSERVICE_PORT.PRODUCT_SERVICE,
+          urls: ['amqp://admin:admin@localhost:5673'],
+          queue: 'product.main',
+          queueOptions: {
+            durable: true,
+            arguments: {
+              'x-dead-letter-exchange': 'product.retry.exchange',
+              'x-dead-letter-routing-key': 'product.retry',
+            },
+          },
         },
       },
     ]),

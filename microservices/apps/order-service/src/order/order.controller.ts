@@ -1,7 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto, UpdateOrderDto } from '@project-pc/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  Ctx,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
+import { ConsumeMessage, Channel } from 'amqplib';
 
 @Controller()
 export class OrderController {
@@ -12,8 +18,37 @@ export class OrderController {
    * Kept for backward compatibility. New flow uses saga.order.create via Saga Orchestrator.
    */
   @MessagePattern('order.create')
-  createOrder(@Payload() data: { createOrderDto: CreateOrderDto; ip: string }) {
-    return this.orderService.createOrder(data.createOrderDto, data.ip);
+  async createOrder(
+    @Payload() data: { createOrderDto: CreateOrderDto; ip: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+
+    try {
+      const orderCreated = await this.orderService.createOrder(
+        data.createOrderDto,
+        data.ip,
+      );
+      channel.ack(msg);
+      return orderCreated;
+    } catch (error) {
+      const xDeath = msg.properties.headers?.['x-death'];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'order.retry')?.count || 0;
+
+      if (retryCount >= 5) {
+        channel.publish(
+          'order.dlx.exchange',
+          'order.dlx',
+          Buffer.from(JSON.stringify(data)),
+          { persistent: true },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   /**
@@ -21,8 +56,35 @@ export class OrderController {
    * Called by Saga Orchestrator Service.
    */
   @MessagePattern('order.createRecord')
-  createRecord(@Payload() data: { createOrderDto: CreateOrderDto }) {
-    return this.orderService.createRecord(data.createOrderDto);
+  async createRecord(
+    @Payload() data: { createOrderDto: CreateOrderDto },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const orderCreated = await this.orderService.createRecord(
+        data.createOrderDto,
+      );
+      channel.ack(msg);
+      return orderCreated;
+    } catch (error) {
+      const xDeath = msg.properties.headers?.['x-death'];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'order.retry')?.count || 0;
+
+      if (retryCount >= 5) {
+        channel.publish(
+          'order.dlx.exchange',
+          'order.dlx',
+          Buffer.from(JSON.stringify(data)),
+          { persistent: true },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   /**
@@ -30,13 +92,27 @@ export class OrderController {
    * Called by Saga Orchestrator when a subsequent step fails.
    */
   @MessagePattern('order.cancel')
-  cancelOrder(@Payload() data: { orderId: string }) {
-    return this.orderService.cancelOrder(data.orderId);
+  cancelOrder(
+    @Payload() data: { orderId: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.cancelOrder(data.orderId);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.getById')
-  getOrderById(@Payload() data: { orderId: string }) {
-    return this.orderService.getOrderById(data.orderId);
+  getOrderById(
+    @Payload() data: { orderId: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.getOrderById(data.orderId);
+    channel.ack(msg);
+    return result;
   }
 
   /**
@@ -52,8 +128,13 @@ export class OrderController {
       paymentType?: string;
       search?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.orderService.getAllOrders(data);
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.getAllOrders(data);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.getAllByGuestId')
@@ -65,38 +146,73 @@ export class OrderController {
       limit?: number;
       status?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.orderService.getAllOrdersByGuestId(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.getAllOrdersByGuestId(
       data.guestId,
       data.page,
       data.limit,
       data.status,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.getPendingOnline')
-  getPendingOnlineOrders(@Payload() data: { guestId: string }) {
-    return this.orderService.getPendingOnlineOrders(data.guestId);
+  getPendingOnlineOrders(
+    @Payload() data: { guestId: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.getPendingOnlineOrders(data.guestId);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.retryPayment')
-  retryPayment(@Payload() data: { orderId: string; ip: string }) {
-    return this.orderService.retryPayment(data.orderId, data.ip);
+  retryPayment(
+    @Payload() data: { orderId: string; ip: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.retryPayment(data.orderId, data.ip);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.updateStatus')
   updateOrderStatus(
     @Payload() data: { id: string; updateOrderDto: UpdateOrderDto },
+    @Ctx() context: RmqContext,
   ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
     console.log(data.updateOrderDto);
-    return this.orderService.updateOrderStatus(data.id, data.updateOrderDto);
+    const result = this.orderService.updateOrderStatus(
+      data.id,
+      data.updateOrderDto,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.updatePayment')
   updateOrderPayment(
     @Payload() data: { id: string; updateOrderDto: UpdateOrderDto },
+    @Ctx() context: RmqContext,
   ) {
-    return this.orderService.updateOrderPayment(data.id, data.updateOrderDto);
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.updateOrderPayment(
+      data.id,
+      data.updateOrderDto,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.getByVariantIds')
@@ -109,14 +225,19 @@ export class OrderController {
       status?: string;
       search?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.orderService.getOrdersByVariantIds(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.getOrdersByVariantIds(
       data.variantIds,
       data.page,
       data.limit,
       data.status,
       data.search,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.getByProductIds')
@@ -129,19 +250,28 @@ export class OrderController {
       status?: string;
       search?: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.orderService.getOrdersByProductIds(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.getOrdersByProductIds(
       data.productIds,
       data.page,
       data.limit,
       data.status,
       data.search,
     );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.getStats')
-  getOrderStats() {
-    return this.orderService.getOrderStats();
+  getOrderStats(@Ctx() context: RmqContext) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.getOrderStats();
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('order.adminHandleRejection')
@@ -152,11 +282,16 @@ export class OrderController {
       action: 'approve' | 'reject';
       refund?: boolean;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.orderService.adminHandleRejection(
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.orderService.adminHandleRejection(
       data.id,
       data.action,
       data.refund ?? false,
     );
+    channel.ack(msg);
+    return result;
   }
 }

@@ -223,8 +223,8 @@ export class VnpayService {
           paymentLinkInfo.transactions?.[0]?.reference || payment.transactionId;
         await payment.save();
 
-        // Update stock for each product variant
-        await this.updateProductStock(orderItems);
+        // // Update stock for each product variant
+        // await this.updateProductStock(orderItems);
 
         // Update order status to COMPLETED (paid successfully)
         try {
@@ -337,25 +337,25 @@ export class VnpayService {
   }
 
   // Update stock for product variants after successful payment
-  private async updateProductStock(
-    orderItems: Array<{
-      productVariant: string;
-      quantity: number;
-    }>,
-  ) {
-    try {
-      for (const item of orderItems) {
-        await firstValueFrom(
-          this.productService.send('product.variant.decrementStock', {
-            variantId: item.productVariant,
-            quantity: item.quantity,
-          }),
-        );
-      }
-    } catch (error) {
-      console.error('Stock update error:', error);
-    }
-  }
+  // private async updateProductStock(
+  //   orderItems: Array<{
+  //     productVariant: string;
+  //     quantity: number;
+  //   }>,
+  // ) {
+  //   try {
+  //     for (const item of orderItems) {
+  //       await firstValueFrom(
+  //         this.productService.send('product.variant.decrementStock', {
+  //           variantId: item.productVariant,
+  //           quantity: item.quantity,
+  //         }),
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error('Stock update error:', error);
+  //   }
+  // }
 
   // Send order confirmation email
   private async sendOrderEmailNotification(

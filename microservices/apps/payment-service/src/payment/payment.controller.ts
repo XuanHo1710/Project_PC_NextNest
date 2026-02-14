@@ -1,17 +1,48 @@
 import { Controller } from '@nestjs/common';
 import { VnpayService } from './payment.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import {
+  Ctx,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
 import { CreatePaymentDto } from '@project-pc/common';
+import { Channel, ConsumeMessage } from 'amqplib';
 
 @Controller()
 export class PaymentController {
   constructor(private readonly vnpayService: VnpayService) {}
 
   @MessagePattern('payment.create')
-  createVnpayPaymentUrl(
+  async createVnpayPaymentUrl(
     @Payload() data: { createPaymentDto: CreatePaymentDto; ip: string },
+    @Ctx() context: RmqContext,
   ) {
-    return this.vnpayService.createPaymentUrl(data.createPaymentDto, data.ip);
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const verifyResult = this.vnpayService.createPaymentUrl(
+        data.createPaymentDto,
+        data.ip,
+      );
+      channel.ack(msg);
+      return verifyResult;
+    } catch (error) {
+      const xDeath = msg.properties.headers?.['x-death'];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'payment.retry')?.count || 0;
+      if (retryCount >= 5) {
+        channel.publish(
+          'payment.dlx.exchange',
+          'payment.dlq',
+          Buffer.from(JSON.stringify(data)),
+          { persistent: true },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   @MessagePattern('payment.verify')
@@ -22,12 +53,34 @@ export class PaymentController {
       status: string;
       guestId: string | null;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.vnpayService.verifyPayment(
-      data.orderCode,
-      data.status,
-      data.guestId,
-    );
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const verifyResult = this.vnpayService.verifyPayment(
+        data.orderCode,
+        data.status,
+        data.guestId,
+      );
+      channel.ack(msg);
+      return verifyResult;
+    } catch (error) {
+      const xDeath = msg.properties.headers?.['x-death'];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'payment.retry')?.count || 0;
+      if (retryCount >= 5) {
+        channel.publish(
+          'payment.dlx.exchange',
+          'payment.dlq',
+          Buffer.from(JSON.stringify(data)),
+          { persistent: true },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   @MessagePattern('payment.createForCashOnDelivery')
@@ -37,11 +90,33 @@ export class PaymentController {
       orderId: string;
       amount: number;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.vnpayService.createPaymentForCashOnDelivery(
-      data.orderId,
-      data.amount,
-    );
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const result = this.vnpayService.createPaymentForCashOnDelivery(
+        data.orderId,
+        data.amount,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      const xDeath = msg.properties.headers?.['x-death'];
+      const retryCount =
+        xDeath?.find((d) => d.queue === 'payment.retry')?.count || 0;
+      if (retryCount >= 5) {
+        channel.publish(
+          'payment.dlx.exchange',
+          'payment.dlq',
+          Buffer.from(JSON.stringify(data)),
+          { persistent: true },
+        );
+        channel.ack(msg);
+      } else {
+        channel.nack(msg, false, false);
+      }
+    }
   }
 
   @MessagePattern('payment.updateStatus')
@@ -51,8 +126,16 @@ export class PaymentController {
       orderId: string;
       status: 'PENDING' | 'PAID' | 'UNPAID' | 'EXPIRED';
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.vnpayService.updatePaymentStatus(data.orderId, data.status);
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.vnpayService.updatePaymentStatus(
+      data.orderId,
+      data.status,
+    );
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('payment.expireByOrderId')
@@ -61,8 +144,13 @@ export class PaymentController {
     data: {
       orderId: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.vnpayService.expirePaymentsByOrderId(data.orderId);
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.vnpayService.expirePaymentsByOrderId(data.orderId);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('payment.getByOrderId')
@@ -71,8 +159,13 @@ export class PaymentController {
     data: {
       orderId: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.vnpayService.getPaymentsByOrderId(data.orderId);
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.vnpayService.getPaymentsByOrderId(data.orderId);
+    channel.ack(msg);
+    return result;
   }
 
   @MessagePattern('payment.refund')
@@ -81,7 +174,12 @@ export class PaymentController {
     data: {
       orderId: string;
     },
+    @Ctx() context: RmqContext,
   ) {
-    return this.vnpayService.refundPayment(data.orderId);
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    const result = this.vnpayService.refundPayment(data.orderId);
+    channel.ack(msg);
+    return result;
   }
 }

@@ -1,14 +1,25 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { MICROSERVICE_PORT } from '@project-pc/common';
+import { setupPaymentRabbitMQ } from 'src/rabbitmq.payment.setup';
 async function bootstrap() {
+  await setupPaymentRabbitMQ();
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
-      transport: Transport.TCP,
+      transport: Transport.RMQ,
       options: {
-        port: MICROSERVICE_PORT.PAYMENT_SERVICE,
+        urls: ['amqp://admin:admin@localhost:5673'],
+        queue: 'payment.main',
+        noAck: false,
+        prefetchCount: 10,
+        queueOptions: {
+          durable: true,
+          arguments: {
+            'x-dead-letter-exchange': 'payment.retry.exchange',
+            'x-dead-letter-routing-key': 'payment.retry',
+          },
+        },
       },
     },
   );

@@ -1,7 +1,7 @@
 "use client";
 import { IoIosArrowDown } from "react-icons/io";
 import { MdKeyboardArrowRight } from "react-icons/md";
-import { Button, Image, Input, Spin } from "antd";
+import { Button, Image, Input, Spin, Badge } from "antd";
 import { BiCategory } from "react-icons/bi";
 import { MdOutlineNotListedLocation } from "react-icons/md";
 import { MdOutlineShoppingCart } from "react-icons/md";
@@ -20,6 +20,7 @@ import { ICategory } from "@/types/category";
 import { categoryClientService, productClientService } from "@/services/client";
 import { IProductCard } from "@/types/product";
 import useCartStore from "@/hooks/useCart";
+import { useUnreadCount } from "@/hooks/client/useChat";
 import { getProductImage } from "@/utils/productHelpers";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
 import { Dropdown, Avatar } from "antd";
@@ -411,7 +412,7 @@ export default function HeaderClient() {
                             href="/chat"
                             className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] font-medium px-3 py-2 rounded-md transition-all whitespace-nowrap hover:bg-gray-50"
                         >
-                            <MdOutlineChatBubbleOutline className="text-xl" />
+                            <ChatBadge />
                         </Link>
 
                         {/* Auth Section */}
@@ -537,5 +538,18 @@ function AuthSection({
                 <FaUserPlus />
             </button>
         </div>
+    );
+}
+
+// Chat Badge with unread count
+function ChatBadge() {
+    const { user } = useAuthUser();
+    const { data } = useUnreadCount(user?._id);
+    const count = data?.unreadCount || 0;
+
+    return (
+        <Badge count={count} size="small" offset={[2, -2]}>
+            <MdOutlineChatBubbleOutline className="text-xl text-[#3b82f6]" />
+        </Badge>
     );
 }

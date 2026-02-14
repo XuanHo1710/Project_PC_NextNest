@@ -8,9 +8,17 @@ import { PaymentController } from 'client/payment/payment.controller';
     ClientsModule.register([
       {
         name: MICROSERVICE.PAYMENT_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          port: MICROSERVICE_PORT.PAYMENT_SERVICE,
+          urls: ['amqp://admin:admin@localhost:5673'],
+          queue: 'payment.main',
+          queueOptions: {
+            durable: true,
+            arguments: {
+              'x-dead-letter-exchange': 'payment.retry.exchange',
+              'x-dead-letter-routing-key': 'payment.retry',
+            },
+          },
         },
       },
     ]),

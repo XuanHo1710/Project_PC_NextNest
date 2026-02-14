@@ -20,17 +20,24 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
     MongooseModule.forFeature([
       { name: AccountGuest.name, schema: AccountGuestSchema },
     ]),
-    ConfigModule, // 👈 BẮT BUỘC
+    ConfigModule,
     AccountGuestModule,
     AccountEmployeeModule,
     RedisModule,
     ClientsModule.register([
       {
         name: MICROSERVICE.NOTIFICATION_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          host: 'localhost',
-          port: MICROSERVICE_PORT.NOTIFICATION_SERVICE,
+          urls: ['amqp://admin:admin@localhost:5673'],
+          queue: 'notification.main',
+          queueOptions: {
+            durable: true,
+            arguments: {
+              'x-dead-letter-exchange': 'notification.retry.exchange',
+              'x-dead-letter-routing-key': 'notification.retry',
+            },
+          },
         },
       },
     ]),

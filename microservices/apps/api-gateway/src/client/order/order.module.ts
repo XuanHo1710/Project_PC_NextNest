@@ -8,9 +8,17 @@ import { OrderController } from 'client/order/order.controller';
     ClientsModule.register([
       {
         name: MICROSERVICE.ORDER_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          port: MICROSERVICE_PORT.ORDER_SERVICE,
+          urls: ['amqp://admin:admin@localhost:5673'],
+          queue: 'order.main',
+          queueOptions: {
+            durable: true,
+            arguments: {
+              'x-dead-letter-exchange': 'order.retry.exchange',
+              'x-dead-letter-routing-key': 'order.retry',
+            },
+          },
         },
       },
       {
@@ -22,9 +30,17 @@ import { OrderController } from 'client/order/order.controller';
       },
       {
         name: MICROSERVICE.PRODUCT_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          port: MICROSERVICE_PORT.PRODUCT_SERVICE,
+          urls: ['amqp://admin:admin@localhost:5673'],
+          queue: 'product.main',
+          queueOptions: {
+            durable: true,
+            arguments: {
+              'x-dead-letter-exchange': 'product.retry.exchange',
+              'x-dead-letter-routing-key': 'product.retry',
+            },
+          },
         },
       },
     ]),
