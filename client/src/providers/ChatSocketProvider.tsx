@@ -4,13 +4,14 @@ import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import useAuthUser from '@/hooks/useAuthUser';
+import useOnlineUsersStore from '@/hooks/useOnlineUsers';
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL + '/chat';
 
 /**
  * Global chat socket provider — connects once when user is logged in.
  * Listens for `message:new` to invalidate unread count in real-time,
- * so the Header badge updates instantly without polling.
+ * and tracks global online status for all users via Zustand store.
  */
 export default function ChatSocketProvider({ children }: { children: React.ReactNode }) {
     const { user } = useAuthUser();
@@ -19,6 +20,8 @@ export default function ChatSocketProvider({ children }: { children: React.React
 
     useEffect(() => {
         const userId = user?._id;
+        const { addOnlineUser, removeOnlineUser, setOnlineUsers } = useOnlineUsersStore.getState();
+
         if (!userId) {
             // Disconnect if user logs out
             if (socketRef.current) {
@@ -41,13 +44,30 @@ export default function ChatSocketProvider({ children }: { children: React.React
 
         socketRef.current = socket;
 
-        // When a new message arrives globally, refresh unread count + conversation list
+        socket.on('connect', () => {
+            // Fetch the initial list of online users on connect/reconnect
+            socket.emit('users:online', {}, (res: { onlineUsers: string[] }) => {
+                if (res?.onlineUsers) {
+                    setOnlineUsers(res.onlineUsers);
+                }
+            });
+        });
+
+        // ---- Online status (global) ----
+        socket.on('user:online', (data: { userId: string }) => {
+            addOnlineUser(data.userId);
+        });
+
+        socket.on('user:offline', (data: { userId: string; lastActive: string }) => {
+            removeOnlineUser(data.userId, data.lastActive);
+        });
+
+        // ---- Message / conversation notifications ----
         socket.on('message:new', () => {
             queryClient.invalidateQueries({ queryKey: ['chat-unread'] });
             queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
         });
 
-        // Also refresh when conversations are created
         socket.on('conversation:created', () => {
             queryClient.invalidateQueries({ queryKey: ['chat-conversations'] });
         });

@@ -464,6 +464,26 @@ export class OrderService {
           console.error('Failed to refund payment:', err);
         }
       }
+
+      // Restore stock for all items in the approved cancellation/refund
+      for (const item of order.orderDetail) {
+        if (item.variantId && item.quantity > 0) {
+          try {
+            await firstValueFrom(
+              this.productService.send('product.variant.incrementStock', {
+                variantId: item.variantId,
+                quantity: item.quantity,
+              }),
+            );
+          } catch (err) {
+            console.error(
+              `Failed to restore stock for variant ${item.variantId} on rejection approval:`,
+              err,
+            );
+          }
+        }
+      }
+
       return await this.orderModel.findByIdAndUpdate(
         new Types.ObjectId(id),
         updateData,

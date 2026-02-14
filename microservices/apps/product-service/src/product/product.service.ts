@@ -36,6 +36,10 @@ import {
   ProductAttributeAllowValueDocument,
 } from './entities/product-attribute-allow-value';
 import {
+  ProductView,
+  ProductViewDocument,
+} from './entities/product-view.entity';
+import {
   Category,
   CategoryDocument,
 } from '../category/entities/category.entity';
@@ -53,6 +57,8 @@ export class ProductService {
     private productAttributeValueModel: Model<ProductAttributeValueDocument>,
     @InjectModel(ProductAttributeAllowValue.name)
     private productAttributeAllowValueModel: Model<ProductAttributeAllowValueDocument>,
+    @InjectModel(ProductView.name)
+    private productViewModel: Model<ProductViewDocument>,
     @InjectModel(Category.name)
     private categoryModel: Model<CategoryDocument>,
     @InjectModel(Brand.name) private brandModel: Model<BrandDocument>,
@@ -1389,5 +1395,135 @@ export class ProductService {
       .exec();
 
     return products.map((p) => p._id.toString());
+  }
+
+  // ============= PRODUCT VIEWS =============
+
+  /**
+   * Create or update a product view record.
+   * Upserts: if record exists for (product, guest), increments viewCount and updates lastViewedAt.
+   */
+  async createOrUpdateView(productId: string, guestId: string) {
+    if (
+      !Types.ObjectId.isValid(guestId) ||
+      !Types.ObjectId.isValid(productId)
+    ) {
+      return null;
+    }
+
+    const view = await this.productViewModel
+      .findOneAndUpdate(
+        {
+          product: new Types.ObjectId(productId),
+          guest: new Types.ObjectId(guestId),
+        },
+        {
+          $inc: { viewCount: 1 },
+          $set: { lastViewedAt: new Date() },
+          $setOnInsert: {
+            product: new Types.ObjectId(productId),
+            guest: new Types.ObjectId(guestId),
+          },
+        },
+        { upsert: true, new: true },
+      )
+      .exec();
+
+    return view;
+  }
+
+  /**
+   * Get recently viewed products for a guest, sorted by lastViewedAt descending.
+   * Returns product cards with defaultVariant, brand, category populated.
+   */
+  async getRecentlyViewedProducts(guestId: string, limit = 20) {
+    if (!Types.ObjectId.isValid(guestId)) {
+      return [];
+    }
+
+    const views = await this.productViewModel
+      .find({ guest: new Types.ObjectId(guestId) })
+      .sort({ lastViewedAt: -1 })
+      .limit(limit)
+      .select('product lastViewedAt viewCount')
+      .lean()
+      .exec();
+
+    if (views.length === 0) return [];
+
+    const productIds = views.map((v) => v.product);
+
+    const products = await this.productModel
+      .find({
+        _id: { $in: productIds },
+        isDeleted: false,
+        status: 'ACTIVE',
+      })
+      .populate('brand', 'name slug logo')
+      .populate('category', 'name slug')
+      .populate('defaultProductVariantId')
+      .lean()
+      .exec();
+
+    // Map products by ID and merge with view metadata
+    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+
+    // Maintain the order from views (sorted by lastViewedAt)
+    const result = views
+      .map((v) => {
+        const product = productMap.get(v.product.toString());
+        if (!product) return null;
+        return {
+          ...product,
+          defaultVariant: product.defaultProductVariantId || null,
+          lastViewedAt: v.lastViewedAt,
+          viewCount: v.viewCount,
+        };
+      })
+      .filter(Boolean);
+
+    return result;
+  }
+
+  /**
+   * Check stock availability for multiple variants at once.
+   * Returns an array with stock info for each requested variant.
+   */
+  async checkVariantsStock(
+    items: Array<{ variantId: string; quantity: number }>,
+  ) {
+    const results: any[] = [];
+
+    for (const item of items) {
+      if (!Types.ObjectId.isValid(item.variantId)) {
+        results.push({
+          variantId: item.variantId,
+          requested: item.quantity,
+          available: 0,
+          sufficient: false,
+        });
+        continue;
+      }
+
+      const variant = await this.productVariantModel
+        .findOne({
+          _id: new Types.ObjectId(item.variantId),
+          isDeleted: false,
+        })
+        .select('stock sku')
+        .lean()
+        .exec();
+
+      const available = variant?.stock ?? 0;
+      results.push({
+        variantId: item.variantId,
+        sku: variant?.sku || '',
+        requested: item.quantity,
+        available,
+        sufficient: available >= item.quantity,
+      });
+    }
+
+    return results;
   }
 }

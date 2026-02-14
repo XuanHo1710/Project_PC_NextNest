@@ -136,4 +136,38 @@ export class ProductController {
       createdBy: guest._id,
     });
   }
+
+  // ============= PRODUCT VIEW TRACKING =============
+
+  /** Track a product view for the logged-in guest (fire-and-forget) */
+  @Post('view/:productId')
+  trackProductView(@Param('productId') productId: string, @Guest() guest: any) {
+    this.productService.emit('product.createView', {
+      productId,
+      guestId: guest._id,
+    });
+    return { success: true };
+  }
+
+  /** Get recently viewed products for the logged-in guest */
+  @Get('recently-viewed/list')
+  getRecentlyViewed(@Guest() guest: any, @Query('limit') limit?: string) {
+    return this.productService.send('product.getRecentlyViewed', {
+      guestId: guest._id,
+      limit: limit ? parseInt(limit, 10) : 20,
+    });
+  }
+
+  // ============= CHECK STOCK =============
+
+  /** Check stock availability for multiple cart items */
+  @Post('check-stock')
+  @Public()
+  checkVariantsStock(
+    @Body() body: { items: Array<{ variantId: string; quantity: number }> },
+  ) {
+    return this.productService.send('product.checkVariantsStock', {
+      items: body.items,
+    });
+  }
 }

@@ -1,6 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import {
   Ctx,
+  EventPattern,
   MessagePattern,
   Payload,
   RmqContext,
@@ -620,6 +621,52 @@ export class ProductController {
   ) {
     return this.handleRmq(context, () =>
       this.productService.getProductIdsByCreator(data.createdBy),
+    );
+  }
+
+  @EventPattern('product.createView')
+  async createProductView(
+    @Payload() data: { productId: string; guestId: string },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef();
+    const msg = context.getMessage();
+    try {
+      await this.productService.createOrUpdateView(
+        data.productId,
+        data.guestId,
+      );
+      channel.ack(msg);
+    } catch (err) {
+      // Non-critical: just ack and log
+      this.logger.warn(
+        `Failed to track product view: ${err instanceof Error ? err.message : err}`,
+      );
+      channel.ack(msg);
+    }
+  }
+
+  @MessagePattern('product.getRecentlyViewed')
+  async getRecentlyViewed(
+    @Payload() data: { guestId: string; limit?: number },
+    @Ctx() context: RmqContext,
+  ) {
+    return this.handleRmq(context, () =>
+      this.productService.getRecentlyViewedProducts(
+        data.guestId,
+        data.limit || 20,
+      ),
+    );
+  }
+
+  @MessagePattern('product.checkVariantsStock')
+  async checkVariantsStock(
+    @Payload()
+    data: { items: Array<{ variantId: string; quantity: number }> },
+    @Ctx() context: RmqContext,
+  ) {
+    return this.handleRmq(context, () =>
+      this.productService.checkVariantsStock(data.items),
     );
   }
 }

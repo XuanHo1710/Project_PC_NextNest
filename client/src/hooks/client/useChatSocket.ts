@@ -5,6 +5,7 @@ import {
   IChatMessage,
   IConversation,
 } from "@/services/client/chat.client.service";
+import useOnlineUsersStore from "@/hooks/useOnlineUsers";
 
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL + "/chat";
 
@@ -21,11 +22,10 @@ export function useChatSocket({
 }: UseChatSocketOptions) {
   const socketRef = useRef<Socket | null>(null);
   const queryClient = useQueryClient();
-  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  // Read online users from global Zustand store
+  const onlineUsers = useOnlineUsersStore((s) => s.onlineUsers);
+  const lastActiveMap = useOnlineUsersStore((s) => s.lastActiveMap);
   const [typingUsers, setTypingUsers] = useState<Record<string, string[]>>({});
-  const [lastActiveMap, setLastActiveMap] = useState<Record<string, string>>(
-    {},
-  );
 
   // Connect socket
   useEffect(() => {
@@ -43,42 +43,13 @@ export function useChatSocket({
 
     socket.on("connect", () => {
       console.log("[Chat Socket] Connected:", socket.id);
-
-      // Get initial online users
-      socket.emit("users:online", {}, (res: { onlineUsers: string[] }) => {
-        if (res?.onlineUsers) {
-          setOnlineUsers(new Set(res.onlineUsers));
-        }
-      });
     });
 
     socket.on("disconnect", () => {
       console.log("[Chat Socket] Disconnected");
     });
 
-    // ---- Online status ----
-    socket.on("user:online", (data: { userId: string }) => {
-      setOnlineUsers((prev) => {
-        const next = new Set(prev);
-        next.add(data.userId);
-        return next;
-      });
-    });
-
-    socket.on(
-      "user:offline",
-      (data: { userId: string; lastActive: string }) => {
-        setOnlineUsers((prev) => {
-          const next = new Set(prev);
-          next.delete(data.userId);
-          return next;
-        });
-        setLastActiveMap((prev) => ({
-          ...prev,
-          [data.userId]: data.lastActive,
-        }));
-      },
-    );
+    // Online status is now handled globally by ChatSocketProvider + useOnlineUsersStore
 
     // ---- Typing ----
     socket.on(

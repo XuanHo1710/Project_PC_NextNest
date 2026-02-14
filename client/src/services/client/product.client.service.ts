@@ -476,6 +476,35 @@ class ProductClientService {
     });
     return response.data;
   }
+
+  // ============== PRODUCT VIEW TRACKING ==============
+
+  /** Track a product view (for logged-in users) */
+  async trackProductView(productId: string) {
+    const response = await axiosClient.post(
+      `${this.baseURL}/view/${productId}`,
+    );
+    return response.data;
+  }
+
+  /** Get recently viewed products */
+  async getRecentlyViewedProducts(limit = 20) {
+    const response = await axiosClient.get(
+      `${this.baseURL}/recently-viewed/list`,
+      { params: { limit } },
+    );
+    return response.data;
+  }
+
+  // ============== STOCK CHECK ==============
+
+  /** Check stock availability for cart items */
+  async checkCartStock(items: Array<{ variantId: string; quantity: number }>) {
+    const response = await axiosClient.post(`${this.baseURL}/check-stock`, {
+      items,
+    });
+    return response.data;
+  }
 }
 
 export const productClientService = new ProductClientService();

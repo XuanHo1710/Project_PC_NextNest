@@ -39,6 +39,7 @@ import useAuthUser from '@/hooks/useAuthUser';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import BreadcrumbNav from '@/components/client/Breadcrumb/Breadcrumb';
 import { useChatSocket } from '@/hooks/client/useChatSocket';
+import useOnlineUsersStore from '@/hooks/useOnlineUsers';
 import { timeAgo } from '@/utils/formatDateTime';
 
 // Extended product type from findBySlug (includes variants + allowValues)
@@ -71,8 +72,14 @@ export default function ProductDetailClient() {
     const [selectedVariant, setSelectedVariant] = useState<IProductVariant | null>(null);
     const [selectedCombination, setSelectedCombination] = useState<Record<string, string>>({});
 
-    // Online status via chat socket
-    const { isUserOnline, getLastActive } = useChatSocket({
+    // Online status from global store (updated by ChatSocketProvider)
+    const onlineUsers = useOnlineUsersStore((s) => s.onlineUsers);
+    const lastActiveMap = useOnlineUsersStore((s) => s.lastActiveMap);
+    const isUserOnline = (uid: string) => onlineUsers.has(uid);
+    const getLastActive = (uid: string) => lastActiveMap[uid] ?? null;
+
+    // Chat socket (for sending messages, typing, etc. — online status handled globally)
+    const chatSocket = useChatSocket({
         userId: user?._id,
         activeConversationId: null,
     });
@@ -82,6 +89,13 @@ export default function ProductDetailClient() {
         queryFn: () => productClientService.getProductsBySlug(slug as string),
         staleTime: 1000 * 60 * 5,
     });
+
+    // Track product view for logged-in users (fire-and-forget)
+    useEffect(() => {
+        if (product?._id && user?._id) {
+            productClientService.trackProductView(product._id).catch(() => { });
+        }
+    }, [product?._id, user?._id]);
 
     // Wishlist status check
     const { data: isWishlisted } = useQuery<boolean>({

@@ -3,7 +3,7 @@ import CartProduct from "@/components/client/Cart/CartProduct";
 import useCartStore from "@/hooks/useCart";
 import { Button, Form, Input, Select, Empty, Divider, Avatar } from "antd";
 import TextArea from "antd/es/input/TextArea";
-import { ShoppingCartOutlined, SafetyCertificateOutlined, CarOutlined, CustomerServiceOutlined } from "@ant-design/icons";
+import { ShoppingCartOutlined, SafetyCertificateOutlined, CarOutlined, CustomerServiceOutlined, WarningOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
@@ -14,10 +14,18 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ICartItemOrder } from "@/types/order";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
-import { accountGuestService } from "@/services/client";
+import { accountGuestService, productClientService } from "@/services/client";
 import { formatCurrencyVND } from "@/utils/productHelpers";
 import { District, IOrderData, Province, Ward } from "@/types";
 import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
+
+interface StockCheckItem {
+    variantId: string;
+    sku: string;
+    requested: number;
+    available: number;
+    sufficient: boolean;
+}
 
 interface OrderFormData {
     fullname: string;
@@ -67,6 +75,29 @@ export default function CartClient() {
 
     // Lấy saved addresses từ profile
     const savedAddresses = profile?.addresses || [];
+
+    // Stock check — verify stock availability for all cart items on load
+    const stockCheckItems = cart?.cartItems
+        .filter(item => item.variant?._id)
+        .map(item => ({ variantId: item.variant._id, quantity: item.quantity })) || [];
+
+    const { data: stockCheckResult } = useQuery<StockCheckItem[]>({
+        queryKey: ['cart-stock-check', stockCheckItems.map(i => `${i.variantId}:${i.quantity}`).join(',')],
+        queryFn: () => productClientService.checkCartStock(stockCheckItems),
+        enabled: stockCheckItems.length > 0,
+        staleTime: 1000 * 30, // refresh every 30s
+        refetchOnWindowFocus: true,
+    });
+
+    // Map variantId → stock check info for quick lookup
+    const stockMap = new Map<string, StockCheckItem>();
+    if (stockCheckResult) {
+        for (const item of stockCheckResult) {
+            stockMap.set(item.variantId, item);
+        }
+    }
+
+    const hasStockIssues = stockCheckResult?.some(item => !item.sufficient) || false;
 
     const [form] = Form.useForm();
 
@@ -205,6 +236,12 @@ export default function CartClient() {
             return;
         }
 
+        // Validate stock availability
+        if (hasStockIssues) {
+            toast.error("Một số sản phẩm trong giỏ hàng đã hết hàng hoặc không đủ số lượng. Vui lòng kiểm tra lại!");
+            return;
+        }
+
         // Validate tổng tiền phải > 0 và >= đơn hàng tối thiểu
         const totalAmount = calculateTotal();
         // const minOrderAmount = 100000; // 100k VND
@@ -295,6 +332,19 @@ export default function CartClient() {
                         <div className="grid grid-cols-12 gap-6">
                             {/* Cart Items Column */}
                             <div className="col-span-12 lg:col-span-7">
+                                {/* Stock warning banner */}
+                                {hasStockIssues && (
+                                    <div className="mb-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 flex items-start gap-3">
+                                        <WarningOutlined className="text-orange-500 text-lg mt-0.5" />
+                                        <div>
+                                            <p className="font-semibold text-orange-700 dark:text-orange-400 text-sm">Một số sản phẩm đã thay đổi tồn kho</p>
+                                            <p className="text-xs text-orange-600 dark:text-orange-300 mt-1">
+                                                Vui lòng kiểm tra lại số lượng hoặc xóa sản phẩm hết hàng trước khi đặt hàng.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
                                     {/* Cart Header */}
                                     <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-750 border-b border-gray-100 dark:border-gray-700 text-xs font-medium text-gray-500 uppercase tracking-wide">
@@ -311,6 +361,7 @@ export default function CartClient() {
                                                 key={cartItem.variant._id}
                                                 cartItem={cartItem}
                                                 handle={{ removeFromCart, updateQuantity }}
+                                                stockInfo={stockMap.get(cartItem.variant?._id)}
                                             />
                                         ))}
                                     </div>

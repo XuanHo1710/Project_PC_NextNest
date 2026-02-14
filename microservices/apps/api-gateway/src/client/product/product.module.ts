@@ -34,6 +34,5 @@ import { ProductAttributeValueController } from 'client/product/product-attribut
     ProductAttributeController,
     ProductVariantController,
   ],
-  providers: [],
 })
 export class ProductModule {}

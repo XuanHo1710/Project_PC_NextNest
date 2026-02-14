@@ -1,9 +1,16 @@
 import { ICartItem } from "@/types/order";
 import { formatCurrencyVND } from "@/utils/productHelpers";
 import { Button, Image, Tag, Popconfirm } from "antd"
-import { DeleteOutlined, MinusOutlined, PlusOutlined } from "@ant-design/icons";
+import { DeleteOutlined, MinusOutlined, PlusOutlined, WarningFilled } from "@ant-design/icons";
 import Link from "next/link";
 
+interface StockCheckItem {
+    variantId: string;
+    sku: string;
+    requested: number;
+    available: number;
+    sufficient: boolean;
+}
 
 interface CartProductProps {
     cartItem: ICartItem;
@@ -11,10 +18,13 @@ interface CartProductProps {
         removeFromCart: (variantId: string) => void;
         updateQuantity: (variantId: string, delta: number) => void;
     };
+    stockInfo?: StockCheckItem;
 }
 
-const CartProduct = ({ cartItem, handle }: CartProductProps) => {
+const CartProduct = ({ cartItem, handle, stockInfo }: CartProductProps) => {
     const { product, variant, quantity, price, subtotal } = cartItem;
+    const isOutOfStock = stockInfo && stockInfo.available === 0;
+    const isInsufficientStock = stockInfo && !stockInfo.sufficient && stockInfo.available > 0;
 
     // Handle deleted/non-existent variant
     if (!variant || !variant._id) {
@@ -56,7 +66,7 @@ const CartProduct = ({ cartItem, handle }: CartProductProps) => {
     const hasDiscount = variant.discount > 0;
 
     return (
-        <div className="group relative flex gap-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-750">
+        <div className={`group relative flex gap-4 p-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 transition-colors hover:bg-gray-50/50 dark:hover:bg-gray-750 ${isOutOfStock ? 'opacity-60 bg-red-50/50 dark:bg-red-900/10' : ''}`}>
             {/* Product Image */}
             <Link href={`/product/${product.slug}`} className="flex-shrink-0">
                 <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 bg-gray-50">
@@ -91,6 +101,20 @@ const CartProduct = ({ cartItem, handle }: CartProductProps) => {
                                         {val}
                                     </Tag>
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Stock warning */}
+                        {isOutOfStock && (
+                            <div className="flex items-center gap-1.5 mt-2 text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md">
+                                <WarningFilled className="text-xs" />
+                                <span className="text-xs font-medium">Sản phẩm đã hết hàng</span>
+                            </div>
+                        )}
+                        {isInsufficientStock && (
+                            <div className="flex items-center gap-1.5 mt-2 text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded-md">
+                                <WarningFilled className="text-xs" />
+                                <span className="text-xs font-medium">Chỉ còn {stockInfo.available} sản phẩm (bạn chọn {stockInfo.requested})</span>
                             </div>
                         )}
                     </div>
