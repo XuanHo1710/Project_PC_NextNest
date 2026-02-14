@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Input, Button, Avatar, Empty, Badge, Spin } from 'antd';
+import { Input, Button, Avatar, Empty, Badge, Spin, message as antMessage, Tooltip } from 'antd';
 import {
     SendOutlined,
     ArrowLeftOutlined,
@@ -9,6 +9,10 @@ import {
     MessageOutlined,
     SearchOutlined,
     LoadingOutlined,
+    PictureOutlined,
+    VideoCameraOutlined,
+    PaperClipOutlined,
+    CloseCircleFilled,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import useAuthUser from '@/hooks/useAuthUser';
@@ -23,6 +27,7 @@ import {
 import { useChatSocket } from '@/hooks/client/useChatSocket';
 import { IConversation, IChatMessage } from '@/services/client/chat.client.service';
 import { timeAgo } from '@/utils/formatDateTime';
+import { UploadImage } from '@/utils/uploadImage';
 
 interface ChatContentProps {
     /** Pre-selected conversation ID from URL */
@@ -33,13 +38,17 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
     const router = useRouter();
     const { user } = useAuthUser();
     const virtuosoRef = useRef<VirtuosoHandle>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [input, setInput] = useState('');
     const [searchConv, setSearchConv] = useState('');
     const [activeConvId, setActiveConvId] = useState<string | null>(initialConversationId ?? null);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [previewFiles, setPreviewFiles] = useState<{ file: File; url: string; type: 'IMAGE' | 'VIDEO' }[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
 
     const userId = user?._id;
-    const userName = user?.email?.split('@')[0] || 'Khách';
+    const userName = user?.fullname || 'Khách';
 
     // Sync when initialConversationId changes (e.g., from URL navigation)
     useEffect(() => {
@@ -124,23 +133,99 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     // ==================== Send message via socket ====================
-    const handleSend = () => {
-        if (!input.trim() || !activeConvId || !userId) return;
+    const handleSend = async () => {
+        if (!activeConvId || !userId) return;
 
-        socketSendMessage({
-            conversationId: activeConvId,
-            senderName: userName,
-            content: input.trim(),
-            type: 'TEXT',
-        });
+        // Send pending media files
+        if (previewFiles.length > 0) {
+            setUploading(true);
+            try {
+                for (const pf of previewFiles) {
+                    const url = await UploadImage(pf.file);
+                    socketSendMessage({
+                        conversationId: activeConvId,
+                        senderName: userName,
+                        content: url,
+                        type: pf.type,
+                    });
+                }
+                setPreviewFiles([]);
+            } catch {
+                antMessage.error('Upload thất bại, vui lòng thử lại');
+            } finally {
+                setUploading(false);
+            }
+        }
 
-        setInput('');
-        stopTyping(activeConvId);
+        // Send text if any
+        if (input.trim()) {
+            socketSendMessage({
+                conversationId: activeConvId,
+                senderName: userName,
+                content: input.trim(),
+                type: 'TEXT',
+            });
+            setInput('');
+            stopTyping(activeConvId);
+        }
 
         setTimeout(() => {
             virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-        }, 100);
+        }, 150);
     };
+
+    // ==================== File upload helpers ====================
+    const handleFileSelect = (files: FileList | null) => {
+        if (!files) return;
+        const newPreviews: typeof previewFiles = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.size > 50 * 1024 * 1024) {
+                antMessage.warning(`${file.name} vượt quá 50MB, bỏ qua`);
+                continue;
+            }
+            const isVideo = file.type.startsWith('video/');
+            const isImage = file.type.startsWith('image/');
+            if (!isVideo && !isImage) {
+                antMessage.warning(`${file.name} không phải ảnh/video, bỏ qua`);
+                continue;
+            }
+            newPreviews.push({
+                file,
+                url: URL.createObjectURL(file),
+                type: isVideo ? 'VIDEO' : 'IMAGE',
+            });
+        }
+        if (newPreviews.length > 0) {
+            setPreviewFiles((prev) => [...prev, ...newPreviews]);
+        }
+    };
+
+    const removePreview = (index: number) => {
+        setPreviewFiles((prev) => {
+            const removed = prev[index];
+            URL.revokeObjectURL(removed.url);
+            return prev.filter((_, i) => i !== index);
+        });
+    };
+
+    // Drag & drop
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    }, []);
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        handleFileSelect(e.dataTransfer.files);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // ==================== Typing indicator ====================
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,38 +287,40 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                 <Spin indicator={<LoadingOutlined className="text-blue-500" />} size="small" />
             ) : hasNextPage ? (
                 <span className="text-xs text-gray-400">Cuộn lên để tải thêm</span>
-            ) : (
+            ) : messages.length > 0 ? (
                 <span className="text-xs text-gray-400">Đầu cuộc trò chuyện</span>
-            )}
+            ) : null}
         </div>
     );
 
     // ==================== Render message content based on type ====================
-    const renderMessageContent = (msg: IChatMessage) => {
+    const renderMessageContent = (msg: IChatMessage, isMe: boolean) => {
         switch (msg.type) {
             case 'IMAGE':
                 return (
-                    <div className="max-w-xs">
+                    <div className="max-w-[280px]">
                         <img
                             src={msg.content}
                             alt="Ảnh"
-                            className="rounded-lg max-w-full h-auto cursor-pointer"
+                            className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                            loading="lazy"
                             onClick={() => window.open(msg.content, '_blank')}
                         />
                     </div>
                 );
             case 'VIDEO':
                 return (
-                    <div className="max-w-xs">
+                    <div className="max-w-[320px]">
                         <video
                             src={msg.content}
                             controls
+                            preload="metadata"
                             className="rounded-lg max-w-full h-auto"
                         />
                     </div>
                 );
             default:
-                return <>{msg.content}</>;
+                return <span className="break-words whitespace-pre-wrap">{msg.content}</span>;
         }
     };
 
@@ -354,7 +441,22 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                 </div>
 
                 {/* Chat Area */}
-                <div className="flex-1 flex flex-col min-w-0">
+                <div
+                    className={`flex-1 flex flex-col min-w-0 relative ${isDragging ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
+                    onDragOver={activeConv ? handleDragOver : undefined}
+                    onDragLeave={activeConv ? handleDragLeave : undefined}
+                    onDrop={activeConv ? handleDrop : undefined}
+                >
+                    {/* Drag overlay */}
+                    {isDragging && (
+                        <div className="absolute inset-0 bg-blue-50/80 dark:bg-blue-900/40 z-50 flex items-center justify-center pointer-events-none">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl px-8 py-6 shadow-lg text-center">
+                                <PictureOutlined className="text-4xl text-blue-500 mb-2" />
+                                <p className="text-sm text-gray-600 dark:text-gray-300 m-0">Thả ảnh/video vào đây</p>
+                            </div>
+                        </div>
+                    )}
+
                     {activeConv && activeOther ? (
                         <>
                             {/* Chat Header */}
@@ -409,6 +511,8 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                         initialTopMostItemIndex={messages.length - 1}
                                         followOutput="smooth"
                                         startReached={handleStartReached}
+                                        overscan={{ main: 200, reverse: 400 }}
+                                        increaseViewportBy={{ top: 400, bottom: 200 }}
                                         components={{ Header: VirtuosoHeader }}
                                         itemContent={(index, msg) => {
                                             const actualIndex = index - firstItemIndex;
@@ -452,14 +556,21 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                                                 {activeOther.name.charAt(0).toUpperCase()}
                                                             </Avatar>
                                                         )}
-                                                        <div className="max-w-[75%]">
+                                                        <div className={`max-w-[75%] ${msg.type === 'IMAGE' || msg.type === 'VIDEO' ? '' : ''}`}>
                                                             <div
-                                                                className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isMe
-                                                                    ? 'bg-blue-500 text-white rounded-br-sm'
-                                                                    : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-sm shadow-sm'
+                                                                className={`${msg.type === 'IMAGE' || msg.type === 'VIDEO'
+                                                                    ? 'p-1 rounded-xl'
+                                                                    : 'px-4 py-2.5 rounded-2xl text-sm leading-relaxed'
+                                                                    } ${isMe
+                                                                        ? msg.type === 'IMAGE' || msg.type === 'VIDEO'
+                                                                            ? 'bg-blue-500/10 rounded-br-sm'
+                                                                            : 'bg-blue-500 text-white rounded-br-sm'
+                                                                        : msg.type === 'IMAGE' || msg.type === 'VIDEO'
+                                                                            ? 'bg-white dark:bg-gray-700 rounded-bl-sm shadow-sm'
+                                                                            : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-sm shadow-sm'
                                                                     }`}
                                                             >
-                                                                {renderMessageContent(msg)}
+                                                                {renderMessageContent(msg, isMe)}
                                                             </div>
                                                             <p className={`text-[10px] text-gray-400 mt-1 ${isMe ? 'text-right' : 'text-left'}`}>
                                                                 {formatTime(msg.createdAt)}
@@ -482,9 +593,56 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                 </div>
                             )}
 
+                            {/* File preview strip */}
+                            {previewFiles.length > 0 && (
+                                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                                    <div className="flex gap-2 overflow-x-auto pb-1">
+                                        {previewFiles.map((pf, i) => (
+                                            <div key={i} className="relative shrink-0 group">
+                                                {pf.type === 'IMAGE' ? (
+                                                    <img
+                                                        src={pf.url}
+                                                        alt="Preview"
+                                                        className="w-16 h-16 object-cover rounded-lg border border-gray-300 dark:border-gray-600"
+                                                    />
+                                                ) : (
+                                                    <div className="w-16 h-16 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-200 dark:bg-gray-700">
+                                                        <VideoCameraOutlined className="text-xl text-gray-500" />
+                                                    </div>
+                                                )}
+                                                <CloseCircleFilled
+                                                    className="absolute -top-1.5 -right-1.5 text-red-500 text-sm cursor-pointer bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    onClick={() => removePreview(i)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Chat Input */}
                             <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*,video/*"
+                                    multiple
+                                    onChange={(e) => {
+                                        handleFileSelect(e.target.files);
+                                        e.target.value = '';
+                                    }}
+                                />
                                 <div className="flex items-center gap-2">
+                                    <Tooltip title="Gửi ảnh/video">
+                                        <Button
+                                            type="text"
+                                            icon={<PaperClipOutlined />}
+                                            onClick={() => fileInputRef.current?.click()}
+                                            className="!text-gray-500 hover:!text-blue-500"
+                                            disabled={uploading}
+                                        />
+                                    </Tooltip>
                                     <Input
                                         placeholder="Nhập tin nhắn..."
                                         value={input}
@@ -492,14 +650,16 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                         onPressEnter={handleSend}
                                         className="!rounded-full"
                                         size="large"
+                                        disabled={uploading}
                                     />
                                     <Button
                                         type="primary"
                                         shape="circle"
                                         size="large"
-                                        icon={<SendOutlined />}
+                                        icon={uploading ? <LoadingOutlined /> : <SendOutlined />}
                                         onClick={handleSend}
-                                        disabled={!input.trim()}
+                                        disabled={(!input.trim() && previewFiles.length === 0) || uploading}
+                                        loading={uploading}
                                     />
                                 </div>
                             </div>

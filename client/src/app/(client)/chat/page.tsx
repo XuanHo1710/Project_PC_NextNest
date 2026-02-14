@@ -23,18 +23,23 @@ export default function ChatPage() {
     const { user } = useAuthUser();
 
     const userId = user?._id;
-    const userName = user?.email?.split('@')[0] || 'Khách';
+    const userName = user?.fullname || 'Khách';
+    const userAvatar = user?.avatar;
 
     const sellerId = searchParams.get('sellerId');
     const sellerName = searchParams.get('sellerName') || 'Người bán';
+    const sellerAvatar = searchParams.get('sellerAvatar') || undefined;
 
-    const { data: conversations = [] } = useConversations(userId);
+    const { data: conversations = [], isLoading: loadingConvs } = useConversations(userId);
     const findOrCreate = useFindOrCreateConversation();
     const didRedirect = useRef(false);
 
     // ==================== Auto-redirect when sellerId is present ====================
     useEffect(() => {
         if (!sellerId || !userId || didRedirect.current) return;
+
+        // Wait until conversations are loaded before deciding
+        if (loadingConvs) return;
 
         // Check if a conversation with this user already exists
         const existing = conversations.find((c) =>
@@ -47,29 +52,29 @@ export default function ChatPage() {
             return;
         }
 
-        // Conversations loaded but no match — create one
-        if (conversations.length > 0 || !findOrCreate.isPending) {
-            if (!findOrCreate.isPending && !findOrCreate.isSuccess) {
-                findOrCreate.mutate(
-                    {
-                        userId,
-                        userName,
-                        userRole: 'buyer',
-                        otherUserId: sellerId,
-                        otherUserName: sellerName,
-                        otherUserRole: 'seller',
+        // No existing conversation — create one
+        if (!findOrCreate.isPending && !findOrCreate.isSuccess) {
+            findOrCreate.mutate(
+                {
+                    userId,
+                    userName,
+                    userAvatar,
+                    userRole: 'buyer',
+                    otherUserId: sellerId,
+                    otherUserName: sellerName,
+                    otherUserAvatar: sellerAvatar,
+                    otherUserRole: 'seller',
+                },
+                {
+                    onSuccess: (conv) => {
+                        didRedirect.current = true;
+                        router.replace(`/chat/${conv._id}`);
                     },
-                    {
-                        onSuccess: (conv) => {
-                            didRedirect.current = true;
-                            router.replace(`/chat/${conv._id}`);
-                        },
-                    },
-                );
-            }
+                },
+            );
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sellerId, userId, conversations]);
+    }, [sellerId, userId, loadingConvs, conversations]);
 
     // Show spinner while redirecting
     if (sellerId && !didRedirect.current) {

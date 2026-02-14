@@ -8,6 +8,7 @@ import "./globals.css";
 
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { ToastContainer } from 'react-toastify';
+import ChatSocketProvider from '@/providers/ChatSocketProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
 
 const geistSans = Geist({
@@ -58,7 +59,9 @@ export default function RootLayout({
 
         <ToastContainer position='top-right'></ToastContainer>
         <QueryProvider>
-          <AntdRegistry>{children}</AntdRegistry>
+          <ChatSocketProvider>
+            <AntdRegistry>{children}</AntdRegistry>
+          </ChatSocketProvider>
         </QueryProvider>
       </body>
     </html>

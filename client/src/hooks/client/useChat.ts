@@ -19,7 +19,7 @@ export function useConversations(userId: string | undefined) {
     queryKey: ["chat-conversations", userId],
     queryFn: () => chatClientService.getConversations(userId!),
     enabled: !!userId,
-    refetchInterval: 15000, // Poll every 15s for new conversations
+    refetchInterval: 30000, // Fallback poll (real-time via socket)
   });
 }
 
@@ -108,6 +108,6 @@ export function useUnreadCount(userId: string | undefined) {
     queryKey: ["chat-unread", userId],
     queryFn: () => chatClientService.getUnreadCount(userId!),
     enabled: !!userId,
-    refetchInterval: 30000, // Poll every 30s
+    refetchInterval: 60000, // Fallback poll every 60s (real-time via socket)
   });
 }

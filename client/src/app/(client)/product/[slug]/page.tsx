@@ -433,7 +433,7 @@ export default function ProductDetailClient() {
                                                 icon={<CommentOutlined />}
                                                 className="!rounded-lg !text-blue-500 !border-blue-300 hover:!bg-blue-50"
                                                 onClick={() => {
-                                                    window.open(`/chat?sellerId=${creator._id}&sellerName=${encodeURIComponent(creator.fullname)}`, '_blank');
+                                                    window.open(`/chat?sellerId=${creator._id}&sellerName=${encodeURIComponent(creator.fullname)}${creator.avatar ? `&sellerAvatar=${encodeURIComponent(creator.avatar)}` : ''}`, '_blank');
                                                 }}
                                             >
                                                 Chat với người bán
