@@ -48,6 +48,11 @@ export class ProductController {
     return this.productService.send('product.search', { searchDto });
   }
 
+  @Post('reindex-elasticsearch')
+  reindexElasticsearch() {
+    return this.productService.send('product.reindex.elasticsearch', {});
+  }
+
   @Patch('updateMany')
   updateManyProducts(@Body() body: { ids: string[]; typeUpdate: string }) {
     return this.productService.send('product.updateMany', {

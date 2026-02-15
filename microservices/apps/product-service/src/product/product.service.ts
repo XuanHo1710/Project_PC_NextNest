@@ -1654,4 +1654,53 @@ export class ProductService {
 
     return results;
   }
+
+  // ============= ELASTICSEARCH REINDEX =============
+  /**
+   * Fetch ALL active products + their variants from MongoDB,
+   * emit per-product events to elasticsearch-service for full reindex.
+   * Reuses existing es.variant.deleteAndRecreate handler.
+   */
+  async reindexAllToElasticsearch() {
+    this.logger.log('Starting full Elasticsearch reindex…');
+
+    const products = await this.productModel
+      .find({ isDeleted: { $ne: true } })
+      .populate('brand', 'name slug logo')
+      .populate('category', 'name slug')
+      .lean()
+      .exec();
+
+    let totalVariants = 0;
+
+    for (const product of products) {
+      const variants = await this.productVariantModel
+        .find({ product: product._id, isDeleted: { $ne: true } })
+        .lean()
+        .exec();
+
+      if (variants.length === 0) continue;
+
+      totalVariants += variants.length;
+
+      // Reuse existing handler — delete old docs for this product, then bulk index new
+      this.emitEsEvent('es.variant.deleteAndRecreate', {
+        productId: (product._id as any).toString(),
+        variants,
+        product,
+        brand: product.brand || null,
+        category: product.category || null,
+      });
+    }
+
+    this.logger.log(
+      `Reindex dispatched: ${products.length} products, ${totalVariants} variants`,
+    );
+
+    return {
+      message: 'Reindex dispatched',
+      products: products.length,
+      variants: totalVariants,
+    };
+  }
 }

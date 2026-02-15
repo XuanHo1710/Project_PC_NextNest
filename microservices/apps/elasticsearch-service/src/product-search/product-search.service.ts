@@ -12,124 +12,172 @@ interface ProductVariantDoc {
   discount: number;
   images: string[];
   combination: Record<string, string>;
-  // Flattened combination text for full-text search
   combinationText: string;
-  // Parent product info
   productId: string;
   productName: string;
   productSlug: string;
   productStatus: string;
   productDescription?: string;
-  // Brand & category info
   brandName?: string;
   brandId?: string;
   categoryName?: string;
   categorySlug?: string;
   categoryId?: string;
-  // Computed
   displayPrice: number;
   createdAt?: string;
   updatedAt?: string;
   isDeleted: boolean;
 }
 
+const INDEX_SETTINGS = {
+  analysis: {
+    analyzer: {
+      vietnamese_analyzer: {
+        type: 'custom' as const,
+        tokenizer: 'standard',
+        filter: ['lowercase', 'asciifolding'],
+      },
+    },
+  },
+  number_of_shards: 1,
+  number_of_replicas: 0,
+};
+
+const INDEX_MAPPINGS = {
+  properties: {
+    variantId: { type: 'keyword' as const },
+    sku: {
+      type: 'text' as const,
+      analyzer: 'vietnamese_analyzer',
+      fields: { keyword: { type: 'keyword' as const } },
+    },
+    subDescription: {
+      type: 'text' as const,
+      analyzer: 'vietnamese_analyzer',
+    },
+    price: { type: 'float' as const },
+    stock: { type: 'integer' as const },
+    discount: { type: 'float' as const },
+    images: { type: 'keyword' as const },
+    combination: { type: 'object' as const, enabled: true },
+    combinationText: {
+      type: 'text' as const,
+      analyzer: 'vietnamese_analyzer',
+    },
+    productId: { type: 'keyword' as const },
+    productName: {
+      type: 'text' as const,
+      analyzer: 'vietnamese_analyzer',
+      fields: { keyword: { type: 'keyword' as const } },
+    },
+    productSlug: { type: 'keyword' as const },
+    productStatus: { type: 'keyword' as const },
+    productDescription: {
+      type: 'text' as const,
+      analyzer: 'vietnamese_analyzer',
+    },
+    brandName: {
+      type: 'text' as const,
+      analyzer: 'vietnamese_analyzer',
+      fields: { keyword: { type: 'keyword' as const } },
+    },
+    brandId: { type: 'keyword' as const },
+    categoryName: {
+      type: 'text' as const,
+      analyzer: 'vietnamese_analyzer',
+      fields: { keyword: { type: 'keyword' as const } },
+    },
+    categorySlug: { type: 'keyword' as const },
+    categoryId: { type: 'keyword' as const },
+    displayPrice: { type: 'float' as const },
+    createdAt: { type: 'date' as const },
+    updatedAt: { type: 'date' as const },
+    isDeleted: { type: 'boolean' as const },
+  },
+};
+
 @Injectable()
 export class ProductSearchService implements OnModuleInit {
   private readonly logger = new Logger(ProductSearchService.name);
   private readonly esClient: Client;
+  private indexReady = false;
 
   constructor() {
-    this.esClient = new Client({
-      node: process.env.ELASTICSEARCH_URL,
-    });
+    const esUrl = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
+    this.logger.log(`Connecting to Elasticsearch at: ${esUrl}`);
+    this.esClient = new Client({ node: esUrl });
   }
 
   async onModuleInit() {
-    await this.ensureIndex();
+    // Retry up to 5 times (ES may still be booting)
+    for (let i = 0; i < 5; i++) {
+      try {
+        await this.ensureIndex();
+        return;
+      } catch (error) {
+        this.logger.warn(
+          `ensureIndex attempt ${i + 1}/5 failed: ${error.message}`,
+        );
+        if (i < 4) await this.sleep(3000);
+      }
+    }
+    this.logger.error('Could not create ES index after 5 attempts');
   }
 
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Ensure the index exists with correct mappings.
+   * If it was auto‑created (no custom analyzer), delete + recreate.
+   */
   private async ensureIndex() {
-    try {
-      const exists = await this.esClient.indices.exists({
+    const exists = await this.esClient.indices.exists({
+      index: PRODUCT_VARIANT_INDEX,
+    });
+
+    if (exists) {
+      // Verify the index has our custom analyzer
+      const settings = await this.esClient.indices.getSettings({
         index: PRODUCT_VARIANT_INDEX,
       });
+      const indexSettings = (settings as any)?.[PRODUCT_VARIANT_INDEX]?.settings
+        ?.index;
+      const hasAnalyzer =
+        indexSettings?.analysis?.analyzer?.vietnamese_analyzer;
 
-      if (!exists) {
-        await this.esClient.indices.create({
-          index: PRODUCT_VARIANT_INDEX,
-          settings: {
-            analysis: {
-              analyzer: {
-                vietnamese_analyzer: {
-                  type: 'custom',
-                  tokenizer: 'standard',
-                  filter: ['lowercase', 'asciifolding'],
-                },
-              },
-            },
-            number_of_shards: 1,
-            number_of_replicas: 0,
-          },
-          mappings: {
-            properties: {
-              variantId: { type: 'keyword' },
-              sku: {
-                type: 'text',
-                analyzer: 'vietnamese_analyzer',
-                fields: { keyword: { type: 'keyword' } },
-              },
-              subDescription: {
-                type: 'text',
-                analyzer: 'vietnamese_analyzer',
-              },
-              price: { type: 'float' },
-              stock: { type: 'integer' },
-              discount: { type: 'float' },
-              images: { type: 'keyword' },
-              combination: { type: 'object', enabled: true },
-              combinationText: {
-                type: 'text',
-                analyzer: 'vietnamese_analyzer',
-              },
-              productId: { type: 'keyword' },
-              productName: {
-                type: 'text',
-                analyzer: 'vietnamese_analyzer',
-                fields: { keyword: { type: 'keyword' } },
-              },
-              productSlug: { type: 'keyword' },
-              productStatus: { type: 'keyword' },
-              productDescription: {
-                type: 'text',
-                analyzer: 'vietnamese_analyzer',
-              },
-              brandName: {
-                type: 'text',
-                analyzer: 'vietnamese_analyzer',
-                fields: { keyword: { type: 'keyword' } },
-              },
-              brandId: { type: 'keyword' },
-              categoryName: {
-                type: 'text',
-                analyzer: 'vietnamese_analyzer',
-                fields: { keyword: { type: 'keyword' } },
-              },
-              categorySlug: { type: 'keyword' },
-              categoryId: { type: 'keyword' },
-              displayPrice: { type: 'float' },
-              createdAt: { type: 'date' },
-              updatedAt: { type: 'date' },
-              isDeleted: { type: 'boolean' },
-            },
-          },
-        });
-        this.logger.log(`Created index: ${PRODUCT_VARIANT_INDEX}`);
+      if (!hasAnalyzer) {
+        this.logger.warn(
+          'Index exists but missing vietnamese_analyzer — recreating…',
+        );
+        await this.esClient.indices.delete({ index: PRODUCT_VARIANT_INDEX });
+        // Fall through to create
       } else {
-        this.logger.log(`Index already exists: ${PRODUCT_VARIANT_INDEX}`);
+        this.logger.log(
+          `Index "${PRODUCT_VARIANT_INDEX}" OK (analyzer verified)`,
+        );
+        this.indexReady = true;
+        return;
       }
-    } catch (error) {
-      this.logger.error('Failed to ensure ES index:', error.message);
     }
+
+    await this.esClient.indices.create({
+      index: PRODUCT_VARIANT_INDEX,
+      settings: INDEX_SETTINGS,
+      mappings: INDEX_MAPPINGS,
+    });
+    this.indexReady = true;
+    this.logger.log(`Created index: ${PRODUCT_VARIANT_INDEX}`);
+  }
+
+  /**
+   * Guarantee the index is ready before any write/read.
+   * Handles the race where events arrive before onModuleInit finishes.
+   */
+  private async ready() {
+    if (this.indexReady) return;
+    await this.ensureIndex();
   }
 
   /**
@@ -153,6 +201,7 @@ export class ProductSearchService implements OnModuleInit {
     category?: any;
   }) {
     try {
+      await this.ready();
       const { variant, product, brand, category } = data;
       const combination = variant.combination || {};
       // Handle Map or plain object
@@ -216,6 +265,7 @@ export class ProductSearchService implements OnModuleInit {
     if (!variants || variants.length === 0) return;
 
     try {
+      await this.ready();
       const body = variants.flatMap((item) => {
         const { variant, product, brand, category } = item;
         const combination = variant.combination || {};
@@ -285,6 +335,7 @@ export class ProductSearchService implements OnModuleInit {
    */
   async removeVariant(variantId: string) {
     try {
+      await this.ready();
       await this.esClient.delete({
         index: PRODUCT_VARIANT_INDEX,
         id: variantId,
@@ -304,6 +355,7 @@ export class ProductSearchService implements OnModuleInit {
    */
   async removeByProductId(productId: string) {
     try {
+      await this.ready();
       const result = await this.esClient.deleteByQuery({
         index: PRODUCT_VARIANT_INDEX,
         query: { term: { productId } },
@@ -328,6 +380,7 @@ export class ProductSearchService implements OnModuleInit {
     category?: any;
   }) {
     try {
+      await this.ready();
       const { productId, product, brand, category } = data;
       await this.esClient.updateByQuery({
         index: PRODUCT_VARIANT_INDEX,
@@ -391,6 +444,8 @@ export class ProductSearchService implements OnModuleInit {
     } = query;
 
     const from = (page - 1) * limit;
+
+    await this.ready();
 
     // Build bool query
     const must: any[] = [];
@@ -512,6 +567,7 @@ export class ProductSearchService implements OnModuleInit {
     if (!q || !q.trim()) return [];
 
     try {
+      await this.ready();
       const result = await this.esClient.search({
         index: PRODUCT_VARIANT_INDEX,
         size: limit,
@@ -564,13 +620,14 @@ export class ProductSearchService implements OnModuleInit {
     }[],
   ) {
     try {
-      // Delete and recreate index
+      // Delete and recreate index with correct mappings
       const exists = await this.esClient.indices.exists({
         index: PRODUCT_VARIANT_INDEX,
       });
       if (exists) {
         await this.esClient.indices.delete({ index: PRODUCT_VARIANT_INDEX });
       }
+      this.indexReady = false;
       await this.ensureIndex();
 
       // Bulk index

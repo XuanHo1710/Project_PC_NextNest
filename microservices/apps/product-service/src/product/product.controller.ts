@@ -679,4 +679,12 @@ export class ProductController {
       this.productService.checkVariantsStock(data.items),
     );
   }
+
+  // ============= ELASTICSEARCH REINDEX =============
+  @MessagePattern('product.reindex.elasticsearch')
+  async reindexElasticsearch(@Payload() data: any, @Ctx() context: RmqContext) {
+    return this.handleRmq(context, () =>
+      this.productService.reindexAllToElasticsearch(),
+    );
+  }
 }
