@@ -19,11 +19,15 @@ export const chatbotClientService = {
     history?: ChatMessage[],
   ): Promise<ChatResponse> {
     try {
-      const response = await axiosInstance.post(`/chatbot/message`, {
-        message,
-        userId,
-        history,
-      });
+      const response = await axiosInstance.post(
+        `/chatbot/message`,
+        {
+          message,
+          userId,
+          history,
+        },
+        { timeout: 120000 }, // 120s - LLM inference is slow on CPU
+      );
       return response.data;
     } catch (error) {
       console.error("Error sending message to chatbot:", error);
@@ -59,8 +63,8 @@ export const chatbotClientService = {
         `/chatbot/recommendations/${guestId}`,
         { params: { limit } },
       );
-      const items = Array.isArray(response.data) ? response.data : [];
-      return items.map(mapAiItemToProductCard);
+      // AI service now returns IProductCard-compatible JSON directly (real _id, sku, etc.)
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error("Error getting AI recommendations:", error);
       return [];
@@ -72,36 +76,10 @@ export const chatbotClientService = {
       const response = await axiosInstance.get(`/chatbot/popular`, {
         params: { limit },
       });
-      const items = Array.isArray(response.data) ? response.data : [];
-      return items.map(mapAiItemToProductCard);
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error("Error getting popular products:", error);
       return [];
     }
   },
 };
-
-/** Map the flat AI recommendation item to the IProductCard shape expected by CardProduct. */
-function mapAiItemToProductCard(item: any): IProductCard {
-  return {
-    _id: item.product_id || "",
-    name: item.name || "",
-    slug: item.slug || "",
-    defaultVariant: {
-      _id: "",
-      sku: "",
-      price: item.default_variant_price || 0,
-      discount: item.default_variant_discount || 0,
-      images: item.default_variant_image ? [item.default_variant_image] : [],
-      combination: {},
-      stock: item.default_variant_stock || 0,
-    },
-    brand: item.brand_name ? { _id: "", name: item.brand_name } : undefined,
-    category: item.category_name
-      ? { _id: "", name: item.category_name, slug: item.category_slug || "" }
-      : undefined,
-    minPrice: item.min_price || 0,
-    maxPrice: item.max_price || 0,
-    status: "ACTIVE",
-  } as IProductCard;
-}

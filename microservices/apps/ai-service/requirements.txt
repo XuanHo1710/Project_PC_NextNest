@@ -2,9 +2,10 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 qdrant-client==1.13.3
 pymongo==4.12.1
-sentence-transformers==3.4.1
+dnspython
 httpx==0.28.1
 pydantic==2.10.5
 pydantic-settings==2.7.1
 python-dotenv==1.0.1
 numpy==2.2.3
+sentence-transformers

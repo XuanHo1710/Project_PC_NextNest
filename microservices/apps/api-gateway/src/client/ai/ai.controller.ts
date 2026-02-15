@@ -11,13 +11,13 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { Guest, Public } from '../../decorators/customize';
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL;
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
 @Controller('/client/chatbot')
 export class AiController {
   private readonly logger = new Logger(AiController.name);
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   /**
    * POST /client/chatbot/message
@@ -30,11 +30,15 @@ export class AiController {
   ) {
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${AI_SERVICE_URL}/api/v1/ai/chat/message`, {
-          message: body.message,
-          userId: body.userId,
-          history: body.history,
-        }),
+        this.httpService.post(
+          `${AI_SERVICE_URL}/api/v1/ai/chat/message`,
+          {
+            message: body.message,
+            userId: body.userId,
+            history: body.history,
+          },
+          { timeout: 120000 }, // 120s - Ollama on CPU is slow
+        ),
       );
       return response.data;
     } catch (error) {
@@ -58,6 +62,7 @@ export class AiController {
       const response = await firstValueFrom(
         this.httpService.get(`${AI_SERVICE_URL}/api/v1/ai/chat/suggestions`, {
           params: { query: query || '' },
+          timeout: 10000,
         }),
       );
       return response.data;
@@ -85,7 +90,10 @@ export class AiController {
       const response = await firstValueFrom(
         this.httpService.get(
           `${AI_SERVICE_URL}/api/v1/ai/recommendations/${guestId}`,
-          { params: { limit: limit ? parseInt(limit, 10) : 20 } },
+          {
+            params: { limit: limit ? parseInt(limit, 10) : 20 },
+            timeout: 60000, // 60s - embedding + qdrant search
+          },
         ),
       );
       return response.data;
@@ -106,6 +114,7 @@ export class AiController {
       const response = await firstValueFrom(
         this.httpService.get(`${AI_SERVICE_URL}/api/v1/ai/popular`, {
           params: { limit: limit ? parseInt(limit, 10) : 20 },
+          timeout: 30000,
         }),
       );
       return response.data;
@@ -124,7 +133,9 @@ export class AiController {
   async reindexProducts() {
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${AI_SERVICE_URL}/api/v1/ai/reindex`),
+        this.httpService.post(`${AI_SERVICE_URL}/api/v1/ai/reindex`, null, {
+          timeout: 300000, // 5 min - reindex can be slow
+        }),
       );
       return response.data;
     } catch (error) {

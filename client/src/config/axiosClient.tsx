@@ -25,7 +25,7 @@ function onRefreshed() {
 // Create axios instance
 const axiosClient = axios.create({
   baseURL,
-  timeout: 10000,
+  timeout: 30000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
