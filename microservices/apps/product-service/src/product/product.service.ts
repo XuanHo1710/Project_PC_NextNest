@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -18,6 +20,7 @@ import {
   UpdateProductAttributeValueDto,
   CreateProductAttributeAllowValueDto,
   UpdateProductAttributeAllowValueDto,
+  MICROSERVICE,
 } from '@project-pc/common';
 import {
   ProductVariant,
@@ -44,9 +47,11 @@ import {
   CategoryDocument,
 } from '../category/entities/category.entity';
 import { Brand, BrandDocument } from '../brand/entities/brand.entity';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class ProductService {
+  private readonly logger = new Logger(ProductService.name);
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     @InjectModel(ProductVariant.name)
@@ -62,7 +67,33 @@ export class ProductService {
     @InjectModel(Category.name)
     private categoryModel: Model<CategoryDocument>,
     @InjectModel(Brand.name) private brandModel: Model<BrandDocument>,
+    @Inject(MICROSERVICE.ELASTICSEARCH_SERVICE)
+    private readonly esClient: ClientProxy,
   ) {}
+
+  // ============= ELASTICSEARCH EVENT HELPERS =============
+  private emitEsEvent(pattern: string, data: any) {
+    try {
+      this.esClient.emit(pattern, data);
+    } catch (err) {
+      this.logger.error(`Failed to emit ES event ${pattern}: ${err.message}`);
+    }
+  }
+
+  private async getProductWithRefs(productId: string) {
+    const product = await this.productModel
+      .findById(productId)
+      .populate('brand', 'name slug logo')
+      .populate('category', 'name slug')
+      .lean()
+      .exec();
+    if (!product) return null;
+    return {
+      product,
+      brand: product.brand || null,
+      category: product.category || null,
+    };
+  }
 
   // ============= PRODUCT CRUD =============
   async createProduct(createProductDto: CreateProductDto) {
@@ -279,6 +310,18 @@ export class ProductService {
         `Product with ID ${id} not found or you don't have permission`,
       );
     }
+
+    // Emit ES update event
+    const refs = await this.getProductWithRefs(id);
+    if (refs) {
+      this.emitEsEvent('es.product.updated', {
+        productId: id,
+        product: refs.product,
+        brand: refs.brand,
+        category: refs.category,
+      });
+    }
+
     return product;
   }
 
@@ -301,6 +344,10 @@ export class ProductService {
         `Product with ID ${id} not found or you don't have permission`,
       );
     }
+
+    // Emit ES delete event
+    this.emitEsEvent('es.product.deleted', { productId: id });
+
     return { message: 'Product deleted successfully', data: product };
   }
 
@@ -333,6 +380,26 @@ export class ProductService {
         { $set: updateData },
       )
       .exec();
+
+    // Emit ES events for bulk update
+    if (typeUpdate === 'DELETE') {
+      for (const id of ids) {
+        this.emitEsEvent('es.product.deleted', { productId: id });
+      }
+    } else {
+      // Status change — update product info in ES
+      for (const id of ids) {
+        const refs = await this.getProductWithRefs(id);
+        if (refs) {
+          this.emitEsEvent('es.product.updated', {
+            productId: id,
+            product: refs.product,
+            brand: refs.brand,
+            category: refs.category,
+          });
+        }
+      }
+    }
 
     return {
       message: `Updated ${result.modifiedCount} products`,
@@ -758,7 +825,7 @@ export class ProductService {
 
     await this.productModel.updateOne(
       { _id: new Types.ObjectId(productId) },
-      { $set: { minPrice, maxPrice, totalStock } },
+      { $set: { minPrice: minPrice, maxPrice: maxPrice, totalStock } },
     );
   }
 
@@ -770,6 +837,18 @@ export class ProductService {
     const variant = new this.productVariantModel(payload);
     const saved = await variant.save();
     await this.recomputeProductPrices(createProductVariantDto.product);
+
+    // Emit ES event for new variant
+    const refs = await this.getProductWithRefs(createProductVariantDto.product);
+    if (refs) {
+      this.emitEsEvent('es.variant.upserted', {
+        variant: saved.toObject(),
+        product: refs.product,
+        brand: refs.brand,
+        category: refs.category,
+      });
+    }
+
     return saved;
   }
 
@@ -787,6 +866,17 @@ export class ProductService {
     // Recompute prices for the parent product
     if (variants.length > 0) {
       await this.recomputeProductPrices(variants[0].product);
+
+      // Emit ES event for bulk variant creation
+      const refs = await this.getProductWithRefs(variants[0].product);
+      if (refs) {
+        this.emitEsEvent('es.variant.bulkUpserted', {
+          variants: results,
+          product: refs.product,
+          brand: refs.brand,
+          category: refs.category,
+        });
+      }
     }
     return results;
   }
@@ -805,7 +895,10 @@ export class ProductService {
         typeof results[0].product === 'object'
           ? results[0].product._id?.toString()
           : results[0].product.toString();
-      if (pid) await this.recomputeProductPrices(pid);
+      if (pid) {
+        await this.recomputeProductPrices(pid);
+        // ES events already emitted per-variant inside updateProductVariant
+      }
     }
     return results;
   }
@@ -818,6 +911,10 @@ export class ProductService {
     const result = await this.productVariantModel
       .updateMany(query, { $set: { isDeleted: true, deletedAt: new Date() } })
       .exec();
+
+    // Emit ES event
+    this.emitEsEvent('es.variant.allDeleted', { productId });
+
     return result;
   }
 
@@ -856,6 +953,21 @@ export class ProductService {
     }
 
     await this.recomputeProductPrices(productId);
+
+    // Emit ES event for delete+recreate
+    const refs = await this.getProductWithRefs(productId);
+    if (refs) {
+      this.emitEsEvent('es.variant.deleteAndRecreate', {
+        productId,
+        variants: results.map((r) =>
+          typeof r.toObject === 'function' ? r.toObject() : r,
+        ),
+        product: refs.product,
+        brand: refs.brand,
+        category: refs.category,
+      });
+    }
+
     return results;
   }
 
@@ -930,6 +1042,18 @@ export class ProductService {
         ? (variant.product as any)._id?.toString()
         : variant.product;
     if (pid) await this.recomputeProductPrices(pid);
+
+    // Emit ES event for variant update
+    const refs = await this.getProductWithRefs(pid || '');
+    if (refs) {
+      this.emitEsEvent('es.variant.upserted', {
+        variant,
+        product: refs.product,
+        brand: refs.brand,
+        category: refs.category,
+      });
+    }
+
     return variant;
   }
 
@@ -952,6 +1076,10 @@ export class ProductService {
     if (variant.product) {
       await this.recomputeProductPrices(variant.product.toString());
     }
+
+    // Emit ES event for variant deletion
+    this.emitEsEvent('es.variant.deleted', { variantId: id });
+
     return { message: 'Product variant deleted successfully', data: variant };
   }
 

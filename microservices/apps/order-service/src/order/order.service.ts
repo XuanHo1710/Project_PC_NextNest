@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -8,11 +8,12 @@ import {
 } from '@project-pc/common';
 import { Order } from 'src/order/entities/order.entity';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout, catchError, of } from 'rxjs';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class OrderService {
+  private readonly logger = new Logger(OrderService.name);
   constructor(
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @Inject(MICROSERVICE.PAYMENT_SERVICE)
@@ -884,13 +885,23 @@ export class OrderService {
           if (item.variantId && item.quantity > 0) {
             try {
               await firstValueFrom(
-                this.productService.send('product.variant.incrementStock', {
-                  variantId: item.variantId,
-                  quantity: item.quantity,
-                }),
+                this.productService
+                  .send('product.variant.incrementStock', {
+                    variantId: item.variantId,
+                    quantity: item.quantity,
+                  })
+                  .pipe(
+                    timeout(15000),
+                    catchError((err) => {
+                      this.logger.error(
+                        `Failed to restore stock for variant ${item.variantId} in expired order ${order._id}: ${err.message}`,
+                      );
+                      return of(null);
+                    }),
+                  ),
               );
             } catch (err) {
-              console.error(
+              this.logger.error(
                 `Failed to restore stock for variant ${item.variantId} in expired order ${order._id}:`,
                 err,
               );

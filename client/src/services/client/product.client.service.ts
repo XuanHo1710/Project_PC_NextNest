@@ -505,6 +505,52 @@ class ProductClientService {
     });
     return response.data;
   }
+
+  // ============== ELASTICSEARCH SEARCH ==============
+
+  /**
+   * Search product variants via Elasticsearch (full search with pagination)
+   * Returns variant-level results with embedded product info
+   */
+  async esSearchProducts(
+    q: string,
+    page = 1,
+    limit = 20,
+    sort?: string,
+    filters?: {
+      minPrice?: number;
+      maxPrice?: number;
+      category?: string;
+      brand?: string;
+    },
+  ): Promise<
+    PaginatedResponse<import("@/types/product").IProductVariantSearchResult>
+  > {
+    const response = await axiosClient.get("/search", {
+      params: {
+        q,
+        page,
+        limit,
+        sort,
+        ...filters,
+      },
+    });
+    return response.data;
+  }
+
+  /**
+   * Quick search (instant/autocomplete) via Elasticsearch
+   */
+  async esQuickSearch(
+    q: string,
+    limit = 10,
+  ): Promise<import("@/types/product").IProductVariantSearchResult[]> {
+    const response = await axiosClient.get("/search/quick", {
+      params: { q, limit },
+    });
+    const result = response.data;
+    return Array.isArray(result) ? result : (result as any)?.data || [];
+  }
 }
 
 export const productClientService = new ProductClientService();

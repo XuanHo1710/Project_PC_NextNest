@@ -193,3 +193,32 @@ export interface ICreateProductVariantDto {
   combination?: Record<string, string>;
   images?: string[];
 }
+
+// ============== ELASTICSEARCH SEARCH RESULT ==============
+export interface IProductVariantSearchResult {
+  _id: string;
+  _score?: number;
+  variantId: string;
+  sku: string;
+  subDescription?: string;
+  price: number;
+  stock: number;
+  discount: number;
+  images: string[];
+  combination: Record<string, string>;
+  combinationText?: string;
+  productId: string;
+  productName: string;
+  productSlug: string;
+  productStatus: string;
+  productDescription?: string;
+  brandName?: string;
+  brandId?: string;
+  categoryName?: string;
+  categorySlug?: string;
+  categoryId?: string;
+  displayPrice: number;
+  createdAt?: string;
+  updatedAt?: string;
+  isDeleted?: boolean;
+}

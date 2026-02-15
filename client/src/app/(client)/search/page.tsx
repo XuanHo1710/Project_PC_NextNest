@@ -5,10 +5,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Input, Empty, Spin } from "antd";
 import { MdOutlineSearch } from "react-icons/md";
-import Link from "next/link";
-import CardProduct from "@/components/client/CardProduct/CardProduct";
+import CardProductVariant from "@/components/client/CardProduct/CardProductVariant";
 import { productClientService } from "@/services/client";
-import { IProductCard } from "@/types/product";
+import { IProductVariantSearchResult } from "@/types/product";
 import { PaginatedResponse } from "@/types";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
@@ -16,12 +15,12 @@ import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
 const PAGE_SIZE = 20;
 
 const sortOptions = [
-    { label: "Mới nhất", value: "" },
-    { label: "Cũ nhất", value: "createdAt_1" },
-    { label: "Giá tăng dần", value: "minPrice_1" },
-    { label: "Giá giảm dần", value: "minPrice_-1" },
-    { label: "Tên A → Z", value: "name_1" },
-    { label: "Tên Z → A", value: "name_-1" },
+    { label: "Liên quan nhất", value: "" },
+    { label: "Giá tăng dần", value: "displayPrice_1" },
+    { label: "Giá giảm dần", value: "displayPrice_-1" },
+    { label: "Tên A → Z", value: "productName_1" },
+    { label: "Tên Z → A", value: "productName_-1" },
+    { label: "Mới nhất", value: "createdAt_-1" },
 ];
 
 export default function SearchPage() {
@@ -72,17 +71,17 @@ export default function SearchPage() {
         updateURL({ sort: value });
     };
 
-    // Infinite scroll query
+    // Infinite scroll query — uses Elasticsearch
     const {
         data,
         isLoading,
         isFetchingNextPage,
         hasNextPage,
         fetchNextPage,
-    } = useInfiniteQuery<PaginatedResponse<IProductCard>>({
-        queryKey: ["search-products", q, sort],
+    } = useInfiniteQuery<PaginatedResponse<IProductVariantSearchResult>>({
+        queryKey: ["es-search-products", q, sort],
         queryFn: ({ pageParam }) =>
-            productClientService.searchProductsPaginated(
+            productClientService.esSearchProducts(
                 q,
                 pageParam as number,
                 PAGE_SIZE,
@@ -114,14 +113,14 @@ export default function SearchPage() {
         return () => observer.disconnect();
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    const products = data?.pages.flatMap((page) => page.data) || [];
+    const variants = data?.pages.flatMap((page) => page.data) || [];
     const totalItems = data?.pages[0]?.pagination?.totalItems || 0;
 
     return (
         <>
             <DynamicMetadata
                 title={q ? `Tìm kiếm "${q}" - PC Store` : "Tìm kiếm sản phẩm - PC Store"}
-                description={`Kết quả tìm kiếm cho "${q}" tại PC Store. Tổng ${totalItems} sản phẩm được tìm thấy.`}
+                description={`Kết quả tìm kiếm cho "${q}" tại PC Store. Tổng ${totalItems} biến thể sản phẩm được tìm thấy.`}
             />
 
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 min-h-screen">
@@ -141,7 +140,7 @@ export default function SearchPage() {
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder="Nhập tên sản phẩm cần tìm..."
+                                placeholder="Tìm kiếm sản phẩm, thông số (vd: ram 16gb, cpu i7, rtx 4060...)"
                                 className="!py-2.5 !px-4 rounded-xl text-base"
                                 suffix={
                                     <MdOutlineSearch
@@ -155,7 +154,7 @@ export default function SearchPage() {
                         {q && (
                             <p className="mt-3 text-gray-500 dark:text-gray-400">
                                 Kết quả tìm kiếm cho <strong className="text-gray-800 dark:text-white">&quot;{q}&quot;</strong>
-                                {!isLoading && <span className="ml-1">— {totalItems} sản phẩm</span>}
+                                {!isLoading && <span className="ml-1">— {totalItems} biến thể sản phẩm</span>}
                             </p>
                         )}
                     </div>
@@ -183,17 +182,17 @@ export default function SearchPage() {
                                 </div>
                             </div>
 
-                            {/* Products */}
+                            {/* Variant Results */}
                             {isLoading ? (
                                 <div className="flex justify-center py-20">
                                     <Spin size="large" />
                                 </div>
-                            ) : products.length > 0 ? (
+                            ) : variants.length > 0 ? (
                                 <>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                        {products.map((product) => (
-                                            <div key={product._id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
-                                                <CardProduct css="p-3" product={product} />
+                                        {variants.map((variant) => (
+                                            <div key={variant._id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                                                <CardProductVariant css="p-3" variant={variant} />
                                             </div>
                                         ))}
                                     </div>
@@ -201,7 +200,7 @@ export default function SearchPage() {
                                     {/* Infinite scroll trigger */}
                                     <div ref={loadMoreRef} className="flex justify-center py-8">
                                         {isFetchingNextPage && <Spin size="large" />}
-                                        {!hasNextPage && products.length > 0 && (
+                                        {!hasNextPage && variants.length > 0 && (
                                             <p className="text-sm text-gray-400">Đã hiển thị tất cả kết quả</p>
                                         )}
                                     </div>
@@ -215,7 +214,7 @@ export default function SearchPage() {
                                                     Không tìm thấy sản phẩm nào
                                                 </p>
                                                 <p className="text-sm text-gray-400">
-                                                    Hãy thử tìm kiếm với từ khóa khác
+                                                    Hãy thử tìm kiếm với từ khóa khác hoặc thông số cụ thể hơn
                                                 </p>
                                             </div>
                                         }
@@ -230,6 +229,9 @@ export default function SearchPage() {
                             <MdOutlineSearch className="text-6xl text-gray-300 mb-4" />
                             <p className="text-lg font-semibold text-gray-500 dark:text-gray-400">
                                 Nhập từ khóa để tìm kiếm sản phẩm
+                            </p>
+                            <p className="text-sm text-gray-400 mt-2">
+                                Ví dụ: ram 16gb, cpu i7 12th, rtx 4060, laptop gaming...
                             </p>
                         </div>
                     )}

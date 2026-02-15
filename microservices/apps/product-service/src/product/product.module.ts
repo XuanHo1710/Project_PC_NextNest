@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
 import { Product, ProductSchema } from './entities/product.entity';
@@ -23,6 +24,7 @@ import { ProductView, ProductViewSchema } from './entities/product-view.entity';
 import { Category, CategorySchema } from '../category/entities/category.entity';
 import { Brand, BrandSchema } from '../brand/entities/brand.entity';
 import { AccountGuest, AccountGuestSchema } from '@project-pc/common';
+import { MICROSERVICE } from '@project-pc/common';
 
 @Module({
   imports: [
@@ -39,6 +41,19 @@ import { AccountGuest, AccountGuestSchema } from '@project-pc/common';
       { name: Brand.name, schema: BrandSchema },
       { name: AccountGuest.name, schema: AccountGuestSchema },
       { name: ProductView.name, schema: ProductViewSchema },
+    ]),
+    ClientsModule.register([
+      {
+        name: MICROSERVICE.ELASTICSEARCH_SERVICE,
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://admin:admin@localhost:5673'],
+          queue: 'elasticsearch.main',
+          queueOptions: {
+            durable: true,
+          },
+        },
+      },
     ]),
   ],
   controllers: [ProductController],

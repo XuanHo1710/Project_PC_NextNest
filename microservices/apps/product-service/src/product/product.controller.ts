@@ -334,6 +334,9 @@ export class ProductController {
       const retryCount =
         xDeath?.find((d) => d.queue === 'product.main')?.count || 0;
       if (retryCount >= 5) {
+        this.logger.error(
+          `decrementStock DLQ: variant=${data.variantId}, qty=${data.quantity}, error=${err.message}`,
+        );
         channel.publish(
           'product.dlx.exchange',
           'product.dlq',
@@ -343,8 +346,10 @@ export class ProductController {
           },
         );
         channel.ack(msg);
+        return { error: true, message: err.message };
       } else {
         channel.nack(msg, false, false);
+        return { error: true, message: err.message, retrying: true };
       }
     }
   }
@@ -368,6 +373,9 @@ export class ProductController {
       const retryCount =
         xDeath?.find((d) => d.queue === 'product.main')?.count || 0;
       if (retryCount >= 5) {
+        this.logger.error(
+          `incrementStock DLQ: variant=${data.variantId}, qty=${data.quantity}, error=${err.message}`,
+        );
         channel.publish(
           'product.dlx.exchange',
           'product.dlq',
@@ -377,8 +385,10 @@ export class ProductController {
           },
         );
         channel.ack(msg);
+        return { error: true, message: err.message };
       } else {
         channel.nack(msg, false, false);
+        return { error: true, message: err.message, retrying: true };
       }
     }
   }

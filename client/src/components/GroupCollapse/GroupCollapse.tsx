@@ -42,12 +42,12 @@ const ContextCollapse = (prop: IProp) => {
                     <div className="flex gap-4 items-center">
                         <Switch
                             checked={
-                                ["/api/v1/admin/" + prop.path, "/api/v1/admin/" + prop.path + "/:id"]
+                                ["/api/v1/admin/" + prop.path, "/api/v1/admin/" + prop.path + `${prop.path === "settings" ? "/:key" : "/:id"}`]
                                     .every(path => prop.selected.some(p => p.method === "GET" && p.path === path))
                             }
                             onChange={(isSelected) => {
                                 prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path);
-                                prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path + "/:id")
+                                prop.handleChange(isSelected, "GET", "/api/v1/admin/" + prop.path + `${prop.path === "settings" ? "/:key" : "/:id"}`)
                             }}
                         />
                         <div>
@@ -60,17 +60,17 @@ const ContextCollapse = (prop: IProp) => {
                     <div className="flex gap-4 items-center">
                         <Switch
                             checked={
-                                ["/api/v1/admin/" + prop.path + "/:id", "/api/v1/admin/" + prop.path + "/updateMany"]
+                                ["/api/v1/admin/" + prop.path + `${prop.path === "settings" ? "/:key" : "/:id"}`, "/api/v1/admin/" + prop.path + "/updateMany"]
                                     .every(path => prop.selected.some(p => p.method === "PATCH" && p.path === path))
                             }
                             onChange={(isSelected) => {
-                                prop.handleChange(isSelected, "PATCH", "/api/v1/admin/" + prop.path + "/:id");
+                                prop.handleChange(isSelected, "PATCH", "/api/v1/admin/" + prop.path + `${prop.path === "settings" ? "/:key" : "/:id"}`);
                                 prop.handleChange(isSelected, "PATCH", "/api/v1/admin/" + prop.path + "/updateMany")
                             }}
                         />
                         <div>
                             <h3 className="font-semibold text-lg">Update {prop.name}</h3>
-                            <p className="text-slate-500"><span className="text-neutral-800 font-bold">PATCH</span>  /api/v1/admin/{prop.path}/:id</p>
+                            <p className="text-slate-500"><span className="text-neutral-800 font-bold">PATCH</span>  /api/v1/admin/{prop.path}{prop.path === "settings" ? "/:key" : "/:id"}</p>
                         </div>
                     </div>
                 </div>
@@ -78,12 +78,12 @@ const ContextCollapse = (prop: IProp) => {
                     <div className="flex gap-4 items-center">
                         <Switch
                             checked={prop.selected.some(
-                                (p) => p.method === "DELETE" && p.path === "/api/v1/admin/" + prop.path + "/:id"
-                            )} onChange={(isSelected) => prop.handleChange(isSelected, "DELETE", "/api/v1/admin/" + prop.path + "/:id")}
+                                (p) => p.method === "DELETE" && p.path === "/api/v1/admin/" + prop.path + `${prop.path === "settings" ? "/:key" : "/:id"}`
+                            )} onChange={(isSelected) => prop.handleChange(isSelected, "DELETE", "/api/v1/admin/" + prop.path + `${prop.path === "settings" ? "/:key" : "/:id"}`)}
                         />
                         <div>
                             <h3 className="font-semibold text-lg">Delete {prop.name}</h3>
-                            <p className="text-slate-500"><span className="text-red-500 font-bold">DELETE</span>  /api/v1/admin/{prop.path}/:id</p>
+                            <p className="text-slate-500"><span className="text-red-500 font-bold">DELETE</span>  /api/v1/admin/{prop.path}{prop.path === "settings" ? "/:key" : "/:id"}</p>
                         </div>
                     </div>
                 </div>
@@ -319,6 +319,19 @@ export const GroupCollapse = ({ roleSelected }: { roleSelected: IRole | null }) 
                                 originName="BRAND"
                                 path="brand"
                                 name="Brand"
+                                handleChange={handleChange}
+                                selected={selected}
+                            />
+                        ),
+                    },
+                    {
+                        key: '10',
+                        label: <h2 className="text-md font-semibold">SETTING</h2>,
+                        children: (
+                            <ContextCollapse
+                                originName="SETTING"
+                                path="settings"
+                                name="Setting"
                                 handleChange={handleChange}
                                 selected={selected}
                             />

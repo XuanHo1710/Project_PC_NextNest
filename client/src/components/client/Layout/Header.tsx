@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ICategory } from "@/types/category";
 import { categoryClientService, productClientService } from "@/services/client";
-import { IProductCard } from "@/types/product";
+import { IProductVariantSearchResult } from "@/types/product";
 import useCartStore from "@/hooks/useCart";
 import { useUnreadCount } from "@/hooks/client/useChat";
 import { getProductImage } from "@/utils/productHelpers";
@@ -51,9 +51,9 @@ export default function HeaderClient() {
     });
 
 
-    const { data: products, isLoading: loadingSearch } = useQuery<IProductCard[] | []>({
+    const { data: products, isLoading: loadingSearch } = useQuery<IProductVariantSearchResult[] | []>({
         queryKey: ['product-search', search], // key để cache
-        queryFn: () => productClientService.searchProducts(search),
+        queryFn: () => productClientService.esQuickSearch(search, 8),
         enabled: !!search
     });
 
@@ -242,17 +242,17 @@ export default function HeaderClient() {
                                     ) : (
                                         products && products.length > 0 ? (
                                             <div className="py-1">
-                                                {products.map((p: IProductCard) => (
+                                                {products.map((v: IProductVariantSearchResult) => (
                                                     <Link
-                                                        key={p._id}
-                                                        href={"/product/" + p.slug}
+                                                        key={v._id}
+                                                        href={"/product/" + v.productSlug}
                                                         onClick={() => { setSearch(""); setOpenSearch(false); }}
                                                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
                                                     >
                                                         <div className="w-12 h-12 shrink-0 rounded-md overflow-hidden border border-gray-100 bg-gray-50">
                                                             <Image
-                                                                src={p.defaultVariant?.images?.[0] || undefined}
-                                                                alt={p.name}
+                                                                src={v.images?.[0] || undefined}
+                                                                alt={v.productName}
                                                                 width={48}
                                                                 height={48}
                                                                 className="!object-cover !w-full !h-full"
@@ -260,22 +260,28 @@ export default function HeaderClient() {
                                                             />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <div className="text-sm font-medium text-gray-800 line-clamp-1">{p.name}</div>
+                                                            <div className="text-sm font-medium text-gray-800 line-clamp-1">{v.productName}</div>
+                                                            {v.combination && Object.keys(v.combination).length > 0 && (
+                                                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                                                    {Object.entries(v.combination).map(([key, val]) => (
+                                                                        <span key={key} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100">
+                                                                            {key}: {val}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                             <div className="flex items-center gap-2 mt-0.5">
                                                                 <span className="text-sm font-bold text-blue-600">
-                                                                    {p.defaultVariant
-                                                                        ? (p.defaultVariant.price * (1 - (p.defaultVariant.discount || 0) / 100)).toLocaleString()
-                                                                        : ((p as any).minPrice || 0).toLocaleString()
-                                                                    }đ
+                                                                    {(v.displayPrice || v.price * (1 - (v.discount || 0) / 100)).toLocaleString()}đ
                                                                 </span>
-                                                                {p.defaultVariant && p.defaultVariant.discount > 0 && (
-                                                                    <span className="text-xs text-gray-400 line-through">{p.defaultVariant.price.toLocaleString()}đ</span>
+                                                                {v.discount > 0 && (
+                                                                    <span className="text-xs text-gray-400 line-through">{v.price.toLocaleString()}đ</span>
                                                                 )}
-                                                                {p.defaultVariant?.discount ? (
+                                                                {v.discount > 0 && (
                                                                     <span className="text-[11px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
-                                                                        -{p.defaultVariant.discount}%
+                                                                        -{v.discount}%
                                                                     </span>
-                                                                ) : null}
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </Link>
