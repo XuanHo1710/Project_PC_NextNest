@@ -37,6 +37,7 @@ export class ProductSearchController {
       variants: any[];
       brand?: any;
       category?: any;
+      attributeMap?: Record<string, string>;
     },
     @Ctx() context: RmqContext,
   ) {
@@ -46,6 +47,7 @@ export class ProductSearchController {
       product: data.product,
       brand: data.brand,
       category: data.category,
+      attributeMap: data.attributeMap,
     }));
     if (items.length > 0) {
       await this.productSearchService.indexVariantsBulk(items);
@@ -96,6 +98,7 @@ export class ProductSearchController {
       product: any;
       brand?: any;
       category?: any;
+      attributeMap?: Record<string, string>;
     },
     @Ctx() context: RmqContext,
   ) {
@@ -126,6 +129,7 @@ export class ProductSearchController {
       product: data.product,
       brand: data.brand,
       category: data.category,
+      attributeMap: (data as any).attributeMap,
     }));
     if (items.length > 0) {
       await this.productSearchService.indexVariantsBulk(items);
@@ -171,6 +175,7 @@ export class ProductSearchController {
       product: any;
       brand?: any;
       category?: any;
+      attributeMap?: Record<string, string>;
     },
     @Ctx() context: RmqContext,
   ) {
@@ -181,6 +186,7 @@ export class ProductSearchController {
       product: data.product,
       brand: data.brand,
       category: data.category,
+      attributeMap: data.attributeMap,
     }));
     if (items.length > 0) {
       await this.productSearchService.indexVariantsBulk(items);

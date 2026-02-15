@@ -206,6 +206,7 @@ export interface IProductVariantSearchResult {
   discount: number;
   images: string[];
   combination: Record<string, string>;
+  combinationDisplay?: Record<string, string>;
   combinationText?: string;
   productId: string;
   productName: string;

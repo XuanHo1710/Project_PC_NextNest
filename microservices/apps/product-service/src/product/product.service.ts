@@ -80,6 +80,28 @@ export class ProductService {
     }
   }
 
+  /**
+   * Build a map of attribute code -> attribute name for ES combinationDisplay
+   * e.g. { "ram": "Ram", "mau-sac": "Màu sắc" }
+   */
+  private async getAttributeCodeToNameMap(): Promise<Record<string, string>> {
+    try {
+      const attributes = await this.productAttributeModel
+        .find({ isDeleted: { $ne: true } })
+        .select('code name')
+        .lean()
+        .exec();
+      const map: Record<string, string> = {};
+      for (const attr of attributes) {
+        if (attr.code) map[attr.code] = attr.name;
+      }
+      return map;
+    } catch (err) {
+      this.logger.warn(`Failed to build attribute code→name map: ${err.message}`);
+      return {};
+    }
+  }
+
   private async getProductWithRefs(productId: string) {
     const product = await this.productModel
       .findById(productId)
@@ -841,11 +863,13 @@ export class ProductService {
     // Emit ES event for new variant
     const refs = await this.getProductWithRefs(createProductVariantDto.product);
     if (refs) {
+      const attributeMap = await this.getAttributeCodeToNameMap();
       this.emitEsEvent('es.variant.upserted', {
         variant: saved.toObject(),
         product: refs.product,
         brand: refs.brand,
         category: refs.category,
+        attributeMap,
       });
     }
 
@@ -870,11 +894,13 @@ export class ProductService {
       // Emit ES event for bulk variant creation
       const refs = await this.getProductWithRefs(variants[0].product);
       if (refs) {
+        const attributeMap = await this.getAttributeCodeToNameMap();
         this.emitEsEvent('es.variant.bulkUpserted', {
           variants: results,
           product: refs.product,
           brand: refs.brand,
           category: refs.category,
+          attributeMap,
         });
       }
     }
@@ -957,6 +983,7 @@ export class ProductService {
     // Emit ES event for delete+recreate
     const refs = await this.getProductWithRefs(productId);
     if (refs) {
+      const attributeMap = await this.getAttributeCodeToNameMap();
       this.emitEsEvent('es.variant.deleteAndRecreate', {
         productId,
         variants: results.map((r) =>
@@ -965,6 +992,7 @@ export class ProductService {
         product: refs.product,
         brand: refs.brand,
         category: refs.category,
+        attributeMap,
       });
     }
 
@@ -1046,11 +1074,13 @@ export class ProductService {
     // Emit ES event for variant update
     const refs = await this.getProductWithRefs(pid || '');
     if (refs) {
+      const attributeMap = await this.getAttributeCodeToNameMap();
       this.emitEsEvent('es.variant.upserted', {
         variant,
         product: refs.product,
         brand: refs.brand,
         category: refs.category,
+        attributeMap,
       });
     }
 
@@ -1671,6 +1701,9 @@ export class ProductService {
       .lean()
       .exec();
 
+    // Build attribute code→name map once for all products
+    const attributeMap = await this.getAttributeCodeToNameMap();
+
     let totalVariants = 0;
 
     for (const product of products) {
@@ -1690,6 +1723,7 @@ export class ProductService {
         product,
         brand: product.brand || null,
         category: product.category || null,
+        attributeMap,
       });
     }
 

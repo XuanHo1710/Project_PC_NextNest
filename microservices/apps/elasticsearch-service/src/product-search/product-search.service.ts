@@ -12,6 +12,7 @@ interface ProductVariantDoc {
   discount: number;
   images: string[];
   combination: Record<string, string>;
+  combinationDisplay: Record<string, string>;
   combinationText: string;
   productId: string;
   productName: string;
@@ -60,6 +61,7 @@ const INDEX_MAPPINGS = {
     discount: { type: 'float' as const },
     images: { type: 'keyword' as const },
     combination: { type: 'object' as const, enabled: true },
+    combinationDisplay: { type: 'object' as const, enabled: true },
     combinationText: {
       type: 'text' as const,
       analyzer: 'vietnamese_analyzer',
@@ -192,6 +194,24 @@ export class ProductSearchService implements OnModuleInit {
   }
 
   /**
+   * Resolve combination codes to display names using attributeMap
+   * e.g. { "ram": "16GB" } + { "ram": "Ram" } => { "Ram": "16GB" }
+   */
+  private buildCombinationDisplay(
+    combination: Record<string, string>,
+    attributeMap?: Record<string, string>,
+  ): Record<string, string> {
+    if (!combination) return {};
+    if (!attributeMap || Object.keys(attributeMap).length === 0) return combination;
+    const display: Record<string, string> = {};
+    for (const [code, value] of Object.entries(combination)) {
+      const name = attributeMap[code] || code;
+      display[name] = value;
+    }
+    return display;
+  }
+
+  /**
    * Index a single variant (create or update)
    */
   async indexVariant(data: {
@@ -199,16 +219,19 @@ export class ProductSearchService implements OnModuleInit {
     product: any;
     brand?: any;
     category?: any;
+    attributeMap?: Record<string, string>;
   }) {
     try {
       await this.ready();
-      const { variant, product, brand, category } = data;
+      const { variant, product, brand, category, attributeMap } = data;
       const combination = variant.combination || {};
       // Handle Map or plain object
       const combinationObj =
         combination instanceof Map
           ? Object.fromEntries(combination)
           : combination;
+
+      const combinationDisplay = this.buildCombinationDisplay(combinationObj, attributeMap);
 
       const doc: ProductVariantDoc = {
         variantId: variant._id?.toString() || variant._id,
@@ -219,7 +242,8 @@ export class ProductSearchService implements OnModuleInit {
         discount: variant.discount || 0,
         images: variant.images || [],
         combination: combinationObj,
-        combinationText: this.buildCombinationText(combinationObj),
+        combinationDisplay,
+        combinationText: this.buildCombinationText(Object.entries(combinationDisplay).length > 0 ? combinationDisplay : combinationObj),
         productId: product._id?.toString() || product._id,
         productName: product.name || '',
         productSlug: product.slug || '',
@@ -258,6 +282,7 @@ export class ProductSearchService implements OnModuleInit {
     variants: {
       variant: any;
       product: any;
+      attributeMap?: Record<string, string>;
       brand?: any;
       category?: any;
     }[],
@@ -267,13 +292,14 @@ export class ProductSearchService implements OnModuleInit {
     try {
       await this.ready();
       const body = variants.flatMap((item) => {
-        const { variant, product, brand, category } = item;
+        const { variant, product, brand, category, attributeMap } = item;
         const combination = variant.combination || {};
         const combinationObj =
           combination instanceof Map
             ? Object.fromEntries(combination)
             : combination;
 
+        const combinationDisplay = this.buildCombinationDisplay(combinationObj, attributeMap);
         const variantId = variant._id?.toString() || variant._id;
 
         const doc: ProductVariantDoc = {
@@ -285,7 +311,8 @@ export class ProductSearchService implements OnModuleInit {
           discount: variant.discount || 0,
           images: variant.images || [],
           combination: combinationObj,
-          combinationText: this.buildCombinationText(combinationObj),
+          combinationDisplay,
+          combinationText: this.buildCombinationText(Object.entries(combinationDisplay).length > 0 ? combinationDisplay : combinationObj),
           productId: product._id?.toString() || product._id,
           productName: product.name || '',
           productSlug: product.slug || '',

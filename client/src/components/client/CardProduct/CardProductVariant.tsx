@@ -15,7 +15,7 @@ const CardProductVariant = ({ variant, css = '' }: CardProductVariantProps) => {
     const originalPrice = variant.price;
     const discount = variant.discount || 0;
     const productImage = variant.images?.[0] || '/placeholder-product.png';
-    const combination = variant.combination || {};
+    const combination = variant.combinationDisplay || variant.combination || {};
 
     return (
         <div className={`card rounded-lg flex flex-col max-h-max bg-white dark:bg-gray-900 p-2 dark:text-white ${css}`}>
