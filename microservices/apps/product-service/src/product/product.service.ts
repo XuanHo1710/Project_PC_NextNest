@@ -97,7 +97,9 @@ export class ProductService {
       }
       return map;
     } catch (err) {
-      this.logger.warn(`Failed to build attribute code→name map: ${err.message}`);
+      this.logger.warn(
+        `Failed to build attribute code→name map: ${err.message}`,
+      );
       return {};
     }
   }

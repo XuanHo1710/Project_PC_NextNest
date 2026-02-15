@@ -202,7 +202,8 @@ export class ProductSearchService implements OnModuleInit {
     attributeMap?: Record<string, string>,
   ): Record<string, string> {
     if (!combination) return {};
-    if (!attributeMap || Object.keys(attributeMap).length === 0) return combination;
+    if (!attributeMap || Object.keys(attributeMap).length === 0)
+      return combination;
     const display: Record<string, string> = {};
     for (const [code, value] of Object.entries(combination)) {
       const name = attributeMap[code] || code;
@@ -231,7 +232,10 @@ export class ProductSearchService implements OnModuleInit {
           ? Object.fromEntries(combination)
           : combination;
 
-      const combinationDisplay = this.buildCombinationDisplay(combinationObj, attributeMap);
+      const combinationDisplay = this.buildCombinationDisplay(
+        combinationObj,
+        attributeMap,
+      );
 
       const doc: ProductVariantDoc = {
         variantId: variant._id?.toString() || variant._id,
@@ -243,7 +247,11 @@ export class ProductSearchService implements OnModuleInit {
         images: variant.images || [],
         combination: combinationObj,
         combinationDisplay,
-        combinationText: this.buildCombinationText(Object.entries(combinationDisplay).length > 0 ? combinationDisplay : combinationObj),
+        combinationText: this.buildCombinationText(
+          Object.entries(combinationDisplay).length > 0
+            ? combinationDisplay
+            : combinationObj,
+        ),
         productId: product._id?.toString() || product._id,
         productName: product.name || '',
         productSlug: product.slug || '',
@@ -299,7 +307,10 @@ export class ProductSearchService implements OnModuleInit {
             ? Object.fromEntries(combination)
             : combination;
 
-        const combinationDisplay = this.buildCombinationDisplay(combinationObj, attributeMap);
+        const combinationDisplay = this.buildCombinationDisplay(
+          combinationObj,
+          attributeMap,
+        );
         const variantId = variant._id?.toString() || variant._id;
 
         const doc: ProductVariantDoc = {
@@ -312,7 +323,11 @@ export class ProductSearchService implements OnModuleInit {
           images: variant.images || [],
           combination: combinationObj,
           combinationDisplay,
-          combinationText: this.buildCombinationText(Object.entries(combinationDisplay).length > 0 ? combinationDisplay : combinationObj),
+          combinationText: this.buildCombinationText(
+            Object.entries(combinationDisplay).length > 0
+              ? combinationDisplay
+              : combinationObj,
+          ),
           productId: product._id?.toString() || product._id,
           productName: product.name || '',
           productSlug: product.slug || '',

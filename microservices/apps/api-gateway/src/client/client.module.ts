@@ -16,6 +16,7 @@ import { OrderModule } from 'client/order/order.module';
 import { NotificationModule } from 'client/notification/notification.module';
 import { ChatModule } from 'client/chat/chat.module';
 import { SearchModule } from 'client/search/search.module';
+import { AiModule } from 'client/ai/ai.module';
 @Module({
   imports: [
     AccountGuestModule,
@@ -31,6 +32,7 @@ import { SearchModule } from 'client/search/search.module';
     NotificationModule,
     ChatModule,
     SearchModule,
+    AiModule,
     JwtModule.register({}),
   ],
   providers: [

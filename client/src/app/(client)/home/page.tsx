@@ -1,6 +1,6 @@
 'use client';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
-import { categoryClientService, productClientService } from "@/services/client";
+import { categoryClientService, productClientService, chatbotClientService } from "@/services/client";
 import { ICategory } from "@/types/category";
 import { IBrand } from "@/types/brand";
 import { IProductCard } from "@/types/product";
@@ -17,6 +17,7 @@ import {
     MdHeadset, MdCameraAlt, MdWatch
 } from "react-icons/md";
 import { FireFilled } from "@ant-design/icons";
+import { HiOutlineSparkles } from "react-icons/hi";
 import { PaginatedResponse } from "@/types/common";
 
 
@@ -52,6 +53,16 @@ export default function HomeClient() {
         queryFn: () => productClientService.getRecentlyViewedProducts(20),
         enabled: !!user?._id,
         staleTime: 1000 * 60 * 2,
+    });
+
+    // AI-powered personalized recommendations
+    const { data: aiRecommendations } = useQuery<IProductCard[]>({
+        queryKey: ['ai-recommendations', user?._id],
+        queryFn: () =>
+            user?._id
+                ? chatbotClientService.getRecommendations(user._id, 20)
+                : chatbotClientService.getPopularProducts(20),
+        staleTime: 1000 * 60 * 5,
     });
 
     // Flash sale countdown timer (resets every 6 hours)
@@ -296,6 +307,31 @@ export default function HomeClient() {
                                 </Carousel>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* ============= AI RECOMMENDATIONS — Gợi ý AI cho bạn ============= */}
+                {aiRecommendations && aiRecommendations.length > 0 && (
+                    <div className="mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-8 px-7 shadow-lg">
+                        <div className="flex items-center justify-between mb-6">
+                            <h1 className="text-xl md:text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                <HiOutlineSparkles className="text-yellow-500" />
+                                {user?._id ? 'AI Gợi ý cho bạn' : 'Sản phẩm phổ biến'}
+                            </h1>
+                            <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                                Powered by AI
+                            </span>
+                        </div>
+                        <Carousel
+                            slidesToShow={5} slidesToScroll={1} draggable dots={false}
+                            arrows autoplaySpeed={3500} responsive={responsiveSettings}
+                        >
+                            {aiRecommendations.map((product: IProductCard) => (
+                                <div key={product._id} className="px-1.5">
+                                    <CardProduct css="p-3" product={product} />
+                                </div>
+                            ))}
+                        </Carousel>
                     </div>
                 )}
 
