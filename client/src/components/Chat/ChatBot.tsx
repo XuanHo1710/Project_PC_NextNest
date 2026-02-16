@@ -330,7 +330,7 @@ const ChatBot = () => {
                                     value={inputValue}
                                     onChange={e => setInputValue(e.target.value)}
                                     onPressEnter={handleSend}
-                                    className="flex-grow rounded-full pr-24 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                    className="flex-grow rounded-full pr-32 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                                     size="large"
                                     disabled={isTyping}
                                 />
