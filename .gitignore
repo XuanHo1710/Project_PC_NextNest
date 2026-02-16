@@ -42,6 +42,5 @@ Thumbs.db
 
 # Ignore các file json và python
 *.json
-*.py
 *.ipynb
 *.requirements.txt

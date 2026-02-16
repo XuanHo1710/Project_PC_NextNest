@@ -1,0 +1,273 @@
+"""
+AI Chat service: uses Ollama (llama3.2) for conversational AI.
+Loads product catalog context to answer questions about products.
+No chat history persistence (in-memory only per session).
+"""
+import logging
+import httpx
+import json
+from datetime import datetime
+
+from config import get_settings
+from database import get_mongo_db
+from hybrid_prediction import predictor
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
+
+
+def _build_product_catalog_context() -> str:
+    """
+    Build a compact product catalog summary for the AI system prompt.
+    This gives the model knowledge about available products.
+    """
+    db = get_mongo_db()
+
+    brands = {str(b["_id"]): b.get("name", "") for b in db["brands"].find({}, {"name": 1})}
+    categories = {
+        str(c["_id"]): c.get("name", "")
+        for c in db["categories"].find({}, {"name": 1})
+    }
+
+    products = list(
+        db["products"]
+        .find({"isDeleted": {"$ne": True}, "status": "ACTIVE"})
+        .sort("createdAt", -1)
+        .limit(100)
+    )
+
+    if not products:
+        return "Hiện tại cửa hàng chưa có sản phẩm nào."
+
+    # Build attribute map
+    attrs = {
+        a["code"]: a.get("name", a["code"])
+        for a in db["productattributes"].find(
+            {"isDeleted": {"$ne": True}}, {"code": 1, "name": 1}
+        )
+        if a.get("code")
+    }
+
+    lines = []
+    for p in products:
+        name = p.get("name", "")
+        brand = brands.get(str(p.get("brand", "")), "")
+        cat = categories.get(str(p.get("category", "")), "")
+        min_price = p.get("minPrice", 0)
+        max_price = p.get("maxPrice", 0)
+
+        # Get variants info
+        variants = list(
+            db["productvariants"].find(
+                {"product": p["_id"], "isDeleted": {"$ne": True}},
+                {"price": 1, "discount": 1, "stock": 1, "combination": 1},
+            )
+        )
+
+        var_info = []
+        for v in variants:
+            combo = v.get("combination", {})
+            combo_str = ", ".join(
+                f"{attrs.get(k, k)}: {val}" for k, val in combo.items()
+            ) if isinstance(combo, dict) else ""
+            price = v.get("price", 0)
+            discount = v.get("discount", 0)
+            final = round(price * (1 - discount / 100))
+            stock = v.get("stock", 0)
+            var_info.append(f"  - {combo_str} | Giá: {final:,}đ (gốc {price:,}đ, giảm {discount}%) | Tồn kho: {stock}")
+
+        line = f"• {name}"
+        if brand:
+            line += f" [{brand}]"
+        if cat:
+            line += f" ({cat})"
+        line += f" - Giá: {min_price:,}đ ~ {max_price:,}đ"
+        if var_info:
+            line += "\n" + "\n".join(var_info[:5])  # Limit to 5 variants per product
+
+        lines.append(line)
+
+    return "\n".join(lines)
+
+
+# Cache the catalog context (refreshed on reindex)
+_catalog_context: str | None = None
+
+
+def get_catalog_context() -> str:
+    global _catalog_context
+    if _catalog_context is None:
+        try:
+            _catalog_context = _build_product_catalog_context()
+        except Exception as e:
+            logger.warning(f"Failed to load product catalog: {e}")
+            _catalog_context = "Hiện tại chưa tải được danh sách sản phẩm. Hãy trả lời chung về cửa hàng."
+    return _catalog_context
+
+
+def refresh_catalog_context():
+    global _catalog_context
+    _catalog_context = None
+    logger.info("Product catalog context cache cleared")
+
+
+SYSTEM_PROMPT = """Bạn là trợ lý AI của cửa hàng Arisu Store — chuyên bán PC Gaming, Laptop, Linh kiện máy tính và phụ kiện công nghệ.
+
+Nhiệm vụ của bạn:
+- Tư vấn sản phẩm phù hợp với nhu cầu khách hàng
+- Trả lời câu hỏi về thông số kỹ thuật, giá cả, tồn kho
+- So sánh sản phẩm khi được yêu cầu
+- Hỗ trợ chính sách bảo hành, đổi trả, giao hàng
+- Trả lời thân thiện, chuyên nghiệp, bằng tiếng Việt
+- Nếu không biết câu trả lời, hãy nói rõ và gợi ý liên hệ hotline: 1800 2097
+
+Chính sách cửa hàng:
+- Giao hàng miễn phí đơn từ 300,000đ
+- Bảo hành chính hãng đầy đủ
+- Đổi trả miễn phí trong 7 ngày
+- Hỗ trợ trả góp 0%
+- 4 showroom tại Hà Nội, Nghệ An, TP.HCM
+
+Dưới đây là danh sách sản phẩm hiện có:
+
+{catalog}
+
+NẾU người dùng cung cấp thông tin (nghề nghiệp, thu nhập,...) để nhờ tư vấn cấu hình mua Laptop/PC, hãy thử phân tích và TRẢ LỜI DUY NHẤT chuỗi JSON sau (bắt đầu bằng PREDICT_JSON:):
+
+PREDICT_JSON: {{"occupation": "...", "monthly_income": 0.0, "age": 20, "preferred_brand": "...", "usage_type": "...", "preferred_ram": "..."}}
+
+Quy tắc điền JSON:
+- occupation: sinh_vien, vp_ke_toan, giao_vien, lap_trinh_vien, ky_su, designer, gamer_streamer, quan_ly_doanh_nhan
+- usage_type: van_phong_hoc_tap, gaming, do_hoa_ky_thuat, doanh_nhan_di_dong
+- monthly_income: số triệu đồng (VD: 15.5). Nếu thiếu hãy để 10.
+- preferred_brand: Dell, HP, Asus, Acer, Lenovo, MSI, Apple, Samsung (nếu user không nói thì để null)
+
+Nếu KHÔNG PHẢI câu hỏi tư vấn cấu hình chi tiết (chỉ hỏi chung chung), hãy trả lời bình thường như nhân viên tư vấn.
+Hãy trả lời ngắn gọn, chính xác và hữu ích. Sử dụng markdown nếu cần format. Trả lời bằng tiếng Việt."""
+
+
+async def chat_with_ollama(
+    message: str,
+    conversation_history: list[dict] | None = None,
+) -> dict:
+    """
+    Send a message to Ollama and get a response.
+    conversation_history: list of { role: 'user'|'assistant', content: str }
+    """
+    catalog = get_catalog_context()
+    system_prompt = SYSTEM_PROMPT.format(catalog=catalog)
+
+    messages = [{"role": "system", "content": system_prompt}]
+
+    # Add conversation history (last 10 messages for context window management)
+    if conversation_history:
+        messages.extend(conversation_history[-10:])
+
+    messages.append({"role": "user", "content": message})
+
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            response = await client.post(
+                f"{settings.OLLAMA_BASE_URL}/api/chat",
+                json={
+                    "model": settings.OLLAMA_MODEL,
+                    "messages": messages,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.7,
+                        "top_p": 0.9,
+                        "num_predict": 1024,
+                    },
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            assistant_message = data.get("message", {}).get("content", "")
+            logger.info(f"RAW OLLAMA RESPONSE: {assistant_message}")
+
+            # --- HYBRID AI PREDICTION INTEGRATION ---
+            if "PREDICT_JSON:" in assistant_message:
+                try:
+                    json_str = assistant_message.split("PREDICT_JSON:")[1].strip()
+                    # Clean up markdown code blocks if present
+                    if json_str.startswith("```"):
+                        json_str = json_str.strip("`").replace("json", "").strip()
+                    
+                    user_profile = json.loads(json_str)
+                    
+                    # 1. Run prediction
+                    prediction = predictor.predict(user_profile)
+                    
+                    if prediction:
+                        # 2. Find real products
+                        products = predictor.find_products(prediction)
+                        
+                        # 3. Re-generate response
+                        assistant_message = (
+                            f"🔍 **Phân tích nhu cầu của bạn:**\n"
+                            f"- Nghề nghiệp: {user_profile.get('occupation')}\n"
+                            f"- Thu nhập: ~{user_profile.get('monthly_income')} triệu/tháng\n"
+                            f"- Nhu cầu: {prediction['recommended_category']} ({prediction['recommended_price_range']})\n\n"
+                            f"🤖 **AI Đề Xuất Cấu Hình:**\n"
+                            f"- Hãng: **{prediction['recommended_brand']}**\n"
+                            f"- RAM: {prediction['recommended_ram']} | ROM: {prediction['recommended_rom']}\n"
+                            f"- Tầm giá: {prediction['recommended_price_range']}\n\n"
+                            f"💻 **Sản phẩm phù hợp tại cửa hàng:**\n"
+                        )
+                        
+                        if products:
+                            for p in products:
+                                assistant_message += f"• {p['name']} - **{p['price']:,}đ**\n"
+                        else:
+                            assistant_message += "Hiện tại chưa tìm thấy sản phẩm khớp 100% tiêu chí, nhưng bạn có thể tham khảo các dòng tương đương tại cửa hàng."
+                            
+                except Exception as e:
+                    logger.error(f"Failed to process prediction JSON: {e}")
+                    # Fallback: Just return original text or generic msg
+                    pass
+            # ----------------------------------------
+
+            # Generate contextual suggestions
+            suggestions = _generate_suggestions(message, assistant_message)
+
+            return {
+                "text": assistant_message,
+                "timestamp": datetime.now().isoformat(),
+                "suggestions": suggestions,
+            }
+
+    except httpx.ConnectError:
+        logger.error("Cannot connect to Ollama. Is it running?")
+        return {
+            "text": "Xin lỗi, hệ thống AI đang bảo trì. Vui lòng thử lại sau hoặc liên hệ hotline 1800 2097 để được hỗ trợ.",
+            "timestamp": datetime.now().isoformat(),
+            "suggestions": ["Liên hệ hỗ trợ", "Xem sản phẩm mới"],
+        }
+    except Exception as e:
+        logger.error(f"Ollama chat error: {e}")
+        return {
+            "text": "Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.",
+            "timestamp": datetime.now().isoformat(),
+            "suggestions": [],
+        }
+
+
+def _generate_suggestions(user_message: str, bot_response: str) -> list[str]:
+    """Generate contextual quick-reply suggestions based on the conversation."""
+    msg_lower = user_message.lower()
+
+    if any(kw in msg_lower for kw in ["giá", "bao nhiêu", "giảm giá", "khuyến mãi"]):
+        return ["So sánh với sản phẩm khác", "Có trả góp không?", "Còn hàng không?"]
+
+    if any(kw in msg_lower for kw in ["laptop", "pc", "máy tính"]):
+        return ["Tư vấn cấu hình", "Laptop cho sinh viên", "PC Gaming giá rẻ"]
+
+    if any(kw in msg_lower for kw in ["bảo hành", "đổi trả", "hoàn tiền"]):
+        return ["Chính sách giao hàng", "Liên hệ hotline", "Showroom gần nhất"]
+
+    if any(kw in msg_lower for kw in ["ram", "cpu", "gpu", "ssd", "card"]):
+        return ["So sánh cấu hình", "Nâng cấp được không?", "Tương thích không?"]
+
+    # Default suggestions
+    return ["Sản phẩm nổi bật", "Khuyến mãi hiện tại", "Tư vấn mua hàng"]
