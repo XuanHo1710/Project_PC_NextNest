@@ -73,10 +73,10 @@ export class AuthController {
     return guest;
   }
 
-  @Get('google')
+  @Get('/google')
   @Public()
   @UseGuards(GoogleAuthGuard)
-  async googleAuth(@Req() req: Request) {
+  async googleAuth() {
     // Initiates the Google OAuth2 login flow
   }
 

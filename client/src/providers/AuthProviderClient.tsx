@@ -37,8 +37,30 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    const { setUser, setAccessToken, resetAuth, user, loading, isAuthenticated, login, logout, loginWithGoogle } = useAuthUser();
+    const { setUser, setAccessToken, resetAuth, user, loading, isAuthenticated, login, logout, loginWithGoogle, handleGoogleCallback } = useAuthUser();
     const [isLoading, setIsLoading] = useState(true);
+
+    // Listen for Google OAuth popup postMessage
+    useEffect(() => {
+        const handleGoogleMessage = async (event: MessageEvent) => {
+            // Extract origin only from the full API URL (e.g. http://localhost:8080/api/v1 → http://localhost:8080)
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const allowedOrigin = new URL(apiUrl).origin;
+            if (event.origin !== allowedOrigin) return;
+
+            if (event.data?.type === 'GOOGLE_LOGIN_SUCCESS') {
+                const { access_token, payload } = event.data.payload;
+                await handleGoogleCallback({ access_token, payload });
+            } else if (event.data?.type === 'GOOGLE_LOGIN_FAILED') {
+                import('antd').then(({ message: antMessage }) => {
+                    antMessage.error('Đăng nhập Google thất bại. Vui lòng thử lại.');
+                });
+            }
+        };
+
+        window.addEventListener('message', handleGoogleMessage);
+        return () => window.removeEventListener('message', handleGoogleMessage);
+    }, [handleGoogleCallback]);
 
     useEffect(() => {
         const fetchProfile = async () => {

@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ClientLocalStrategy } from 'guards/client-local-jwt.strategy';
+import { GoogleStrategy } from 'guards/google.strategy';
 import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
 
 @Module({
@@ -32,7 +33,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
     ]),
   ],
   controllers: [AuthController],
-  providers: [ClientLocalStrategy],
-  exports: [ClientLocalStrategy, PassportModule, JwtModule],
+  providers: [ClientLocalStrategy, GoogleStrategy],
+  exports: [ClientLocalStrategy, GoogleStrategy, PassportModule, JwtModule],
 })
 export class AuthModule {}

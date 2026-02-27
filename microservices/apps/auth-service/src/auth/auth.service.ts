@@ -89,7 +89,14 @@ export class ClientAuthService {
         authProvider: 'google',
         googleId: googleId,
       });
-      return result;
+      // Google accounts are already verified — activate immediately
+      await this.accountGuestService.update((result as any)._id.toString(), {
+        isEmailVerified: true,
+        accountStatus: 'ACTIVE',
+      });
+      return this.accountGuestService.getGuestById(
+        (result as any)._id.toString(),
+      );
     } else {
       // Update thông tin nếu user đã tồn tại
       await this.accountGuestService.update(guest._id.toString(), {

@@ -15,6 +15,10 @@ interface AuthUserState {
   register: (registerData: IClientRegisterDto) => Promise<boolean>;
   logout: () => Promise<void>;
   loginWithGoogle: () => void;
+  handleGoogleCallback: (data: {
+    access_token: string;
+    payload: Record<string, unknown>;
+  }) => Promise<boolean>;
 
   setUser: (user: IClientUser | null) => void;
   setAccessToken: (token: string | null) => void;
@@ -110,7 +114,48 @@ const useAuthUser = create<AuthUserState>((set) => ({
   },
 
   loginWithGoogle: () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/client/auth/google`;
+    const width = 500;
+    const height = 620;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    window.open(
+      `${process.env.NEXT_PUBLIC_API_URL}/client/auth/google`,
+      "googleLogin",
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`,
+    );
+  },
+
+  handleGoogleCallback: async (data) => {
+    try {
+      set({ loading: true });
+
+      const response = await axios.post("/api/client/auth/google-callback", {
+        access_token: data.access_token,
+        payload: data.payload,
+      });
+
+      if (response.data.success && response.data.data) {
+        const { user, access_token } = response.data.data;
+        set({
+          user,
+          accessToken: access_token,
+          isAuthenticated: true,
+        });
+        toast.success("Đăng nhập Google thành công!");
+        return true;
+      }
+
+      message.error(response.data.message || "Đăng nhập Google thất bại");
+      return false;
+    } catch (error: unknown) {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Đăng nhập Google thất bại";
+      message.error(errorMessage);
+      return false;
+    } finally {
+      set({ loading: false });
+    }
   },
 
   setUser: (user) =>
