@@ -128,7 +128,7 @@ export default function HomeClient() {
                         <ul style={{ scrollbarWidth: "none" }} className="m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-slate-800">
                             {categories && categories.length > 0 && categories.map((category, index) => (
                                 <Link key={category._id} href={`/collection/${category.slug}`}>
-                                    <li className="w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-indigo-50 hover:text-indigo-600 px-6 py-3 flex items-center">
+                                    <li className="w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-blue-50 hover:text-blue-600 px-6 py-3 flex items-center">
                                         <span className="font-medium flex items-center gap-3">{ListIcon[index % ListIcon.length]} {category.name}</span>
                                         <MdKeyboardArrowRight className="text-xl" />
                                     </li>
@@ -141,12 +141,12 @@ export default function HomeClient() {
                     <div className="col-span-12 xl:col-span-9 row-span-3 rounded-lg shadow-sm overflow-hidden max-h-max">
                         <Carousel autoplay arrows autoplaySpeed={3000} dots={{ className: 'custom-dots' }} className="hero-banner-carousel">
                             <div>
-                                <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 flex items-center">
+                                <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-blue-600 via-blue-600 to-purple-700 flex items-center">
                                     <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
                                     <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
                                         <h2 className="text-3xl md:text-5xl font-extrabold mb-3">PC Gaming</h2>
                                         <p className="text-lg md:text-xl opacity-90 mb-4">Hiệu năng vượt trội, chiến mọi tựa game!</p>
-                                        <Link href="/collection/pc-gaming" className="inline-block bg-white text-indigo-600 font-bold px-6 py-2.5 rounded-full hover:bg-indigo-50 transition-colors">Khám phá ngay</Link>
+                                        <Link href="/collection/pc-gaming" className="inline-block bg-white text-blue-600 font-bold px-6 py-2.5 rounded-full hover:bg-blue-50 transition-colors">Khám phá ngay</Link>
                                     </div>
                                 </div>
                             </div>
@@ -181,12 +181,12 @@ export default function HomeClient() {
                                 </div>
                             </div>
                             <div>
-                                <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center">
+                                <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-blue-500 to-blue-600 flex items-center">
                                     <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1625225233840-695456021cde?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
                                     <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
                                         <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Phụ kiện Gaming</h2>
                                         <p className="text-lg md:text-xl opacity-90 mb-4">Bàn phím cơ, chuột, tai nghe chính hãng!</p>
-                                        <Link href="/collection/phu-kien" className="inline-block bg-white text-indigo-600 font-bold px-6 py-2.5 rounded-full hover:bg-indigo-50 transition-colors">Xem ngay</Link>
+                                        <Link href="/collection/phu-kien" className="inline-block bg-white text-blue-600 font-bold px-6 py-2.5 rounded-full hover:bg-blue-50 transition-colors">Xem ngay</Link>
                                     </div>
                                 </div>
                             </div>
@@ -235,18 +235,18 @@ export default function HomeClient() {
                                         className="group block"
                                     >
                                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center
-                                            hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500 transition-all duration-200 h-[180px] justify-center">
+                                            hover:shadow-md hover:border-blue-200 dark:hover:border-blue-500 transition-all duration-200 h-[180px] justify-center">
                                             <div className="w-16 h-16 mb-3 flex items-center justify-center">
                                                 {brand.logo ? (
                                                     <img src={brand.logo} alt={brand.name}
                                                         className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-200" />
                                                 ) : (
-                                                    <div className="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                                    <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
                                                         {brand.name.charAt(0)}
                                                     </div>
                                                 )}
                                             </div>
-                                            <h3 className="font-bold text-sm md:text-base text-gray-800 dark:text-white group-hover:text-indigo-500 transition-colors">
+                                            <h3 className="font-bold text-sm md:text-base text-gray-800 dark:text-white group-hover:text-blue-500 transition-colors">
                                                 {brand.name}
                                             </h3>
                                             {brand.description && (
@@ -365,36 +365,36 @@ export default function HomeClient() {
                 {/* ============= SHOWROOM — Original layout ============= */}
                 <div className="mx-4 sm:mx-5 xl:mx-32 dark:bg-slate-800 rounded-lg bg-white py-10 px-5 sm:px-7 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-center">
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-indigo-500">HỆ THỐNG SHOWROOM</h1>
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-500">HỆ THỐNG SHOWROOM</h1>
                     </div>
                     <div className="mt-12 grid grid-flow-row grid-cols-12 gap-3">
                         {/* Showroom 1 */}
                         <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
                             <div className="flex items-center">
-                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-indigo-100 text-indigo-600">1</div>
-                                <div className="font-bold text-indigo-500">
+                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-blue-100 text-blue-600">1</div>
+                                <div className="font-bold text-blue-500">
                                     <h5>Showroom bán hàng</h5>
                                     <h2>QUẬN CẦU GIẤY, HÀ NỘI</h2>
                                 </div>
                             </div>
                             <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">41 Khúc Thừa Dụ, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội</h2>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hình ảnh showroom</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline bảo hành: 19006100</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
                             </p>
@@ -403,29 +403,29 @@ export default function HomeClient() {
                         <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
                             <div className="flex items-center">
                                 <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-purple-100 text-purple-600">2</div>
-                                <div className="font-bold text-indigo-500">
+                                <div className="font-bold text-blue-500">
                                     <h5>Showroom bán hàng</h5>
                                     <h2>QUẬN ĐỐNG ĐA, HÀ NỘI</h2>
                                 </div>
                             </div>
                             <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">94E-94F Đường Láng, Phường Ngã Tư Sở, Quận Đống Đa, Hà Nội</h2>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hình ảnh showroom</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline bảo hành: 19006100</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
                             </p>
@@ -434,29 +434,29 @@ export default function HomeClient() {
                         <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
                             <div className="flex items-center">
                                 <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-emerald-100 text-emerald-600">3</div>
-                                <div className="font-bold text-indigo-500 w-2/3">
+                                <div className="font-bold text-blue-500 w-2/3">
                                     <h5>Showroom bán hàng</h5>
                                     <h2>VINH, NGHỆ AN</h2>
                                 </div>
                             </div>
                             <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">72 Lê Lợi, Thành Phố Vinh, Nghệ An</h2>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hình ảnh showroom</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline bảo hành: 19006100</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
                             </p>
@@ -465,29 +465,29 @@ export default function HomeClient() {
                         <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
                             <div className="flex items-center">
                                 <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-rose-100 text-rose-600">4</div>
-                                <div className="font-bold text-indigo-500">
+                                <div className="font-bold text-blue-500">
                                     <h5>Showroom bán hàng</h5>
                                     <h2>QUẬN 10, HỒ CHÍ MINH</h2>
                                 </div>
                             </div>
                             <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">260 Lý Thường Kiệt, Phường 14, Quận 10, Hồ Chí Minh</h2>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hình ảnh showroom</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline bảo hành: 19006100</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
                             </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
                                 <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
                             </p>

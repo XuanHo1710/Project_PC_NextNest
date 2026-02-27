@@ -808,9 +808,9 @@ export default function MyProductsPage() {
 
                                     {/* ======= BULK APPLY ======= */}
                                     {editVariants.length > 1 && (
-                                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
+                                        <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
                                             <div className="flex items-center gap-2 mb-3">
-                                                <TagsOutlined className="text-indigo-500" />
+                                                <TagsOutlined className="text-blue-500" />
                                                 <span className="font-semibold text-sm text-gray-700">Áp dụng hàng loạt</span>
                                                 <span className="text-[11px] text-gray-400">cho tất cả {editVariants.length} biến thể</span>
                                             </div>

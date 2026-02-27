@@ -308,7 +308,7 @@ export default function ProductDetailClient() {
                         {/* Right: Product Info */}
                         <div className="lg:col-span-7 space-y-5">
                             {/* Price Section */}
-                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 rounded-xl p-5">
+                            <div className="bg-gradient-to-r from-blue-50 to-blue-50 dark:from-gray-700 dark:to-gray-700 rounded-xl p-5">
                                 <div className="flex items-end gap-4 flex-wrap">
                                     <span className="text-blue-600 dark:text-blue-400 font-bold text-3xl xl:text-4xl">
                                         {displayFinalPrice.toLocaleString()}đ

@@ -25,7 +25,7 @@ export default function AuthSuccessPage() {
     }, [router]);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
                 <Spin size="large" className="mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Đang xử lý đăng nhập...</h2>
