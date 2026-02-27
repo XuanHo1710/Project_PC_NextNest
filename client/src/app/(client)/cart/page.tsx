@@ -421,13 +421,13 @@ export default function CartClient() {
 
                                         {/* User Profile Badge */}
                                         {user && profile ? (
-                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-3 mb-4 border border-blue-100 dark:border-blue-800">
+                                            <div className="bg-gradient-to-r from-blue-50 to-blue-50 dark:from-blue-900/20 dark:to-blue-900/20 rounded-lg p-3 mb-4 border border-blue-100 dark:border-blue-800">
                                                 <div className="flex items-center gap-3">
                                                     {profile.avatar ?
                                                         <Avatar src={profile.avatar} />
                                                         :
 
-                                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
                                                             {profile.fullname?.charAt(0).toUpperCase()}
                                                         </div>
 

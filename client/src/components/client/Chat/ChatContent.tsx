@@ -284,7 +284,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
     const VirtuosoHeader = () => (
         <div className="flex justify-center py-3">
             {isFetchingNextPage ? (
-                Spin indicator={<LoadingOutlined className="text-indigo-500" />} size="small" />
+                Spin indicator={<LoadingOutlined className="text-blue-500" />} size="small" />
             ) : hasNextPage ? (
             <span className="text-xs text-gray-400">Cuộn lên để tải thêm</span>
             ) : messages.length > 0 ? (
@@ -400,7 +400,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                     <div
                                         key={conv._id}
                                         className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 ${activeConvId === conv._id
-                                            ? 'bg-indigo-50 dark:bg-gray-700 border-l-2 border-l-indigo-500'
+                                            ? 'bg-blue-50 dark:bg-gray-700 border-l-2 border-l-blue-500'
                                             : ''
                                             }`}
                                         onClick={() => handleSelectConversation(conv._id)}
@@ -408,7 +408,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                         <Badge count={unread} size="small">
                                             <div className="relative">
                                                 <Avatar
-                                                    className="bg-indigo-500 shrink-0"
+                                                    className="bg-blue-500 shrink-0"
                                                     size={40}
                                                     src={other.avatar || undefined}
                                                 >
@@ -429,7 +429,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                             <p className={`text-xs m-0 truncate ${unread > 0 ? 'text-gray-800 dark:text-white font-semibold' : 'text-gray-500'}`}>
                                                 {conv.lastMessage?.content || 'Bắt đầu trò chuyện...'}
                                             </p>
-                                            <span className="text-[10px] text-indigo-400">
+                                            <span className="text-[10px] text-blue-400">
                                                 {other.role === 'seller' ? 'Người bán' : 'Người mua'}
                                             </span>
                                         </div>
@@ -442,16 +442,16 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
 
                 {/* Chat Area */}
                 <div
-                    className={`flex-1 flex-col min-w-0 relative ${activeConvId ? 'flex' : 'hidden md:flex'} ${isDragging ? 'ring-2 ring-indigo-400 ring-inset' : ''}`}
+                    className={`flex-1 flex-col min-w-0 relative ${activeConvId ? 'flex' : 'hidden md:flex'} ${isDragging ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
                     onDragOver={activeConv ? handleDragOver : undefined}
                     onDragLeave={activeConv ? handleDragLeave : undefined}
                     onDrop={activeConv ? handleDrop : undefined}
                 >
                     {/* Drag overlay */}
                     {isDragging && (
-                        <div className="absolute inset-0 bg-indigo-50/80 dark:bg-indigo-900/40 z-50 flex items-center justify-center pointer-events-none">
+                        <div className="absolute inset-0 bg-blue-50/80 dark:bg-blue-900/40 z-50 flex items-center justify-center pointer-events-none">
                             <div className="bg-white dark:bg-gray-800 rounded-xl px-8 py-6 shadow-lg text-center">
-                                <PictureOutlined className="text-4xl text-indigo-500 mb-2" />
+                                <PictureOutlined className="text-4xl text-blue-500 mb-2" />
                                 <p className="text-sm text-gray-600 dark:text-gray-300 m-0">Thả ảnh/video vào đây</p>
                             </div>
                         </div>
@@ -473,7 +473,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                 </button>
                                 <div className="relative">
                                     <Avatar
-                                        className="bg-indigo-500 shrink-0"
+                                        className="bg-blue-500 shrink-0"
                                         size={40}
                                         src={activeOther.avatar || undefined}
                                     >
@@ -559,7 +559,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                                     <div className={`flex mb-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                                         {!isMe && (
                                                             <Avatar
-                                                                className="bg-indigo-500 shrink-0 mt-1 mr-2"
+                                                                className="bg-blue-500 shrink-0 mt-1 mr-2"
                                                                 size={28}
                                                                 src={activeOther.avatar || undefined}
                                                             >
@@ -573,8 +573,8 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                                                     : 'px-4 py-2.5 rounded-2xl text-sm leading-relaxed'
                                                                     } ${isMe
                                                                         ? msg.type === 'IMAGE' || msg.type === 'VIDEO'
-                                                                            ? 'bg-indigo-500/10 rounded-br-sm'
-                                                                            : 'bg-indigo-500 text-white rounded-br-sm'
+                                                                            ? 'bg-blue-500/10 rounded-br-sm'
+                                                                            : 'bg-blue-500 text-white rounded-br-sm'
                                                                         : msg.type === 'IMAGE' || msg.type === 'VIDEO'
                                                                             ? 'bg-white dark:bg-gray-700 rounded-bl-sm shadow-sm'
                                                                             : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-sm shadow-sm'
@@ -649,7 +649,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                             type="text"
                                             icon={<PaperClipOutlined />}
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="!text-gray-500 hover:!text-indigo-500"
+                                            className="!text-gray-500 hover:!text-blue-500"
                                             disabled={uploading}
                                         />
                                     </Tooltip>
