@@ -546,6 +546,7 @@ export class ProductSearchService implements OnModuleInit {
           minPrice: 'displayPrice',
           createdAt: 'createdAt',
           name: 'productName.keyword',
+          productName: 'productName.keyword',
         };
 
         const esField = fieldMap[field] || field;

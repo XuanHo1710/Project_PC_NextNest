@@ -185,22 +185,34 @@ def fetch_all_products() -> list[dict]:
 
 def ensure_collection():
     """Create the Qdrant collection if it doesn't exist."""
-    client = get_qdrant_client()
-    collection_name = settings.COLLECTION_NAME
-    dim = get_embedding_dimension()
+    try:
+        client = get_qdrant_client()
+        collection_name = settings.COLLECTION_NAME
+        dim = get_embedding_dimension()
 
-    collections = [c.name for c in client.get_collections().collections]
-    if collection_name not in collections:
-        logger.info(
-            f"Creating Qdrant collection '{collection_name}' with dim={dim}"
-        )
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
-        )
-        logger.info(f"Collection '{collection_name}' created")
-    else:
-        logger.info(f"Collection '{collection_name}' already exists")
+        collections = [c.name for c in client.get_collections().collections]
+        if collection_name not in collections:
+            logger.info(
+                f"Creating Qdrant collection '{collection_name}' with dim={dim}"
+            )
+            client.create_collection(
+                collection_name=collection_name,
+                vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
+            )
+            logger.info(f"Collection '{collection_name}' created")
+        else:
+            logger.info(f"Collection '{collection_name}' already exists")
+    except Exception as e:
+        error_msg = str(e)
+        logger.warning(f"Failed to ensure Qdrant collection: {error_msg}")
+        if "404" in error_msg or "Not Found" in error_msg:
+            logger.warning(
+                "Qdrant Cloud cluster may be expired or URL is invalid. "
+                f"Current URL: {settings.QDRANT_URL} — "
+                "Please create a new cluster at https://cloud.qdrant.io or run Qdrant locally: "
+                "docker run -p 6333:6333 qdrant/qdrant"
+            )
+        logger.warning("Product vector search will be unavailable until Qdrant is fixed.")
 
 
 def index_all_products() -> dict:

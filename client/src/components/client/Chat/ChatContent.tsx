@@ -48,7 +48,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
     const [isDragging, setIsDragging] = useState(false);
 
     const userId = user?._id;
-    const userName = user?.fullname || 'Khách';
+    const userName = user?.fullname || 'KhÃ¡ch';
 
     // Sync when initialConversationId changes (e.g., from URL navigation)
     useEffect(() => {
@@ -151,7 +151,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                 }
                 setPreviewFiles([]);
             } catch {
-                antMessage.error('Upload thất bại, vui lòng thử lại');
+                antMessage.error('Upload tháº¥t báº¡i, vui lÃ²ng thá»­ láº¡i');
             } finally {
                 setUploading(false);
             }
@@ -181,13 +181,13 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             if (file.size > 50 * 1024 * 1024) {
-                antMessage.warning(`${file.name} vượt quá 50MB, bỏ qua`);
+                antMessage.warning(`${file.name} vÆ°á»£t quÃ¡ 50MB, bá» qua`);
                 continue;
             }
             const isVideo = file.type.startsWith('video/');
             const isImage = file.type.startsWith('image/');
             if (!isVideo && !isImage) {
-                antMessage.warning(`${file.name} không phải ảnh/video, bỏ qua`);
+                antMessage.warning(`${file.name} khÃ´ng pháº£i áº£nh/video, bá» qua`);
                 continue;
             }
             newPreviews.push({
@@ -258,7 +258,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
         const date = new Date(timestamp);
         const now = new Date();
         const diff = now.getTime() - date.getTime();
-        if (diff < 60_000) return 'Vừa xong';
+        if (diff < 60_000) return 'Vá»«a xong';
         if (diff < 3600_000) return `${Math.floor(diff / 60_000)}p`;
         if (diff < 86400_000) return formatTime(timestamp);
         return date.toLocaleDateString('vi-VN');
@@ -284,11 +284,11 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
     const VirtuosoHeader = () => (
         <div className="flex justify-center py-3">
             {isFetchingNextPage ? (
-                Spin indicator={<LoadingOutlined className="text-indigo-500" />} size="small" />
+                Spin indicator={<LoadingOutlined className="text-blue-500" />} size="small" />
             ) : hasNextPage ? (
-            <span className="text-xs text-gray-400">Cuộn lên để tải thêm</span>
+            <span className="text-xs text-gray-400">Cuá»™n lÃªn Ä‘á»ƒ táº£i thÃªm</span>
             ) : messages.length > 0 ? (
-            <span className="text-xs text-gray-400">Đầu cuộc trò chuyện</span>
+            <span className="text-xs text-gray-400">Äáº§u cuá»™c trÃ² chuyá»‡n</span>
             ) : null}
         </div>
     );
@@ -301,7 +301,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                     <div className="max-w-[280px]">
                         <img
                             src={msg.content}
-                            alt="Ảnh"
+                            alt="áº¢nh"
                             className="rounded-lg max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
                             loading="lazy"
                             onClick={() => window.open(msg.content, '_blank')}
@@ -324,20 +324,20 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
         }
     };
 
-    // ==================== No user — unauthenticated ====================
+    // ==================== No user â€” unauthenticated ====================
     if (!userId) {
         return (
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white min-h-screen">
                 <div className="mx-5 xl:mx-20">
-                    <Breadcrumb items={[{ label: 'Tin nhắn' }]} />
+                    <Breadcrumb items={[{ label: 'Tin nháº¯n' }]} />
                 </div>
                 <div className="max-w-2xl mx-auto py-20 px-4">
                     <Empty
                         image={<MessageOutlined className="text-6xl text-gray-300" />}
-                        description="Vui lòng đăng nhập để sử dụng tin nhắn"
+                        description="Vui lÃ²ng Ä‘Äƒng nháº­p Ä‘á»ƒ sá»­ dá»¥ng tin nháº¯n"
                     >
                         <Link href="/login">
-                            <Button type="primary">Đăng nhập</Button>
+                            <Button type="primary">ÄÄƒng nháº­p</Button>
                         </Link>
                     </Empty>
                 </div>
@@ -351,7 +351,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
             <div className="mx-5 xl:mx-20">
                 <Breadcrumb
                     items={[
-                        { label: 'Tin nhắn' },
+                        { label: 'Tin nháº¯n' },
                         ...(activeOther ? [{ label: activeOther.name }] : []),
                     ]}
                 />
@@ -368,10 +368,10 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                 className="!p-1"
                                 size="small"
                             />
-                            <h3 className="font-semibold text-base m-0 flex-1">Tin nhắn</h3>
+                            <h3 className="font-semibold text-base m-0 flex-1">Tin nháº¯n</h3>
                         </div>
                         <Input
-                            placeholder="Tìm cuộc trò chuyện..."
+                            placeholder="TÃ¬m cuá»™c trÃ² chuyá»‡n..."
                             prefix={<SearchOutlined className="text-gray-400" />}
                             size="small"
                             value={searchConv}
@@ -388,7 +388,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                             </div>
                         ) : filteredConversations.length === 0 ? (
                             <div className="text-center py-8 text-gray-400 text-sm">
-                                Không có cuộc trò chuyện
+                                KhÃ´ng cÃ³ cuá»™c trÃ² chuyá»‡n
                             </div>
                         ) : (
                             filteredConversations.map((conv) => {
@@ -400,7 +400,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                     <div
                                         key={conv._id}
                                         className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 ${activeConvId === conv._id
-                                            ? 'bg-indigo-50 dark:bg-gray-700 border-l-2 border-l-indigo-500'
+                                            ? 'bg-blue-50 dark:bg-gray-700 border-l-2 border-l-blue-500'
                                             : ''
                                             }`}
                                         onClick={() => handleSelectConversation(conv._id)}
@@ -408,7 +408,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                         <Badge count={unread} size="small">
                                             <div className="relative">
                                                 <Avatar
-                                                    className="bg-indigo-500 shrink-0"
+                                                    className="bg-blue-500 shrink-0"
                                                     size={40}
                                                     src={other.avatar || undefined}
                                                 >
@@ -427,10 +427,10 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                                 </span>
                                             </div>
                                             <p className={`text-xs m-0 truncate ${unread > 0 ? 'text-gray-800 dark:text-white font-semibold' : 'text-gray-500'}`}>
-                                                {conv.lastMessage?.content || 'Bắt đầu trò chuyện...'}
+                                                {conv.lastMessage?.content || 'Báº¯t Ä‘áº§u trÃ² chuyá»‡n...'}
                                             </p>
-                                            <span className="text-[10px] text-indigo-400">
-                                                {other.role === 'seller' ? 'Người bán' : 'Người mua'}
+                                            <span className="text-[10px] text-blue-400">
+                                                {other.role === 'seller' ? 'NgÆ°á»i bÃ¡n' : 'NgÆ°á»i mua'}
                                             </span>
                                         </div>
                                     </div>
@@ -442,17 +442,17 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
 
                 {/* Chat Area */}
                 <div
-                    className={`flex-1 flex-col min-w-0 relative ${activeConvId ? 'flex' : 'hidden md:flex'} ${isDragging ? 'ring-2 ring-indigo-400 ring-inset' : ''}`}
+                    className={`flex-1 flex-col min-w-0 relative ${activeConvId ? 'flex' : 'hidden md:flex'} ${isDragging ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
                     onDragOver={activeConv ? handleDragOver : undefined}
                     onDragLeave={activeConv ? handleDragLeave : undefined}
                     onDrop={activeConv ? handleDrop : undefined}
                 >
                     {/* Drag overlay */}
                     {isDragging && (
-                        <div className="absolute inset-0 bg-indigo-50/80 dark:bg-indigo-900/40 z-50 flex items-center justify-center pointer-events-none">
+                        <div className="absolute inset-0 bg-blue-50/80 dark:bg-blue-900/40 z-50 flex items-center justify-center pointer-events-none">
                             <div className="bg-white dark:bg-gray-800 rounded-xl px-8 py-6 shadow-lg text-center">
-                                <PictureOutlined className="text-4xl text-indigo-500 mb-2" />
-                                <p className="text-sm text-gray-600 dark:text-gray-300 m-0">Thả ảnh/video vào đây</p>
+                                <PictureOutlined className="text-4xl text-blue-500 mb-2" />
+                                <p className="text-sm text-gray-600 dark:text-gray-300 m-0">Tháº£ áº£nh/video vÃ o Ä‘Ã¢y</p>
                             </div>
                         </div>
                     )}
@@ -473,7 +473,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                 </button>
                                 <div className="relative">
                                     <Avatar
-                                        className="bg-indigo-500 shrink-0"
+                                        className="bg-blue-500 shrink-0"
                                         size={40}
                                         src={activeOther.avatar || undefined}
                                     >
@@ -489,17 +489,17 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                     </p>
                                     <p className={`text-xs m-0 ${isUserOnline(activeOther.userId) ? 'text-green-500' : 'text-gray-400'}`}>
                                         {isUserOnline(activeOther.userId)
-                                            ? 'Đang hoạt động'
+                                            ? 'Äang hoáº¡t Ä‘á»™ng'
                                             : getLastActive(activeOther.userId)
-                                                ? `Hoạt động ${timeAgo(getLastActive(activeOther.userId)!)}`
+                                                ? `Hoáº¡t Ä‘á»™ng ${timeAgo(getLastActive(activeOther.userId)!)}`
                                                 : activeOther.role === 'seller'
-                                                    ? 'Người bán'
-                                                    : 'Người mua'}
+                                                    ? 'NgÆ°á»i bÃ¡n'
+                                                    : 'NgÆ°á»i mua'}
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Chat Messages — Virtuoso */}
+                            {/* Chat Messages â€” Virtuoso */}
                             <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
                                 {loadingMessages ? (
                                     <div className="flex items-center justify-center h-full">
@@ -508,8 +508,8 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                 ) : messages.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
                                         <SmileOutlined className="text-4xl mb-3" />
-                                        <p className="text-sm">Bắt đầu cuộc trò chuyện với {activeOther.name}</p>
-                                        <p className="text-xs">Hãy gửi tin nhắn đầu tiên!</p>
+                                        <p className="text-sm">Báº¯t Ä‘áº§u cuá»™c trÃ² chuyá»‡n vá»›i {activeOther.name}</p>
+                                        <p className="text-xs">HÃ£y gá»­i tin nháº¯n Ä‘áº§u tiÃªn!</p>
                                     </div>
                                 ) : (
                                     <Virtuoso
@@ -559,7 +559,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                                     <div className={`flex mb-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
                                                         {!isMe && (
                                                             <Avatar
-                                                                className="bg-indigo-500 shrink-0 mt-1 mr-2"
+                                                                className="bg-blue-500 shrink-0 mt-1 mr-2"
                                                                 size={28}
                                                                 src={activeOther.avatar || undefined}
                                                             >
@@ -573,8 +573,8 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                                                     : 'px-4 py-2.5 rounded-2xl text-sm leading-relaxed'
                                                                     } ${isMe
                                                                         ? msg.type === 'IMAGE' || msg.type === 'VIDEO'
-                                                                            ? 'bg-indigo-500/10 rounded-br-sm'
-                                                                            : 'bg-indigo-500 text-white rounded-br-sm'
+                                                                            ? 'bg-blue-500/10 rounded-br-sm'
+                                                                            : 'bg-blue-500 text-white rounded-br-sm'
                                                                         : msg.type === 'IMAGE' || msg.type === 'VIDEO'
                                                                             ? 'bg-white dark:bg-gray-700 rounded-bl-sm shadow-sm'
                                                                             : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-sm shadow-sm'
@@ -598,7 +598,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                             {activeTyping.length > 0 && (
                                 <div className="px-4 py-1 bg-gray-50 dark:bg-gray-900">
                                     <p className="text-xs text-gray-400 italic m-0">
-                                        {activeOther.name} đang nhập...
+                                        {activeOther.name} Ä‘ang nháº­p...
                                     </p>
                                 </div>
                             )}
@@ -644,17 +644,17 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                                     }}
                                 />
                                 <div className="flex items-center gap-2">
-                                    <Tooltip title="Gửi ảnh/video">
+                                    <Tooltip title="Gá»­i áº£nh/video">
                                         <Button
                                             type="text"
                                             icon={<PaperClipOutlined />}
                                             onClick={() => fileInputRef.current?.click()}
-                                            className="!text-gray-500 hover:!text-indigo-500"
+                                            className="!text-gray-500 hover:!text-blue-500"
                                             disabled={uploading}
                                         />
                                     </Tooltip>
                                     <Input
-                                        placeholder="Nhập tin nhắn..."
+                                        placeholder="Nháº­p tin nháº¯n..."
                                         value={input}
                                         onChange={handleInputChange}
                                         onPressEnter={handleSend}
@@ -678,7 +678,7 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
                         <div className="flex-1 flex items-center justify-center text-gray-400">
                             <div className="text-center">
                                 <MessageOutlined className="text-5xl mb-3" />
-                                <p className="text-sm">Chọn một cuộc trò chuyện để bắt đầu</p>
+                                <p className="text-sm">Chá»n má»™t cuá»™c trÃ² chuyá»‡n Ä‘á»ƒ báº¯t Ä‘áº§u</p>
                             </div>
                         </div>
                     )}

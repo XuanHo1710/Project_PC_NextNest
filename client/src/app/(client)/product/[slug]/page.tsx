@@ -1,555 +1,142 @@
-'use client';
-import { useEffect, useState, useMemo } from 'react';
-import CardProduct from "@/components/client/CardProduct/CardProduct";
-import { productClientService } from "@/services/client";
-import { IProductCard, IProductWithPagination, IProductVariant, ICreatorInfo } from "@/types/product";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Carousel, Rate, Tag, Tabs, message, Divider, Badge, Image } from "antd";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { ProductDetailSkeleton } from "@/components/Skeletons";
-import {
-    ShoppingCartOutlined,
-    HeartOutlined,
-    HeartFilled,
-    CheckCircleFilled,
-    FireFilled,
-    CommentOutlined,
-    SafetyCertificateFilled,
-    ThunderboltFilled,
-    RocketFilled,
-    HomeOutlined,
-    TruckOutlined,
-    PhoneOutlined,
-    CreditCardOutlined,
-    SwapOutlined,
-} from '@ant-design/icons';
-import DescriptionProduct from '@/components/client/ProductDetail/Description';
-import ProductInteractionSection from '@/components/client/ProductInteraction/ProductInteractionSection';
-import ProductImageGallery from '@/components/client/ProductDetail/ProductImageGallery';
-import useCartStore from '@/hooks/useCart';
-import {
-    getProductOriginalPrice,
-    getProductDiscount,
-    getProductImage,
-    getProductImages,
-} from '@/utils/productHelpers';
-import Swal from "sweetalert2";
-import useAuthUser from '@/hooks/useAuthUser';
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { Card, Divider, Tag, Empty } from 'antd';
+import PaymentMethods from '@/components/client/PaymentMethods';
+import Link from 'next/link';
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
-import BreadcrumbNav from '@/components/client/Breadcrumb/Breadcrumb';
-import { useChatSocket } from '@/hooks/client/useChatSocket';
-import useOnlineUsersStore from '@/hooks/useOnlineUsers';
-import { timeAgo } from '@/utils/formatDateTime';
+import Breadcrumb from '@/components/client/Breadcrumb/Breadcrumb';
+import { IOrderData } from '@/types';
+import { useRouter } from 'next/navigation';
 
-// Extended product type from findBySlug (includes variants + allowValues)
-interface ProductDetail extends IProductCard {
-    variants?: IProductVariant[];
-    allowValues?: Array<{
-        _id: string;
-        attributeValue: {
-            _id: string;
-            value: string;
-            label: string;
-            colorHex?: string;
-            imageUrl?: string;
-            attribute: {
-                _id: string;
-                name: string;
-                code: string;
-                displayType: 'RADIO' | 'COLOR' | 'IMAGE' | 'BUTTON';
-            }
-        };
-    }>;
-}
-
-export default function ProductDetailClient() {
-    const { slug } = useParams();
+const PaymentPage = () => {
     const router = useRouter();
-    const { addToCart } = useCartStore();
-    const { user } = useAuthUser();
-    // Selected variant state
-    const [selectedVariant, setSelectedVariant] = useState<IProductVariant | null>(null);
-    const [selectedCombination, setSelectedCombination] = useState<Record<string, string>>({});
+    const [orderData, setOrderData] = useState<IOrderData | null>(null);
+    const [isReady, setIsReady] = useState(false);
 
-    // Online status from global store (updated by ChatSocketProvider)
-    const onlineUsers = useOnlineUsersStore((s) => s.onlineUsers);
-    const lastActiveMap = useOnlineUsersStore((s) => s.lastActiveMap);
-    const isUserOnline = (uid: string) => onlineUsers.has(uid);
-    const getLastActive = (uid: string) => lastActiveMap[uid] ?? null;
-
-    // Chat socket (for sending messages, typing, etc. — online status handled globally)
-    const chatSocket = useChatSocket({
-        userId: user?._id,
-        activeConversationId: null,
-    });
-
-    const { data: product, isLoading: isLoadingProduct } = useQuery<ProductDetail>({
-        queryKey: ['product-slug', slug],
-        queryFn: () => productClientService.getProductsBySlug(slug as string),
-        staleTime: 1000 * 60 * 5,
-    });
-
-    // Track product view for logged-in users (fire-and-forget)
     useEffect(() => {
-        if (product?._id && user?._id) {
-            productClientService.trackProductView(product._id).catch(() => { });
-        }
-    }, [product?._id, user?._id]);
-
-    // Wishlist status check
-    const { data: isWishlisted } = useQuery<boolean>({
-        queryKey: ['product-isWishlist', product?._id],
-        queryFn: () => productClientService.isWishlistByGuestAndProduct(product?._id as string),
-        enabled: !!product?._id && !!user?.id,
-    });
-
-    const { data: dataProduct, isLoading: isLoadingDataProduct } = useQuery<IProductWithPagination | null>({
-        queryKey: ['product-by-category', product?.category?._id || ""],
-        queryFn: () => productClientService.getProductsByCategoryId(product?.category?._id || "" as string),
-        enabled: !!product?.category?._id,
-    });
-
-
-
-    const queryClient = useQueryClient();
-
-    const addToWishlistMutation = useMutation({
-        mutationFn: ({ productID, shouldAdd }: { productID: string; shouldAdd: boolean }) =>
-            shouldAdd
-                ? productClientService.addToWishlist(productID)
-                : productClientService.removeFromWishlist(productID),
-        onSuccess: (_data, variables) => {
-            Swal.fire({
-                icon: "success",
-                title: variables.shouldAdd ? "Đã thêm vào yêu thích!" : "Đã xóa khỏi yêu thích!",
-                showConfirmButton: false,
-                timer: 1500,
-            });
-            queryClient.invalidateQueries({ queryKey: ['product-isWishlist', product?._id] });
-            queryClient.invalidateQueries({ queryKey: ['wishlist'] });
-        },
-        onError: () => message.error('Đã có lỗi xảy ra. Vui lòng thử lại sau.'),
-    });
-
-    // Derive attribute groups from allowValues
-    const attributeGroups = useMemo(() => {
-        if (!product?.allowValues) return [];
-        const groups: Record<string, {
-            attribute: { _id: string; name: string; code: string; displayType: 'RADIO' | 'COLOR' | 'IMAGE' | 'BUTTON' | '' };
-            values: Array<{ _id: string; value: string; label: string; colorHex?: string; imageUrl?: string }>;
-        }> = {};
-        for (const av of product?.allowValues) {
-            if (!av.attributeValue?.attribute) continue;
-            const attr = av.attributeValue.attribute;
-            if (!groups[attr._id]) {
-                groups[attr._id] = { attribute: attr, values: [] };
-            }
-            const existing = groups[attr._id].values.find(v => v._id === av.attributeValue._id);
-            if (!existing) {
-                groups[attr._id].values.push({
-                    _id: av.attributeValue._id,
-                    value: av.attributeValue.value,
-                    label: av.attributeValue.label,
-                    colorHex: av.attributeValue.colorHex,
-                    imageUrl: av.attributeValue.imageUrl,
-                });
+        const raw = sessionStorage.getItem("orderData");
+        if (raw) {
+            try {
+                setOrderData(JSON.parse(raw));
+            } catch {
+                // ignore
             }
         }
-        return Object.values(groups);
-    }, [product?.allowValues]);
+        setIsReady(true);
+    }, []);
 
-
-    // Set default variant on load
-    useEffect(() => {
-        if (product?.defaultVariant && !selectedVariant) {
-            const dv = product?.defaultVariant as IProductVariant;
-            setSelectedVariant(dv);
-            if (dv.combination) setSelectedCombination(dv.combination);
-        }
-    }, [product, selectedVariant]);
-
-    // Match variant from selected combination
-    useEffect(() => {
-        if (!product?.variants || Object.keys(selectedCombination).length === 0) return;
-        const match = product.variants.find(v => {
-            if (!v.combination) return false;
-            return Object.entries(selectedCombination).every(
-                ([key, val]) => v.combination[key] === val
-            );
-        });
-        if (match) setSelectedVariant(match);
-    }, [selectedCombination, product?.variants]);
-
-    const handleCombinationSelect = (attrCode: string, valueLabel: string) => {
-        setSelectedCombination(prev => ({ ...prev, [attrCode]: valueLabel }));
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
     };
 
-    // Current display data from selected variant or defaultVariant
-    const displayImages = selectedVariant ? selectedVariant.images ? product.variants.map(v => v.images).flat() : [] : getProductImages(product);
-    const displayPrice = selectedVariant ? selectedVariant.price : getProductOriginalPrice(product);
-    const displayDiscount = selectedVariant ? selectedVariant.discount : getProductDiscount(product);
-    const displayFinalPrice = Math.round(displayPrice * (1 - displayDiscount / 100));
-    const displayStock = selectedVariant?.stock ?? 0;
+    if (!isReady) return null;
 
-    useEffect(() => {
-        if (!isLoadingProduct) window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, [isLoadingProduct]);
-
-    // Build cart variant from selectedVariant or defaultVariant
-    const getCartVariant = () => {
-        const v = selectedVariant || (product?.defaultVariant);
-        if (!v) return null;
-        return {
-            _id: v._id,
-            sku: v.sku || '',
-            price: v.price,
-            discount: v.discount,
-            stock: v.stock ?? 0,
-            images: v.images || [],
-            combination: v.combination || {},
-        };
-    };
-
-    const handleAddToCart = () => {
-        if (!product) return;
-        const cartVariant = getCartVariant();
-        if (!cartVariant) {
-            message.warning('Vui lòng chọn phiên bản sản phẩm!');
-            return;
-        }
-        if (cartVariant.stock <= 0) {
-            message.error('Sản phẩm đã hết hàng!');
-            return;
-        }
-        addToCart(product, cartVariant);
-    };
-
-    const responsiveSettings = [
-        { breakpoint: 1024, settings: { slidesToShow: 4, slidesToScroll: 1 } },
-        { breakpoint: 800, settings: { slidesToShow: 3, slidesToScroll: 1 } },
-        { breakpoint: 600, settings: { slidesToShow: 2, slidesToScroll: 1 } },
-    ];
-
-    const handleAddToWishlist = (p: IProductCard) => {
-        if (!user?.id) {
-            Swal.fire({ icon: "warning", title: "Vui lòng đăng nhập để sử dụng tính năng này!" });
-            return;
-        }
-        addToWishlistMutation.mutate({ productID: p._id, shouldAdd: !isWishlisted });
-    };
-
-    if (isLoadingProduct) return <ProductDetailSkeleton />;
-
-
-    if (!product || !product?._id) return null;
+    if (!orderData || !orderData.orderDetail?.length) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <Card className="max-w-md w-full mx-4 text-center shadow-lg border-0 rounded-xl">
+                    <Empty description="KhÃ´ng cÃ³ thÃ´ng tin Ä‘Æ¡n hÃ ng" className="mb-4" />
+                    <p className="text-gray-500 mb-6">Vui lÃ²ng thÃªm sáº£n pháº©m vÃ o giá» hÃ ng trÆ°á»›c khi thanh toÃ¡n.</p>
+                    <Link href="/cart">
+                        <button className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                            Quay láº¡i giá» hÃ ng
+                        </button>
+                    </Link>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <>
             <DynamicMetadata
-                title={`${product.name} - Giá ${displayFinalPrice.toLocaleString()}đ | PC Store`}
-                description={`Mua ${product.name} chính hãng giá ${displayFinalPrice.toLocaleString()}đ. ${product.description || 'Bảo hành chính hãng, giao hàng nhanh.'}`}
-                keywords={`${product.name}, mua ${product.name}, ${product.category?.name || 'pc gaming'}, linh kiện máy tính`}
-                ogTitle={`${product.name} - ${displayFinalPrice.toLocaleString()}đ`}
-                ogDescription={`${product.description || 'Bảo hành chính hãng, giao hàng nhanh'}`}
-                ogImage={getProductImage(product) || '/laptop.png'}
+                title="Thanh toÃ¡n Ä‘Æ¡n hÃ ng - Project PC"
+                description="HoÃ n táº¥t thanh toÃ¡n Ä‘Æ¡n hÃ ng táº¡i Project PC."
+                keywords="thanh toÃ¡n, payment, payos, cod"
             />
-
-            <div className="pt-3 bg-slate-50 dark:bg-gray-900 dark:text-white min-h-screen">
+            <div className="min-h-screen my-5 bg-slate-50 dark:bg-gray-900 dark:text-white pt-52 md:pt-3">
                 {/* Breadcrumb */}
-                <div className="mx-5 xl:mx-32 mb-4">
-                    <BreadcrumbNav items={[
-                        ...(product.category ? [{ label: product.category.name, href: `/collection/${product.category.slug}` }] : []),
-                        { label: product.name },
+                <div className='mx-5 xl:mx-32 mb-6'>
+                    <Breadcrumb items={[
+                        { label: 'Giá» hÃ ng', href: '/cart' },
+                        { label: 'Thanh toÃ¡n' },
                     ]} />
                 </div>
 
-                {/* Main Product Card */}
-                <div className="mx-5 xl:mx-32 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 md:p-8 mb-6">
-                    {/* Product Title */}
-                    <h1 className="font-bold text-2xl items-center lg:text-4xl text-gray-900 dark:text-white pb-4 border-b border-gray-100 dark:border-gray-700 flex gap-3 flex-wrap">
-                        {product.name}
-                        {displayDiscount > 0 && (
-                            <Tag color="red" className="!text-lg !font-semibold !rounded-lg !px-3">
-                                <FireFilled className="mr-1" /> -{displayDiscount}%
-                            </Tag>
-                        )}
-                        {product.brand?.name && (
-                            <Tag color="blue" className="!rounded-lg !text-xl">{product.brand.name}</Tag>
-                        )}
-                    </h1>
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Thanh toÃ¡n Ä‘Æ¡n hÃ ng</h1>
+                        <p className="text-gray-600 dark:text-gray-300">Vui lÃ²ng chá»n phÆ°Æ¡ng thá»©c thanh toÃ¡n phÃ¹ há»£p</p>
+                    </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 mt-6 gap-8">
-                        {/* Left: Image Gallery */}
-                        <div className="lg:col-span-5">
-                            <ProductImageGallery
-                                images={displayImages}
-                                productName={product.name}
-                            />
-
-                            {/* Rating + Stats */}
-                            <div className="mt-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-xl flex items-center justify-between">
-                                <div className="flex flex-col items-center">
-                                    <Rate disabled defaultValue={product.avgRating || 0} allowHalf className="text-sm" />
-                                    <span className="text-xs text-gray-500 mt-1">{product.totalRatings || 0} đánh giá</span>
-                                </div>
-                                <Divider orientation="vertical" className="!h-10 !border-gray-300" />
-                                <div className="flex flex-col text-sm">
-                                    <span className="text-green-600 font-semibold flex items-center gap-1">
-                                        <CheckCircleFilled /> Hàng chính hãng
-                                    </span>
-                                    <span className="text-blue-500 flex items-center gap-1 mt-1">
-                                        <SafetyCertificateFilled /> Bảo hành đầy đủ
-                                    </span>
-                                </div>
-                            </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Payment Methods */}
+                        <div className="lg:col-span-2">
+                            <PaymentMethods orderData={orderData} />
                         </div>
 
-                        {/* Right: Product Info */}
-                        <div className="lg:col-span-7 space-y-5">
-                            {/* Price Section */}
-                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 rounded-xl p-5">
-                                <div className="flex items-end gap-4 flex-wrap">
-                                    <span className="text-blue-600 dark:text-blue-400 font-bold text-3xl xl:text-4xl">
-                                        {displayFinalPrice.toLocaleString()}đ
-                                    </span>
-                                    {displayDiscount > 0 && (
-                                        <>
-                                            <span className="line-through text-gray-400 text-xl font-semibold">
-                                                {displayPrice.toLocaleString()}đ
-                                            </span>
-                                            <Tag color="red" className="!text-sm !font-bold !rounded-lg">
-                                                Tiết kiệm {(displayPrice - displayFinalPrice).toLocaleString()}đ
-                                            </Tag>
-                                        </>
-                                    )}
-                                </div>
-                                {displayStock > 0 ? (
-                                    <div className="mt-2 flex items-center gap-2">
-                                        <Badge status="success" />
-                                        <span className="text-green-600 text-sm font-medium">Còn {displayStock} sản phẩm</span>
-                                    </div>
-                                ) : (
-                                    <div className="mt-2 flex items-center gap-2">
-                                        <Badge status="error" />
-                                        <span className="text-red-500 text-sm font-medium">Tạm hết hàng</span>
-                                    </div>
-                                )}
-                                <div className='mt-2 flex flex-col gap-2 items-start justify-center'>
-                                    <p>Mô tả ngắn: </p>
+                        {/* Order Summary */}
+                        <div className="lg:col-span-1">
+                            <Card className="shadow-xl border-0 sticky h-fit">
+                                <h3 className="text-xl font-bold text-gray-800 mb-6">ThÃ´ng tin Ä‘Æ¡n hÃ ng</h3>
 
-                                    <Tag>{selectedVariant?.subDescription || ""}</Tag>
-                                </div>
-                            </div>
-
-                            {/* Variant Selection */}
-                            {attributeGroups.length > 0 && (
                                 <div className="space-y-4">
-                                    {attributeGroups.map(group => (
-                                        <div key={group.attribute._id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2.5 block">
-                                                {group.attribute.name}
-                                            </label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {group.values.map(val => {
-                                                    const isSelected = selectedCombination[group.attribute.code] === val.label;
-                                                    return (
-                                                        <button
-                                                            key={val._id}
-                                                            onClick={() => handleCombinationSelect(group.attribute.code, val.label)}
-                                                            className={`
-                                                                px-4 py-2 rounded-lg border-2 transition-all flex items-center gap-2 text-sm font-medium
-                                                                ${isSelected
-                                                                    ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:bg-blue-900/30 dark:text-blue-300'
-                                                                    : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50/50 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500'
-                                                                }
-                                                            `}
-                                                        >
-                                                            {group.attribute.displayType === 'COLOR' && val.colorHex && (
-                                                                <>
-                                                                    <span
-                                                                        className="w-5 h-5 rounded-full border-2 border-white shadow shrink-0"
-                                                                        style={{ backgroundColor: val.colorHex }}
-                                                                    />
-                                                                    <span>{val.label}</span>
-                                                                </>
-                                                            )}
-                                                            {group.attribute.displayType === 'IMAGE' && val.imageUrl && (
-                                                                <div className='flex flex-col gap-5 items-center justify-center'>
-                                                                    <Image src={val.imageUrl} alt={val.label} className="!w-20 !h-20 rounded object-cover" />
-                                                                    <p>{val.label}</p>
-                                                                </div>
-                                                            )}
-                                                            {(group.attribute.displayType === 'BUTTON' || group.attribute.displayType === 'RADIO') &&
-                                                                <span>{val.label}</span>
-                                                            }
-                                                            {isSelected && <CheckCircleFilled className="text-blue-500 text-xs" />}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Shipping Info */}
-                            <div className="grid grid-cols-2 gap-3">
-                                {[
-                                    { icon: <TruckOutlined className="text-blue-500" />, text: 'Giao hàng nhanh 24h' },
-                                    { icon: <SwapOutlined className="text-blue-500" />, text: 'Đổi trả miễn phí 7 ngày' },
-                                    { icon: <CreditCardOutlined className="text-blue-500" />, text: 'Hỗ trợ trả góp 0%' },
-                                    { icon: <PhoneOutlined className="text-blue-500" />, text: 'Hotline: 1900 1234' },
-                                ].map((item, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2.5">
-                                        {item.icon}
-                                        <span>{item.text}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Seller Info */}
-                            {product.createdBy && typeof product.createdBy === 'object' && (product.createdBy as ICreatorInfo).fullname && (() => {
-                                const creator = product.createdBy as ICreatorInfo;
-                                const sellerOnline = isUserOnline(creator._id);
-                                const sellerLastActive = getLastActive(creator._id);
-                                return (
-                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 block">
-                                            Người đăng bán
-                                        </label>
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative">
-                                                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-sm overflow-hidden">
-                                                    {creator.avatar ? (
-                                                        <img src={creator.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        creator.fullname?.charAt(0)?.toUpperCase()
+                                    <div style={{ scrollbarWidth: 'none' }} className='max-h-72 min-h-52 overflow-y-scroll'>
+                                        {orderData.orderDetail.map((item, index) => (
+                                            <div className='flex border border-gray-200 p-3 rounded-lg my-2 justify-between' key={index}>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-gray-800 line-clamp-2 text-sm">{item.product.name}</p>
+                                                    {item.productVariant?.combination && Object.keys(item.productVariant.combination).length > 0 && (
+                                                        <Tag color="blue" className="!text-xs !m-0 !rounded-md mt-1">
+                                                            {Object.entries(item.productVariant.combination).map(([key, val]) => (`${key}: ${val}`)).join(' | ')}
+                                                        </Tag>
                                                     )}
+                                                    <p className="text-xs mt-1 text-gray-500">SL: {item.quantity} x {formatCurrency(item.price)}</p>
                                                 </div>
-                                                {sellerOnline && (
-                                                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-700 rounded-full" />
-                                                )}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-semibold text-sm text-gray-800 dark:text-white truncate">
-                                                    {creator.fullname}
-                                                </p>
-                                                <p className={`text-xs truncate ${sellerOnline ? 'text-green-500' : 'text-gray-500'}`}>
-                                                    {sellerOnline
-                                                        ? 'Đang hoạt động'
-                                                        : sellerLastActive
-                                                            ? `Hoạt động ${timeAgo(sellerLastActive)}`
-                                                            : creator.email}
+                                                <p className="font-semibold text-blue-600 ml-4 whitespace-nowrap text-sm">
+                                                    {formatCurrency(item.price * item.quantity)}
                                                 </p>
                                             </div>
-                                            <Button
-                                                icon={<CommentOutlined />}
-                                                className="!rounded-lg !text-blue-500 !border-blue-300 hover:!bg-blue-50"
-                                                onClick={() => {
-                                                    window.open(`/chat?sellerId=${creator._id}&sellerName=${encodeURIComponent(creator.fullname)}${creator.avatar ? `&sellerAvatar=${encodeURIComponent(creator.avatar)}` : ''}`, '_blank');
-                                                }}
-                                            >
-                                                Chat với người bán
-                                            </Button>
+                                        ))}
+                                    </div>
+
+                                    <Divider className="my-4" />
+
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-500">Táº¡m tÃ­nh:</span>
+                                            <span className="font-medium">{formatCurrency(orderData.totalAmount || 0)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-500">PhÃ­ váº­n chuyá»ƒn:</span>
+                                            <span className="font-medium text-green-600">Miá»…n phÃ­</span>
+                                        </div>
+
+                                        <Divider className="my-3" />
+
+                                        <div className="flex justify-between text-lg font-bold text-gray-900">
+                                            <span>Tá»•ng cá»™ng:</span>
+                                            <span className="text-red-500">{formatCurrency(orderData.totalAmount || 0)}</span>
                                         </div>
                                     </div>
-                                );
-                            })()}
+                                </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex flex-wrap gap-3 pt-2">
-                                <Button
-                                    size="large"
-                                    onClick={() => {
-                                        handleAddToCart();
-                                        Swal.fire({
-                                            icon: "success", title: "Thêm vào giỏ hàng thành công!",
-                                            showConfirmButton: false, timer: 1500,
-                                        });
-                                    }}
-                                    icon={<ShoppingCartOutlined />}
-                                    className="!bg-amber-500 !text-white !border-amber-500 hover:!bg-amber-600 !h-12 !px-8 !rounded-xl !font-semibold !text-base !shadow-lg !shadow-amber-500/20"
-                                    disabled={displayStock <= 0}
-                                >
-                                    Thêm vào giỏ
-                                </Button>
-                                <Button
-                                    size="large"
-                                    onClick={() => { handleAddToCart(); router.push('/cart'); }}
-                                    icon={<ThunderboltFilled />}
-                                    type="primary"
-                                    className="!h-12 !px-10 !rounded-xl !font-semibold !text-base !shadow-lg !shadow-blue-500/20"
-                                    disabled={displayStock <= 0}
-                                >
-                                    Mua ngay
-                                </Button>
-                                <Button
-                                    size="large"
-                                    icon={isWishlisted ? <HeartFilled /> : <HeartOutlined />}
-                                    onClick={() => handleAddToWishlist(product)}
-                                    loading={addToWishlistMutation.isPending}
-                                    className={`!h-12 !px-6 !rounded-xl !font-medium ${isWishlisted ? '!text-red-500 !border-red-300' : '!text-gray-500 !border-gray-300'} hover:!text-red-500`}
-                                >
-                                    {isWishlisted ? 'Đã yêu thích' : 'Yêu thích'}
-                                </Button>
-                            </div>
+                                <div className="mt-6 p-3 bg-blue-50 rounded-lg">
+                                    <p className="text-xs text-blue-800 text-center">
+                                        Giao dá»‹ch Ä‘Æ°á»£c báº£o máº­t vá»›i cÃ´ng nghá»‡ mÃ£ hÃ³a SSL
+                                    </p>
+                                </div>
+                            </Card>
                         </div>
                     </div>
                 </div>
-
-                {/* Tabs: Description + Comments */}
-                <div className="mx-5 xl:mx-32 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mb-6">
-                    <Tabs
-                        defaultActiveKey="1"
-                        type="card"
-                        className="product-detail-tabs"
-                        size="large"
-                        items={[
-                            {
-                                key: '1',
-                                label: 'Mô tả sản phẩm',
-                                children: <DescriptionProduct product={product} />,
-                            },
-                            {
-                                key: '2',
-                                label: (
-                                    <span className="flex items-center gap-1.5">
-                                        <CommentOutlined /> Đánh giá & bình luận
-                                    </span>
-                                ),
-                                children: <ProductInteractionSection productId={product._id} />,
-                            }
-                        ]}
-                    />
-                </div>
-
-                {/* Related Products */}
-                {dataProduct && dataProduct.data?.length > 0 && (
-                    <div className="mx-5 xl:mx-32 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mb-10">
-                        <h2 className="font-bold text-blue-600 dark:text-white text-xl lg:text-2xl pb-4 border-b border-gray-100 flex items-center gap-2">
-                            <RocketFilled className="text-blue-500" /> Sản phẩm tương tự
-                        </h2>
-                        <Carousel
-                            slidesToShow={5}
-                            slidesToScroll={1}
-                            draggable
-                            className="mt-6 cursor-grab"
-                            dots={false}
-                            autoplay
-                            arrows
-                            autoplaySpeed={3000}
-                            responsive={responsiveSettings}
-                        >
-                            {dataProduct.data.map(item => (
-                                <div key={item._id} className="px-1.5">
-                                    <CardProduct css="hover:shadow-lg transition-all" product={item} />
-                                </div>
-                            ))}
-                        </Carousel>
-                    </div>
-                )}
             </div>
         </>
     );
-}
+};
+
+export default PaymentPage;

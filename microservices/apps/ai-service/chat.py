@@ -291,9 +291,11 @@ async def chat_with_ollama(
 
 def search_products_for_chat(query: str, limit: int = 6) -> list[dict]:
     """
-    Search Qdrant for products relevant to the user's chat message.
+    Search for products relevant to the user's chat message.
+    Tries Qdrant vector search first, falls back to MongoDB text search.
     Returns IProductCard-compatible dicts from MongoDB.
     """
+    # 1. Try Qdrant vector search
     try:
         vector = generate_embedding(query)
         client = get_qdrant_client()
@@ -315,13 +317,69 @@ def search_products_for_chat(query: str, limit: int = 6) -> list[dict]:
             if len(candidate_ids) >= limit:
                 break
 
-        if not candidate_ids:
-            return []
-
-        return _fetch_product_cards(candidate_ids)
+        if candidate_ids:
+            return _fetch_product_cards(candidate_ids)
     except Exception as e:
-        logger.warning(f"Product search for chat failed: {e}")
+        logger.warning(f"Qdrant search failed: {e}, falling back to MongoDB text search")
+
+    # 2. Fallback: MongoDB regex/text search
+    try:
+        return _mongo_fallback_search(query, limit)
+    except Exception as e:
+        logger.warning(f"MongoDB fallback search also failed: {e}")
         return []
+
+
+def _mongo_fallback_search(query: str, limit: int = 6) -> list[dict]:
+    """
+    Fallback product search using MongoDB when Qdrant is unavailable.
+    Uses regex matching on product name, brand name, and category name.
+    """
+    import re
+    db = get_mongo_db()
+
+    # Build regex from query keywords
+    keywords = [w.strip() for w in query.split() if len(w.strip()) >= 2]
+    if not keywords:
+        return []
+
+    # Build OR conditions for each keyword against product name
+    regex_conditions = []
+    for kw in keywords:
+        escaped = re.escape(kw)
+        regex_conditions.append({"name": {"$regex": escaped, "$options": "i"}})
+
+    # Also search by brand/category names
+    brand_ids = set()
+    cat_ids = set()
+    for kw in keywords:
+        escaped = re.escape(kw)
+        for b in db["brands"].find({"name": {"$regex": escaped, "$options": "i"}}, {"_id": 1}):
+            brand_ids.add(b["_id"])
+        for c in db["categories"].find({"name": {"$regex": escaped, "$options": "i"}}, {"_id": 1}):
+            cat_ids.add(c["_id"])
+
+    if brand_ids:
+        regex_conditions.append({"brand": {"$in": list(brand_ids)}})
+    if cat_ids:
+        regex_conditions.append({"category": {"$in": list(cat_ids)}})
+
+    products = list(
+        db["products"]
+        .find({
+            "$or": regex_conditions,
+            "isDeleted": {"$ne": True},
+            "status": "ACTIVE",
+        })
+        .sort("createdAt", -1)
+        .limit(limit)
+    )
+
+    if not products:
+        return []
+
+    product_ids = [str(p["_id"]) for p in products]
+    return _fetch_product_cards(product_ids)
 
 
 def _generate_suggestions(user_message: str, bot_response: str) -> list[str]:

@@ -66,27 +66,27 @@ export default function WishlistPage() {
         mutationFn: ({ productId }: { productId: string }) =>
             productClientService.removeFromWishlist(productId),
         onSuccess: () => {
-            message.success('Đã xóa khỏi danh sách yêu thích!');
+            message.success('ÄÃ£ xÃ³a khá»i danh sÃ¡ch yÃªu thÃ­ch!');
             queryClient.invalidateQueries({ queryKey: ['wishlist'] });
             queryClient.invalidateQueries({ queryKey: ['wishlist-products'] });
         },
         onError: () => {
-            message.error('Có lỗi xảy ra khi xóa sản phẩm!');
+            message.error('CÃ³ lá»—i xáº£y ra khi xÃ³a sáº£n pháº©m!');
         },
     });
 
     const handleAddToCart = (product: IProductCard) => {
         if (getProductStock(product) === 0) {
-            message.error('Sản phẩm đã hết hàng');
+            message.error('Sáº£n pháº©m Ä‘Ã£ háº¿t hÃ ng');
             return;
         }
         const variant = getDefaultCartVariant(product);
         if (!variant) {
-            message.warning('Sản phẩm không có phiên bản khả dụng!');
+            message.warning('Sáº£n pháº©m khÃ´ng cÃ³ phiÃªn báº£n kháº£ dá»¥ng!');
             return;
         }
         addToCart(product, variant);
-        message.success('Đã thêm vào giỏ hàng!');
+        message.success('ÄÃ£ thÃªm vÃ o giá» hÃ ng!');
     };
 
     const handleRemoveFromWishlist = (productId: string) => {
@@ -96,15 +96,15 @@ export default function WishlistPage() {
     const breadcrumb = (
         <div className="mx-5 xl:mx-32">
             <Breadcrumb items={[
-                { label: 'Hồ sơ', href: '/profile/detail' },
-                { label: 'Yêu thích' },
+                { label: 'Há»“ sÆ¡', href: '/profile/detail' },
+                { label: 'YÃªu thÃ­ch' },
             ]} />
         </div>
     );
 
     if (isLoading) {
         return (
-            <div className="container mx-auto">
+            <div className="pt-52 md:pt-3 bg-slate-50 dark:bg-slate-900 dark:text-white">
                 {breadcrumb}
                 <div className="mx-5 xl:mx-32 mt-5 pb-5 grid grid-cols-12 gap-0 lg:gap-9">
                     <ProfileSidebar user={user} activePage="wishlist" />
@@ -112,7 +112,7 @@ export default function WishlistPage() {
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <HeartFilled className="text-red-500 text-xl" />
-                                <h2 className="text-xl font-bold text-gray-800 dark:text-white m-0">Danh sách yêu thích</h2>
+                                <h2 className="text-xl font-bold text-gray-800 dark:text-white m-0">Danh sÃ¡ch yÃªu thÃ­ch</h2>
                             </div>
                             <WishlistSkeleton />
                         </div>
@@ -125,10 +125,10 @@ export default function WishlistPage() {
     return (
         <>
             <DynamicMetadata
-                title={`Danh sách yêu thích (${wishlistProducts?.length || 0}) - PC Store`}
-                description="Quản lý danh sách sản phẩm yêu thích của bạn tại PC Store."
+                title={`Danh sÃ¡ch yÃªu thÃ­ch (${wishlistProducts?.length || 0}) - PC Store`}
+                description="Quáº£n lÃ½ danh sÃ¡ch sáº£n pháº©m yÃªu thÃ­ch cá»§a báº¡n táº¡i PC Store."
             />
-            <div className="container mx-auto">
+            <div className="pt-52 md:pt-3 bg-slate-50 dark:bg-slate-900 dark:text-white">
                 {breadcrumb}
 
                 <div className="mx-5 xl:mx-32 mt-5 pb-5 grid grid-cols-12 gap-0 lg:gap-9">
@@ -141,7 +141,7 @@ export default function WishlistPage() {
                                 <div className="flex items-center gap-3">
                                     <HeartFilled className="text-red-500 text-xl" />
                                     <h2 className="text-xl font-bold text-gray-800 dark:text-white m-0">
-                                        Yêu thích
+                                        YÃªu thÃ­ch
                                     </h2>
                                     <span className="bg-red-50 dark:bg-red-900/30 text-red-500 text-xs font-semibold px-2.5 py-1 rounded-full">
                                         {wishlistProducts.length}
@@ -158,11 +158,11 @@ export default function WishlistPage() {
                                             description={
                                                 <div className="text-center">
                                                     <p className="text-gray-400 mb-4 text-sm">
-                                                        Bạn chưa thêm sản phẩm nào vào danh sách yêu thích
+                                                        Báº¡n chÆ°a thÃªm sáº£n pháº©m nÃ o vÃ o danh sÃ¡ch yÃªu thÃ­ch
                                                     </p>
                                                     <Link href="/home">
                                                         <Button type="primary">
-                                                            Khám phá sản phẩm
+                                                            KhÃ¡m phÃ¡ sáº£n pháº©m
                                                         </Button>
                                                     </Link>
                                                 </div>
@@ -229,14 +229,14 @@ export default function WishlistPage() {
                                                         <div className="flex items-center gap-1.5">
                                                             <span className={`w-1.5 h-1.5 rounded-full ${stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
                                                             <span className={`text-xs ${stock > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>
-                                                                {stock > 0 ? `Còn ${stock} sản phẩm` : 'Hết hàng'}
+                                                                {stock > 0 ? `CÃ²n ${stock} sáº£n pháº©m` : 'Háº¿t hÃ ng'}
                                                             </span>
                                                         </div>
                                                     </div>
 
                                                     {/* Actions */}
                                                     <div className="flex flex-col sm:flex-row items-center gap-2 flex-shrink-0">
-                                                        <Tooltip title="Thêm vào giỏ hàng">
+                                                        <Tooltip title="ThÃªm vÃ o giá» hÃ ng">
                                                             <Button
                                                                 type="primary"
                                                                 icon={<ShoppingCartOutlined />}
@@ -246,7 +246,7 @@ export default function WishlistPage() {
                                                                 size="middle"
                                                             />
                                                         </Tooltip>
-                                                        <Tooltip title="Xem chi tiết">
+                                                        <Tooltip title="Xem chi tiáº¿t">
                                                             <Link href={`/product/${product.slug}`}>
                                                                 <Button
                                                                     icon={<EyeOutlined />}
@@ -256,13 +256,13 @@ export default function WishlistPage() {
                                                             </Link>
                                                         </Tooltip>
                                                         <Popconfirm
-                                                            title="Xóa khỏi yêu thích?"
+                                                            title="XÃ³a khá»i yÃªu thÃ­ch?"
                                                             onConfirm={() => handleRemoveFromWishlist(product._id)}
-                                                            okText="Xóa"
-                                                            cancelText="Hủy"
+                                                            okText="XÃ³a"
+                                                            cancelText="Há»§y"
                                                             okButtonProps={{ danger: true }}
                                                         >
-                                                            <Tooltip title="Xóa">
+                                                            <Tooltip title="XÃ³a">
                                                                 <Button
                                                                     type="text"
                                                                     danger

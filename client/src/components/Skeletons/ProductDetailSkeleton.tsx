@@ -85,7 +85,7 @@ const ProductDetailSkeleton = () => {
                         </div>
 
                         {/* Price section skeleton */}
-                        <div className='px-4 py-4 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-750 rounded-xl shadow-sm'>
+                        <div className='px-4 py-4 mb-6 bg-gradient-to-r from-blue-50 to-blue-50 dark:from-gray-800 dark:to-gray-750 rounded-xl shadow-sm'>
                             <div className='md:flex items-end mb-4'>
                                 <Skeleton width={150} height={40} className="mb-2" />
                                 <div className="flex items-center ml-4">

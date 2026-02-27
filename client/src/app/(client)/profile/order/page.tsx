@@ -20,18 +20,18 @@ import { PaginatedResponse } from '@/types';
 type OrderStatus = 'ALL' | 'PENDING' | 'SHIPPING' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED' | 'REFUNDED' | 'EXPIRED';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; textColor: string }> = {
-    PENDING: { label: 'Chờ xác nhận', color: 'orange', textColor: 'text-orange-500' },
-    SHIPPING: { label: 'Đang vận chuyển', color: 'blue', textColor: 'text-blue-500' },
-    DELIVERED: { label: 'Đã giao hàng', color: 'cyan', textColor: 'text-cyan-500' },
-    COMPLETED: { label: 'Hoàn thành', color: 'green', textColor: 'text-green-600' },
-    CANCELLED: { label: 'Đã hủy', color: 'red', textColor: 'text-red-500' },
-    REFUNDED: { label: 'Hoàn tiền', color: 'purple', textColor: 'text-purple-500' },
-    EXPIRED: { label: 'Hết hạn', color: 'default', textColor: 'text-gray-500' },
+    PENDING: { label: 'Chá» xÃ¡c nháº­n', color: 'orange', textColor: 'text-orange-500' },
+    SHIPPING: { label: 'Äang váº­n chuyá»ƒn', color: 'blue', textColor: 'text-blue-500' },
+    DELIVERED: { label: 'ÄÃ£ giao hÃ ng', color: 'cyan', textColor: 'text-cyan-500' },
+    COMPLETED: { label: 'HoÃ n thÃ nh', color: 'green', textColor: 'text-green-600' },
+    CANCELLED: { label: 'ÄÃ£ há»§y', color: 'red', textColor: 'text-red-500' },
+    REFUNDED: { label: 'HoÃ n tiá»n', color: 'purple', textColor: 'text-purple-500' },
+    EXPIRED: { label: 'Háº¿t háº¡n', color: 'default', textColor: 'text-gray-500' },
 };
 
 const PAYMENT_LABELS: Record<string, string> = {
     COD: 'COD',
-    CARD: 'Trực tuyến',
+    CARD: 'Trá»±c tuyáº¿n',
 };
 
 const PAGE_SIZE = 10;
@@ -46,20 +46,20 @@ export default function OrderPage() {
         mutationFn: ({ orderId, status, reason }: { orderId: string; status: string; reason?: string }) =>
             orderClientService.updateOrderStatus(orderId, status, reason),
         onSuccess: () => {
-            message.success('Cập nhật trạng thái đơn hàng thành công');
+            message.success('Cáº­p nháº­t tráº¡ng thÃ¡i Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng');
             queryClient.invalidateQueries({ queryKey: ['get-order-by-guest-id'] });
         },
         onError: () => {
-            message.error('Cập nhật trạng thái thất bại');
+            message.error('Cáº­p nháº­t tráº¡ng thÃ¡i tháº¥t báº¡i');
         },
     });
 
     const handleConfirmReceived = (orderId: string) => {
         Modal.confirm({
-            title: 'Xác nhận đã nhận hàng',
-            content: 'Bạn xác nhận đã nhận được đơn hàng này?',
-            okText: 'Đã nhận hàng',
-            cancelText: 'Hủy',
+            title: 'XÃ¡c nháº­n Ä‘Ã£ nháº­n hÃ ng',
+            content: 'Báº¡n xÃ¡c nháº­n Ä‘Ã£ nháº­n Ä‘Æ°á»£c Ä‘Æ¡n hÃ ng nÃ y?',
+            okText: 'ÄÃ£ nháº­n hÃ ng',
+            cancelText: 'Há»§y',
             onOk: () => statusMutation.mutate({ orderId, status: 'DELIVERED' }),
         });
     };
@@ -67,20 +67,20 @@ export default function OrderPage() {
     const handleCancelOrder = (orderId: string) => {
         let reason = '';
         Modal.confirm({
-            title: 'Hủy đơn hàng',
+            title: 'Há»§y Ä‘Æ¡n hÃ ng',
             content: (
                 <div>
-                    <p className="mb-2">Bạn có chắc chắn muốn hủy đơn hàng này?</p>
+                    <p className="mb-2">Báº¡n cÃ³ cháº¯c cháº¯n muá»‘n há»§y Ä‘Æ¡n hÃ ng nÃ y?</p>
                     <Input.TextArea
-                        placeholder="Lý do hủy đơn (không bắt buộc)"
+                        placeholder="LÃ½ do há»§y Ä‘Æ¡n (khÃ´ng báº¯t buá»™c)"
                         rows={3}
                         onChange={(e) => { reason = e.target.value; }}
                     />
                 </div>
             ),
-            okText: 'Xác nhận hủy',
+            okText: 'XÃ¡c nháº­n há»§y',
             okButtonProps: { danger: true },
-            cancelText: 'Đóng',
+            cancelText: 'ÄÃ³ng',
             onOk: () => statusMutation.mutate({ orderId, status: 'CANCELLED', reason }),
         });
     };
@@ -116,7 +116,7 @@ export default function OrderPage() {
     };
 
     const tabItems = [
-        { key: 'ALL', label: `Tất cả` },
+        { key: 'ALL', label: `Táº¥t cáº£` },
         ...Object.entries(STATUS_CONFIG).map(([key, config]) => ({
             key,
             label: config.label,
@@ -135,16 +135,16 @@ export default function OrderPage() {
         <>
             {!isLoading &&
                 <DynamicMetadata
-                    title={`Quản lý đơn hàng (${data?.pagination.totalItems ?? 0} đơn) - Project PC`}
-                    description="Theo dõi và quản lý đơn hàng của bạn tại Project PC."
-                    keywords="quản lý đơn hàng, theo dõi đơn hàng, lịch sử mua hàng"
+                    title={`Quáº£n lÃ½ Ä‘Æ¡n hÃ ng (${data?.pagination.totalItems ?? 0} Ä‘Æ¡n) - Project PC`}
+                    description="Theo dÃµi vÃ  quáº£n lÃ½ Ä‘Æ¡n hÃ ng cá»§a báº¡n táº¡i Project PC."
+                    keywords="quáº£n lÃ½ Ä‘Æ¡n hÃ ng, theo dÃµi Ä‘Æ¡n hÃ ng, lá»‹ch sá»­ mua hÃ ng"
                 />
             }
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
                 <div className='mx-5 xl:mx-32'>
                     <Breadcrumb items={[
-                        { label: 'Hồ sơ người dùng', href: '/profile/detail' },
-                        { label: 'Quản lý đơn hàng' },
+                        { label: 'Há»“ sÆ¡ ngÆ°á»i dÃ¹ng', href: '/profile/detail' },
+                        { label: 'Quáº£n lÃ½ Ä‘Æ¡n hÃ ng' },
                     ]} />
                 </div>
 
@@ -154,11 +154,11 @@ export default function OrderPage() {
                     <div className='col-span-12 lg:col-span-9 p-4 md:p-6 bg-white rounded-2xl shadow-xl dark:bg-gray-800 dark:text-white'>
                         <div className="flex flex-wrap justify-between items-center pb-3 border-solid border-b-2 border-blue-200 dark:border-slate-900 mb-4 gap-2">
                             <h2 className='text-xl font-bold dark:text-white'>
-                                Quản lý đơn hàng
+                                Quáº£n lÃ½ Ä‘Æ¡n hÃ ng
                             </h2>
                             {data?.pagination.totalItems > 0 && (
                                 <span className="text-sm text-gray-500">
-                                    Tổng {data?.pagination.totalItems} đơn hàng
+                                    Tá»•ng {data?.pagination.totalItems} Ä‘Æ¡n hÃ ng
                                 </span>
                             )}
                         </div>
@@ -197,14 +197,14 @@ export default function OrderPage() {
                                                     pageSize={PAGE_SIZE}
                                                     onChange={(page) => setCurrentPage(page)}
                                                     showSizeChanger={false}
-                                                    showTotal={(total) => `Tổng ${total} đơn hàng`}
+                                                    showTotal={(total) => `Tá»•ng ${total} Ä‘Æ¡n hÃ ng`}
                                                 />
                                             </div>
                                         )}
                                     </>
                                 ) : (
                                     <div className="py-16">
-                                        <Empty description="Chưa có đơn hàng nào" />
+                                        <Empty description="ChÆ°a cÃ³ Ä‘Æ¡n hÃ ng nÃ o" />
                                     </div>
                                 )}
                             </div>
@@ -242,7 +242,7 @@ function OrderCard({
             {/* Order Header */}
             <div className="flex flex-wrap justify-between items-center gap-2 pb-3 border-b border-gray-100 dark:border-gray-700">
                 <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-sm text-gray-500">Mã đơn:</span>
+                    <span className="text-sm text-gray-500">MÃ£ Ä‘Æ¡n:</span>
                     <span className="font-mono font-semibold text-blue-600 text-sm">
                         #{order._id.slice(-8).toUpperCase()}
                     </span>
@@ -302,9 +302,9 @@ function OrderCard({
             {/* Order Footer */}
             <div className="flex flex-wrap justify-between items-center pt-3 border-t border-gray-100 dark:border-gray-700 gap-2">
                 <div className="text-sm">
-                    <span className="text-gray-500">{order.orderDetail.length} sản phẩm</span>
+                    <span className="text-gray-500">{order.orderDetail.length} sáº£n pháº©m</span>
                     <span className="mx-2 text-gray-300">|</span>
-                    <span className="text-gray-500">Tổng: </span>
+                    <span className="text-gray-500">Tá»•ng: </span>
                     <span className="text-red-500 font-bold text-lg">
                         {formatCurrency(order.totalAmount)}
                     </span>
@@ -317,7 +317,7 @@ function OrderCard({
                             onClick={() => onConfirmReceived(order._id)}
                             loading={isUpdating}
                         >
-                            Đã nhận được hàng
+                            ÄÃ£ nháº­n Ä‘Æ°á»£c hÃ ng
                         </Button>
                     )}
                     {order.status === 'COMPLETED' && order.payment?.type === 'COD' && (
@@ -327,10 +327,10 @@ function OrderCard({
                             onClick={() => onCancelOrder(order._id)}
                             loading={isUpdating}
                         >
-                            Hủy đơn hàng
+                            Há»§y Ä‘Æ¡n hÃ ng
                         </Button>
                     )}
-                    <Link href={`/chat?sellerId=${order._id}&sellerName=Người bán`}>
+                    <Link href={`/chat?sellerId=${order._id}&sellerName=NgÆ°á»i bÃ¡n`}>
                         <Button
                             size="small"
                             icon={<MessageOutlined />}
@@ -339,7 +339,7 @@ function OrderCard({
                         </Button>
                     </Link>
                     {order.reason && (order.status === 'CANCELLED' || order.status === 'REFUNDED') && (
-                        <span className="text-xs text-gray-400 italic">Lý do: {order.reason}</span>
+                        <span className="text-xs text-gray-400 italic">LÃ½ do: {order.reason}</span>
                     )}
                 </div>
             </div>
