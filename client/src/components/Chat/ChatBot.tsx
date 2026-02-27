@@ -8,6 +8,15 @@ import { IoMdChatboxes } from 'react-icons/io';
 import { BiSupport } from 'react-icons/bi';
 import { HiOutlineSparkles } from 'react-icons/hi';
 import { chatbotClientService } from '@/services/client';
+import { IProductCard } from '@/types/product';
+import Link from 'next/link';
+import {
+    getProductDisplayPrice,
+    getProductImage,
+    getProductDiscount,
+    getProductOriginalPrice,
+    formatCurrencyVND,
+} from '@/utils/productHelpers';
 
 const EmojiPicker = lazy(() => import('@emoji-mart/react'));
 
@@ -16,6 +25,15 @@ interface ChatMessage {
     sender: 'bot' | 'user';
     time: string;
     suggestions?: string[];
+    products?: IProductCard[];
+}
+
+interface StreamingState {
+    fullText: string;
+    displayedChars: number;
+    products: IProductCard[];
+    suggestions: string[];
+    time: string;
 }
 
 const WELCOME_MESSAGE: ChatMessage = {
@@ -25,6 +43,9 @@ const WELCOME_MESSAGE: ChatMessage = {
     suggestions: ['Tư vấn PC Gaming 20 triệu', 'Laptop cho sinh viên', 'So sánh RTX 4060 vs 4070'],
 };
 
+const CHARS_PER_TICK = 3;
+const TICK_INTERVAL = 20;
+
 const ChatBot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
@@ -32,12 +53,14 @@ const ChatBot = () => {
     const [showScrollBtn, setShowScrollBtn] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
     const [inputValue, setInputValue] = useState('');
+    const [streaming, setStreaming] = useState<StreamingState | null>(null);
 
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const isAtBottomRef = useRef(true);
+    const streamingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // ── Scroll helpers ──────────────────────────────────────────────
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
@@ -46,7 +69,6 @@ const ChatBot = () => {
         }
     }, []);
 
-    // Check if user scrolled away from bottom
     const handleScroll = useCallback(() => {
         const container = messagesContainerRef.current;
         if (!container) return;
@@ -56,14 +78,12 @@ const ChatBot = () => {
         setShowScrollBtn(distanceFromBottom > 120);
     }, []);
 
-    // Auto-scroll when new messages arrive (only if already at bottom)
     useEffect(() => {
         if (isAtBottomRef.current) {
             scrollToBottom();
         }
-    }, [messages, isTyping, scrollToBottom]);
+    }, [messages, isTyping, streaming?.displayedChars, scrollToBottom]);
 
-    // Always scroll to bottom when chat opens
     useEffect(() => {
         if (isOpen) {
             requestAnimationFrame(() => {
@@ -75,7 +95,6 @@ const ChatBot = () => {
         }
     }, [isOpen, scrollToBottom]);
 
-    // Close emoji picker on outside click
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
@@ -90,11 +109,54 @@ const ChatBot = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // ── Streaming typewriter effect ─────────────────────────────────
+    useEffect(() => {
+        if (!streaming) return;
+
+        if (streaming.displayedChars >= streaming.fullText.length) {
+            setMessages(prev => [
+                ...prev,
+                {
+                    text: streaming.fullText,
+                    sender: 'bot',
+                    time: streaming.time,
+                    suggestions: streaming.suggestions,
+                    products: streaming.products,
+                },
+            ]);
+            setStreaming(null);
+            return;
+        }
+
+        streamingRef.current = setInterval(() => {
+            setStreaming(prev => {
+                if (!prev) return null;
+                const next = prev.displayedChars + CHARS_PER_TICK;
+                if (next >= prev.fullText.length) {
+                    return { ...prev, displayedChars: prev.fullText.length };
+                }
+                return { ...prev, displayedChars: next };
+            });
+        }, TICK_INTERVAL);
+
+        return () => {
+            if (streamingRef.current) {
+                clearInterval(streamingRef.current);
+                streamingRef.current = null;
+            }
+        };
+    }, [streaming?.displayedChars, streaming?.fullText.length]);
+
+    useEffect(() => {
+        return () => {
+            if (streamingRef.current) clearInterval(streamingRef.current);
+        };
+    }, []);
+
     const addEmoji = (emojiData: any) => {
         setInputValue(prev => prev + emojiData.native);
     };
 
-    // ── Build conversation history for the API ──────────────────────
     const buildHistory = useCallback(() => {
         return messages
             .filter(m => m !== WELCOME_MESSAGE)
@@ -104,9 +166,8 @@ const ChatBot = () => {
             }));
     }, [messages]);
 
-    // ── Send message ────────────────────────────────────────────────
     const sendMessage = useCallback(async (text: string) => {
-        if (!text.trim() || isTyping) return;
+        if (!text.trim() || isTyping || streaming) return;
 
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const userMsg: ChatMessage = { text, sender: 'user', time };
@@ -131,15 +192,15 @@ const ChatBot = () => {
             });
 
             setIsTyping(false);
-            setMessages(prev => [
-                ...prev,
-                {
-                    text: response.text,
-                    sender: 'bot',
-                    time: responseTime,
-                    suggestions: response.suggestions,
-                },
-            ]);
+
+            // Start typewriter streaming
+            setStreaming({
+                fullText: response.text,
+                displayedChars: 0,
+                products: response.products || [],
+                suggestions: response.suggestions || [],
+                time: responseTime,
+            });
         } catch {
             setIsTyping(false);
             setMessages(prev => [
@@ -151,7 +212,7 @@ const ChatBot = () => {
                 },
             ]);
         }
-    }, [isTyping, buildHistory]);
+    }, [isTyping, streaming, buildHistory]);
 
     const handleSend = () => {
         sendMessage(inputValue.trim());
@@ -161,43 +222,93 @@ const ChatBot = () => {
         sendMessage(suggestion);
     };
 
+    const isInputDisabled = isTyping || !!streaming;
+
+    // ── Product Card ────────────────────────────────────────────────
+    const ProductCard = ({ product }: { product: IProductCard }) => {
+        const image = getProductImage(product);
+        const displayPrice = getProductDisplayPrice(product);
+        const originalPrice = getProductOriginalPrice(product);
+        const discount = getProductDiscount(product);
+
+        return (
+            <Link
+                href={`/product/${product.slug || product._id}`}
+                target="_blank"
+                className="block min-w-[130px] max-w-[130px] bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group"
+            >
+                <div className="w-full h-[90px] bg-gray-50 flex items-center justify-center p-2 overflow-hidden">
+                    {image ? (
+                        <img
+                            src={image}
+                            alt={product.name}
+                            className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                            loading="lazy"
+                        />
+                    ) : (
+                        <div className="text-gray-300 text-2xl">📦</div>
+                    )}
+                </div>
+                <div className="p-2">
+                    <p className="text-[11px] font-medium text-gray-700 line-clamp-2 leading-tight mb-1.5 min-h-[28px]">
+                        {product.name}
+                    </p>
+                    <p className="text-[12px] font-bold text-indigo-600">
+                        {formatCurrencyVND(displayPrice)}
+                    </p>
+                    {discount > 0 && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                            <span className="text-[10px] text-gray-400 line-through">
+                                {formatCurrencyVND(originalPrice)}
+                            </span>
+                            <span className="text-[9px] bg-red-50 text-red-500 px-1 rounded font-medium">
+                                -{discount.toFixed(0)}%
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </Link>
+        );
+    };
+
     // ── Render ──────────────────────────────────────────────────────
     return (
-        <div className="fixed bottom-24 right-5 z-50 flex flex-col items-end">
+        <div className="fixed bottom-20 sm:bottom-24 right-3 sm:right-5 z-50 flex flex-col items-end">
             {/* Floating button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-lg hover:shadow-blue-300/50 hover:scale-105 active:scale-95 transition-all mb-3"
+                className="group flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-lg hover:shadow-indigo-300/50 hover:scale-105 active:scale-95 transition-all mb-2 sm:mb-3"
                 aria-label={isOpen ? 'Close chat' : 'Open chat'}
             >
                 {isOpen ? (
-                    <FiX size={26} className="transition-transform group-hover:rotate-90" />
+                    <FiX size={24} className="transition-transform group-hover:rotate-90" />
                 ) : (
-                    <IoMdChatboxes size={26} className="animate-pulse" />
+                    <IoMdChatboxes size={24} className="animate-pulse" />
                 )}
             </button>
 
             {/* Chat window */}
             {isOpen && (
                 <div
-                    className="bg-white rounded-2xl shadow-2xl w-80 sm:w-96 overflow-hidden mb-2 border border-blue-100 flex flex-col"
+                    className="bg-white rounded-2xl shadow-2xl w-[calc(100vw-24px)] sm:w-96 overflow-hidden mb-2 border border-indigo-100 flex flex-col"
                     style={{
-                        maxHeight: 'min(580px, calc(100vh - 180px))',
+                        maxWidth: '420px',
+                        maxHeight: 'min(600px, calc(100vh - 140px))',
                         animation: 'chatSlideUp 0.25s ease-out forwards',
                     }}
                 >
                     {/* ── Header ── */}
-                    <div className="bg-gradient-to-r from-blue-400 to-blue-600 text-white p-4 flex items-center flex-shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center flex-shrink-0 shadow-sm">
-                            <RiRobot2Fill className="text-blue-500 text-xl" />
+                    <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-3 sm:p-4 flex items-center flex-shrink-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/90 flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <RiRobot2Fill className="text-indigo-500 text-lg sm:text-xl" />
                         </div>
                         <div className="ml-3 flex-1 min-w-0">
                             <h3 className="font-bold flex items-center text-sm">
                                 Arisu AI Assistant
                                 <HiOutlineSparkles className="ml-1 text-yellow-200 animate-pulse" />
                             </h3>
-                            <p className="text-xs text-blue-100">
-                                {isTyping ? 'Đang soạn tin...' : 'Online · Hỏi tôi bất cứ điều gì'}
+                            <p className="text-xs text-indigo-200">
+                                {isTyping ? 'Đang suy nghĩ...' : streaming ? 'Đang trả lời...' : 'Online · Hỏi tôi bất cứ điều gì'}
                             </p>
                         </div>
                         <button
@@ -212,8 +323,8 @@ const ChatBot = () => {
                     <div
                         ref={messagesContainerRef}
                         onScroll={handleScroll}
-                        className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-blue-50/40 to-white relative"
-                        style={{ minHeight: '320px' }}
+                        className="flex-1 overflow-y-auto p-3 sm:p-4 bg-gradient-to-b from-indigo-50/30 to-white relative"
+                        style={{ minHeight: '300px' }}
                     >
                         {messages.map((msg, index) => (
                             <div
@@ -222,19 +333,32 @@ const ChatBot = () => {
                                 style={{ animation: `chatMsgIn 0.25s ease-out ${index > 0 ? '0.05s' : '0s'} both` }}
                             >
                                 {msg.sender === 'bot' && (
-                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-2 flex-shrink-0 mt-1">
+                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center mr-2 flex-shrink-0 mt-1">
                                         <RiRobot2Line className="text-white text-sm" />
                                     </div>
                                 )}
-                                <div className="flex flex-col max-w-[78%]">
+                                <div className="flex flex-col max-w-[82%] sm:max-w-[78%]">
                                     <div
                                         className={`rounded-2xl py-2.5 px-3.5 shadow-sm ${msg.sender === 'user'
-                                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-md'
-                                            : 'bg-white text-gray-800 border border-blue-100 rounded-bl-md'
+                                            ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-br-md'
+                                            : 'bg-white text-gray-800 border border-indigo-100/60 rounded-bl-md'
                                             }`}
                                     >
                                         <p className="leading-relaxed text-[13px] whitespace-pre-wrap break-words">{msg.text}</p>
                                     </div>
+
+                                    {/* Product cards */}
+                                    {msg.sender === 'bot' && msg.products && msg.products.length > 0 && (
+                                        <div className="mt-2 -mx-1">
+                                            <p className="text-[11px] text-gray-500 font-medium mb-1.5 px-1">🛒 Sản phẩm gợi ý:</p>
+                                            <div className="flex gap-2 overflow-x-auto pb-1.5 px-1 scrollbar-thin">
+                                                {msg.products.map((product) => (
+                                                    <ProductCard key={product._id} product={product} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <span className={`text-[10px] mt-1 px-1 ${msg.sender === 'user' ? 'text-gray-400 text-right' : 'text-gray-400'}`}>
                                         {msg.time}
                                     </span>
@@ -246,7 +370,7 @@ const ChatBot = () => {
                                                 <button
                                                     key={idx}
                                                     onClick={() => handleSuggestionClick(s)}
-                                                    className="text-[11px] bg-blue-50 hover:bg-blue-100 text-blue-600 py-1 px-2.5 rounded-full border border-blue-200 transition-colors whitespace-nowrap"
+                                                    className="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-600 py-1 px-2.5 rounded-full border border-indigo-200/60 transition-colors whitespace-nowrap"
                                                 >
                                                     {s}
                                                 </button>
@@ -255,24 +379,53 @@ const ChatBot = () => {
                                     )}
                                 </div>
                                 {msg.sender === 'user' && (
-                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ml-2 flex-shrink-0 mt-1">
+                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center ml-2 flex-shrink-0 mt-1">
                                         <RiUser3Fill className="text-white text-xs" />
                                     </div>
                                 )}
                             </div>
                         ))}
 
-                        {/* Typing indicator */}
-                        {isTyping && (
+                        {/* Streaming message (typewriter effect) */}
+                        {streaming && (
                             <div className="mb-3 flex justify-start" style={{ animation: 'chatMsgIn 0.2s ease-out both' }}>
-                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-2 flex-shrink-0 mt-1">
+                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center mr-2 flex-shrink-0 mt-1">
                                     <RiRobot2Line className="text-white text-sm" />
                                 </div>
-                                <div className="bg-white rounded-2xl rounded-bl-md py-3 px-4 shadow-sm border border-blue-100">
+                                <div className="flex flex-col max-w-[82%] sm:max-w-[78%]">
+                                    <div className="bg-white text-gray-800 border border-indigo-100/60 rounded-2xl rounded-bl-md py-2.5 px-3.5 shadow-sm">
+                                        <p className="leading-relaxed text-[13px] whitespace-pre-wrap break-words">
+                                            {streaming.fullText.substring(0, streaming.displayedChars)}
+                                            <span className="inline-block w-[2px] h-[14px] bg-indigo-500 ml-0.5 align-middle animate-pulse" />
+                                        </p>
+                                    </div>
+
+                                    {/* Show product cards once text streaming is complete */}
+                                    {streaming.displayedChars >= streaming.fullText.length && streaming.products.length > 0 && (
+                                        <div className="mt-2 -mx-1" style={{ animation: 'chatMsgIn 0.3s ease-out both' }}>
+                                            <p className="text-[11px] text-gray-500 font-medium mb-1.5 px-1">🛒 Sản phẩm gợi ý:</p>
+                                            <div className="flex gap-2 overflow-x-auto pb-1.5 px-1 scrollbar-thin">
+                                                {streaming.products.map((product) => (
+                                                    <ProductCard key={product._id} product={product} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Typing indicator (waiting for API) */}
+                        {isTyping && (
+                            <div className="mb-3 flex justify-start" style={{ animation: 'chatMsgIn 0.2s ease-out both' }}>
+                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center mr-2 flex-shrink-0 mt-1">
+                                    <RiRobot2Line className="text-white text-sm" />
+                                </div>
+                                <div className="bg-white rounded-2xl rounded-bl-md py-3 px-4 shadow-sm border border-indigo-100/60">
                                     <div className="flex space-x-1.5">
-                                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '300ms' }} />
                                     </div>
                                 </div>
                             </div>
@@ -288,7 +441,7 @@ const ChatBot = () => {
                                 isAtBottomRef.current = true;
                                 scrollToBottom();
                             }}
-                            className="absolute bottom-[72px] right-4 w-8 h-8 rounded-full bg-white shadow-lg border border-blue-200 flex items-center justify-center text-blue-500 hover:bg-blue-50 transition-colors z-10"
+                            className="absolute bottom-[72px] right-4 w-8 h-8 rounded-full bg-white shadow-lg border border-indigo-200 flex items-center justify-center text-indigo-500 hover:bg-indigo-50 transition-colors z-10"
                             style={{ animation: 'chatMsgIn 0.15s ease-out both' }}
                         >
                             <FiChevronDown size={18} />
@@ -296,7 +449,7 @@ const ChatBot = () => {
                     )}
 
                     {/* ── Input area ── */}
-                    <div className="p-3 border-t border-blue-100 bg-white flex-shrink-0">
+                    <div className="p-2.5 sm:p-3 border-t border-indigo-100/60 bg-white flex-shrink-0">
                         <div className="relative">
                             {showEmoji && (
                                 <div
@@ -305,7 +458,7 @@ const ChatBot = () => {
                                 >
                                     <Suspense
                                         fallback={
-                                            <div className="w-[352px] h-[435px] bg-white rounded-lg shadow-lg border border-blue-100 flex items-center justify-center text-gray-400">
+                                            <div className="w-[300px] sm:w-[352px] h-[400px] sm:h-[435px] bg-white rounded-lg shadow-lg border border-indigo-100 flex items-center justify-center text-gray-400">
                                                 Loading...
                                             </div>
                                         }
@@ -326,28 +479,28 @@ const ChatBot = () => {
                                 <Input
                                     ref={inputRef as any}
                                     id="chat-input"
-                                    placeholder="Nhập tin nhắn..."
+                                    placeholder={isInputDisabled ? 'Đang xử lý...' : 'Nhập tin nhắn...'}
                                     value={inputValue}
                                     onChange={e => setInputValue(e.target.value)}
                                     onPressEnter={handleSend}
-                                    className="flex-grow rounded-full pr-32 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                    className="flex-grow rounded-full pr-24 sm:pr-28 focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                                     size="large"
-                                    disabled={isTyping}
+                                    disabled={isInputDisabled}
                                 />
                                 <div className="absolute right-1 top-1 bottom-1 flex items-center">
                                     <button
                                         onClick={() => setShowEmoji(!showEmoji)}
-                                        className="h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 emoji-trigger mr-1.5 transition-colors"
+                                        className="h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:text-indigo-500 emoji-trigger mr-1 transition-colors"
                                     >
-                                        <FiSmile size={20} />
+                                        <FiSmile size={18} />
                                     </button>
                                     <button
                                         onClick={handleSend}
-                                        className={`px-3 h-8 rounded-full flex items-center justify-center transition-all ${inputValue.trim() && !isTyping
-                                            ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-sm hover:opacity-90 active:scale-95'
+                                        className={`px-3 h-8 rounded-full flex items-center justify-center transition-all ${inputValue.trim() && !isInputDisabled
+                                            ? 'bg-gradient-to-r from-indigo-400 to-indigo-600 text-white shadow-sm hover:opacity-90 active:scale-95'
                                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                             }`}
-                                        disabled={!inputValue.trim() || isTyping}
+                                        disabled={!inputValue.trim() || isInputDisabled}
                                     >
                                         <FiSend size={16} />
                                     </button>

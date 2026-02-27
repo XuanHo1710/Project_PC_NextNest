@@ -188,7 +188,7 @@ export default function CollectionPage() {
 
             {/* Mobile Filter Drawer */}
             <Drawer
-                className="dark:!bg-blue-900 dark:!text-white"
+                className="dark:!bg-gray-900 dark:!text-white"
                 title="Bộ lọc sản phẩm"
                 placement="bottom"
                 onClose={() => setDrawerOpen(false)}
@@ -264,7 +264,7 @@ export default function CollectionPage() {
 
                 {/* Page Title */}
                 <div className="mx-5 xl:mx-32 mb-5">
-                    <h1 className="font-bold text-xl lg:text-3xl uppercase text-blue-500 border-b-2 border-blue-400 pb-2 inline-block">
+                    <h1 className="font-bold text-xl lg:text-3xl uppercase text-indigo-500 border-b-2 border-indigo-400 pb-2 inline-block">
                         {collectionName}
                         <span className="ml-2 text-sm text-stone-400 lowercase font-medium">
                             (Tổng {collectionData?.pagination?.totalItems || 0} sản phẩm)
@@ -287,7 +287,7 @@ export default function CollectionPage() {
                         <div className="mt-3 flex flex-wrap gap-2">
                             <Link
                                 href={`/collection/${slug}`}
-                                className="px-3 py-1.5 text-sm rounded-full bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors"
+                                className="px-3 py-1.5 text-sm rounded-full bg-indigo-500 text-white font-medium hover:bg-indigo-600 transition-colors"
                             >
                                 Tất cả
                             </Link>
@@ -295,7 +295,7 @@ export default function CollectionPage() {
                                 <Link
                                     key={child._id}
                                     href={`/collection/${child.slug}`}
-                                    className="px-3 py-1.5 text-sm rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-800 hover:text-blue-600 transition-colors font-medium"
+                                    className="px-3 py-1.5 text-sm rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-indigo-100 dark:hover:bg-indigo-800 hover:text-indigo-600 transition-colors font-medium"
                                 >
                                     {child.name}
                                 </Link>
@@ -387,25 +387,25 @@ export default function CollectionPage() {
                                 <div className="flex gap-2 flex-wrap">
                                     <button
                                         onClick={() => handleSort("")}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "" ? "bg-indigo-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-100"}`}
                                     >
                                         Mới nhất
                                     </button>
                                     <button
                                         onClick={() => handleSort("minPrice_1")}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "minPrice_1" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "minPrice_1" ? "bg-indigo-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-100"}`}
                                     >
                                         Giá tăng dần
                                     </button>
                                     <button
                                         onClick={() => handleSort("minPrice_-1")}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "minPrice_-1" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "minPrice_-1" ? "bg-indigo-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-100"}`}
                                     >
                                         Giá giảm dần
                                     </button>
                                     <button
                                         onClick={() => handleSort("name_1")}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "name_1" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "name_1" ? "bg-indigo-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-100"}`}
                                     >
                                         A → Z
                                     </button>
@@ -413,20 +413,20 @@ export default function CollectionPage() {
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => setDrawerOpen(true)}
-                                        className="lg:hidden px-4 py-2 rounded-full text-sm bg-blue-50 text-blue-500 font-medium"
+                                        className="lg:hidden px-4 py-2 rounded-full text-sm bg-indigo-50 text-indigo-500 font-medium"
                                     >
                                         Bộ lọc <i className="ml-1 fa-solid fa-filter"></i>
                                     </button>
                                     <div className="flex gap-1">
                                         <button
                                             onClick={() => setIsGridView(true)}
-                                            className={`p-2 rounded ${isGridView ? "text-blue-500" : "text-gray-400"}`}
+                                            className={`p-2 rounded ${isGridView ? "text-indigo-500" : "text-gray-400"}`}
                                         >
                                             <i className="fa-solid fa-table-cells-large"></i>
                                         </button>
                                         <button
                                             onClick={() => setIsGridView(false)}
-                                            className={`p-2 rounded ${!isGridView ? "text-blue-500" : "text-gray-400"}`}
+                                            className={`p-2 rounded ${!isGridView ? "text-indigo-500" : "text-gray-400"}`}
                                         >
                                             <i className="fa-solid fa-list"></i>
                                         </button>
@@ -467,14 +467,14 @@ export default function CollectionPage() {
                                                 <div className="flex-1 flex flex-col justify-between min-w-0">
                                                     <div>
                                                         <Link href={`/product/${product.slug || product._id}`}>
-                                                            <h2 className="font-medium text-sm md:text-base line-clamp-2 hover:text-blue-500 transition-colors">
+                                                            <h2 className="font-medium text-sm md:text-base line-clamp-2 hover:text-indigo-500 transition-colors">
                                                                 {product.name}
                                                             </h2>
                                                         </Link>
                                                     </div>
                                                     <div className="flex items-end justify-between">
                                                         <div>
-                                                            <p className="font-bold text-lg text-blue-500">
+                                                            <p className="font-bold text-lg text-indigo-500">
                                                                 {getProductDisplayPrice(product).toLocaleString()}đ
                                                             </p>
                                                             {getProductDiscount(product) > 0 && (
@@ -503,7 +503,7 @@ export default function CollectionPage() {
                                                                 });
                                                                 addToCart(product, variant);
                                                             }}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors"
+                                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm rounded-lg transition-colors"
                                                         >
                                                             <i className="fa-solid fa-cart-shopping"></i>
                                                             <span className="hidden md:inline">Thêm vào giỏ</span>
