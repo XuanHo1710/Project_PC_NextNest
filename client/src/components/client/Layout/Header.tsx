@@ -10,6 +10,8 @@ import { FaRegUserCircle, FaUserPlus } from "react-icons/fa";
 import { FaStore } from "react-icons/fa";
 import { IoDocumentOutline } from "react-icons/io5";
 import { FaPhoneAlt } from "react-icons/fa";
+import { HiOutlineMenuAlt3 } from "react-icons/hi";
+import { IoClose } from "react-icons/io5";
 import Marquee from "react-fast-marquee";
 import { MdOutlineSearch } from "react-icons/md";
 import { useEffect, useState } from "react";
@@ -41,6 +43,7 @@ export default function HeaderClient() {
     const [childrenCategories, setChildrenCategories] = useState<ICategory[] | []>([]);
 
     const [search, setSearch] = useState("");
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const { cart, updateQuantity, removeFromCart, calculateTotal } = useCartStore();
 
@@ -154,37 +157,38 @@ export default function HeaderClient() {
                 switchToLogin={handleOpenLogin}
             />
 
-            <header className="fixed w-full z-50 left-0 right-0 top-0 bg-[#3b82f6]">
-                <div className="max-w-7xl mx-auto px-4">
-                    {/* Top Bar */}
-                    <div className="flex items-center justify-between py-2 border-b border-blue-300">
-                        <Marquee className="flex-1 text-xs font-semibold text-white" speed={50} gradient={false}>
+            <header className="fixed w-full z-50 left-0 right-0 top-0 bg-white shadow-md">
+                {/* Top Bar — desktop only */}
+                <div className="hidden md:block bg-slate-700 text-white">
+                    <div className="max-w-7xl mx-auto px-4 flex items-center justify-between py-1.5">
+                        <Marquee className="flex-1 text-xs font-medium" speed={50} gradient={false}>
                             🔄 Thu cũ giá ngon - Lên đời tiết kiệm ✅ Sản phẩm Chính hãng - Xuất VAT đầy đủ 🚚 Giao nhanh - Miễn phí cho đơn 300k
                         </Marquee>
-                        <div className="flex items-center">
-                            <h5 className="header-item text-white"><FaStore /> Cửa hàng gần bạn</h5>
-                            <h5 className="header-item text-white"><IoDocumentOutline /> Tra cứu đơn hàng</h5>
-                            <h5 className="header-item text-white"><FaPhoneAlt /> 1800 2097</h5>
+                        <div className="flex items-center text-xs">
+                            <h5 className="flex items-center gap-1.5 border-l border-slate-500 px-3 cursor-pointer hover:text-sky-300 transition-colors"><FaStore /> Cửa hàng gần bạn</h5>
+                            <h5 className="flex items-center gap-1.5 border-l border-slate-500 px-3 cursor-pointer hover:text-sky-300 transition-colors"><IoDocumentOutline /> Tra cứu đơn hàng</h5>
+                            <h5 className="flex items-center gap-1.5 border-l border-slate-500 px-3 cursor-pointer hover:text-sky-300 transition-colors"><FaPhoneAlt /> 1800 2097</h5>
                         </div>
                     </div>
+                </div>
 
-                    {/* Main Header */}
-                    <div className="flex items-center gap-4 py-3">
+                {/* Main Header */}
+                <div className="max-w-7xl mx-auto px-4">
+                    <div className="flex items-center gap-3 py-2.5">
                         {/* Logo */}
-                        <h2 className="font-bold text-white text-2xl whitespace-nowrap">Arisu</h2>
+                        <Link href="/home">
+                            <h2 className="font-bold text-slate-700 text-2xl whitespace-nowrap">Arisu</h2>
+                        </Link>
 
-                        {/* Category Dropdown */}
-                        <div className="relative">
+                        {/* Category Dropdown — desktop */}
+                        <div className="relative hidden lg:block">
                             <button
-                                onClick={() => {
-                                    setOpenCategory(!isOpenCategory);
-                                    setOpenItemCategory(false)
-                                }}
-                                className="flex items-center gap-2 bg-white cursor-pointer text-[#3b82f6] font-medium px-4 py-2 rounded-md transition-all whitespace-nowrap"
+                                onClick={() => { setOpenCategory(!isOpenCategory); setOpenItemCategory(false) }}
+                                className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 cursor-pointer text-slate-700 font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
                             >
-                                <BiCategory className="text-lg" />
+                                <BiCategory className="text-lg text-indigo-500" />
                                 <span>Danh mục</span>
-                                <IoIosArrowDown className="text-sm" />
+                                <IoIosArrowDown className="text-xs text-slate-400" />
                             </button>
 
                             {isOpenCategory && (
@@ -197,7 +201,7 @@ export default function HeaderClient() {
                                                 <li
                                                     key={category._id}
                                                     onMouseEnter={() => handleHoverCategory(category.children as ICategory[])}
-                                                    className={`text-sm font-medium px-4 py-2 hover:bg-blue-400 hover:text-white justify-between cursor-pointer flex items-center gap-2 ${isFirst ? 'rounded-t-xl' : ''} ${isLast ? 'rounded-b-xl' : ''}`}
+                                                    className={`text-sm font-medium px-4 py-2.5 hover:bg-indigo-50 hover:text-indigo-600 justify-between cursor-pointer flex items-center gap-2 ${isFirst ? 'rounded-t-xl' : ''} ${isLast ? 'rounded-b-xl' : ''}`}
                                                 >
                                                     {category.name} <MdKeyboardArrowRight className="text-base" />
                                                 </li>
@@ -214,11 +218,11 @@ export default function HeaderClient() {
                             )}
                         </div>
 
-                        {/* Location */}
-                        <button className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] font-medium px-4 py-2 rounded-md transition-all whitespace-nowrap">
-                            <MdOutlineNotListedLocation />
+                        {/* Location — desktop */}
+                        <button className="hidden lg:flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm">
+                            <MdOutlineNotListedLocation className="text-indigo-500" />
                             <span>Hồ Chí Minh</span>
-                            <IoIosArrowDown className="text-sm" />
+                            <IoIosArrowDown className="text-xs text-slate-400" />
                         </button>
 
                         {/* Search Bar */}
@@ -228,13 +232,13 @@ export default function HeaderClient() {
                                 onChange={(e) => handleOnChange(e.target.value)}
                                 onKeyDown={(e) => { if (e.key === "Enter") handleSearchNavigate(); }}
                                 placeholder="Bạn muốn mua gì ngày hôm nay"
-                                className="!py-2 !px-4 rounded-md w-full"
-                                suffix={<MdOutlineSearch className="text-xl text-gray-400 cursor-pointer hover:text-blue-500" onClick={handleSearchNavigate} />}
+                                className="!py-2 !px-4 rounded-lg w-full !border-slate-200 focus:!border-indigo-400"
+                                suffix={<MdOutlineSearch className="text-xl text-slate-400 cursor-pointer hover:text-indigo-500" onClick={handleSearchNavigate} />}
                             />
 
                             {/* Search Results */}
                             {isOpenSearch && (
-                                <div style={{ scrollbarWidth: "none" }} className="z-20 absolute top-full w-[480px] rounded-lg left-0 mt-1 max-h-[380px] bg-white overflow-y-auto shadow-xl border border-gray-200">
+                                <div style={{ scrollbarWidth: "none" }} className="z-20 absolute top-full w-full md:w-[480px] rounded-lg left-0 mt-1 max-h-[380px] bg-white overflow-y-auto shadow-xl border border-gray-200">
                                     {loadingSearch ? (
                                         <div className="flex items-center justify-center py-12">
                                             <Spin size="large" />
@@ -264,14 +268,14 @@ export default function HeaderClient() {
                                                             {v.combination && Object.keys(v.combination).length > 0 && (
                                                                 <div className="flex flex-wrap gap-1 mt-0.5">
                                                                     {Object.entries(v.combination).map(([key, val]) => (
-                                                                        <span key={key} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100">
+                                                                        <span key={key} className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
                                                                             {key}: {val}
                                                                         </span>
                                                                     ))}
                                                                 </div>
                                                             )}
                                                             <div className="flex items-center gap-2 mt-0.5">
-                                                                <span className="text-sm font-bold text-blue-600">
+                                                                <span className="text-sm font-bold text-indigo-600">
                                                                     {(v.displayPrice || v.price * (1 - (v.discount || 0) / 100)).toLocaleString()}đ
                                                                 </span>
                                                                 {v.discount > 0 && (
@@ -305,7 +309,7 @@ export default function HeaderClient() {
                                         <Link
                                             href={`/search?q=${encodeURIComponent(search)}`}
                                             onClick={() => { setOpenSearch(false); }}
-                                            className="block text-center py-2.5 text-sm font-semibold text-blue-500 hover:text-blue-600 hover:bg-blue-50 border-t border-gray-100 transition-colors sticky bottom-0 bg-white rounded-b-lg"
+                                            className="block text-center py-2.5 text-sm font-semibold text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 border-t border-gray-100 transition-colors sticky bottom-0 bg-white rounded-b-lg"
                                         >
                                             Xem tất cả kết quả →
                                         </Link>
@@ -314,26 +318,28 @@ export default function HeaderClient() {
                             )}
                         </div>
 
-                        {/* Cart Button */}
-                        <div className="relative">
+                        {/* Cart Button — desktop */}
+                        <div className="relative hidden md:block">
                             <button
                                 onClick={() => setOpenCart(!isOpenCart)}
-                                className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] font-medium px-4 py-2 rounded-md transition-all whitespace-nowrap"
+                                className="flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
                             >
                                 <span>Giỏ hàng</span>
-                                <MdOutlineShoppingCart className="text-lg" />
+                                <Badge count={cart?.cartItems?.length || 0} size="small" offset={[2, -2]}>
+                                    <MdOutlineShoppingCart className="text-lg text-indigo-500" />
+                                </Badge>
                             </button>
 
                             {/* Cart Dropdown */}
                             {isOpenCart && (
                                 <div className='bg-white shadow-2xl z-30 min-h-36 right-0 rounded-xl absolute top-12 w-[400px] border border-gray-200'>
-                                    <div className='py-3 border-b border-gray-200 uppercase text-center text-xl font-medium'>
+                                    <div className='py-3 border-b border-gray-200 uppercase text-center text-xl font-medium text-slate-700'>
                                         Giỏ hàng
                                     </div>
 
                                     {cart && cart?.cartItems?.length <= 0 ? (
-                                        <div className='flex flex-col items-center py-5'>
-                                            <i className="fa-solid fa-cart-shopping text-6xl"></i>
+                                        <div className='flex flex-col items-center py-5 text-slate-400'>
+                                            <MdOutlineShoppingCart className="text-5xl" />
                                             <p className="mt-2">Hiện chưa có sản phẩm</p>
                                         </div>
                                     ) : (
@@ -346,7 +352,7 @@ export default function HeaderClient() {
                                                     <div className='flex-grow ml-3'>
                                                         <div className='flex justify-between'>
                                                             <Link onClick={() => setOpenCart(false)} href={"/product/" + c.product?.slug}>
-                                                                <h2 className='hover:text-blue-500 font-semibold text-sm line-clamp-1 pr-4'>
+                                                                <h2 className='hover:text-indigo-500 font-semibold text-sm line-clamp-1 pr-4'>
                                                                     {c.product?.name}
                                                                 </h2>
                                                             </Link>
@@ -354,14 +360,13 @@ export default function HeaderClient() {
                                                                 onClick={() => removeFromCart(c.variant._id)}
                                                                 className="text-gray-400 hover:text-red-500 cursor-pointer"
                                                             >
-                                                                <i className="fa-solid fa-xmark"></i>
+                                                                <IoClose />
                                                             </button>
                                                         </div>
-                                                        {/* Show variant combination to distinguish same-product items */}
                                                         {c.variant?.combination && Object.keys(c.variant.combination).length > 0 && (
                                                             <div className='flex flex-wrap gap-1 mt-1'>
                                                                 {Object.values(c.variant.combination).map((val, i) => (
-                                                                    <span key={i} className='text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded'>
+                                                                    <span key={i} className='text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded'>
                                                                         {val}
                                                                     </span>
                                                                 ))}
@@ -369,21 +374,11 @@ export default function HeaderClient() {
                                                         )}
                                                         <div className='flex justify-between mt-1.5 items-center'>
                                                             <div className='flex items-center border border-gray-200 rounded'>
-                                                                <Button
-                                                                    onClick={() => updateQuantity(c.variant._id, -1)}
-                                                                    className='border-none px-2'
-                                                                >
-                                                                    <i className="fa-solid fa-minus"></i>
-                                                                </Button>
-                                                                <span className='w-8 text-center'>{c.quantity}</span>
-                                                                <Button
-                                                                    onClick={() => updateQuantity(c.variant._id, 1)}
-                                                                    className='border-none px-2'
-                                                                >
-                                                                    <i className="fa-solid fa-plus"></i>
-                                                                </Button>
+                                                                <Button onClick={() => updateQuantity(c.variant._id, -1)} className='border-none px-2'>−</Button>
+                                                                <span className='w-8 text-center text-sm'>{c.quantity}</span>
+                                                                <Button onClick={() => updateQuantity(c.variant._id, 1)} className='border-none px-2'>+</Button>
                                                             </div>
-                                                            <p className='font-semibold text-red-500'>
+                                                            <p className='font-semibold text-red-500 text-sm'>
                                                                 {c.price.toLocaleString()}đ
                                                             </p>
                                                         </div>
@@ -394,8 +389,8 @@ export default function HeaderClient() {
                                     )}
 
                                     <div className='py-3 border-t border-gray-200 flex items-center justify-between px-4'>
-                                        <p className='uppercase font-semibold'>Tổng tiền:</p>
-                                        <p className='text-blue-500 font-semibold text-lg'>
+                                        <p className='uppercase font-semibold text-sm text-slate-600'>Tổng tiền:</p>
+                                        <p className='text-indigo-600 font-semibold text-lg'>
                                             {calculateTotal().toLocaleString()}đ
                                         </p>
                                     </div>
@@ -404,7 +399,7 @@ export default function HeaderClient() {
                                         <Link
                                             onClick={() => setOpenCart(false)}
                                             href="/cart"
-                                            className='block py-2 text-center rounded-md text-white font-medium bg-blue-500 hover:bg-blue-600 transition-colors'
+                                            className='block py-2.5 text-center rounded-lg text-white font-medium bg-indigo-500 hover:bg-indigo-600 transition-colors'
                                         >
                                             XEM GIỎ HÀNG
                                         </Link>
@@ -413,21 +408,67 @@ export default function HeaderClient() {
                             )}
                         </div>
 
-                        {/* Chat Button */}
+                        {/* Chat Button — desktop */}
                         <Link
                             href="/chat"
-                            className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] font-medium px-3 py-2 rounded-md transition-all whitespace-nowrap hover:bg-gray-50"
+                            className="hidden md:flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg transition-all whitespace-nowrap"
                         >
                             <ChatBadge />
                         </Link>
 
-                        {/* Auth Section */}
-                        <AuthSection
-                            handleOpenLogin={handleOpenLogin}
-                            handleOpenRegister={handleOpenRegister}
-                        />
+                        {/* Auth Section — desktop */}
+                        <div className="hidden md:block">
+                            <AuthSection
+                                handleOpenLogin={handleOpenLogin}
+                                handleOpenRegister={handleOpenRegister}
+                            />
+                        </div>
+
+                        {/* Mobile: Cart + Hamburger */}
+                        <div className="flex md:hidden items-center gap-2">
+                            <Link href="/cart" className="relative p-2">
+                                <Badge count={cart?.cartItems?.length || 0} size="small" offset={[0, 0]}>
+                                    <MdOutlineShoppingCart className="text-xl text-slate-600" />
+                                </Badge>
+                            </Link>
+                            <button
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                className="p-2 text-slate-600"
+                            >
+                                {mobileMenuOpen ? <IoClose className="text-2xl" /> : <HiOutlineMenuAlt3 className="text-2xl" />}
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                {/* Mobile Menu Drawer */}
+                {mobileMenuOpen && (
+                    <div className="md:hidden bg-white border-t border-slate-100 shadow-lg max-h-[80vh] overflow-y-auto">
+                        <div className="p-4 space-y-3">
+                            {/* Mobile Auth */}
+                            <div className="pb-3 border-b border-slate-100">
+                                <AuthSection
+                                    handleOpenLogin={() => { setMobileMenuOpen(false); handleOpenLogin(); }}
+                                    handleOpenRegister={() => { setMobileMenuOpen(false); handleOpenRegister(); }}
+                                />
+                            </div>
+                            {/* Mobile Category */}
+                            <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-2.5 text-slate-700 font-medium hover:text-indigo-500">
+                                <BiCategory className="text-lg text-indigo-500" /> Danh mục sản phẩm
+                            </Link>
+                            {/* Mobile Chat */}
+                            <Link href="/chat" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-2.5 text-slate-700 font-medium hover:text-indigo-500">
+                                <MdOutlineChatBubbleOutline className="text-lg text-indigo-500" /> Tin nhắn <ChatBadge />
+                            </Link>
+                            {/* Mobile Info */}
+                            <div className="pt-3 border-t border-slate-100 space-y-2 text-sm text-slate-500">
+                                <p className="flex items-center gap-2"><FaStore className="text-indigo-400" /> Cửa hàng gần bạn</p>
+                                <p className="flex items-center gap-2"><IoDocumentOutline className="text-indigo-400" /> Tra cứu đơn hàng</p>
+                                <p className="flex items-center gap-2"><FaPhoneAlt className="text-indigo-400" /> 1800 2097</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </header>
         </>
     )
@@ -505,7 +546,6 @@ function AuthSection({
     ];
 
     if (user) {
-        console.log(user)
         return (
             <div className="flex items-center gap-2">
                 <Dropdown
@@ -513,14 +553,14 @@ function AuthSection({
                     placement="bottomRight"
                     arrow
                 >
-                    <div className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] hover:bg-gray-50 font-medium px-4 py-2 rounded-md transition-all">
+                    <div className="flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-all">
                         <Avatar
                             src={user?.avatar || null}
                             icon={<UserOutlined />}
                             size="small"
                         />
-                        <span className="max-w-24 truncate">{user.fullname}</span>
-                        <IoIosArrowDown />
+                        <span className="max-w-24 truncate text-sm">{user.fullname}</span>
+                        <IoIosArrowDown className="text-xs text-slate-400" />
                     </div>
                 </Dropdown>
             </div>
@@ -531,14 +571,14 @@ function AuthSection({
         <div className="flex items-center gap-2">
             <button
                 onClick={handleOpenLogin}
-                className="flex items-center gap-2 cursor-pointer bg-white text-[#3b82f6] font-medium px-4 py-2 rounded-md transition-all whitespace-nowrap"
+                className="flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
             >
                 <span>Đăng nhập</span>
-                <FaRegUserCircle />
+                <FaRegUserCircle className="text-indigo-500" />
             </button>
             <button
                 onClick={handleOpenRegister}
-                className="flex items-center gap-2 cursor-pointer bg-blue-400 hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-all whitespace-nowrap"
+                className="flex items-center gap-2 cursor-pointer bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
             >
                 <span>Đăng ký</span>
                 <FaUserPlus />

@@ -38,9 +38,9 @@ export default function ProfileDetail() {
     const queryClient = useQueryClient();
 
     const { data: guest, isLoading } = useQuery<IAccountGuest | null>({
-        queryKey: ['profile-guest', user?.id],
+        queryKey: ['profile-guest', user?._id],
         queryFn: () => accountGuestService.getProfile(),
-        enabled: !!user?.id,
+        enabled: !!user?._id,
     });
 
 

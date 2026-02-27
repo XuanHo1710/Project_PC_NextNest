@@ -44,7 +44,7 @@ const useAuthUser = create<AuthUserState>((set) => ({
       if (response.data.success && response.data.data) {
         const { user, access_token } = response.data.data;
         set({
-          user,
+          user: user ? { ...user, id: user._id } : null,
           accessToken: access_token,
           isAuthenticated: true,
         });
@@ -137,7 +137,7 @@ const useAuthUser = create<AuthUserState>((set) => ({
       if (response.data.success && response.data.data) {
         const { user, access_token } = response.data.data;
         set({
-          user,
+          user: user ? { ...user, id: user._id } : null,
           accessToken: access_token,
           isAuthenticated: true,
         });

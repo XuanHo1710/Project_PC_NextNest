@@ -119,16 +119,16 @@ export default function HomeClient() {
                 ogDescription="Hệ thống bán lẻ PC, Laptop, linh kiện chính hãng uy tín với giá tốt nhất. Bảo hành toàn diện, giao hàng nhanh, hỗ trợ trả góp 0%."
                 ogImage="/logo.jpg"
             />
-            <div className="dark:bg-slate-900 md:pt-3 pt-52 py-10 bg-slate-50">
+            <div className="dark:bg-slate-900 md:pt-3 pt-44 py-10 bg-gray-50">
 
                 {/* ============= HERO: Category sidebar + Banner ============= */}
-                <div className="content-header mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5">
+                <div className="content-header mx-4 sm:mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5">
                     {/* Category sidebar — original simple style */}
-                    <div className="row-span-3 hidden xl:block col-span-3 rounded-lg shadow-lg bg-white">
-                        <ul style={{ scrollbarWidth: "none" }} className="m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-blue-950">
+                    <div className="row-span-3 hidden xl:block col-span-3 rounded-lg shadow-sm bg-white border border-gray-100">
+                        <ul style={{ scrollbarWidth: "none" }} className="m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-slate-800">
                             {categories && categories.length > 0 && categories.map((category, index) => (
                                 <Link key={category._id} href={`/collection/${category.slug}`}>
-                                    <li className="w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-blue-100 hover:text-blue-500 px-6 py-3 flex items-center">
+                                    <li className="w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-indigo-50 hover:text-indigo-600 px-6 py-3 flex items-center">
                                         <span className="font-medium flex items-center gap-3">{ListIcon[index % ListIcon.length]} {category.name}</span>
                                         <MdKeyboardArrowRight className="text-xl" />
                                     </li>
@@ -138,7 +138,7 @@ export default function HomeClient() {
                     </div>
 
                     {/* Banner carousel */}
-                    <div className="col-span-12 xl:col-span-9 row-span-3 rounded-lg shadow-lg overflow-hidden max-h-max">
+                    <div className="col-span-12 xl:col-span-9 row-span-3 rounded-lg shadow-sm overflow-hidden max-h-max">
                         <Carousel autoplay arrows autoplaySpeed={3000} dots={{ className: 'custom-dots' }} className="hero-banner-carousel">
                             <div>
                                 <div className="relative h-[300px] md:h-[420px] bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 flex items-center">
@@ -146,7 +146,7 @@ export default function HomeClient() {
                                     <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
                                         <h2 className="text-3xl md:text-5xl font-extrabold mb-3">PC Gaming</h2>
                                         <p className="text-lg md:text-xl opacity-90 mb-4">Hiệu năng vượt trội, chiến mọi tựa game!</p>
-                                        <Link href="/collection/pc-gaming" className="inline-block bg-white text-blue-600 font-bold px-6 py-2.5 rounded-full hover:bg-blue-50 transition-colors">Khám phá ngay</Link>
+                                        <Link href="/collection/pc-gaming" className="inline-block bg-white text-indigo-600 font-bold px-6 py-2.5 rounded-full hover:bg-indigo-50 transition-colors">Khám phá ngay</Link>
                                     </div>
                                 </div>
                             </div>
@@ -186,7 +186,7 @@ export default function HomeClient() {
                                     <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
                                         <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Phụ kiện Gaming</h2>
                                         <p className="text-lg md:text-xl opacity-90 mb-4">Bàn phím cơ, chuột, tai nghe chính hãng!</p>
-                                        <Link href="/collection/phu-kien" className="inline-block bg-white text-blue-600 font-bold px-6 py-2.5 rounded-full hover:bg-blue-50 transition-colors">Xem ngay</Link>
+                                        <Link href="/collection/phu-kien" className="inline-block bg-white text-indigo-600 font-bold px-6 py-2.5 rounded-full hover:bg-indigo-50 transition-colors">Xem ngay</Link>
                                     </div>
                                 </div>
                             </div>
@@ -196,9 +196,9 @@ export default function HomeClient() {
 
                 {/* ============= RECENTLY VIEWED (only for logged-in users) ============= */}
                 {recentlyViewed && recentlyViewed.length > 0 && (
-                    <div className="mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-8 px-7 shadow-lg">
+                    <div className="mx-4 sm:mx-5 xl:mx-32 my-8 dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-6">
-                            <h1 className="text-xl md:text-3xl font-bold text-gray-800 dark:text-white">
+                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
                                 Sản phẩm xem gần đây
                             </h1>
                         </div>
@@ -217,9 +217,9 @@ export default function HomeClient() {
 
                 {/* ============= BRAND CAROUSEL ============= */}
                 {brands?.data && brands.data.length > 0 && (
-                    <div className="mx-5 xl:mx-32 my-10">
+                    <div className="mx-4 sm:mx-5 xl:mx-32 my-8">
                         <div className="flex items-center justify-between mb-6">
-                            <h1 className="text-xl md:text-3xl font-bold text-gray-800 dark:text-white">
+                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
                                 Thương hiệu nổi bật
                             </h1>
                         </div>
@@ -234,19 +234,19 @@ export default function HomeClient() {
                                         href={`/collection/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
                                         className="group block"
                                     >
-                                        <div className="bg-white dark:bg-blue-950 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center
-                                            hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-200 h-[180px] justify-center">
+                                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center
+                                            hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500 transition-all duration-200 h-[180px] justify-center">
                                             <div className="w-16 h-16 mb-3 flex items-center justify-center">
                                                 {brand.logo ? (
                                                     <img src={brand.logo} alt={brand.name}
                                                         className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-200" />
                                                 ) : (
-                                                    <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                                    <div className="w-16 h-16 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
                                                         {brand.name.charAt(0)}
                                                     </div>
                                                 )}
                                             </div>
-                                            <h3 className="font-bold text-sm md:text-base text-gray-800 dark:text-white group-hover:text-blue-500 transition-colors">
+                                            <h3 className="font-bold text-sm md:text-base text-gray-800 dark:text-white group-hover:text-indigo-500 transition-colors">
                                                 {brand.name}
                                             </h3>
                                             {brand.description && (
@@ -262,7 +262,7 @@ export default function HomeClient() {
 
                 {/* ============= FLASH SALE — TOP DISCOUNT PRODUCTS ============= */}
                 {topDiscountProducts && topDiscountProducts.length > 0 && (
-                    <div id="top-discount" className="mx-5 xl:mx-32 my-10">
+                    <div id="top-discount" className="mx-4 sm:mx-5 xl:mx-32 my-8">
                         <div className="bg-red-600 rounded-lg shadow-lg overflow-hidden">
                             {/* Flash sale header */}
                             <div className="flex flex-wrap items-center justify-between px-7 py-4 bg-red-700">
@@ -294,7 +294,7 @@ export default function HomeClient() {
                                 </div>
                             </div>
                             {/* Products */}
-                            <div className="bg-white dark:bg-blue-950 py-8 px-7">
+                            <div className="bg-white dark:bg-slate-800 py-8 px-5 sm:px-7">
                                 <Carousel
                                     slidesToShow={5} slidesToScroll={1} draggable dots={false}
                                     autoplay arrows autoplaySpeed={2500} responsive={responsiveSettings}
@@ -312,9 +312,9 @@ export default function HomeClient() {
 
                 {/* ============= AI RECOMMENDATIONS — Gợi ý AI cho bạn ============= */}
                 {aiRecommendations && aiRecommendations.length > 0 && (
-                    <div className="mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-8 px-7 shadow-lg">
+                    <div className="mx-4 sm:mx-5 xl:mx-32 my-8 dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-6">
-                            <h1 className="text-xl md:text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white flex items-center gap-2">
                                 <HiOutlineSparkles className="text-yellow-500" />
                                 {user?._id ? 'AI Gợi ý cho bạn' : 'Sản phẩm phổ biến'}
                             </h1>
@@ -336,9 +336,9 @@ export default function HomeClient() {
                 )}
 
                 {/* ============= PRODUCT GRID — Gợi ý cho bạn ============= */}
-                <div className="mx-5 xl:mx-32 my-10 dark:bg-blue-950 rounded-lg bg-white py-8 px-7 shadow-lg">
+                <div className="mx-4 sm:mx-5 xl:mx-32 my-8 dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-6">
-                        <h1 className="text-xl md:text-3xl font-bold text-gray-800 dark:text-white">
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
                             Gợi ý cho bạn
                         </h1>
                     </div>
@@ -358,137 +358,137 @@ export default function HomeClient() {
                 </div>
 
                 {/* ============= TAGLINE ============= */}
-                <div className="h-60 content-center text-white my-10 flex flex-wrap items-center justify-center font-extrabold text-base sm:text-xl lg:text-4xl cursor-default">
+                <div className="py-16 sm:py-20 content-center text-slate-600 dark:text-white my-8 flex flex-wrap items-center justify-center font-extrabold text-lg sm:text-xl lg:text-3xl cursor-default text-center px-4">
                     Khơi nguồn đam mê, chạm đến đỉnh công nghệ!
                 </div>
 
                 {/* ============= SHOWROOM — Original layout ============= */}
-                <div className="mx-5 xl:mx-32 dark:bg-blue-950 rounded-lg bg-white py-10 px-7 shadow-md">
+                <div className="mx-4 sm:mx-5 xl:mx-32 dark:bg-slate-800 rounded-lg bg-white py-10 px-5 sm:px-7 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-center">
-                        <h1 className="text-xl md:text-3xl font-bold text-blue-500">HỆ THỐNG SHOWROOM</h1>
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-indigo-500">HỆ THỐNG SHOWROOM</h1>
                     </div>
                     <div className="mt-12 grid grid-flow-row grid-cols-12 gap-3">
                         {/* Showroom 1 */}
                         <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
                             <div className="flex items-center">
-                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-blue-200">1</div>
-                                <div className="font-bold text-blue-500">
+                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-indigo-100 text-indigo-600">1</div>
+                                <div className="font-bold text-indigo-500">
                                     <h5>Showroom bán hàng</h5>
                                     <h2>QUẬN CẦU GIẤY, HÀ NỘI</h2>
                                 </div>
                             </div>
-                            <h2 className="ml-2 mt-3 mb-5">41 Khúc Thừa Dụ, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội</h2>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-images w-1/6 text-2xl"></i>
+                            <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">41 Khúc Thừa Dụ, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội</h2>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hình ảnh showroom</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-solid fa-headphones w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-solid fa-phone w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline bảo hành: 19006100</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-envelope w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-clock w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
                             </p>
                         </div>
                         {/* Showroom 2 */}
                         <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
                             <div className="flex items-center">
-                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-purple-400">2</div>
-                                <div className="font-bold text-blue-500">
+                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-purple-100 text-purple-600">2</div>
+                                <div className="font-bold text-indigo-500">
                                     <h5>Showroom bán hàng</h5>
                                     <h2>QUẬN ĐỐNG ĐA, HÀ NỘI</h2>
                                 </div>
                             </div>
-                            <h2 className="ml-2 mt-3 mb-5">94E-94F Đường Láng, Phường Ngã Tư Sở, Quận Đống Đa, Hà Nội</h2>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-images w-1/6 text-2xl"></i>
+                            <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">94E-94F Đường Láng, Phường Ngã Tư Sở, Quận Đống Đa, Hà Nội</h2>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hình ảnh showroom</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-solid fa-headphones w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-solid fa-phone w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline bảo hành: 19006100</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-envelope w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-clock w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
                             </p>
                         </div>
                         {/* Showroom 3 */}
                         <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
                             <div className="flex items-center">
-                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-green-300">3</div>
-                                <div className="font-bold text-blue-500 w-2/3">
+                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-emerald-100 text-emerald-600">3</div>
+                                <div className="font-bold text-indigo-500 w-2/3">
                                     <h5>Showroom bán hàng</h5>
                                     <h2>VINH, NGHỆ AN</h2>
                                 </div>
                             </div>
-                            <h2 className="ml-2 mt-3 mb-5">72 Lê Lợi, Thành Phố Vinh, Nghệ An</h2>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-images w-1/6 text-2xl"></i>
+                            <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">72 Lê Lợi, Thành Phố Vinh, Nghệ An</h2>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hình ảnh showroom</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-solid fa-headphones w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-solid fa-phone w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline bảo hành: 19006100</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-envelope w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-clock w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
                             </p>
                         </div>
                         {/* Showroom 4 */}
                         <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
                             <div className="flex items-center">
-                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-red-200">4</div>
-                                <div className="font-bold text-blue-500">
+                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-rose-100 text-rose-600">4</div>
+                                <div className="font-bold text-indigo-500">
                                     <h5>Showroom bán hàng</h5>
                                     <h2>QUẬN 10, HỒ CHÍ MINH</h2>
                                 </div>
                             </div>
-                            <h2 className="ml-2 mt-3 mb-5">260 Lý Thường Kiệt, Phường 14, Quận 10, Hồ Chí Minh</h2>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-images w-1/6 text-2xl"></i>
+                            <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">260 Lý Thường Kiệt, Phường 14, Quận 10, Hồ Chí Minh</h2>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hình ảnh showroom</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-solid fa-headphones w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-solid fa-phone w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Hotline bảo hành: 19006100</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-envelope w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
                             </p>
-                            <p className="ml-2 my-3 text-base flex items-center cursor-pointer hover:text-blue-600">
-                                <i className="fa-regular fa-clock w-1/6 text-2xl"></i>
+                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-indigo-500">
+                                <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
                                 <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
                             </p>
                         </div>
