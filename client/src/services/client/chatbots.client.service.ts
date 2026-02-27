@@ -10,6 +10,7 @@ interface ChatResponse {
   text: string;
   timestamp: string;
   suggestions?: string[];
+  products?: IProductCard[];
 }
 
 export const chatbotClientService = {

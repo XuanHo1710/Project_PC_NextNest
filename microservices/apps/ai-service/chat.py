@@ -9,8 +9,10 @@ import json
 from datetime import datetime
 
 from config import get_settings
-from database import get_mongo_db
+from database import get_mongo_db, get_qdrant_client
 from hybrid_prediction import predictor
+from embedding import generate_embedding
+from recommendation import _fetch_product_cards
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -187,6 +189,7 @@ async def chat_with_ollama(
             logger.info(f"RAW OLLAMA RESPONSE: {assistant_message}")
 
             # --- HYBRID AI PREDICTION INTEGRATION ---
+            recommended_products = []
             if "PREDICT_JSON:" in assistant_message:
                 try:
                     json_str = assistant_message.split("PREDICT_JSON:")[1].strip()
@@ -203,7 +206,22 @@ async def chat_with_ollama(
                         # 2. Find real products
                         products = predictor.find_products(prediction)
                         
-                        # 3. Re-generate response
+                        # 3. Build IProductCard-compatible results
+                        if products:
+                            product_ids = []
+                            db = get_mongo_db()
+                            for p in products:
+                                name = p.get("name", "")
+                                doc = db["products"].find_one(
+                                    {"name": name, "isDeleted": {"$ne": True}, "status": "ACTIVE"},
+                                    {"_id": 1}
+                                )
+                                if doc:
+                                    product_ids.append(str(doc["_id"]))
+                            if product_ids:
+                                recommended_products = _fetch_product_cards(product_ids[:6])
+                        
+                        # 4. Re-generate response
                         assistant_message = (
                             f"🔍 **Phân tích nhu cầu của bạn:**\n"
                             f"- Nghề nghiệp: {user_profile.get('occupation')}\n"
@@ -228,6 +246,21 @@ async def chat_with_ollama(
                     pass
             # ----------------------------------------
 
+            # Search for relevant products via Qdrant vector similarity
+            if not recommended_products:
+                # Check if the message is product-related
+                product_keywords = [
+                    "sản phẩm", "laptop", "pc", "máy tính", "linh kiện", "phụ kiện",
+                    "ram", "cpu", "gpu", "ssd", "card", "màn hình", "bàn phím",
+                    "chuột", "tai nghe", "tư vấn", "giá", "mua", "so sánh",
+                    "gaming", "văn phòng", "sinh viên", "thiết kế", "lập trình",
+                    "đề xuất", "gợi ý", "khuyến mãi", "giảm giá", "rẻ", "tốt",
+                ]
+                msg_lower = message.lower()
+                is_product_query = any(kw in msg_lower for kw in product_keywords)
+                if is_product_query:
+                    recommended_products = search_products_for_chat(message, limit=6)
+
             # Generate contextual suggestions
             suggestions = _generate_suggestions(message, assistant_message)
 
@@ -235,6 +268,7 @@ async def chat_with_ollama(
                 "text": assistant_message,
                 "timestamp": datetime.now().isoformat(),
                 "suggestions": suggestions,
+                "products": recommended_products,
             }
 
     except httpx.ConnectError:
@@ -243,6 +277,7 @@ async def chat_with_ollama(
             "text": "Xin lỗi, hệ thống AI đang bảo trì. Vui lòng thử lại sau hoặc liên hệ hotline 1800 2097 để được hỗ trợ.",
             "timestamp": datetime.now().isoformat(),
             "suggestions": ["Liên hệ hỗ trợ", "Xem sản phẩm mới"],
+            "products": [],
         }
     except Exception as e:
         logger.error(f"Ollama chat error: {e}")
@@ -250,7 +285,43 @@ async def chat_with_ollama(
             "text": "Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.",
             "timestamp": datetime.now().isoformat(),
             "suggestions": [],
+            "products": [],
         }
+
+
+def search_products_for_chat(query: str, limit: int = 6) -> list[dict]:
+    """
+    Search Qdrant for products relevant to the user's chat message.
+    Returns IProductCard-compatible dicts from MongoDB.
+    """
+    try:
+        vector = generate_embedding(query)
+        client = get_qdrant_client()
+
+        search_result = client.query_points(
+            collection_name=settings.COLLECTION_NAME,
+            query=vector,
+            limit=limit + 2,
+            with_payload=True,
+        )
+        results = search_result.points
+
+        # Collect mongo IDs from Qdrant results
+        candidate_ids: list[str] = []
+        for r in results:
+            mongo_id = r.payload.get("_mongo_id", "")
+            if mongo_id and r.score > 0.3:  # Only relevance above threshold
+                candidate_ids.append(mongo_id)
+            if len(candidate_ids) >= limit:
+                break
+
+        if not candidate_ids:
+            return []
+
+        return _fetch_product_cards(candidate_ids)
+    except Exception as e:
+        logger.warning(f"Product search for chat failed: {e}")
+        return []
 
 
 def _generate_suggestions(user_message: str, bot_response: str) -> list[str]:

@@ -267,7 +267,7 @@ export default function HomeClient() {
                             {/* Flash sale header */}
                             <div className="flex flex-wrap items-center justify-between px-7 py-4 bg-red-700">
                                 <div className="flex items-center gap-3">
-                                    <FireFilled className="text-yellow-300 text-2xl animate-pulse" />
+                                    <FireFilled className="!text-yellow-300 text-2xl animate-pulse" />
                                     <h1 className="text-xl md:text-3xl font-extrabold text-white tracking-wide uppercase">
                                         Flash Sale
                                     </h1>

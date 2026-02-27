@@ -83,6 +83,7 @@ class ChatMessageResponse(BaseModel):
     text: str
     timestamp: str
     suggestions: list[str] = []
+    products: list[dict] = []
 
 
 class ReindexResponse(BaseModel):
