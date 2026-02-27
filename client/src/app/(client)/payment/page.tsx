@@ -39,11 +39,11 @@ const PaymentPage = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <Card className="max-w-md w-full mx-4 text-center shadow-lg border-0 rounded-xl">
-                    <Empty description="KhÃ´ng cÃ³ thÃ´ng tin Ä‘Æ¡n hÃ ng" className="mb-4" />
-                    <p className="text-gray-500 mb-6">Vui lÃ²ng thÃªm sáº£n pháº©m vÃ o giá» hÃ ng trÆ°á»›c khi thanh toÃ¡n.</p>
+                    <Empty description="Không có thông tin đơn hàng" className="mb-4" />
+                    <p className="text-gray-500 mb-6">Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.</p>
                     <Link href="/cart">
                         <button className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                            Quay láº¡i giá» hÃ ng
+                            Quay lại giỏ hàng
                         </button>
                     </Link>
                 </Card>
@@ -54,23 +54,23 @@ const PaymentPage = () => {
     return (
         <>
             <DynamicMetadata
-                title="Thanh toÃ¡n Ä‘Æ¡n hÃ ng - Project PC"
-                description="HoÃ n táº¥t thanh toÃ¡n Ä‘Æ¡n hÃ ng táº¡i Project PC."
-                keywords="thanh toÃ¡n, payment, payos, cod"
+                title="Thanh toán đơn hàng - Project PC"
+                description="Hoàn tất thanh toán đơn hàng tại Project PC."
+                keywords="thanh toán, payment, payos, cod"
             />
-            <div className="min-h-screen my-5 bg-slate-50 dark:bg-gray-900 dark:text-white pt-52 md:pt-3">
+            <div className="min-h-screen my-5 bg-slate-50 dark:bg-gray-900 dark:text-white pt-3">
                 {/* Breadcrumb */}
                 <div className='mx-5 xl:mx-32 mb-6'>
                     <Breadcrumb items={[
-                        { label: 'Giá» hÃ ng', href: '/cart' },
-                        { label: 'Thanh toÃ¡n' },
+                        { label: 'Giỏ hàng', href: '/cart' },
+                        { label: 'Thanh toán' },
                     ]} />
                 </div>
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Thanh toÃ¡n Ä‘Æ¡n hÃ ng</h1>
-                        <p className="text-gray-600 dark:text-gray-300">Vui lÃ²ng chá»n phÆ°Æ¡ng thá»©c thanh toÃ¡n phÃ¹ há»£p</p>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Thanh toán đơn hàng</h1>
+                        <p className="text-gray-600 dark:text-gray-300">Vui lòng chọn phương thức thanh toán phù hợp</p>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -82,7 +82,7 @@ const PaymentPage = () => {
                         {/* Order Summary */}
                         <div className="lg:col-span-1">
                             <Card className="shadow-xl border-0 sticky h-fit">
-                                <h3 className="text-xl font-bold text-gray-800 mb-6">ThÃ´ng tin Ä‘Æ¡n hÃ ng</h3>
+                                <h3 className="text-xl font-bold text-gray-800 mb-6">Thông tin đơn hàng</h3>
 
                                 <div className="space-y-4">
                                     <div style={{ scrollbarWidth: 'none' }} className='max-h-72 min-h-52 overflow-y-scroll'>
@@ -108,18 +108,18 @@ const PaymentPage = () => {
 
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">Táº¡m tÃ­nh:</span>
+                                            <span className="text-gray-500">Tạm tính:</span>
                                             <span className="font-medium">{formatCurrency(orderData.totalAmount || 0)}</span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500">PhÃ­ váº­n chuyá»ƒn:</span>
-                                            <span className="font-medium text-green-600">Miá»…n phÃ­</span>
+                                            <span className="text-gray-500">Phí vận chuyển:</span>
+                                            <span className="font-medium text-green-600">Miễn phí</span>
                                         </div>
 
                                         <Divider className="my-3" />
 
                                         <div className="flex justify-between text-lg font-bold text-gray-900">
-                                            <span>Tá»•ng cá»™ng:</span>
+                                            <span>Tổng cộng:</span>
                                             <span className="text-red-500">{formatCurrency(orderData.totalAmount || 0)}</span>
                                         </div>
                                     </div>
@@ -127,7 +127,7 @@ const PaymentPage = () => {
 
                                 <div className="mt-6 p-3 bg-blue-50 rounded-lg">
                                     <p className="text-xs text-blue-800 text-center">
-                                        Giao dá»‹ch Ä‘Æ°á»£c báº£o máº­t vá»›i cÃ´ng nghá»‡ mÃ£ hÃ³a SSL
+                                        Giao dịch được bảo mật với công nghệ mã hóa SSL
                                     </p>
                                 </div>
                             </Card>

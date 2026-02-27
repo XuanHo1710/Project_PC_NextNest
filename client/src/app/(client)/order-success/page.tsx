@@ -26,11 +26,11 @@ export default function OrderSuccessPage() {
 
     useEffect(() => {
         if (typeof document !== 'undefined') {
-            document.title = 'Äáº·t hÃ ng thÃ nh cÃ´ng - Project PC';
+            document.title = 'Đặt hàng thành công - Project PC';
         }
 
         const orderId = searchParams.get('orderId') || `ORD${Date.now()}`;
-        const customerName = searchParams.get('customerName') || 'KhÃ¡ch hÃ ng';
+        const customerName = searchParams.get('customerName') || 'Khách hàng';
         const phoneNumber = searchParams.get('phone') || '';
         const address = searchParams.get('address') || '';
         const totalAmount = parseInt(searchParams.get('total') || '0');
@@ -40,7 +40,7 @@ export default function OrderSuccessPage() {
     }, [searchParams]);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 pt-52 md:pt-10 pb-10">
+        <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 py-10">
             <div className="container mx-auto px-4 max-w-3xl">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
@@ -58,17 +58,17 @@ export default function OrderSuccessPage() {
                             <CheckCircleOutlined className="text-4xl text-green-600 dark:text-green-400" />
                         </motion.div>
                         <Title level={2} className="text-green-600 dark:text-green-400 !mb-1">
-                            Äáº·t hÃ ng thÃ nh cÃ´ng!
+                            Đặt hàng thành công!
                         </Title>
                         <Paragraph className="text-gray-500 dark:text-gray-400">
-                            Cáº£m Æ¡n báº¡n Ä‘Ã£ Ä‘áº·t hÃ ng táº¡i Project PC
+                            Cảm ơn bạn đã đặt hàng tại Project PC
                         </Paragraph>
                     </div>
 
                     {/* Order Info Card */}
                     <Card className="mb-5 shadow-sm" styles={{ body: { padding: '24px 28px' } }}>
                         <div className="text-center mb-5">
-                            <Text className="text-gray-500 text-sm">MÃ£ Ä‘Æ¡n hÃ ng</Text>
+                            <Text className="text-gray-500 text-sm">Mã đơn hàng</Text>
                             <div className="text-lg font-semibold text-blue-600 dark:text-blue-400 mt-1">
                                 #{orderInfo.orderId}
                             </div>
@@ -80,21 +80,21 @@ export default function OrderSuccessPage() {
                             <div className="flex items-start gap-3">
                                 <UserOutlined className="text-gray-400 mt-1" />
                                 <div>
-                                    <Text className="text-gray-500 text-xs block">NgÆ°á»i nháº­n</Text>
+                                    <Text className="text-gray-500 text-xs block">Người nhận</Text>
                                     <Text strong>{orderInfo.customerName}</Text>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3">
                                 <PhoneOutlined className="text-gray-400 mt-1" />
                                 <div>
-                                    <Text className="text-gray-500 text-xs block">Sá»‘ Ä‘iá»‡n thoáº¡i</Text>
+                                    <Text className="text-gray-500 text-xs block">Số điện thoại</Text>
                                     <Text strong>{orderInfo.phoneNumber}</Text>
                                 </div>
                             </div>
                             <div className="flex items-start gap-3 sm:col-span-2">
                                 <EnvironmentOutlined className="text-gray-400 mt-1" />
                                 <div>
-                                    <Text className="text-gray-500 text-xs block">Äá»‹a chá»‰ giao hÃ ng</Text>
+                                    <Text className="text-gray-500 text-xs block">Địa chỉ giao hàng</Text>
                                     <Text strong>{orderInfo.address}</Text>
                                 </div>
                             </div>
@@ -106,25 +106,25 @@ export default function OrderSuccessPage() {
                             <div className="flex items-center gap-2">
                                 <DollarOutlined className="text-gray-400" />
                                 <Text className="text-gray-500">
-                                    {orderInfo.method === 'COD' ? 'Thanh toÃ¡n khi nháº­n hÃ ng (COD)' : 'Thanh toÃ¡n trá»±c tuyáº¿n'}
+                                    {orderInfo.method === 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'Thanh toán trực tuyến'}
                                 </Text>
                             </div>
                             <Text strong className="text-red-500 text-xl">
-                                {orderInfo.totalAmount.toLocaleString()}Ä‘
+                                {orderInfo.totalAmount.toLocaleString()}đ
                             </Text>
                         </div>
                     </Card>
 
                     {/* Delivery Timeline */}
                     <Card className="mb-5 shadow-sm" styles={{ body: { padding: '24px 28px' } }}>
-                        <Text strong className="block mb-4">Tiáº¿n trÃ¬nh Ä‘Æ¡n hÃ ng</Text>
+                        <Text strong className="block mb-4">Tiến trình đơn hàng</Text>
                         <Steps
                             current={0}
                             size="small"
                             items={[
-                                { title: 'Äang xá»­ lÃ½', icon: <InboxOutlined /> },
-                                { title: 'Äang giao', icon: <CarOutlined /> },
-                                { title: 'ÄÃ£ giao', icon: <CheckCircleOutlined /> },
+                                { title: 'Đang xử lý', icon: <InboxOutlined /> },
+                                { title: 'Đang giao', icon: <CarOutlined /> },
+                                { title: 'Đã giao', icon: <CheckCircleOutlined /> },
                             ]}
                         />
                     </Card>
@@ -134,18 +134,18 @@ export default function OrderSuccessPage() {
                         <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <Link href="/home">
                                 <Button type="primary" size="large" icon={<HomeOutlined />} className="w-full sm:w-auto">
-                                    Vá» trang chá»§
+                                    Về trang chủ
                                 </Button>
                             </Link>
                             <Link href="/home">
                                 <Button size="large" icon={<ShoppingOutlined />} className="w-full sm:w-auto">
-                                    Tiáº¿p tá»¥c mua sáº¯m
+                                    Tiếp tục mua sắm
                                 </Button>
                             </Link>
                         </div>
                         <div className="text-center mt-4">
                             <Text className="text-gray-400 text-sm">
-                                LiÃªn há»‡ há»— trá»£: <a href="tel:1900xxxx" className="text-blue-500">1900-xxxx</a>
+                                Liên hệ hỗ trợ: <a href="tel:1900xxxx" className="text-blue-500">1900-xxxx</a>
                             </Text>
                         </div>
                     </Card>

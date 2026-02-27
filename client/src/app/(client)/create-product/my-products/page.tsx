@@ -136,7 +136,7 @@ export default function MyProductsPage() {
 
     // ============ REGENERATE VARIANTS ============
     const regenerateVariants = useCallback((configs: AttrConfig[], oldVariants: IProductVariant[]) => {
-        // When no attributes or all values removed â†’ empty table
+        // When no attributes or all values removed → empty table
         if (configs.length === 0 || configs.every((c) => c.values.length === 0)) {
             return [];
         }
@@ -227,7 +227,7 @@ export default function MyProductsPage() {
 
             if (existingIdx >= 0) {
                 if (updated[existingIdx].values.includes(valueLabel)) {
-                    message.warning(`"${valueLabel}" Ä‘Ã£ tá»“n táº¡i trong "${updated[existingIdx].attrName}"`);
+                    message.warning(`"${valueLabel}" đã tồn tại trong "${updated[existingIdx].attrName}"`);
                     return prev;
                 }
                 updated[existingIdx] = {
@@ -246,7 +246,7 @@ export default function MyProductsPage() {
 
             const newVariants = regenerateVariants(updated, editVariants);
             setEditVariants(newVariants);
-            message.success(`ThÃªm "${valueLabel}" â†’ ${newVariants.length} biáº¿n thá»ƒ`);
+            message.success(`Thêm "${valueLabel}" → ${newVariants.length} biến thể`);
             return updated;
         });
 
@@ -272,7 +272,7 @@ export default function MyProductsPage() {
             setEditVariants(newVariants);
             return updated;
         });
-        message.info("ÄÃ£ xÃ³a thuá»™c tÃ­nh");
+        message.info("Đã xóa thuộc tính");
     };
 
     // ============ VARIANT DETAIL DRAWER ============
@@ -299,7 +299,7 @@ export default function MyProductsPage() {
             ),
         );
         setDetailDrawerOpen(false);
-        message.success("ÄÃ£ cáº­p nháº­t chi tiáº¿t biáº¿n thá»ƒ");
+        message.success("Đã cập nhật chi tiết biến thể");
     };
 
     const handleUploadFiles = async (files: File[]) => {
@@ -313,9 +313,9 @@ export default function MyProductsPage() {
                 ),
             );
             setDetailVariant((prev) => prev ? { ...prev, images: [...(prev.images || []), ...urls] } : prev);
-            message.success(`ÄÃ£ táº£i lÃªn ${urls.length} áº£nh`);
+            message.success(`Đã tải lên ${urls.length} ảnh`);
         } catch {
-            message.error("Táº£i áº£nh tháº¥t báº¡i, vui lÃ²ng thá»­ láº¡i");
+            message.error("Tải ảnh thất bại, vui lòng thử lại");
         } finally {
             setUploadingImages(false);
         }
@@ -364,7 +364,7 @@ export default function MyProductsPage() {
                 setSavingVariants(false);
             }
 
-            message.success("Cáº­p nháº­t sáº£n pháº©m thÃ nh cÃ´ng!");
+            message.success("Cập nhật sản phẩm thành công!");
             setEditModalOpen(false);
             setEditingProduct(null);
             setEditVariants([]);
@@ -386,7 +386,7 @@ export default function MyProductsPage() {
     const handleBulkApply = (field: "price" | "discount" | "stock", value: number | null) => {
         if (value === null || value === undefined) return;
         setEditVariants((prev) => prev.map((v) => ({ ...v, [field]: value })));
-        message.success(`ÄÃ£ Ã¡p dá»¥ng ${field === "price" ? "giÃ¡" : field === "discount" ? "giáº£m giÃ¡" : "tá»“n kho"} cho ${editVariants.length} biáº¿n thá»ƒ`);
+        message.success(`Đã áp dụng ${field === "price" ? "giá" : field === "discount" ? "giảm giá" : "tồn kho"} cho ${editVariants.length} biến thể`);
     };
 
     const handleRemove = async (id: string) => { await removeProduct.mutateAsync(id); };
@@ -427,9 +427,9 @@ export default function MyProductsPage() {
     // ============ COMPUTED ============
     const getStatusTag = (status: string) => {
         const map: Record<string, { color: string; text: string }> = {
-            ACTIVE: { color: "green", text: "Äang bÃ¡n" },
-            INACTIVE: { color: "orange", text: "áº¨n" },
-            STOPSOLD: { color: "red", text: "Ngá»«ng bÃ¡n" },
+            ACTIVE: { color: "green", text: "Đang bán" },
+            INACTIVE: { color: "orange", text: "Ẩn" },
+            STOPSOLD: { color: "red", text: "Ngừng bán" },
         };
         const s = map[status] || { color: "default", text: status };
         return <Tag color={s.color}>{s.text}</Tag>;
@@ -450,7 +450,7 @@ export default function MyProductsPage() {
     const columns: ColumnsType<IProduct> = [
         { title: "#", key: "index", width: 50, render: (_, __, i) => (page - 1) * limit + i + 1 },
         {
-            title: "áº¢nh", key: "image", width: 70,
+            title: "Ảnh", key: "image", width: 70,
             render: (_, record) => {
                 const img = (variantsMap[record._id] || []).flatMap((v) => v.images || []).find(Boolean);
                 return img ? (
@@ -466,7 +466,7 @@ export default function MyProductsPage() {
             },
         },
         {
-            title: "TÃªn sáº£n pháº©m", dataIndex: "name", key: "name", ellipsis: true,
+            title: "Tên sản phẩm", dataIndex: "name", key: "name", ellipsis: true,
             render: (name: string, record) => (
                 <div>
                     <div className="font-medium text-[13px] line-clamp-1">{name}</div>
@@ -475,18 +475,18 @@ export default function MyProductsPage() {
             ),
         },
         {
-            title: "GiÃ¡", key: "price", width: 200,
+            title: "Giá", key: "price", width: 200,
             render: (_, record) => (
                 <div className="text-[13px]">
                     <span className="font-semibold text-red-500">{formatCurrencyVND(record.maxPrice || 0)}</span>
                     {record.minPrice !== record.maxPrice && (
-                        <span className="text-gray-400"> â€” <span className="text-red-500 font-semibold">{formatCurrencyVND(record.maxPrice || 0)}</span></span>
+                        <span className="text-gray-400"> — <span className="text-red-500 font-semibold">{formatCurrencyVND(record.maxPrice || 0)}</span></span>
                     )}
                 </div>
             ),
         },
         {
-            title: "Tá»“n kho", key: "stock", width: 80, align: "center",
+            title: "Tồn kho", key: "stock", width: 80, align: "center",
             render: (_, record) => {
                 const total = (variantsMap[record._id] || []).reduce((s, v) => s + (v.stock || 0), 0);
                 return loadingTableVariants ? <Spin size="small" /> : (
@@ -495,15 +495,15 @@ export default function MyProductsPage() {
                 );
             },
         },
-        { title: "Tráº¡ng thÃ¡i", dataIndex: "status", key: "status", width: 120, align: "center", render: (s: string) => getStatusTag(s) },
+        { title: "Trạng thái", dataIndex: "status", key: "status", width: 120, align: "center", render: (s: string) => getStatusTag(s) },
         {
             title: "", key: "action", width: 130, align: "center",
             render: (_, record) => (
                 <Space size={4}>
                     <Tooltip title="Xem"><Button type="text" size="small" icon={<EyeOutlined />} onClick={() => router.push(`/product/${record.slug}`)} /></Tooltip>
-                    <Tooltip title="Chá»‰nh sá»­a"><Button type="text" size="small" icon={<EditOutlined />} className="!text-blue-500" onClick={() => handleEdit(record)} /></Tooltip>
-                    <Popconfirm title="Gá»¡ sáº£n pháº©m?" description="Sáº£n pháº©m sáº½ áº©n khá»i trang." onConfirm={() => handleRemove(record._id)} okText="Gá»¡" cancelText="Há»§y" okButtonProps={{ danger: true, loading: removeProduct.isPending }}>
-                        <Tooltip title="Gá»¡"><Button type="text" size="small" icon={<StopOutlined />} className="!text-red-500" danger /></Tooltip>
+                    <Tooltip title="Chỉnh sửa"><Button type="text" size="small" icon={<EditOutlined />} className="!text-blue-500" onClick={() => handleEdit(record)} /></Tooltip>
+                    <Popconfirm title="Gỡ sản phẩm?" description="Sản phẩm sẽ ẩn khỏi trang." onConfirm={() => handleRemove(record._id)} okText="Gỡ" cancelText="Hủy" okButtonProps={{ danger: true, loading: removeProduct.isPending }}>
+                        <Tooltip title="Gỡ"><Button type="text" size="small" icon={<StopOutlined />} className="!text-red-500" danger /></Tooltip>
                     </Popconfirm>
                 </Space>
             ),
@@ -520,24 +520,24 @@ export default function MyProductsPage() {
                     onClick={() => router.back()}
                     className="!text-gray-500 hover:!text-blue-500 !px-0 !mb-2"
                 >
-                    Quay láº¡i
+                    Quay lại
                 </Button>
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold m-0">Sáº£n pháº©m cá»§a tÃ´i</h1>
-                        <p className="text-gray-400 text-sm m-0 mt-0.5">{totalProducts} sáº£n pháº©m Ä‘Ã£ Ä‘Äƒng bÃ¡n</p>
+                        <h1 className="text-2xl font-bold m-0">Sản phẩm của tôi</h1>
+                        <p className="text-gray-400 text-sm m-0 mt-0.5">{totalProducts} sản phẩm đã đăng bán</p>
                     </div>
-                    <Button icon={<ReloadOutlined />} onClick={() => refetch()}>LÃ m má»›i</Button>
+                    <Button icon={<ReloadOutlined />} onClick={() => refetch()}>Làm mới</Button>
                 </div>
             </div>
 
             {/* Statistics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                 {[
-                    { icon: <ShoppingOutlined className="text-lg" />, label: "Tá»•ng cá»™ng", value: totalProducts, bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100" },
-                    { icon: <CheckCircleOutlined className="text-lg" />, label: "Äang bÃ¡n", value: activeCount, bg: "bg-green-50", text: "text-green-600", border: "border-green-100" },
-                    { icon: <CloseCircleOutlined className="text-lg" />, label: "Äang áº©n", value: inactiveCount, bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-100" },
-                    { icon: <InboxOutlined className="text-lg" />, label: "Háº¿t hÃ ng", value: outOfStockCount, bg: "bg-red-50", text: "text-red-600", border: "border-red-100" },
+                    { icon: <ShoppingOutlined className="text-lg" />, label: "Tổng cộng", value: totalProducts, bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100" },
+                    { icon: <CheckCircleOutlined className="text-lg" />, label: "Đang bán", value: activeCount, bg: "bg-green-50", text: "text-green-600", border: "border-green-100" },
+                    { icon: <CloseCircleOutlined className="text-lg" />, label: "Đang ẩn", value: inactiveCount, bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-100" },
+                    { icon: <InboxOutlined className="text-lg" />, label: "Hết hàng", value: outOfStockCount, bg: "bg-red-50", text: "text-red-600", border: "border-red-100" },
                 ].map((s) => (
                     <div key={s.label} className={`${s.bg} rounded-xl border ${s.border} p-4 flex items-center gap-3 transition-shadow hover:shadow-sm`}>
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${s.text} bg-white shadow-sm`}>{s.icon}</div>
@@ -552,7 +552,7 @@ export default function MyProductsPage() {
             {/* Search */}
             <div className="mb-4">
                 <Input.Search
-                    placeholder="TÃ¬m kiáº¿m theo tÃªn sáº£n pháº©m..."
+                    placeholder="Tìm kiếm theo tên sản phẩm..."
                     value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
                     onSearch={handleSearch} onPressEnter={handleSearch}
                     enterButton={<SearchOutlined />} style={{ maxWidth: 420 }} allowClear size="large"
@@ -566,7 +566,7 @@ export default function MyProductsPage() {
 
             {totalProducts > limit && (
                 <div className="flex justify-end mt-4">
-                    <Pagination current={page} total={totalProducts} pageSize={limit} onChange={(p) => setPage(p)} showTotal={(t) => `Tá»•ng ${t}`} showSizeChanger={false} />
+                    <Pagination current={page} total={totalProducts} pageSize={limit} onChange={(p) => setPage(p)} showTotal={(t) => `Tổng ${t}`} showSizeChanger={false} />
                 </div>
             )}
 
@@ -578,7 +578,7 @@ export default function MyProductsPage() {
                             <EditOutlined className="text-blue-500" />
                         </div>
                         <div>
-                            <div className="font-semibold text-base leading-tight">Chá»‰nh sá»­a sáº£n pháº©m</div>
+                            <div className="font-semibold text-base leading-tight">Chỉnh sửa sản phẩm</div>
                             <div className="text-xs text-gray-400 font-normal">{editingProduct?.name}</div>
                         </div>
                     </div>
@@ -590,13 +590,13 @@ export default function MyProductsPage() {
                 styles={{ body: { maxHeight: "78vh", overflowY: "auto", padding: "12px 24px" } }}
                 footer={
                     <div className="flex items-center justify-between pt-2 border-t">
-                        <Button onClick={() => { setEditModalOpen(false); setEditingProduct(null); }}>Há»§y</Button>
+                        <Button onClick={() => { setEditModalOpen(false); setEditingProduct(null); }}>Hủy</Button>
                         <Button
                             type="primary" size="large" icon={<SaveOutlined />}
                             loading={updateProduct.isPending || savingVariants}
                             onClick={handleEditSubmit}
                         >
-                            LÆ°u thay Ä‘á»•i
+                            Lưu thay đổi
                         </Button>
                     </div>
                 }
@@ -607,27 +607,27 @@ export default function MyProductsPage() {
                         // ===== TAB: INFO =====
                         {
                             key: "info",
-                            label: "ThÃ´ng tin",
+                            label: "Thông tin",
                             children: (
                                 <div className="space-y-5 mt-3">
                                     <Form form={editForm} layout="vertical" requiredMark={false}>
                                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                             <div className="md:col-span-3">
-                                                <Form.Item name="name" label="TÃªn sáº£n pháº©m" rules={[{ required: true, message: "Vui lÃ²ng nháº­p tÃªn" }]}>
-                                                    <Input placeholder="Nháº­p tÃªn sáº£n pháº©m..." size="large" />
+                                                <Form.Item name="name" label="Tên sản phẩm" rules={[{ required: true, message: "Vui lòng nhập tên" }]}>
+                                                    <Input placeholder="Nhập tên sản phẩm..." size="large" />
                                                 </Form.Item>
                                             </div>
                                             <div>
-                                                <Form.Item name="status" label="Tráº¡ng thÃ¡i" rules={[{ required: true }]}>
+                                                <Form.Item name="status" label="Trạng thái" rules={[{ required: true }]}>
                                                     <Select size="large" options={[
-                                                        { value: "ACTIVE", label: "Äang bÃ¡n" },
-                                                        { value: "INACTIVE", label: "áº¨n" },
+                                                        { value: "ACTIVE", label: "Đang bán" },
+                                                        { value: "INACTIVE", label: "Ẩn" },
                                                     ]} />
                                                 </Form.Item>
                                             </div>
                                         </div>
-                                        <Form.Item name="description" label="MÃ´ táº£ sáº£n pháº©m">
-                                            <RichTextEditor placeholder="Nháº­p mÃ´ táº£ chi tiáº¿t sáº£n pháº©m..." minHeight={150} />
+                                        <Form.Item name="description" label="Mô tả sản phẩm">
+                                            <RichTextEditor placeholder="Nhập mô tả chi tiết sản phẩm..." minHeight={150} />
                                         </Form.Item>
                                     </Form>
 
@@ -635,25 +635,25 @@ export default function MyProductsPage() {
                                         <div className="rounded-xl bg-gradient-to-br from-slate-50 to-blue-50/50 border border-blue-100 p-4">
                                             <div className="flex items-center gap-2 mb-3">
                                                 <TagsOutlined className="text-blue-600" />
-                                                <span className="font-semibold text-sm text-gray-700">Tá»•ng quan biáº¿n thá»ƒ</span>
+                                                <span className="font-semibold text-sm text-gray-700">Tổng quan biến thể</span>
                                                 <Badge count={editVariants.length} style={{ backgroundColor: "#3b82f6" }} />
                                             </div>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                 <div className="bg-white rounded-lg p-3 border border-gray-100">
-                                                    <div className="text-[11px] text-gray-400 uppercase tracking-wide">GiÃ¡ tháº¥p nháº¥t</div>
+                                                    <div className="text-[11px] text-gray-400 uppercase tracking-wide">Giá thấp nhất</div>
                                                     <div className="font-bold text-red-500 text-base mt-0.5">{formatCurrencyVND(editSummary.minPrice)}</div>
                                                 </div>
                                                 <div className="bg-white rounded-lg p-3 border border-gray-100">
-                                                    <div className="text-[11px] text-gray-400 uppercase tracking-wide">GiÃ¡ cao nháº¥t</div>
+                                                    <div className="text-[11px] text-gray-400 uppercase tracking-wide">Giá cao nhất</div>
                                                     <div className="font-bold text-red-500 text-base mt-0.5">{formatCurrencyVND(editSummary.maxPrice)}</div>
                                                 </div>
                                                 <div className="bg-white rounded-lg p-3 border border-gray-100">
-                                                    <div className="text-[11px] text-gray-400 uppercase tracking-wide">Tá»•ng tá»“n kho</div>
+                                                    <div className="text-[11px] text-gray-400 uppercase tracking-wide">Tổng tồn kho</div>
                                                     <div className="font-bold text-green-600 text-base mt-0.5">{editSummary.totalStock}</div>
                                                 </div>
                                                 {editSummary.thumbnail && (
                                                     <div className="bg-white rounded-lg p-3 border border-gray-100">
-                                                        <div className="text-[11px] text-gray-400 uppercase tracking-wide">áº¢nh Ä‘áº¡i diá»‡n</div>
+                                                        <div className="text-[11px] text-gray-400 uppercase tracking-wide">Ảnh đại diện</div>
                                                         <Image src={editSummary.thumbnail} alt="" width={44} height={44}
                                                             style={{ objectFit: "cover", borderRadius: 6, marginTop: 4 }} />
                                                     </div>
@@ -667,11 +667,11 @@ export default function MyProductsPage() {
                         // ===== TAB: VARIANTS =====
                         {
                             key: "variants",
-                            label: `Biáº¿n thá»ƒ (${editVariants.length})`,
+                            label: `Biến thể (${editVariants.length})`,
                             children: loadingVariants ? (
                                 <div className="flex flex-col items-center justify-center py-16 gap-3">
                                     <Spin size="large" />
-                                    <span className="text-gray-400">Äang táº£i biáº¿n thá»ƒ...</span>
+                                    <span className="text-gray-400">Đang tải biến thể...</span>
                                 </div>
                             ) : (
                                 <div className="space-y-5 mt-3">
@@ -679,22 +679,22 @@ export default function MyProductsPage() {
                                     <div className="rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/30 p-5">
                                         <div className="flex items-center gap-2 mb-1">
                                             <PlusOutlined className="text-blue-500" />
-                                            <span className="font-semibold text-gray-700">Quáº£n lÃ½ thuá»™c tÃ­nh</span>
+                                            <span className="font-semibold text-gray-700">Quản lý thuộc tính</span>
                                         </div>
                                         <p className="text-xs text-gray-400 mb-4 ml-6">
-                                            Chá»n thuá»™c tÃ­nh rá»“i thÃªm giÃ¡ trá»‹. Há»‡ thá»‘ng tá»± sinh tá»• há»£p biáº¿n thá»ƒ (tÃ­ch Descartes).
+                                            Chọn thuộc tính rồi thêm giá trị. Hệ thống tự sinh tổ hợp biến thể (tích Descartes).
                                         </p>
 
                                         {/* Attribute selector */}
                                         <div className="bg-white rounded-lg border p-4 mb-4">
                                             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
                                                 <div className="md:col-span-5">
-                                                    <label className="text-xs text-gray-500 mb-1.5 block font-medium">Thuá»™c tÃ­nh</label>
+                                                    <label className="text-xs text-gray-500 mb-1.5 block font-medium">Thuộc tính</label>
                                                     <InfiniteSelect
                                                         fetchFn={fetchAttributes}
                                                         mapOption={mapAttribute}
                                                         queryKeyPrefix="edit-attr-select"
-                                                        placeholder="Chá»n thuá»™c tÃ­nh..."
+                                                        placeholder="Chọn thuộc tính..."
                                                         value={selectedAttribute?._id || undefined}
                                                         onChange={() => { setSelectedAttrValueLabel(""); setManualValue(""); }}
                                                         onSelect={(_: string, option: any) => {
@@ -703,7 +703,7 @@ export default function MyProductsPage() {
                                                         size="large"
                                                         className="w-full"
                                                         pageSize={15}
-                                                        emptyText="KhÃ´ng tÃ¬m tháº¥y"
+                                                        emptyText="Không tìm thấy"
                                                         allowClear
                                                         onClear={() => { setSelectedAttribute(null); setSelectedAttrValueLabel(""); setManualValue(""); }}
                                                     />
@@ -711,24 +711,24 @@ export default function MyProductsPage() {
 
                                                 <div className="md:col-span-5">
                                                     <label className="text-xs text-gray-500 mb-1.5 block font-medium">
-                                                        GiÃ¡ trá»‹ {selectedAttribute && <span className="text-blue-500">({selectedAttribute.name})</span>}
+                                                        Giá trị {selectedAttribute && <span className="text-blue-500">({selectedAttribute.name})</span>}
                                                     </label>
                                                     {selectedAttribute ? (
                                                         <InfiniteSelect
                                                             fetchFn={fetchAttributeValues}
                                                             mapOption={mapAttributeValue}
                                                             queryKeyPrefix={`edit-attr-val-${selectedAttribute._id}`}
-                                                            placeholder="Chá»n tá»« danh sÃ¡ch..."
+                                                            placeholder="Chọn từ danh sách..."
                                                             value={selectedAttrValueLabel || undefined}
                                                             onChange={(val: string) => { setSelectedAttrValueLabel(val); setManualValue(""); }}
                                                             size="large"
                                                             className="w-full"
                                                             pageSize={20}
-                                                            emptyText="KhÃ´ng cÃ³ sáºµn"
+                                                            emptyText="Không có sẵn"
                                                             allowClear
                                                         />
                                                     ) : (
-                                                        <Input disabled placeholder="Chá»n thuá»™c tÃ­nh trÆ°á»›c..." size="large" />
+                                                        <Input disabled placeholder="Chọn thuộc tính trước..." size="large" />
                                                     )}
                                                 </div>
 
@@ -739,17 +739,17 @@ export default function MyProductsPage() {
                                                         onClick={() => handleAddAttributeValue()}
                                                         className="w-full"
                                                     >
-                                                        ThÃªm
+                                                        Thêm
                                                     </Button>
                                                 </div>
                                             </div>
 
                                             {selectedAttribute && (
                                                 <div className="mt-3 flex gap-2 items-center">
-                                                    <span className="text-xs text-gray-400 whitespace-nowrap">Hoáº·c nháº­p thá»§ cÃ´ng:</span>
+                                                    <span className="text-xs text-gray-400 whitespace-nowrap">Hoặc nhập thủ công:</span>
                                                     <Input
                                                         size="middle"
-                                                        placeholder={`Nháº­p giÃ¡ trá»‹ ${selectedAttribute.name}...`}
+                                                        placeholder={`Nhập giá trị ${selectedAttribute.name}...`}
                                                         value={manualValue}
                                                         onChange={(e) => { setManualValue(e.target.value); setSelectedAttrValueLabel(""); }}
                                                         onPressEnter={() => handleAddAttributeValue(manualValue)}
@@ -758,7 +758,7 @@ export default function MyProductsPage() {
                                                     {manualValue.trim() && (
                                                         <Button type="link" size="small" icon={<PlusOutlined />}
                                                             onClick={() => handleAddAttributeValue(manualValue)}>
-                                                            ThÃªm &quot;{manualValue}&quot;
+                                                            Thêm &quot;{manualValue}&quot;
                                                         </Button>
                                                     )}
                                                 </div>
@@ -789,7 +789,7 @@ export default function MyProductsPage() {
                                                                 </Tag>
                                                             ))}
                                                         </div>
-                                                        <Tooltip title="XÃ³a thuá»™c tÃ­nh">
+                                                        <Tooltip title="Xóa thuộc tính">
                                                             <Button type="text" size="small" danger
                                                                 icon={<DeleteOutlined />}
                                                                 className="opacity-0 group-hover:opacity-100 transition-opacity"
@@ -800,7 +800,7 @@ export default function MyProductsPage() {
                                                 ))}
 
                                                 <div className="text-xs text-gray-400 pt-1 pl-1">
-                                                    Tá»• há»£p: {attrConfigs.map((c) => c.values.length).join(" Ã— ")} = <strong className="text-blue-600">{editVariants.length}</strong> biáº¿n thá»ƒ
+                                                    Tổ hợp: {attrConfigs.map((c) => c.values.length).join(" × ")} = <strong className="text-blue-600">{editVariants.length}</strong> biến thể
                                                 </div>
                                             </div>
                                         )}
@@ -808,16 +808,16 @@ export default function MyProductsPage() {
 
                                     {/* ======= BULK APPLY ======= */}
                                     {editVariants.length > 1 && (
-                                        <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
+                                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
                                             <div className="flex items-center gap-2 mb-3">
-                                                <TagsOutlined className="text-blue-500" />
-                                                <span className="font-semibold text-sm text-gray-700">Ãp dá»¥ng hÃ ng loáº¡t</span>
-                                                <span className="text-[11px] text-gray-400">cho táº¥t cáº£ {editVariants.length} biáº¿n thá»ƒ</span>
+                                                <TagsOutlined className="text-indigo-500" />
+                                                <span className="font-semibold text-sm text-gray-700">Áp dụng hàng loạt</span>
+                                                <span className="text-[11px] text-gray-400">cho tất cả {editVariants.length} biến thể</span>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex-1">
-                                                        <label className="text-[11px] text-gray-500 mb-1 block">GiÃ¡ (â‚«)</label>
+                                                        <label className="text-[11px] text-gray-500 mb-1 block">Giá (₫)</label>
                                                         <InputNumber
                                                             value={bulkPrice}
                                                             onChange={(v) => setBulkPrice(v)}
@@ -834,12 +834,12 @@ export default function MyProductsPage() {
                                                         onClick={() => { handleBulkApply("price", bulkPrice); setBulkPrice(null); }}
                                                         className="!mt-[18px]"
                                                     >
-                                                        Ãp dá»¥ng
+                                                        Áp dụng
                                                     </Button>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex-1">
-                                                        <label className="text-[11px] text-gray-500 mb-1 block">Giáº£m giÃ¡ (%)</label>
+                                                        <label className="text-[11px] text-gray-500 mb-1 block">Giảm giá (%)</label>
                                                         <InputNumber
                                                             value={bulkDiscount}
                                                             onChange={(v) => setBulkDiscount(v)}
@@ -854,12 +854,12 @@ export default function MyProductsPage() {
                                                         onClick={() => { handleBulkApply("discount", bulkDiscount); setBulkDiscount(null); }}
                                                         className="!mt-[18px]"
                                                     >
-                                                        Ãp dá»¥ng
+                                                        Áp dụng
                                                     </Button>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex-1">
-                                                        <label className="text-[11px] text-gray-500 mb-1 block">Tá»“n kho</label>
+                                                        <label className="text-[11px] text-gray-500 mb-1 block">Tồn kho</label>
                                                         <InputNumber
                                                             value={bulkStock}
                                                             onChange={(v) => setBulkStock(v)}
@@ -874,7 +874,7 @@ export default function MyProductsPage() {
                                                         onClick={() => { handleBulkApply("stock", bulkStock); setBulkStock(null); }}
                                                         className="!mt-[18px]"
                                                     >
-                                                        Ãp dá»¥ng
+                                                        Áp dụng
                                                     </Button>
                                                 </div>
                                             </div>
@@ -885,7 +885,7 @@ export default function MyProductsPage() {
                                     {editVariants.length === 0 ? (
                                         <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                                             <InboxOutlined className="text-4xl text-gray-300 mb-3" />
-                                            <p className="text-gray-400 m-0">ThÃªm thuá»™c tÃ­nh vÃ  giÃ¡ trá»‹ Ä‘á»ƒ sinh biáº¿n thá»ƒ</p>
+                                            <p className="text-gray-400 m-0">Thêm thuộc tính và giá trị để sinh biến thể</p>
                                         </div>
                                     ) : (
                                         <div className="rounded-xl border overflow-hidden">
@@ -897,7 +897,7 @@ export default function MyProductsPage() {
                                                 scroll={{ x: 950 }}
                                                 columns={[
                                                     {
-                                                        title: "áº¢nh", key: "image", width: 55, fixed: "left",
+                                                        title: "Ảnh", key: "image", width: 55, fixed: "left",
                                                         render: (_, v: IProductVariant) => {
                                                             const img = v.images?.[0];
                                                             return img
@@ -913,7 +913,7 @@ export default function MyProductsPage() {
                                                         ),
                                                     },
                                                     {
-                                                        title: "Thuá»™c tÃ­nh", key: "combination", width: 220,
+                                                        title: "Thuộc tính", key: "combination", width: 220,
                                                         render: (_, v: IProductVariant) => {
                                                             const combo = v.combination || {};
                                                             return Object.entries(combo).length > 0 ? (
@@ -925,11 +925,11 @@ export default function MyProductsPage() {
                                                                         </span>
                                                                     ))}
                                                                 </div>
-                                                            ) : <span className="text-gray-300 text-xs">â€”</span>;
+                                                            ) : <span className="text-gray-300 text-xs">—</span>;
                                                         },
                                                     },
                                                     {
-                                                        title: "GiÃ¡ (â‚«)", key: "price", width: 140,
+                                                        title: "Giá (₫)", key: "price", width: 140,
                                                         render: (_, v: IProductVariant) => (
                                                             <InputNumber value={v.price} min={0} step={10000}
                                                                 formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
@@ -940,7 +940,7 @@ export default function MyProductsPage() {
                                                         ),
                                                     },
                                                     {
-                                                        title: "Giáº£m %", key: "discount", width: 80,
+                                                        title: "Giảm %", key: "discount", width: 80,
                                                         render: (_, v: IProductVariant) => (
                                                             <InputNumber value={v.discount} min={0} max={100}
                                                                 onChange={(val) => handleVariantFieldChange(v._id, "discount", val || 0)}
@@ -956,7 +956,7 @@ export default function MyProductsPage() {
                                                         ),
                                                     },
                                                     {
-                                                        title: "Sau giáº£m", key: "final", width: 110, align: "right",
+                                                        title: "Sau giảm", key: "final", width: 110, align: "right",
                                                         render: (_, v: IProductVariant) => (
                                                             <span className="font-semibold text-red-500 text-xs whitespace-nowrap">
                                                                 {formatCurrencyVND(v.price * (1 - (v.discount || 0) / 100))}
@@ -966,7 +966,7 @@ export default function MyProductsPage() {
                                                     {
                                                         title: "", key: "actions", width: 50, align: "center", fixed: "right",
                                                         render: (_, v: IProductVariant) => (
-                                                            <Tooltip title="Chi tiáº¿t">
+                                                            <Tooltip title="Chi tiết">
                                                                 <Button
                                                                     type="text" size="small"
                                                                     icon={<ExpandOutlined />}
@@ -991,8 +991,8 @@ export default function MyProductsPage() {
             <Drawer
                 title={
                     <div>
-                        <div className="font-semibold text-sm">Chi tiáº¿t biáº¿n thá»ƒ</div>
-                        <div className="text-[11px] text-gray-400 font-normal font-mono">{detailVariant?.sku || "â€”"}</div>
+                        <div className="font-semibold text-sm">Chi tiết biến thể</div>
+                        <div className="text-[11px] text-gray-400 font-normal font-mono">{detailVariant?.sku || "—"}</div>
                     </div>
                 }
                 placement="right"
@@ -1001,7 +1001,7 @@ export default function MyProductsPage() {
                 onClose={() => setDetailDrawerOpen(false)}
                 extra={
                     <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveVariantDetail}>
-                        LÆ°u
+                        Lưu
                     </Button>
                 }
             >
@@ -1009,7 +1009,7 @@ export default function MyProductsPage() {
                     <div className="space-y-5">
                         {/* Combination display */}
                         <div className="rounded-lg bg-slate-50 border p-3">
-                            <div className="text-[11px] text-gray-400 uppercase tracking-wide mb-2">Tá»• há»£p thuá»™c tÃ­nh</div>
+                            <div className="text-[11px] text-gray-400 uppercase tracking-wide mb-2">Tổ hợp thuộc tính</div>
                             <div className="flex flex-wrap gap-1.5">
                                 {Object.entries(detailVariant.combination || {}).map(([k, v]) => (
                                     <span key={k} className="inline-flex items-center gap-1 bg-white border border-blue-200 rounded-md px-2 py-1 text-xs">
@@ -1026,23 +1026,23 @@ export default function MyProductsPage() {
                                 <Form.Item name="sku" label="SKU" className="col-span-2">
                                     <Input size="large" className="!font-mono" />
                                 </Form.Item>
-                                <Form.Item name="price" label="GiÃ¡ (â‚«)">
+                                <Form.Item name="price" label="Giá (₫)">
                                     <InputNumber size="large" min={0} step={10000} className="!w-full"
                                         formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                         parser={(val) => Number(val?.replace(/,/g, "") || 0) as any} />
                                 </Form.Item>
-                                <Form.Item name="discount" label="Giáº£m giÃ¡ (%)">
+                                <Form.Item name="discount" label="Giảm giá (%)">
                                     <InputNumber size="large" min={0} max={100} className="!w-full" />
                                 </Form.Item>
-                                <Form.Item name="stock" label="Tá»“n kho" className="col-span-2">
+                                <Form.Item name="stock" label="Tồn kho" className="col-span-2">
                                     <InputNumber size="large" min={0} className="!w-full" />
                                 </Form.Item>
                             </div>
 
                             <Divider className="!my-3" />
 
-                            <Form.Item name="subDescription" label="MÃ´ táº£ biáº¿n thá»ƒ">
-                                <Input.TextArea rows={4} placeholder="MÃ´ táº£ riÃªng cho biáº¿n thá»ƒ nÃ y..." className="!resize-none" />
+                            <Form.Item name="subDescription" label="Mô tả biến thể">
+                                <Input.TextArea rows={4} placeholder="Mô tả riêng cho biến thể này..." className="!resize-none" />
                             </Form.Item>
                         </Form>
 
@@ -1052,7 +1052,7 @@ export default function MyProductsPage() {
                         <div>
                             <div className="flex items-center justify-between mb-3">
                                 <span className="font-medium text-sm">
-                                    HÃ¬nh áº£nh ({(detailVariant.images || []).length})
+                                    Hình ảnh ({(detailVariant.images || []).length})
                                 </span>
                             </div>
 
@@ -1096,13 +1096,13 @@ export default function MyProductsPage() {
                                 {uploadingImages ? (
                                     <div>
                                         <Spin />
-                                        <p className="text-xs text-gray-400 mt-2 mb-0">Äang táº£i áº£nh lÃªn Cloudinary...</p>
+                                        <p className="text-xs text-gray-400 mt-2 mb-0">Đang tải ảnh lên Cloudinary...</p>
                                     </div>
                                 ) : (
                                     <div>
                                         <UploadOutlined className="text-2xl text-gray-300" />
-                                        <p className="text-sm text-gray-500 mt-1 mb-0">Nháº¥n Ä‘á»ƒ chá»n áº£nh hoáº·c kÃ©o tháº£ vÃ o Ä‘Ã¢y</p>
-                                        <p className="text-[11px] text-gray-400 mt-0.5 mb-0">Há»— trá»£ JPG, PNG, WEBP (tá»‘i Ä‘a 20MB)</p>
+                                        <p className="text-sm text-gray-500 mt-1 mb-0">Nhấn để chọn ảnh hoặc kéo thả vào đây</p>
+                                        <p className="text-[11px] text-gray-400 mt-0.5 mb-0">Hỗ trợ JPG, PNG, WEBP (tối đa 20MB)</p>
                                     </div>
                                 )}
                             </div>
@@ -1110,7 +1110,7 @@ export default function MyProductsPage() {
 
                         {/* Price preview */}
                         <div className="rounded-lg bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 p-3 mt-4">
-                            <div className="text-[11px] text-gray-400 uppercase tracking-wide">GiÃ¡ sau giáº£m</div>
+                            <div className="text-[11px] text-gray-400 uppercase tracking-wide">Giá sau giảm</div>
                             <div className="text-xl font-bold text-red-500 mt-0.5">
                                 {formatCurrencyVND(
                                     (detailForm.getFieldValue("price") || detailVariant.price) *

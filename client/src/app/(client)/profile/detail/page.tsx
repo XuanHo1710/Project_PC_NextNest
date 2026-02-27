@@ -60,7 +60,7 @@ export default function ProfileDetail() {
             }
 
             const guestUpdated = await accountGuestService.updateProfile(inforGuestUpdate as Partial<IAccountGuest>);
-            message.success('Cáº­p nháº­t thÃ´ng tin thÃ nh cÃ´ng!');
+            message.success('Cập nhật thông tin thành công!');
             queryClient.invalidateQueries({ queryKey: ['profile-guest'] });
             setUser({
                 ...user,
@@ -68,7 +68,7 @@ export default function ProfileDetail() {
             });
         } catch (error) {
             console.error('Error updating profile:', error);
-            message.error('CÃ³ lá»—i xáº£y ra khi cáº­p nháº­t thÃ´ng tin');
+            message.error('Có lỗi xảy ra khi cập nhật thông tin');
         } finally {
             setLoading(false);
         }
@@ -83,12 +83,12 @@ export default function ProfileDetail() {
         beforeUpload: async (file) => {
             const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
             if (!isJpgOrPng) {
-                message.error('Chá»‰ cÃ³ thá»ƒ upload file JPG/PNG!');
+                message.error('Chỉ có thể upload file JPG/PNG!');
                 return false;
             }
             const isLt2M = file.size / 1024 / 1024 < 2;
             if (!isLt2M) {
-                message.error('áº¢nh pháº£i nhá» hÆ¡n 2MB!');
+                message.error('Ảnh phải nhỏ hơn 2MB!');
                 return false;
             }
             setFileUrl(file as File)
@@ -139,17 +139,17 @@ export default function ProfileDetail() {
     return (
         <>
             <DynamicMetadata
-                title="ThÃ´ng tin cÃ¡ nhÃ¢n - PC Store"
-                description="Quáº£n lÃ½ thÃ´ng tin cÃ¡ nhÃ¢n, cáº­p nháº­t há»“ sÆ¡ ngÆ°á»i dÃ¹ng táº¡i PC Store. Cáº­p nháº­t thÃ´ng tin Ä‘á»ƒ nháº­n Æ°u Ä‘Ã£i vÃ  quÃ  táº·ng háº¥p dáº«n."
-                keywords="thÃ´ng tin cÃ¡ nhÃ¢n, há»“ sÆ¡, tÃ i khoáº£n, cáº­p nháº­t thÃ´ng tin"
-                ogTitle="Quáº£n lÃ½ thÃ´ng tin cÃ¡ nhÃ¢n - PC Store"
-                ogDescription="Cáº­p nháº­t vÃ  quáº£n lÃ½ thÃ´ng tin cÃ¡ nhÃ¢n cá»§a báº¡n"
+                title="Thông tin cá nhân - PC Store"
+                description="Quản lý thông tin cá nhân, cập nhật hồ sơ người dùng tại PC Store. Cập nhật thông tin để nhận ưu đãi và quà tặng hấp dẫn."
+                keywords="thông tin cá nhân, hồ sơ, tài khoản, cập nhật thông tin"
+                ogTitle="Quản lý thông tin cá nhân - PC Store"
+                ogDescription="Cập nhật và quản lý thông tin cá nhân của bạn"
             />
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
                 <div className='mx-5 xl:mx-32'>
                     <Breadcrumb items={[
-                        { label: 'Há»“ sÆ¡ ngÆ°á»i dÃ¹ng', href: '/profile/detail' },
-                        { label: 'ThÃ´ng tin chi tiáº¿t' },
+                        { label: 'Hồ sơ người dùng', href: '/profile/detail' },
+                        { label: 'Thông tin chi tiết' },
                     ]} />
                 </div>
 
@@ -158,7 +158,7 @@ export default function ProfileDetail() {
 
                     <div className='col-span-12 lg:col-span-9 p-6 bg-white rounded-2xl shadow-xl dark:bg-gray-800 dark:text-white'>
                         <h2 className='text-xl font-bold pb-3 border-solid border-b-2 border-blue-200 dark:border-slate-900 dark:text-white mb-6'>
-                            Cáº­p nháº­t thÃ´ng tin cÃ¡ nhÃ¢n
+                            Cập nhật thông tin cá nhân
                         </h2>
 
                         {/* Avatar Section */}
@@ -170,13 +170,13 @@ export default function ProfileDetail() {
                                 className="mr-4"
                             />
                             <div className="flex-1">
-                                <h3 className="font-semibold text-lg mb-2">áº¢nh Ä‘áº¡i diá»‡n</h3>
+                                <h3 className="font-semibold text-lg mb-2">Ảnh đại diện</h3>
                                 <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
-                                    Chá»n áº£nh Ä‘áº¡i diá»‡n Ä‘á»ƒ hiá»ƒn thá»‹ trÃªn há»“ sÆ¡ cá»§a báº¡n
+                                    Chọn ảnh đại diện để hiển thị trên hồ sơ của bạn
                                 </p>
                                 <Upload {...uploadProps}>
                                     <Button icon={<CameraOutlined />}>
-                                        Thay Ä‘á»•i áº£nh
+                                        Thay đổi ảnh
                                     </Button>
                                 </Upload>
                             </div>
@@ -191,15 +191,15 @@ export default function ProfileDetail() {
                         >
                             <Form.Item
                                 name="fullname"
-                                label={<span className="dark:text-white font-medium">Há» vÃ  tÃªn</span>}
+                                label={<span className="dark:text-white font-medium">Họ và tên</span>}
                                 rules={[
-                                    { required: true, message: 'Vui lÃ²ng nháº­p há» vÃ  tÃªn!' },
-                                    { min: 2, message: 'Há» tÃªn pháº£i cÃ³ Ã­t nháº¥t 2 kÃ½ tá»±!' }
+                                    { required: true, message: 'Vui lòng nhập họ và tên!' },
+                                    { min: 2, message: 'Họ tên phải có ít nhất 2 ký tự!' }
                                 ]}
                             >
                                 <Input
                                     className="py-2 dark:bg-gray-700 dark:text-white"
-                                    placeholder="Nháº­p há» vÃ  tÃªn"
+                                    placeholder="Nhập họ và tên"
                                 />
                             </Form.Item>
 
@@ -207,42 +207,42 @@ export default function ProfileDetail() {
                                 name="email"
                                 label={<span className="dark:text-white font-medium">Email</span>}
                                 rules={[
-                                    { required: true, message: 'Vui lÃ²ng nháº­p email!' },
-                                    { type: 'email', message: 'Email khÃ´ng há»£p lá»‡!' }
+                                    { required: true, message: 'Vui lòng nhập email!' },
+                                    { type: 'email', message: 'Email không hợp lệ!' }
                                 ]}
                             >
                                 <Input
                                     className="py-2 dark:bg-gray-700 dark:text-white"
-                                    placeholder="Nháº­p Ä‘á»‹a chá»‰ email"
-                                    disabled // Email thÆ°á»ng khÃ´ng cho phÃ©p thay Ä‘á»•i
+                                    placeholder="Nhập địa chỉ email"
+                                    disabled // Email thường không cho phép thay đổi
                                 />
                             </Form.Item>
 
                             <Form.Item
                                 name="phone"
-                                label={<span className="dark:text-white font-medium">Sá»‘ Ä‘iá»‡n thoáº¡i</span>}
+                                label={<span className="dark:text-white font-medium">Số điện thoại</span>}
                                 rules={[
-                                    { required: true, message: 'Vui lÃ²ng nháº­p sá»‘ Ä‘iá»‡n thoáº¡i!' },
-                                    { pattern: /^[0-9]{10,11}$/, message: 'Sá»‘ Ä‘iá»‡n thoáº¡i khÃ´ng há»£p lá»‡!' }
+                                    { required: true, message: 'Vui lòng nhập số điện thoại!' },
+                                    { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ!' }
                                 ]}
                             >
                                 <Input
                                     className="py-2 dark:bg-gray-700 dark:text-white"
-                                    placeholder="Nháº­p sá»‘ Ä‘iá»‡n thoáº¡i"
+                                    placeholder="Nhập số điện thoại"
                                 />
                             </Form.Item>
 
                             <Form.Item
                                 name="gender"
-                                label={<span className="dark:text-white font-medium">Giá»›i tÃ­nh</span>}
+                                label={<span className="dark:text-white font-medium">Giới tính</span>}
                             >
                                 <Select
                                     className="dark:bg-gray-700"
-                                    placeholder="Chá»n giá»›i tÃ­nh"
+                                    placeholder="Chọn giới tính"
                                 >
                                     <Select.Option value="MALE">Nam</Select.Option>
-                                    <Select.Option value="FEMALE">Ná»¯</Select.Option>
-                                    <Select.Option value="OTHER">KhÃ¡c</Select.Option>
+                                    <Select.Option value="FEMALE">Nữ</Select.Option>
+                                    <Select.Option value="OTHER">Khác</Select.Option>
                                 </Select>
                             </Form.Item>
 
@@ -254,7 +254,7 @@ export default function ProfileDetail() {
                                     className="bg-blue-500 hover:bg-blue-600 font-bold py-2 px-8"
                                     size="large"
                                 >
-                                    {loading ? 'Äang cáº­p nháº­t...' : 'Cáº­p nháº­t thÃ´ng tin'}
+                                    {loading ? 'Đang cập nhật...' : 'Cập nhật thông tin'}
                                 </Button>
                             </Form.Item>
                         </Form>
@@ -262,12 +262,12 @@ export default function ProfileDetail() {
                         <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg">
                             <h3 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
                                 <i className="fas fa-exclamation-triangle mr-2"></i>
-                                LÆ°u Ã½:
+                                Lưu ý:
                             </h3>
                             <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-                                <li>â€¢ Email khÃ´ng thá»ƒ thay Ä‘á»•i sau khi Ä‘Ã£ xÃ¡c thá»±c</li>
-                                <li>â€¢ ThÃ´ng tin cÃ¡ nhÃ¢n sáº½ Ä‘Æ°á»£c sá»­ dá»¥ng cho cÃ¡c Ä‘Æ¡n hÃ ng cá»§a báº¡n</li>
-                                <li>â€¢ Vui lÃ²ng cung cáº¥p thÃ´ng tin chÃ­nh xÃ¡c Ä‘á»ƒ trÃ¡nh sai sÃ³t khi giao hÃ ng</li>
+                                <li>• Email không thể thay đổi sau khi đã xác thực</li>
+                                <li>• Thông tin cá nhân sẽ được sử dụng cho các đơn hàng của bạn</li>
+                                <li>• Vui lòng cung cấp thông tin chính xác để tránh sai sót khi giao hàng</li>
                             </ul>
                         </div>
                     </div>
