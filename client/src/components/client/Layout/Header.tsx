@@ -48,14 +48,14 @@ export default function HeaderClient() {
     const { cart, updateQuantity, removeFromCart, calculateTotal } = useCartStore();
 
     const { data, isLoading } = useQuery<ICategory[] | []>({
-        queryKey: ['categories'], // key Ã„â€˜Ã¡Â»Æ’ cache
+        queryKey: ['categories'], // key để cache
         queryFn: () => categoryClientService.getAllCategories(),
-        staleTime: 1000 * 60 * 5, // 5 phÃƒÂºt cache khÃƒÂ´ng gÃ¡Â»Âi lÃ¡ÂºÂ¡i
+        staleTime: 1000 * 60 * 5, // 5 phút cache không gọi lại
     });
 
 
     const { data: products, isLoading: loadingSearch } = useQuery<IProductVariantSearchResult[] | []>({
-        queryKey: ['product-search', search], // key Ã„â€˜Ã¡Â»Æ’ cache
+        queryKey: ['product-search', search], // key để cache
         queryFn: () => productClientService.esQuickSearch(search, 8),
         enabled: !!search
     });
@@ -66,7 +66,7 @@ export default function HeaderClient() {
             setCategories(data);
 
         }
-    }, [data, isLoading]); // chÃ¡Â»â€° chÃ¡ÂºÂ¡y khi data thay Ã„â€˜Ã¡Â»â€¢i
+    }, [data, isLoading]); // chỉ chạy khi data thay đổi
 
     const handleHoverCategory = (children: ICategory[]) => {
         setChildrenCategories(children)
@@ -157,17 +157,17 @@ export default function HeaderClient() {
                 switchToLogin={handleOpenLogin}
             />
 
-            <header className="fixed w-full z-50 left-0 right-0 top-0 bg-blue-600 shadow-lg">
-                {/* Top Bar Ã¢â‚¬â€ desktop only */}
-                <div className="hidden md:block bg-blue-700 text-white">
+            <header className="fixed w-full z-50 left-0 right-0 top-0 bg-[#3b82f6]">
+                {/* Top Bar — desktop only */}
+                <div className="hidden md:block bg-[#2563eb] text-white">
                     <div className="max-w-7xl mx-auto px-4 flex items-center justify-between py-1.5">
                         <Marquee className="flex-1 text-xs font-medium" speed={50} gradient={false}>
-                            Ã°Å¸â€â€ž Thu cÃ…Â© giÃƒÂ¡ ngon - LÃƒÂªn Ã„â€˜Ã¡Â»Âi tiÃ¡ÂºÂ¿t kiÃ¡Â»â€¡m Ã¢Å“â€¦ SÃ¡ÂºÂ£n phÃ¡ÂºÂ©m ChÃƒÂ­nh hÃƒÂ£ng - XuÃ¡ÂºÂ¥t VAT Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§ Ã°Å¸Å¡Å¡ Giao nhanh - MiÃ¡Â»â€¦n phÃƒÂ­ cho Ã„â€˜Ã†Â¡n 300k
+                            🔄 Thu cũ giá ngon - Lên đời tiết kiệm ✅ Sản phẩm Chính hãng - Xuất VAT đầy đủ 🚚 Giao nhanh - Miễn phí cho đơn 300k
                         </Marquee>
                         <div className="flex items-center text-xs">
-                            <h5 className="flex items-center gap-1.5 border-l border-blue-400/30 px-3 cursor-pointer hover:text-blue-200 transition-colors"><FaStore /> CÃ¡Â»Â­a hÃƒÂ ng gÃ¡ÂºÂ§n bÃ¡ÂºÂ¡n</h5>
-                            <h5 className="flex items-center gap-1.5 border-l border-blue-400/30 px-3 cursor-pointer hover:text-blue-200 transition-colors"><IoDocumentOutline /> Tra cÃ¡Â»Â©u Ã„â€˜Ã†Â¡n hÃƒÂ ng</h5>
-                            <h5 className="flex items-center gap-1.5 border-l border-blue-400/30 px-3 cursor-pointer hover:text-blue-200 transition-colors"><FaPhoneAlt /> 1800 2097</h5>
+                            <h5 className="flex items-center gap-1.5 border-l border-blue-300 px-3 cursor-pointer hover:text-sky-300 transition-colors"><FaStore /> Cửa hàng gần bạn</h5>
+                            <h5 className="flex items-center gap-1.5 border-l border-blue-300 px-3 cursor-pointer hover:text-sky-300 transition-colors"><IoDocumentOutline /> Tra cứu đơn hàng</h5>
+                            <h5 className="flex items-center gap-1.5 border-l border-blue-300 px-3 cursor-pointer hover:text-sky-300 transition-colors"><FaPhoneAlt /> 1800 2097</h5>
                         </div>
                     </div>
                 </div>
@@ -180,19 +180,19 @@ export default function HeaderClient() {
                             <h2 className="font-bold text-white text-2xl whitespace-nowrap">Arisu</h2>
                         </Link>
 
-                        {/* Category Dropdown Ã¢â‚¬â€ desktop */}
+                        {/* Category Dropdown — desktop */}
                         <div className="relative hidden lg:block">
                             <button
                                 onClick={() => { setOpenCategory(!isOpenCategory); setOpenItemCategory(false) }}
-                                className="flex items-center gap-2 bg-blue-500/30 hover:bg-blue-500/40 cursor-pointer text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
+                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 cursor-pointer text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
                             >
-                                <BiCategory className="text-lg text-blue-200" />
-                                <span>Danh mÃ¡Â»Â¥c</span>
-                                <IoIosArrowDown className="text-xs text-blue-100/60" />
+                                <BiCategory className="text-lg text-white" />
+                                <span>Danh mục</span>
+                                <IoIosArrowDown className="text-xs text-blue-200" />
                             </button>
 
                             {isOpenCategory && (
-                                <div style={{ scrollbarWidth: "none" }} className="w-60 max-h-[550px] min-h-[550px] overflow-auto z-40 absolute top-12 left-0 bg-white border border-slate-200 shadow-2xl rounded-xl">
+                                <div style={{ scrollbarWidth: "none" }} className="w-60 max-h-[550px] min-h-[550px] overflow-auto z-40 absolute top-12 left-0 bg-white border border-gray-200 shadow-2xl rounded-xl">
                                     <ul className="text-sm">
                                         {categories.map((category, index) => {
                                             const isFirst = index === 0;
@@ -212,17 +212,17 @@ export default function HeaderClient() {
                             )}
 
                             {isOpenCategory && isOpenItemCategory && (
-                                <div style={{ scrollbarWidth: "none" }} className="z-40 gap-5 absolute w-[900px] max-h-[500px] min-h-[500px] overflow-auto grid grid-flow-row grid-cols-12 top-12 left-64 p-5 text-base bg-white border border-slate-200 shadow-2xl rounded-md">
+                                <div style={{ scrollbarWidth: "none" }} className="z-40 gap-5 absolute w-[900px] max-h-[500px] min-h-[500px] overflow-auto grid grid-flow-row grid-cols-12 top-12 left-64 p-5 text-base bg-white border border-gray-200 shadow-2xl rounded-md">
                                     {childrenCategories.length > 0 && renderCategoryGrid(childrenCategories, 3)}
                                 </div>
                             )}
                         </div>
 
-                        {/* Location Ã¢â‚¬â€ desktop */}
-                        <button className="hidden lg:flex items-center gap-2 cursor-pointer bg-blue-500/30 hover:bg-blue-500/40 text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm">
-                            <MdOutlineNotListedLocation className="text-blue-200" />
-                            <span>HÃ¡Â»â€œ ChÃƒÂ­ Minh</span>
-                            <IoIosArrowDown className="text-xs text-blue-100/60" />
+                        {/* Location — desktop */}
+                        <button className="hidden lg:flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm">
+                            <MdOutlineNotListedLocation className="text-white" />
+                            <span>Hồ Chí Minh</span>
+                            <IoIosArrowDown className="text-xs text-blue-200" />
                         </button>
 
                         {/* Search Bar */}
@@ -231,9 +231,9 @@ export default function HeaderClient() {
                                 value={search}
                                 onChange={(e) => handleOnChange(e.target.value)}
                                 onKeyDown={(e) => { if (e.key === "Enter") handleSearchNavigate(); }}
-                                placeholder="BÃ¡ÂºÂ¡n muÃ¡Â»â€˜n mua gÃƒÂ¬ ngÃƒÂ y hÃƒÂ´m nay"
-                                className="!py-2 !px-4 rounded-lg w-full !bg-white !border-blue-400/30 focus:!border-blue-300"
-                                suffix={<MdOutlineSearch className="text-xl text-gray-400 cursor-pointer hover:text-blue-500" onClick={handleSearchNavigate} />}
+                                placeholder="Bạn muốn mua gì ngày hôm nay"
+                                className="!py-2 !px-4 rounded-lg w-full !border-white/30 focus:!border-white/60"
+                                suffix={<MdOutlineSearch className="text-xl text-blue-300 cursor-pointer hover:text-white" onClick={handleSearchNavigate} />}
                             />
 
                             {/* Search Results */}
@@ -276,10 +276,10 @@ export default function HeaderClient() {
                                                             )}
                                                             <div className="flex items-center gap-2 mt-0.5">
                                                                 <span className="text-sm font-bold text-blue-600">
-                                                                    {(v.displayPrice || v.price * (1 - (v.discount || 0) / 100)).toLocaleString()}Ã„â€˜
+                                                                    {(v.displayPrice || v.price * (1 - (v.discount || 0) / 100)).toLocaleString()}đ
                                                                 </span>
                                                                 {v.discount > 0 && (
-                                                                    <span className="text-xs text-gray-400 line-through">{v.price.toLocaleString()}Ã„â€˜</span>
+                                                                    <span className="text-xs text-gray-400 line-through">{v.price.toLocaleString()}đ</span>
                                                                 )}
                                                                 {v.discount > 0 && (
                                                                     <span className="text-[11px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
@@ -300,8 +300,8 @@ export default function HeaderClient() {
                                                     width={120}
                                                     preview={false}
                                                 />
-                                                <p className="text-sm font-semibold mb-0.5">KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m nÃƒÂ o</p>
-                                                <p className="text-xs text-gray-400">HÃƒÂ£y thÃ¡Â»Â­ tÃƒÂ¬m kiÃ¡ÂºÂ¿m vÃ¡Â»â€ºi tÃ¡Â»Â« khÃƒÂ³a khÃƒÂ¡c.</p>
+                                                <p className="text-sm font-semibold mb-0.5">Không tìm thấy sản phẩm nào</p>
+                                                <p className="text-xs text-gray-400">Hãy thử tìm kiếm với từ khóa khác.</p>
                                             </div>
                                         )
                                     )}
@@ -311,22 +311,22 @@ export default function HeaderClient() {
                                             onClick={() => { setOpenSearch(false); }}
                                             className="block text-center py-2.5 text-sm font-semibold text-blue-500 hover:text-blue-600 hover:bg-blue-50 border-t border-gray-100 transition-colors sticky bottom-0 bg-white rounded-b-lg"
                                         >
-                                            Xem tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ kÃ¡ÂºÂ¿t quÃ¡ÂºÂ£ Ã¢â€ â€™
+                                            Xem tất cả kết quả →
                                         </Link>
                                     )}
                                 </div>
                             )}
                         </div>
 
-                        {/* Cart Button Ã¢â‚¬â€ desktop */}
+                        {/* Cart Button — desktop */}
                         <div className="relative hidden md:block">
                             <button
                                 onClick={() => setOpenCart(!isOpenCart)}
-                                className="flex items-center gap-2 cursor-pointer bg-blue-500/30 hover:bg-blue-500/40 text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
+                                className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
                             >
-                                <span>GiÃ¡Â»Â hÃƒÂ ng</span>
+                                <span>Giỏ hàng</span>
                                 <Badge count={cart?.cartItems?.length || 0} size="small" offset={[2, -2]}>
-                                    <MdOutlineShoppingCart className="text-lg text-blue-200" />
+                                    <MdOutlineShoppingCart className="text-lg text-white" />
                                 </Badge>
                             </button>
 
@@ -334,13 +334,13 @@ export default function HeaderClient() {
                             {isOpenCart && (
                                 <div className='bg-white shadow-2xl z-30 min-h-36 right-0 rounded-xl absolute top-12 w-[400px] border border-gray-200'>
                                     <div className='py-3 border-b border-gray-200 uppercase text-center text-xl font-medium text-slate-700'>
-                                        GiÃ¡Â»Â hÃƒÂ ng
+                                        Giỏ hàng
                                     </div>
 
                                     {cart && cart?.cartItems?.length <= 0 ? (
                                         <div className='flex flex-col items-center py-5 text-slate-400'>
                                             <MdOutlineShoppingCart className="text-5xl" />
-                                            <p className="mt-2">HiÃ¡Â»â€¡n chÃ†Â°a cÃƒÂ³ sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m</p>
+                                            <p className="mt-2">Hiện chưa có sản phẩm</p>
                                         </div>
                                     ) : (
                                         <div className="max-h-80 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
@@ -374,12 +374,12 @@ export default function HeaderClient() {
                                                         )}
                                                         <div className='flex justify-between mt-1.5 items-center'>
                                                             <div className='flex items-center border border-gray-200 rounded'>
-                                                                <Button onClick={() => updateQuantity(c.variant._id, -1)} className='border-none px-2'>Ã¢Ë†â€™</Button>
+                                                                <Button onClick={() => updateQuantity(c.variant._id, -1)} className='border-none px-2'>−</Button>
                                                                 <span className='w-8 text-center text-sm'>{c.quantity}</span>
                                                                 <Button onClick={() => updateQuantity(c.variant._id, 1)} className='border-none px-2'>+</Button>
                                                             </div>
                                                             <p className='font-semibold text-red-500 text-sm'>
-                                                                {c.price.toLocaleString()}Ã„â€˜
+                                                                {c.price.toLocaleString()}đ
                                                             </p>
                                                         </div>
                                                     </div>
@@ -389,9 +389,9 @@ export default function HeaderClient() {
                                     )}
 
                                     <div className='py-3 border-t border-gray-200 flex items-center justify-between px-4'>
-                                        <p className='uppercase font-semibold text-sm text-slate-600'>TÃ¡Â»â€¢ng tiÃ¡Â»Ân:</p>
+                                        <p className='uppercase font-semibold text-sm text-slate-600'>Tổng tiền:</p>
                                         <p className='text-blue-600 font-semibold text-lg'>
-                                            {calculateTotal().toLocaleString()}Ã„â€˜
+                                            {calculateTotal().toLocaleString()}đ
                                         </p>
                                     </div>
 
@@ -401,22 +401,22 @@ export default function HeaderClient() {
                                             href="/cart"
                                             className='block py-2.5 text-center rounded-lg text-white font-medium bg-blue-500 hover:bg-blue-600 transition-colors'
                                         >
-                                            XEM GIÃ¡Â»Å½ HÃƒâ‚¬NG
+                                            XEM GIỎ HÀNG
                                         </Link>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* Chat Button Ã¢â‚¬â€ desktop */}
+                        {/* Chat Button — desktop */}
                         <Link
                             href="/chat"
-                            className="hidden md:flex items-center gap-2 cursor-pointer bg-blue-500/30 hover:bg-blue-500/40 text-white font-medium px-3 py-2 rounded-lg transition-all whitespace-nowrap"
+                            className="hidden md:flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2 rounded-lg transition-all whitespace-nowrap"
                         >
                             <ChatBadge />
                         </Link>
 
-                        {/* Auth Section Ã¢â‚¬â€ desktop */}
+                        {/* Auth Section — desktop */}
                         <div className="hidden md:block">
                             <AuthSection
                                 handleOpenLogin={handleOpenLogin}
@@ -443,27 +443,27 @@ export default function HeaderClient() {
 
                 {/* Mobile Menu Drawer */}
                 {mobileMenuOpen && (
-                    <div className="md:hidden bg-blue-600 border-t border-blue-400/20 shadow-lg max-h-[80vh] overflow-y-auto">
-                        <div className="p-4 space-y-1">
+                    <div className="md:hidden bg-[#3b82f6] border-t border-blue-400/30 shadow-lg max-h-[80vh] overflow-y-auto">
+                        <div className="p-4 space-y-3">
                             {/* Mobile Auth */}
-                            <div className="pb-3 border-b border-blue-400/20">
+                            <div className="pb-3 border-b border-blue-400/30">
                                 <AuthSection
                                     handleOpenLogin={() => { setMobileMenuOpen(false); handleOpenLogin(); }}
                                     handleOpenRegister={() => { setMobileMenuOpen(false); handleOpenRegister(); }}
                                 />
                             </div>
                             {/* Mobile Category */}
-                            <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-3 text-white font-medium hover:text-blue-200 border-b border-blue-400/20">
-                                <BiCategory className="text-lg text-blue-200" /> Danh mÃ¡Â»Â¥c sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m
+                            <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-2.5 text-white font-medium hover:text-blue-200">
+                                <BiCategory className="text-lg text-blue-200" /> Danh mục sản phẩm
                             </Link>
                             {/* Mobile Chat */}
-                            <Link href="/chat" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-3 text-white font-medium hover:text-blue-200 border-b border-blue-400/20">
-                                <MdOutlineChatBubbleOutline className="text-lg text-blue-200" /> Tin nhÃ¡ÂºÂ¯n <ChatBadge />
+                            <Link href="/chat" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-2.5 text-white font-medium hover:text-blue-200">
+                                <MdOutlineChatBubbleOutline className="text-lg text-blue-200" /> Tin nhắn <ChatBadge />
                             </Link>
                             {/* Mobile Info */}
-                            <div className="pt-3 space-y-3 text-sm text-blue-100/70">
-                                <p className="flex items-center gap-2"><FaStore className="text-blue-200" /> CÃ¡Â»Â­a hÃƒÂ ng gÃ¡ÂºÂ§n bÃ¡ÂºÂ¡n</p>
-                                <p className="flex items-center gap-2"><IoDocumentOutline className="text-blue-200" /> Tra cÃ¡Â»Â©u Ã„â€˜Ã†Â¡n hÃƒÂ ng</p>
+                            <div className="pt-3 border-t border-blue-400/30 space-y-2 text-sm text-blue-100">
+                                <p className="flex items-center gap-2"><FaStore className="text-blue-200" /> Cửa hàng gần bạn</p>
+                                <p className="flex items-center gap-2"><IoDocumentOutline className="text-blue-200" /> Tra cứu đơn hàng</p>
                                 <p className="flex items-center gap-2"><FaPhoneAlt className="text-blue-200" /> 1800 2097</p>
                             </div>
                         </div>
@@ -490,7 +490,7 @@ function AuthSection({
             label: (
                 <Link href="/profile/detail" className="flex items-center gap-2">
                     <UserOutlined />
-                    <span>ThÃƒÂ´ng tin cÃƒÂ¡ nhÃƒÂ¢n</span>
+                    <span>Thông tin cá nhân</span>
                 </Link>
             ),
         },
@@ -499,7 +499,7 @@ function AuthSection({
             label: (
                 <Link href="/profile/password" className="flex items-center gap-2">
                     <CloudSyncOutlined />
-                    <span>Thay Ã„â€˜Ã¡Â»â€¢i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u</span>
+                    <span>Thay đổi mật khẩu</span>
                 </Link>
             ),
         },
@@ -508,7 +508,7 @@ function AuthSection({
             label: (
                 <Link href="/profile/address" className="flex items-center gap-2">
                     <CarFilled />
-                    <span>ThÃƒÂ´ng tin Ã„â€˜Ã¡Â»â€¹a chÃ¡Â»â€°</span>
+                    <span>Thông tin địa chỉ</span>
                 </Link>
             ),
         },
@@ -517,7 +517,7 @@ function AuthSection({
             label: (
                 <Link href="/profile/order" className="flex items-center gap-2">
                     <PicRightOutlined />
-                    <span>Ã„ÂÃ†Â¡n hÃƒÂ ng cÃ¡Â»Â§a tÃƒÂ´i</span>
+                    <span>Đơn hàng của tôi</span>
                 </Link>
             ),
         },
@@ -526,7 +526,7 @@ function AuthSection({
             label: (
                 <Link href="/create-product" className="flex items-center gap-2">
                     <ShopOutlined />
-                    <span>Ã„ÂÃ„Æ’ng bÃƒÂ¡n sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m</span>
+                    <span>Đăng bán sản phẩm</span>
                 </Link>
             ),
         },
@@ -538,7 +538,7 @@ function AuthSection({
             label: (
                 <div className="flex items-center gap-2 text-red-500">
                     <LogoutOutlined />
-                    <span>Ã„ÂÃ„Æ’ng xuÃ¡ÂºÂ¥t</span>
+                    <span>Đăng xuất</span>
                 </div>
             ),
             onClick: logout,
@@ -553,14 +553,14 @@ function AuthSection({
                     placement="bottomRight"
                     arrow
                 >
-                    <div className="flex items-center gap-2 cursor-pointer bg-blue-500/30 hover:bg-blue-500/40 text-white font-medium px-4 py-2 rounded-lg transition-all">
+                    <div className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all">
                         <Avatar
                             src={user?.avatar || null}
                             icon={<UserOutlined />}
                             size="small"
                         />
                         <span className="max-w-24 truncate text-sm">{user.fullname}</span>
-                        <IoIosArrowDown className="text-xs text-blue-100/60" />
+                        <IoIosArrowDown className="text-xs text-blue-200" />
                     </div>
                 </Dropdown>
             </div>
@@ -571,16 +571,16 @@ function AuthSection({
         <div className="flex items-center gap-2">
             <button
                 onClick={handleOpenLogin}
-                className="flex items-center gap-2 cursor-pointer bg-blue-500/30 hover:bg-blue-500/40 text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
+                className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
             >
-                <span>Ã„ÂÃ„Æ’ng nhÃ¡ÂºÂ­p</span>
-                <FaRegUserCircle className="text-blue-200" />
+                <span>Đăng nhập</span>
+                <FaRegUserCircle className="text-white" />
             </button>
             <button
                 onClick={handleOpenRegister}
-                className="flex items-center gap-2 cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
+                className="flex items-center gap-2 cursor-pointer bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm font-medium"
             >
-                <span>Ã„ÂÃ„Æ’ng kÃƒÂ½</span>
+                <span>Đăng ký</span>
                 <FaUserPlus />
             </button>
         </div>
@@ -595,7 +595,7 @@ function ChatBadge() {
 
     return (
         <Badge count={count} size="small" offset={[2, -2]}>
-            <MdOutlineChatBubbleOutline className="text-xl text-blue-200" />
+            <MdOutlineChatBubbleOutline className="text-xl text-[#3b82f6]" />
         </Badge>
     );
 }
