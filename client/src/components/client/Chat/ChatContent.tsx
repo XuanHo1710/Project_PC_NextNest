@@ -284,11 +284,11 @@ export default function ChatContent({ initialConversationId }: ChatContentProps)
     const VirtuosoHeader = () => (
         <div className="flex justify-center py-3">
             {isFetchingNextPage ? (
-                Spin indicator={<LoadingOutlined className="text-blue-500" />} size="small" />
+                <Spin indicator={<LoadingOutlined className="text-blue-500" />} size="small" />
             ) : hasNextPage ? (
-            <span className="text-xs text-gray-400">Cuộn lên để tải thêm</span>
+                <span className="text-xs text-gray-400">Cuộn lên để tải thêm</span>
             ) : messages.length > 0 ? (
-            <span className="text-xs text-gray-400">Đầu cuộc trò chuyện</span>
+                <span className="text-xs text-gray-400">Đầu cuộc trò chuyện</span>
             ) : null}
         </div>
     );

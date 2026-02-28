@@ -322,11 +322,11 @@ export default function HeaderClient() {
                         <div className="relative hidden md:block">
                             <button
                                 onClick={() => setOpenCart(!isOpenCart)}
-                                className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
+                                className="flex items-center gap-2 cursor-pointer bg-white text-blue-400 font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
                             >
                                 <span>Giỏ hàng</span>
                                 <Badge count={cart?.cartItems?.length || 0} size="small" offset={[2, -2]}>
-                                    <MdOutlineShoppingCart className="text-lg text-white" />
+                                    <MdOutlineShoppingCart className="text-lg text-blue-400" />
                                 </Badge>
                             </button>
 
@@ -411,7 +411,7 @@ export default function HeaderClient() {
                         {/* Chat Button — desktop */}
                         <Link
                             href="/chat"
-                            className="hidden md:flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 text-white font-medium px-3 py-2 rounded-lg transition-all whitespace-nowrap"
+                            className="hidden md:flex items-center gap-2 cursor-pointer bg-white text-white font-medium px-3 py-2 rounded-lg transition-all whitespace-nowrap"
                         >
                             <ChatBadge />
                         </Link>
@@ -553,14 +553,14 @@ function AuthSection({
                     placement="bottomRight"
                     arrow
                 >
-                    <div className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all">
+                    <div className="flex items-center gap-2 cursor-pointer bg-white text-black font-medium px-4 py-2 rounded-lg transition-all">
                         <Avatar
                             src={user?.avatar || null}
                             icon={<UserOutlined />}
                             size="small"
                         />
                         <span className="max-w-24 truncate text-sm">{user.fullname}</span>
-                        <IoIosArrowDown className="text-xs text-blue-200" />
+                        <IoIosArrowDown className="text-xs text-blue-400" />
                     </div>
                 </Dropdown>
             </div>

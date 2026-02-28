@@ -15,7 +15,7 @@ export default function FooterClient() {
                         </p>
                         <div className="flex items-center mt-3 max-w-md">
                             <input
-                                className="px-4 py-2.5 bg-blue-800 border border-blue-400/30 focus:outline-none focus:border-blue-300 transition-all text-white placeholder-blue-300 w-full rounded-l-lg text-sm"
+                                className="px-4 py-2.5 bg-white border border-blue-400/30 focus:outline-none focus:border-blue-300 transition-all text-black placeholder-gray-300 w-full rounded-l-lg text-sm"
                                 placeholder="Nhập email để nhận ưu đãi"
                             />
                             <button className="bg-blue-400 hover:bg-blue-300 transition-colors font-semibold px-5 py-2.5 rounded-r-lg text-sm whitespace-nowrap">

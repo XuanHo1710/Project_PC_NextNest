@@ -230,42 +230,68 @@ const ChatBot = () => {
         const displayPrice = getProductDisplayPrice(product);
         const originalPrice = getProductOriginalPrice(product);
         const discount = getProductDiscount(product);
+        const stock = product.defaultVariant?.stock ?? 0;
 
         return (
             <Link
                 href={`/product/${product.slug || product._id}`}
                 target="_blank"
-                className="block min-w-[130px] max-w-[130px] bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group"
+                className="block min-w-[200px] max-w-[200px] bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 overflow-hidden group"
             >
-                <div className="w-full h-[90px] bg-gray-50 flex items-center justify-center p-2 overflow-hidden">
-                    {image ? (
+                {/* Image */}
+                <div className="relative w-full h-[120px] bg-gray-50 flex items-center justify-center p-2 overflow-hidden">
+                    {image && image !== '/placeholder-product.png' ? (
                         <img
                             src={image}
                             alt={product.name}
-                            className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                            className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
                             loading="lazy"
                         />
                     ) : (
-                        <div className="text-gray-300 text-2xl">📦</div>
+                        <div className="text-gray-300 text-3xl">📦</div>
+                    )}
+                    {discount > 0 && (
+                        <span className="absolute top-1.5 right-1.5 text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-md shadow-sm">
+                            -{discount.toFixed(0)}%
+                        </span>
                     )}
                 </div>
-                <div className="p-2">
-                    <p className="text-[11px] font-medium text-gray-700 line-clamp-2 leading-tight mb-1.5 min-h-[28px]">
+
+                {/* Info */}
+                <div className="p-2.5">
+                    {/* Brand */}
+                    {product.brand?.name && (
+                        <span className="text-[10px] text-blue-500 font-medium uppercase tracking-wide">
+                            {product.brand.name}
+                        </span>
+                    )}
+
+                    {/* Name */}
+                    <p className="text-[12px] font-semibold text-gray-800 line-clamp-2 leading-tight mt-0.5 min-h-[32px]">
                         {product.name}
                     </p>
-                    <p className="text-[12px] font-bold text-blue-600">
-                        {formatCurrencyVND(displayPrice)}
-                    </p>
-                    {discount > 0 && (
-                        <div className="flex items-center gap-1 mt-0.5">
-                            <span className="text-[10px] text-gray-400 line-through">
+
+                    {/* Price */}
+                    <div className="mt-1.5">
+                        <p className="text-[14px] font-bold text-red-500">
+                            {formatCurrencyVND(displayPrice)}
+                        </p>
+                        {discount > 0 && (
+                            <p className="text-[11px] text-gray-400 line-through mt-0.5">
                                 {formatCurrencyVND(originalPrice)}
-                            </span>
-                            <span className="text-[9px] bg-red-50 text-red-500 px-1 rounded font-medium">
-                                -{discount.toFixed(0)}%
-                            </span>
-                        </div>
-                    )}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Stock & CTA */}
+                    <div className="mt-2 flex items-center justify-between">
+                        <span className={`text-[10px] font-medium ${stock > 0 ? 'text-green-500' : 'text-red-400'}`}>
+                            {stock > 0 ? `Còn ${stock} sp` : 'Hết hàng'}
+                        </span>
+                        <span className="text-[10px] text-blue-500 font-medium group-hover:underline">
+                            Xem chi tiết →
+                        </span>
+                    </div>
                 </div>
             </Link>
         );
@@ -290,10 +316,10 @@ const ChatBot = () => {
             {/* Chat window */}
             {isOpen && (
                 <div
-                    className="bg-white rounded-2xl shadow-2xl w-[calc(100vw-24px)] sm:w-96 overflow-hidden mb-2 border border-blue-100 flex flex-col"
+                    className="bg-white rounded-2xl shadow-2xl w-[calc(100vw-24px)] sm:w-[440px] overflow-hidden mb-2 border border-blue-100 flex flex-col"
                     style={{
-                        maxWidth: '420px',
-                        maxHeight: 'min(600px, calc(100vh - 140px))',
+                        maxWidth: '480px',
+                        maxHeight: 'min(650px, calc(100vh - 140px))',
                         animation: 'chatSlideUp 0.25s ease-out forwards',
                     }}
                 >
@@ -337,7 +363,7 @@ const ChatBot = () => {
                                         <RiRobot2Line className="text-white text-sm" />
                                     </div>
                                 )}
-                                <div className="flex flex-col max-w-[82%] sm:max-w-[78%]">
+                                <div className="flex flex-col max-w-[90%] sm:max-w-[88%]">
                                     <div
                                         className={`rounded-2xl py-2.5 px-3.5 shadow-sm ${msg.sender === 'user'
                                             ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-md'
@@ -349,11 +375,16 @@ const ChatBot = () => {
 
                                     {/* Product cards */}
                                     {msg.sender === 'bot' && msg.products && msg.products.length > 0 && (
-                                        <div className="mt-2 -mx-1">
-                                            <p className="text-[11px] text-gray-500 font-medium mb-1.5 px-1">🛒 Sản phẩm gợi ý:</p>
-                                            <div className="flex gap-2 overflow-x-auto pb-1.5 px-1 scrollbar-thin">
+                                        <div className="mt-3">
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                                <span className="text-sm">🛒</span>
+                                                <p className="text-[12px] text-gray-600 font-semibold">Sản phẩm gợi ý cho bạn</p>
+                                            </div>
+                                            <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin snap-x snap-mandatory">
                                                 {msg.products.map((product) => (
-                                                    <ProductCard key={product._id} product={product} />
+                                                    <div key={product._id} className="snap-start">
+                                                        <ProductCard product={product} />
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
@@ -392,7 +423,7 @@ const ChatBot = () => {
                                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-2 flex-shrink-0 mt-1">
                                     <RiRobot2Line className="text-white text-sm" />
                                 </div>
-                                <div className="flex flex-col max-w-[82%] sm:max-w-[78%]">
+                                <div className="flex flex-col max-w-[90%] sm:max-w-[88%]">
                                     <div className="bg-white text-gray-800 border border-blue-100/60 rounded-2xl rounded-bl-md py-2.5 px-3.5 shadow-sm">
                                         <p className="leading-relaxed text-[13px] whitespace-pre-wrap break-words">
                                             {streaming.fullText.substring(0, streaming.displayedChars)}
@@ -402,11 +433,16 @@ const ChatBot = () => {
 
                                     {/* Show product cards once text streaming is complete */}
                                     {streaming.displayedChars >= streaming.fullText.length && streaming.products.length > 0 && (
-                                        <div className="mt-2 -mx-1" style={{ animation: 'chatMsgIn 0.3s ease-out both' }}>
-                                            <p className="text-[11px] text-gray-500 font-medium mb-1.5 px-1">🛒 Sản phẩm gợi ý:</p>
-                                            <div className="flex gap-2 overflow-x-auto pb-1.5 px-1 scrollbar-thin">
+                                        <div className="mt-3" style={{ animation: 'chatMsgIn 0.3s ease-out both' }}>
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                                <span className="text-sm">🛒</span>
+                                                <p className="text-[12px] text-gray-600 font-semibold">Sản phẩm gợi ý cho bạn</p>
+                                            </div>
+                                            <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin snap-x snap-mandatory">
                                                 {streaming.products.map((product) => (
-                                                    <ProductCard key={product._id} product={product} />
+                                                    <div key={product._id} className="snap-start">
+                                                        <ProductCard product={product} />
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>

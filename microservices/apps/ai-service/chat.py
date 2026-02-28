@@ -123,6 +123,12 @@ Nhiệm vụ của bạn:
 - Trả lời thân thiện, chuyên nghiệp, bằng tiếng Việt
 - Nếu không biết câu trả lời, hãy nói rõ và gợi ý liên hệ hotline: 1800 2097
 
+QUAN TRỌNG - Khi gợi ý sản phẩm:
+- Luôn ghi TÊN SẢN PHẨM CHÍNH XÁC như trong danh sách sản phẩm bên dưới
+- Dùng format: • TÊN_SẢN_PHẨM - GIÁ_TIỀN (ví dụ: • PC ULTRA GAMING i5 12400F - RTX 5060 8GB - 14,180,000đ)
+- Hệ thống sẽ tự động hiển thị card sản phẩm với hình ảnh, giá, nút xem chi tiết
+- KHÔNG cần ghi link hay URL, chỉ cần ghi đúng tên sản phẩm
+
 Chính sách cửa hàng:
 - Giao hàng miễn phí đơn từ 300,000đ
 - Bảo hành chính hãng đầy đủ
@@ -248,18 +254,32 @@ async def chat_with_ollama(
 
             # Search for relevant products via Qdrant vector similarity
             if not recommended_products:
-                # Check if the message is product-related
+                # Check if user message OR bot response mentions products
                 product_keywords = [
                     "sản phẩm", "laptop", "pc", "máy tính", "linh kiện", "phụ kiện",
                     "ram", "cpu", "gpu", "ssd", "card", "màn hình", "bàn phím",
                     "chuột", "tai nghe", "tư vấn", "giá", "mua", "so sánh",
                     "gaming", "văn phòng", "sinh viên", "thiết kế", "lập trình",
                     "đề xuất", "gợi ý", "khuyến mãi", "giảm giá", "rẻ", "tốt",
+                    "cấu hình", "build", "workstation", "rtx", "geforce", "ryzen",
+                    "intel", "amd", "asus", "msi", "gigabyte", "corsair",
                 ]
                 msg_lower = message.lower()
-                is_product_query = any(kw in msg_lower for kw in product_keywords)
+                resp_lower = assistant_message.lower()
+                is_product_query = any(kw in msg_lower for kw in product_keywords) or any(kw in resp_lower for kw in product_keywords)
+
                 if is_product_query:
-                    recommended_products = search_products_for_chat(message, limit=6)
+                    # Try searching with both user message and AI response combined for better matching
+                    combined_query = f"{message} {assistant_message[:200]}"
+                    recommended_products = search_products_for_chat(combined_query, limit=6)
+
+                    # If Qdrant/vector search didn't find enough, also try extracting product names from AI response
+                    if len(recommended_products) < 3:
+                        extra = _extract_products_from_response(assistant_message, limit=6 - len(recommended_products))
+                        existing_ids = {p["_id"] for p in recommended_products}
+                        for ep in extra:
+                            if ep["_id"] not in existing_ids:
+                                recommended_products.append(ep)
 
             # Generate contextual suggestions
             suggestions = _generate_suggestions(message, assistant_message)
@@ -400,3 +420,62 @@ def _generate_suggestions(user_message: str, bot_response: str) -> list[str]:
 
     # Default suggestions
     return ["Sản phẩm nổi bật", "Khuyến mãi hiện tại", "Tư vấn mua hàng"]
+
+
+def _extract_products_from_response(response_text: str, limit: int = 6) -> list[dict]:
+    """
+    Extract product names mentioned in the AI response and match them to real
+    products in MongoDB.  This catches cases where the LLM describes products
+    inline (e.g. "• PC Gaming i5 12400F - RTX 3060") but the vector search
+    didn't return them.
+    """
+    import re
+    db = get_mongo_db()
+
+    # Common patterns the LLM uses when listing products:
+    #   • Product Name - **12,345,000đ**
+    #   - Product Name
+    #   1. Product Name
+    pattern = re.compile(
+        r"(?:^[•\-\*\d]+[\.\)]*\s*)"   # bullet / number prefix
+        r"(.+?)(?:\s*[-–—]\s*\*{0,2}\d|$)",  # capture name before price
+        re.MULTILINE,
+    )
+    candidates = [m.group(1).strip().strip("*").strip() for m in pattern.finditer(response_text)]
+    # Also grab anything that looks like "PC ...", "Laptop ..."
+    pc_pattern = re.compile(r"\b((?:PC|Laptop|Máy tính)\s[A-Za-z0-9\s\-\+]{10,60})", re.IGNORECASE)
+    candidates += [m.group(1).strip() for m in pc_pattern.finditer(response_text)]
+
+    if not candidates:
+        return []
+
+    # Deduplicate
+    seen = set()
+    unique = []
+    for c in candidates:
+        key = c.lower()[:30]
+        if key not in seen and len(c) > 5:
+            seen.add(key)
+            unique.append(c)
+
+    # Search MongoDB for each candidate name
+    product_ids: list[str] = []
+    for name in unique[:10]:  # cap iterations
+        escaped = re.escape(name[:50])
+        doc = db["products"].find_one(
+            {
+                "name": {"$regex": escaped, "$options": "i"},
+                "isDeleted": {"$ne": True},
+                "status": "ACTIVE",
+            },
+            {"_id": 1},
+        )
+        if doc and str(doc["_id"]) not in product_ids:
+            product_ids.append(str(doc["_id"]))
+        if len(product_ids) >= limit:
+            break
+
+    if not product_ids:
+        return []
+
+    return _fetch_product_cards(product_ids)
