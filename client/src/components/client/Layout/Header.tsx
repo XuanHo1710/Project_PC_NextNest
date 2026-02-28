@@ -14,7 +14,7 @@ import { HiOutlineMenuAlt3 } from "react-icons/hi";
 import { IoClose } from "react-icons/io5";
 import Marquee from "react-fast-marquee";
 import { MdOutlineSearch } from "react-icons/md";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -64,12 +64,30 @@ export default function HeaderClient() {
     useEffect(() => {
         if (data && !isLoading) {
             setCategories(data);
-
         }
-    }, [data, isLoading]); // chỉ chạy khi data thay đổi
+    }, [data, isLoading]);
 
-    const handleHoverCategory = (children: ICategory[]) => {
-        setChildrenCategories(children)
+    // Compute parent categories (no parentId) and children map from flat list
+    const parentCategories = useMemo(() => {
+        return categories.filter(cat => !cat.parentId);
+    }, [categories]);
+
+    const childrenMap = useMemo(() => {
+        const map: Record<string, ICategory[]> = {};
+        categories.forEach(cat => {
+            if (cat.parentId) {
+                const pid = typeof cat.parentId === 'object' && cat.parentId !== null
+                    ? (cat.parentId as { _id: string })._id
+                    : String(cat.parentId);
+                if (!map[pid]) map[pid] = [];
+                map[pid].push(cat);
+            }
+        });
+        return map;
+    }, [categories]);
+
+    const handleHoverCategory = (parentId: string) => {
+        setChildrenCategories(childrenMap[parentId] || []);
         setOpenItemCategory(true);
     }
 
@@ -104,38 +122,41 @@ export default function HeaderClient() {
         setOpenModalRegister(false);
     }
 
-    const renderCategoryGrid = (categories: ICategory[], colSpan = 2) => {
-        return categories.map((cat) => (
-            <div key={cat._id} className={`col-span-${colSpan} flex flex-col gap-3`}>
-                <Link
-                    onClick={() => {
-                        setOpenItemCategory(false);
-                        setOpenCategory(false)
-                    }}
-                    href={"/collection/" + cat.slug}
-                    className="font-semibold"
-                >
-                    {cat.name}
-                </Link>
-                {cat.children && cat.children.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                        {cat.children.map((child) => (
-                            <Link
-                                onClick={() => {
-                                    setOpenItemCategory(false);
-                                    setOpenCategory(false)
-                                }}
-                                href={"/collection/" + child.slug}
-                                key={child._id}
-                                className="text-sm hover:text-blue-500 cursor-pointer"
-                            >
-                                {child.name}
-                            </Link>
-                        ))}
-                    </div>
-                )}
-            </div>
-        ));
+    const renderCategoryGrid = (cats: ICategory[], colSpan = 2) => {
+        return cats.map((cat) => {
+            const subChildren = childrenMap[cat._id] || [];
+            return (
+                <div key={cat._id} className={`col-span-${colSpan} flex flex-col gap-3`}>
+                    <Link
+                        onClick={() => {
+                            setOpenItemCategory(false);
+                            setOpenCategory(false)
+                        }}
+                        href={"/collection/" + cat.slug}
+                        className="font-semibold"
+                    >
+                        {cat.name}
+                    </Link>
+                    {subChildren.length > 0 && (
+                        <div className="flex flex-col gap-2">
+                            {subChildren.map((child) => (
+                                <Link
+                                    onClick={() => {
+                                        setOpenItemCategory(false);
+                                        setOpenCategory(false)
+                                    }}
+                                    href={"/collection/" + child.slug}
+                                    key={child._id}
+                                    className="text-sm hover:text-blue-500 cursor-pointer"
+                                >
+                                    {child.name}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        });
     };
 
 
@@ -194,13 +215,13 @@ export default function HeaderClient() {
                             {isOpenCategory && (
                                 <div style={{ scrollbarWidth: "none" }} className="w-60 max-h-[550px] min-h-[550px] overflow-auto z-40 absolute top-12 left-0 bg-white border border-gray-200 shadow-2xl rounded-xl">
                                     <ul className="text-sm">
-                                        {categories.map((category, index) => {
+                                        {parentCategories.map((category, index) => {
                                             const isFirst = index === 0;
-                                            const isLast = index === categories.length - 1;
+                                            const isLast = index === parentCategories.length - 1;
                                             return (
                                                 <li
                                                     key={category._id}
-                                                    onMouseEnter={() => handleHoverCategory(category.children as ICategory[])}
+                                                    onMouseEnter={() => handleHoverCategory(category._id)}
                                                     className={`text-sm font-medium px-4 py-2.5 hover:bg-blue-50 hover:text-blue-600 justify-between cursor-pointer flex items-center gap-2 ${isFirst ? 'rounded-t-xl' : ''} ${isLast ? 'rounded-b-xl' : ''}`}
                                                 >
                                                     {category.name} <MdKeyboardArrowRight className="text-base" />

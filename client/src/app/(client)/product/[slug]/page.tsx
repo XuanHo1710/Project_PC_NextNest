@@ -335,10 +335,11 @@ export default function ProductDetailClient() {
                                         <span className="text-red-500 text-sm font-medium">Tạm hết hàng</span>
                                     </div>
                                 )}
-                                <div className='mt-2 flex flex-col gap-2 items-start justify-center'>
+                                <div className='mt-2 flex flex-col gap-2 items-start justify-center w-full'>
                                     <p>Mô tả ngắn: </p>
-
-                                    <Tag>{selectedVariant?.subDescription || ""}</Tag>
+                                    <div className="w-full max-w-full">
+                                        <p className="whitespace-normal text-sm text-stone-500 !break-words max-w-full">{selectedVariant?.subDescription || ""}</p>
+                                    </div>
                                 </div>
                             </div>
 

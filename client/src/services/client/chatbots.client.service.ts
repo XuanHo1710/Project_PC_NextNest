@@ -57,7 +57,7 @@ export const chatbotClientService = {
 
   async getRecommendations(
     guestId: string,
-    limit: number = 20,
+    limit: number = 8,
   ): Promise<IProductCard[]> {
     try {
       const response = await axiosInstance.get(
@@ -72,7 +72,7 @@ export const chatbotClientService = {
     }
   },
 
-  async getPopularProducts(limit: number = 20): Promise<IProductCard[]> {
+  async getPopularProducts(limit: number = 8): Promise<IProductCard[]> {
     try {
       const response = await axiosInstance.get(`/chatbot/popular`, {
         params: { limit },

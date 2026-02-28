@@ -140,7 +140,7 @@ async def chat_suggestions(query: str = Query("", description="Current query for
 @app.get("/api/v1/ai/recommendations/{guest_id}")
 async def get_recommendations_endpoint(
     guest_id: str,
-    limit: int = Query(20, ge=1, le=50, description="Number of recommendations"),
+    limit: int = Query(8, ge=1, le=50, description="Number of recommendations"),
 ):
     """Get personalized product recommendations for a guest based on viewing behavior.
     Returns list of IProductCard-compatible dicts with real MongoDB _id, sku, etc."""
@@ -156,7 +156,7 @@ async def get_recommendations_endpoint(
 
 @app.get("/api/v1/ai/popular")
 async def get_popular_products_endpoint(
-    limit: int = Query(20, ge=1, le=50),
+    limit: int = Query(8, ge=1, le=50),
 ):
     """Get popular products (fallback when no user context).
     Returns list of IProductCard-compatible dicts."""

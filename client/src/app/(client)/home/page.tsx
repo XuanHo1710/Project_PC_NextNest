@@ -10,7 +10,7 @@ import Link from "next/link";
 import { HomePageSkeleton } from "@/components/Skeletons";
 import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import useAuthUser from "@/hooks/useAuthUser";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
     MdKeyboardArrowRight, MdLaptopChromebook, MdPhoneIphone, MdTv,
@@ -60,8 +60,8 @@ export default function HomeClient() {
         queryKey: ['ai-recommendations', user?._id],
         queryFn: () =>
             user?._id
-                ? chatbotClientService.getRecommendations(user._id, 20)
-                : chatbotClientService.getPopularProducts(20),
+                ? chatbotClientService.getRecommendations(user._id, 8)
+                : chatbotClientService.getPopularProducts(8),
         staleTime: 1000 * 60 * 5,
     });
 
@@ -83,6 +83,31 @@ export default function HomeClient() {
         const timer = setInterval(() => setCountdown(getTimeLeft()), 1000);
         return () => clearInterval(timer);
     }, []);
+
+    // Only show root-level categories in sidebar (those with no parentId)
+    const parentCategories = useMemo(() => {
+        if (!categories) return [];
+        return categories.filter(cat => !cat.parentId);
+    }, [categories]);
+
+    // Build children map: parentId → child categories
+    const childrenMap = useMemo(() => {
+        if (!categories) return {} as Record<string, ICategory[]>;
+        const map: Record<string, ICategory[]> = {};
+        categories.forEach(cat => {
+            if (cat.parentId) {
+                const pid = typeof cat.parentId === 'object' && cat.parentId !== null
+                    ? (cat.parentId as { _id: string })._id
+                    : String(cat.parentId);
+                if (!map[pid]) map[pid] = [];
+                map[pid].push(cat);
+            }
+        });
+        return map;
+    }, [categories]);
+
+    const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
+    const hoveredChildren = hoveredCategoryId ? (childrenMap[hoveredCategoryId] || []) : [];
 
     if (isLoadingProducts) {
         return <HomePageSkeleton />
@@ -123,18 +148,60 @@ export default function HomeClient() {
 
                 {/* ============= HERO: Category sidebar + Banner ============= */}
                 <div className="content-header mx-4 sm:mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5">
-                    {/* Category sidebar — original simple style */}
-                    <div className="row-span-3 hidden xl:block col-span-3 rounded-lg shadow-sm bg-white border border-gray-100">
+                    {/* Category sidebar with hover children panel */}
+                    <div
+                        className="row-span-3 hidden xl:block col-span-3 rounded-lg shadow-sm bg-white border border-gray-100 relative"
+                        onMouseLeave={() => setHoveredCategoryId(null)}
+                    >
                         <ul style={{ scrollbarWidth: "none" }} className="m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-slate-800">
-                            {categories && categories.length > 0 && categories.map((category, index) => (
-                                <Link key={category._id} href={`/collection/${category.slug}`}>
-                                    <li className="w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-blue-50 hover:text-blue-600 px-6 py-3 flex items-center">
-                                        <span className="font-medium flex items-center gap-3">{ListIcon[index % ListIcon.length]} {category.name}</span>
-                                        <MdKeyboardArrowRight className="text-xl" />
-                                    </li>
-                                </Link>
+                            {parentCategories.length > 0 && parentCategories.map((category, index) => (
+                                <li
+                                    key={category._id}
+                                    onMouseEnter={() => setHoveredCategoryId(category._id)}
+                                    className="w-full rounded-t-lg justify-between cursor-pointer dark:text-white hover:bg-blue-50 hover:text-blue-600 px-6 py-3 flex items-center"
+                                >
+                                    <Link href={`/collection/${category.slug}`} className="font-medium flex items-center gap-3 flex-1">
+                                        {ListIcon[index % ListIcon.length]} {category.name}
+                                    </Link>
+                                    <MdKeyboardArrowRight className="text-xl" />
+                                </li>
                             ))}
                         </ul>
+
+                        {/* Children panel — appears on hover */}
+                        {hoveredCategoryId && hoveredChildren.length > 0 && (
+                            <div
+                                style={{ scrollbarWidth: "none" }}
+                                className="absolute left-full top-0 ml-1 w-[700px] max-h-[500px] overflow-auto bg-white border border-gray-200 shadow-2xl rounded-lg p-5 z-50 grid grid-cols-3 gap-4"
+                            >
+                                {hoveredChildren.map((child) => {
+                                    const subChildren = childrenMap[child._id] || [];
+                                    return (
+                                        <div key={child._id} className="flex flex-col gap-2">
+                                            <Link
+                                                href={`/collection/${child.slug}`}
+                                                className="font-semibold text-sm hover:text-blue-600 transition-colors"
+                                            >
+                                                {child.name}
+                                            </Link>
+                                            {subChildren.length > 0 && (
+                                                <div className="flex flex-col gap-1.5">
+                                                    {subChildren.map((sub) => (
+                                                        <Link
+                                                            key={sub._id}
+                                                            href={`/collection/${sub.slug}`}
+                                                            className="text-xs text-gray-500 hover:text-blue-500 transition-colors"
+                                                        >
+                                                            {sub.name}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     {/* Banner carousel */}
@@ -358,7 +425,7 @@ export default function HomeClient() {
                 </div>
 
                 {/* ============= TAGLINE ============= */}
-                <div className="py-16 sm:py-20 content-center text-slate-600 dark:text-white my-8 flex flex-wrap items-center justify-center font-extrabold text-lg sm:text-xl lg:text-3xl cursor-default text-center px-4">
+                <div className="py-16 sm:py-20 content-center text-white dark:text-white my-8 flex flex-wrap items-center justify-center font-extrabold text-lg sm:text-xl lg:text-3xl cursor-default text-center px-4">
                     Khơi nguồn đam mê, chạm đến đỉnh công nghệ!
                 </div>
 

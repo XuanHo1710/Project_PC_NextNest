@@ -9,7 +9,7 @@ class CategoryClientService {
   }
 
   async getAllCategories(): Promise<ICategory[]> {
-    const response = await axios.get(`/category`);
+    const response = await axios.get(`/category`, { params: { limit: 1000 } });
     // Backend returns { data: [...], pagination: {...} }
     const result = response.data;
     return result?.data || result || [];

@@ -217,7 +217,7 @@ def build_and_store_user_vector(guest_id: str) -> list[float] | None:
 
 # ── public API ────────────────────────────────────────────────────
 
-def get_recommendations(guest_id: str, limit: int = 20) -> list[dict]:
+def get_recommendations(guest_id: str, limit: int = 8) -> list[dict]:
     """
     Personalised recommendations for *guest_id*.
     1. Build/update the user's preference vector from ProductView
@@ -272,7 +272,7 @@ def get_recommendations(guest_id: str, limit: int = 20) -> list[dict]:
     return _fetch_product_cards(candidate_ids)
 
 
-def get_popular_products(limit: int = 20) -> list[dict]:
+def get_popular_products(limit: int = 8) -> list[dict]:
     """
     Fallback: most-viewed products globally.
     Returns full IProductCard dicts from MongoDB.
