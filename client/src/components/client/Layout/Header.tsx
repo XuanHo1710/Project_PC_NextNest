@@ -224,7 +224,7 @@ export default function HeaderClient() {
                             </button>
 
                             {isOpenCategory && (
-                                <div style={{ scrollbarWidth: "none" }} className="w-60 max-h-[550px] min-h-[550px] overflow-auto z-40 absolute top-12 left-0 bg-white border border-gray-200 shadow-2xl rounded-xl">
+                                <div style={{ scrollbarWidth: "none" }} className="w-60 max-h-max  overflow-auto z-40 absolute top-12 left-0 bg-white border border-gray-200 shadow-2xl rounded-xl">
                                     <ul className="text-sm">
                                         {parentCategories.map((category, index) => {
                                             const isFirst = index === 0;

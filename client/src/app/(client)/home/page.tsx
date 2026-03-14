@@ -172,7 +172,7 @@ export default function HomeClient() {
                         {hoveredCategoryId && hoveredChildren.length > 0 && (
                             <div
                                 style={{ scrollbarWidth: "none" }}
-                                className="absolute left-full top-0 ml-1 w-[700px] max-h-[500px] overflow-auto bg-white border border-gray-200 shadow-2xl rounded-lg p-5 z-50 grid grid-cols-3 gap-4"
+                                className="absolute left-full top-0 ml-1 w-4xl h-full overflow-auto bg-white border border-gray-200 shadow-2xl rounded-lg p-5 z-50 grid grid-cols-3 gap-4"
                             >
                                 {hoveredChildren.map((child) => {
                                     const subChildren = childrenMap[child._id] || [];
@@ -180,7 +180,7 @@ export default function HomeClient() {
                                         <div key={child._id} className="flex flex-col gap-2">
                                             <Link
                                                 href={`/collection/${child.slug}`}
-                                                className="font-semibold text-sm hover:text-blue-600 transition-colors"
+                                                className="font-semibold text-lg hover:text-blue-600 transition-colors"
                                             >
                                                 {child.name}
                                             </Link>
@@ -190,7 +190,7 @@ export default function HomeClient() {
                                                         <Link
                                                             key={sub._id}
                                                             href={`/collection/${sub.slug}`}
-                                                            className="text-xs text-gray-500 hover:text-blue-500 transition-colors"
+                                                            className="text-sm text-gray-500 hover:text-blue-500 transition-colors"
                                                         >
                                                             {sub.name}
                                                         </Link>
