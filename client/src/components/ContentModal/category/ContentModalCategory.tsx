@@ -2,7 +2,7 @@
 import { ICategory } from '@/types/category';
 // import { Editor } from '@tinymce/tinymce-react';
 import { Button, Form, Input, Select, Spin } from 'antd';
-import { JSX } from 'react';
+import { useMemo } from 'react';
 import { useCreateCategory, useCategoriesAll } from '@/hooks/admin';
 
 
@@ -67,24 +67,28 @@ export default function ContentModalCategory() {
         return tree;
     };
 
-
-    const renderCategoryOptions = (categories: ICategory[], level = 0): JSX.Element[] => {
-        const prefix = '-'.repeat(level);
-
-        return categories.flatMap(category => {
-            const option = (
-                <Select.Option key={category._id} value={category._id}>
-                    {`${prefix} ${category.name}`}
-                </Select.Option>
-            );
-
-            const childrenOptions = category.children && category.children.length > 0
-                ? renderCategoryOptions(category.children, level + 1)
+    const flattenCategoryOptions = (nodes: ICategory[], level = 0): Array<{ value: string; label: string; searchText: string }> => {
+        const prefix = level > 0 ? `${'-'.repeat(level)} ` : '';
+        return nodes.flatMap((category) => {
+            const current = [{
+                value: category._id,
+                label: `${prefix}${category.name}`,
+                searchText: `${category.name} ${category.slug || ''}`.toLowerCase(),
+            }];
+            const children = category.children && category.children.length > 0
+                ? flattenCategoryOptions(category.children, level + 1)
                 : [];
-
-            return [option, ...childrenOptions];
+            return [...current, ...children];
         });
     };
+
+    const categoryOptions = useMemo(() => {
+        const tree = buildCategoryTree(categories);
+        return [
+            { value: '', label: 'Không', searchText: 'khong none' },
+            ...flattenCategoryOptions(tree),
+        ];
+    }, [categories]);
 
 
 
@@ -111,11 +115,20 @@ export default function ContentModalCategory() {
                         <Input placeholder='Nhập tên danh mục ...' />
                     </Form.Item>
                     <Form.Item label="Chọn danh mục cha" name="parentId" className='font-sans text-lg'>
-                        <Select allowClear showSearch placeholder="Chọn danh mục cha (nếu có)">
-                            <Select.Option value="">Không</Select.Option>
-                            {renderCategoryOptions(buildCategoryTree(categories))}
-
-                        </Select>
+                        <Select
+                            allowClear
+                            showSearch
+                            optionFilterProp="label"
+                            placeholder="Chọn danh mục cha (nếu có)"
+                            options={categoryOptions}
+                            filterOption={(input, option) => {
+                                const keyword = input.toLowerCase().trim();
+                                return (
+                                    String(option?.label || '').toLowerCase().includes(keyword)
+                                    || String((option as any)?.searchText || '').includes(keyword)
+                                );
+                            }}
+                        />
                     </Form.Item>
                     <div className='text-right mb-10'>
                         <Button loading={addCategory.isPending} htmlType='submit' variant='solid' color='primary' className='text-right'>Thêm mới</Button>

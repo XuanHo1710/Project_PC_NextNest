@@ -29,9 +29,29 @@ export const useCategoriesAll = () => {
   return useQuery({
     queryKey: [...categoryKeys.all, "dropdown"],
     queryFn: async () => {
-      const response = await categoryService.getAll("?limit=100");
-      // Extract data array from paginated response
-      return (response as any)?.data || [];
+      const limit = 200;
+      let page = 1;
+      let totalPages = 1;
+      const allData: ICategory[] = [];
+
+      do {
+        const response = await categoryService.getAll(
+          `?page=${page}&limit=${limit}&sort=createdAt_desc`,
+        );
+        allData.push(...(response.data || []));
+        totalPages = response.pagination?.totalPages || 1;
+        page += 1;
+      } while (page <= totalPages);
+
+      return {
+        data: allData,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalItems: allData.length,
+          itemsPerPage: allData.length,
+        },
+      };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

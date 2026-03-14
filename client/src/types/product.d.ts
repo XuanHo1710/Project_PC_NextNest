@@ -99,6 +99,8 @@ export interface IProduct {
   avgRating?: number;
   createdBy?: string | ICreatorInfo;
   totalStock?: number;
+  totalImages?: number;
+  thumbnail?: string | null;
   defaultVariant?: {
     _id: string;
     sku: string;

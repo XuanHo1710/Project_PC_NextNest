@@ -426,7 +426,7 @@ export default function MyProductsPage() {
         {
             title: "Ảnh", key: "image", width: 70,
             render: (_, record) => {
-                const img = record.defaultVariant?.images?.[0];
+                const img = record.thumbnail || record.defaultVariant?.images?.[0];
                 return img ? (
                     <Image src={img} alt={record.name} width={50} height={50}
                         style={{ objectFit: "cover", borderRadius: 8 }}

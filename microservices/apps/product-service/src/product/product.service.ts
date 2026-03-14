@@ -134,7 +134,7 @@ export class ProductService {
       ),
     ).map((id) => new Types.ObjectId(id));
 
-    const [defaultVariants, firstVariantsByProduct, stockAgg] =
+    const [defaultVariants, firstVariantsByProduct, stockAgg, imageAgg] =
       await Promise.all([
         defaultVariantIds.length > 0
           ? this.productVariantModel
@@ -179,6 +179,24 @@ export class ProductService {
             },
           ])
           .exec(),
+        this.productVariantModel
+          .aggregate([
+            {
+              $match: {
+                isDeleted: false,
+                product: {
+                  $in: productIds.map((id) => new Types.ObjectId(id)),
+                },
+              },
+            },
+            {
+              $group: {
+                _id: '$product',
+                totalImages: { $sum: { $size: { $ifNull: ['$images', []] } } },
+              },
+            },
+          ])
+          .exec(),
       ]);
 
     const defaultVariantMap = new Map(
@@ -189,6 +207,9 @@ export class ProductService {
     );
     const stockMap = new Map(
       stockAgg.map((s: any) => [s._id.toString(), s.totalStock || 0]),
+    );
+    const imageMap = new Map(
+      imageAgg.map((img: any) => [img._id.toString(), img.totalImages || 0]),
     );
 
     return products.map((product) => {
@@ -209,8 +230,40 @@ export class ProductService {
       }
 
       product['totalStock'] = stockMap.get(pid) || 0;
+      product['totalImages'] = imageMap.get(pid) || 0;
+      product['thumbnail'] =
+        variant?.images?.[0] || product['defaultVariant']?.images?.[0] || null;
       return product;
     });
+  }
+
+  private async getDescendantCategoryIds(rootCategoryId: Types.ObjectId) {
+    const collected = new Set<string>([rootCategoryId.toString()]);
+    let frontier: Types.ObjectId[] = [new Types.ObjectId(rootCategoryId)];
+
+    while (frontier.length > 0) {
+      const children = await this.categoryModel
+        .find({
+          parentId: { $in: frontier },
+          isDeleted: { $ne: true },
+        })
+        .select('_id')
+        .lean()
+        .exec();
+
+      const nextFrontier: Types.ObjectId[] = [];
+      for (const child of children) {
+        const childId = child._id.toString();
+        if (!collected.has(childId)) {
+          collected.add(childId);
+          nextFrontier.push(new Types.ObjectId(child._id));
+        }
+      }
+
+      frontier = nextFrontier;
+    }
+
+    return Array.from(collected).map((id) => new Types.ObjectId(id));
   }
 
   // ============= PRODUCT CRUD =============
@@ -679,13 +732,11 @@ export class ProductService {
         .lean()
         .exec();
 
-      if (childCategories.length > 0) {
-        query.category = {
-          $in: [category._id, ...childCategories.map((c) => c._id)],
-        };
-      } else {
-        query.category = category._id;
-      }
+      const categoryIds = await this.getDescendantCategoryIds(
+        new Types.ObjectId(category._id),
+      );
+      query.category =
+        categoryIds.length > 1 ? { $in: categoryIds } : category._id;
     }
 
     if (collectionType === 'brand') {

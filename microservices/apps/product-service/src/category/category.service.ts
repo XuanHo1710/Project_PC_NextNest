@@ -12,9 +12,19 @@ export class CategoryService {
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
-    const parentCategory = (await this.categoryModel.findOne({
-      _id: new Types.ObjectId(createCategoryDto.parentId),
-    })) as Category | null;
+    const parentId = createCategoryDto.parentId;
+    const hasValidParent =
+      !!parentId &&
+      typeof parentId === 'string' &&
+      parentId.trim() !== '' &&
+      Types.ObjectId.isValid(parentId);
+
+    const parentCategory = hasValidParent
+      ? ((await this.categoryModel.findOne({
+          _id: new Types.ObjectId(parentId),
+          isDeleted: { $ne: true },
+        })) as Category | null)
+      : null;
 
     const categoryCreated = {
       name: createCategoryDto.name,
@@ -98,9 +108,19 @@ export class CategoryService {
       throw new BadRequestException('Category not found');
     }
 
-    const parentCategory = await this.categoryModel.findOne({
-      _id: new Types.ObjectId(updateCategoryDto.parentId),
-    });
+    const parentId = updateCategoryDto.parentId;
+    const hasValidParent =
+      !!parentId &&
+      typeof parentId === 'string' &&
+      parentId.trim() !== '' &&
+      Types.ObjectId.isValid(parentId);
+
+    const parentCategory = hasValidParent
+      ? await this.categoryModel.findOne({
+          _id: new Types.ObjectId(parentId),
+          isDeleted: { $ne: true },
+        })
+      : null;
 
     // Cập nhật thông tin chính
     const categoryUpdated = {
