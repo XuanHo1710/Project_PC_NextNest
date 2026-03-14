@@ -311,10 +311,9 @@ class ProductClientService {
   // ============== COLLECTION ==============
 
   /**
-   * Get products by collection slug (matches both category & brand slugs)
-   * Uses $or query on backend
+   * Get products by category slug (collection page)
    */
-  async getCollectionProducts(
+  async getCategoryCollectionProducts(
     slug: string,
     page = 1,
     limit = 12,
@@ -337,6 +336,54 @@ class ProductClientService {
       },
     );
     return response.data;
+  }
+
+  /**
+   * Get products by brand slug (brand page)
+   */
+  async getBrandCollectionProducts(
+    slug: string,
+    page = 1,
+    limit = 12,
+    sort?: string,
+    cpu?: string,
+    ram?: string,
+    storage?: string,
+  ): Promise<
+    PaginatedResponse<IProductCard> & {
+      collectionInfo: {
+        category: ICategory | null;
+        brand: IBrand | null;
+      };
+    }
+  > {
+    const response = await axiosClient.get(`${this.baseURL}/brand/${slug}`, {
+      params: { page, limit, sort, cpu, ram, storage },
+    });
+    return response.data;
+  }
+
+  /**
+   * @deprecated Use getCategoryCollectionProducts or getBrandCollectionProducts
+   */
+  async getCollectionProducts(
+    slug: string,
+    page = 1,
+    limit = 12,
+    sort?: string,
+    cpu?: string,
+    ram?: string,
+    storage?: string,
+  ) {
+    return this.getCategoryCollectionProducts(
+      slug,
+      page,
+      limit,
+      sort,
+      cpu,
+      ram,
+      storage,
+    );
   }
 
   /**

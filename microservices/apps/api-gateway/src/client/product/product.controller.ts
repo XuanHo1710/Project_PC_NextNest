@@ -43,7 +43,7 @@ export class ProductController {
 
   @Get('collection/:slug')
   @Public()
-  findByCollection(
+  findByCategorySlug(
     @Param('slug') slug: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -52,7 +52,29 @@ export class ProductController {
     @Query('ram') ram?: string,
     @Query('storage') storage?: string,
   ) {
-    return this.productService.send('product.findByCollection', {
+    return this.productService.send('product.findByCategorySlug', {
+      slug,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 12,
+      sort: sort || '',
+      cpu: cpu || '',
+      ram: ram || '',
+      storage: storage || '',
+    });
+  }
+
+  @Get('brand/:slug')
+  @Public()
+  findByBrandSlug(
+    @Param('slug') slug: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sort') sort?: string,
+    @Query('cpu') cpu?: string,
+    @Query('ram') ram?: string,
+    @Query('storage') storage?: string,
+  ) {
+    return this.productService.send('product.findByBrandSlug', {
       slug,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 12,

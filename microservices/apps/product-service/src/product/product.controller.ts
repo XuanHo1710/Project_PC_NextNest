@@ -173,6 +173,56 @@ export class ProductController {
     );
   }
 
+  @MessagePattern('product.findByCategorySlug')
+  async findByCategorySlug(
+    @Payload()
+    data: {
+      slug: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+      cpu?: string;
+      ram?: string;
+      storage?: string;
+    },
+    @Ctx() context: RmqContext,
+  ) {
+    return this.handleRmq(context, () =>
+      this.productService.findByCategorySlug(
+        data.slug,
+        data.page,
+        data.limit,
+        data.sort,
+        { cpu: data.cpu, ram: data.ram, storage: data.storage },
+      ),
+    );
+  }
+
+  @MessagePattern('product.findByBrandSlug')
+  async findByBrandSlug(
+    @Payload()
+    data: {
+      slug: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+      cpu?: string;
+      ram?: string;
+      storage?: string;
+    },
+    @Ctx() context: RmqContext,
+  ) {
+    return this.handleRmq(context, () =>
+      this.productService.findByBrandSlug(
+        data.slug,
+        data.page,
+        data.limit,
+        data.sort,
+        { cpu: data.cpu, ram: data.ram, storage: data.storage },
+      ),
+    );
+  }
+
   @MessagePattern('product.findAllClient')
   async findAllClientProducts(
     @Payload() data: { page?: number; limit?: number },

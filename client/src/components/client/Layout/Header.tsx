@@ -69,12 +69,12 @@ export default function HeaderClient() {
 
     // Compute parent categories (no parentId) and children map from flat list
     const parentCategories = useMemo(() => {
-        return categories.filter(cat => !cat.parentId);
+        return categories.filter((cat: ICategory) => !cat.parentId);
     }, [categories]);
 
     const childrenMap = useMemo(() => {
         const map: Record<string, ICategory[]> = {};
-        categories.forEach(cat => {
+        categories.forEach((cat: ICategory) => {
             if (cat.parentId) {
                 const pid = typeof cat.parentId === 'object' && cat.parentId !== null
                     ? (cat.parentId as { _id: string })._id
@@ -122,8 +122,19 @@ export default function HeaderClient() {
         setOpenModalRegister(false);
     }
 
+    useEffect(() => {
+        if (!mobileMenuOpen) {
+            document.body.style.overflow = "";
+            return;
+        }
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, [mobileMenuOpen]);
+
     const renderCategoryGrid = (cats: ICategory[], colSpan = 2) => {
-        return cats.map((cat) => {
+        return cats.map((cat: ICategory) => {
             const subChildren = childrenMap[cat._id] || [];
             return (
                 <div key={cat._id} className={`col-span-${colSpan} flex flex-col gap-3`}>
@@ -139,7 +150,7 @@ export default function HeaderClient() {
                     </Link>
                     {subChildren.length > 0 && (
                         <div className="flex flex-col gap-2">
-                            {subChildren.map((child) => (
+                            {subChildren.map((child: ICategory) => (
                                 <Link
                                     onClick={() => {
                                         setOpenItemCategory(false);
@@ -464,28 +475,62 @@ export default function HeaderClient() {
 
                 {/* Mobile Menu Drawer */}
                 {mobileMenuOpen && (
-                    <div className="md:hidden bg-[#3b82f6] border-t border-blue-400/30 shadow-lg max-h-[80vh] overflow-y-auto">
-                        <div className="p-4 space-y-3">
-                            {/* Mobile Auth */}
-                            <div className="pb-3 border-b border-blue-400/30">
-                                <AuthSection
-                                    handleOpenLogin={() => { setMobileMenuOpen(false); handleOpenLogin(); }}
-                                    handleOpenRegister={() => { setMobileMenuOpen(false); handleOpenRegister(); }}
-                                />
-                            </div>
-                            {/* Mobile Category */}
-                            <Link href="/home" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-2.5 text-white font-medium hover:text-blue-200">
-                                <BiCategory className="text-lg text-blue-200" /> Danh mục sản phẩm
-                            </Link>
-                            {/* Mobile Chat */}
-                            <Link href="/chat" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 py-2.5 text-white font-medium hover:text-blue-200">
-                                <MdOutlineChatBubbleOutline className="text-lg text-blue-200" /> Tin nhắn <ChatBadge />
-                            </Link>
-                            {/* Mobile Info */}
-                            <div className="pt-3 border-t border-blue-400/30 space-y-2 text-sm text-blue-100">
-                                <p className="flex items-center gap-2"><FaStore className="text-blue-200" /> Cửa hàng gần bạn</p>
-                                <p className="flex items-center gap-2"><IoDocumentOutline className="text-blue-200" /> Tra cứu đơn hàng</p>
-                                <p className="flex items-center gap-2"><FaPhoneAlt className="text-blue-200" /> 1800 2097</p>
+                    <div className="md:hidden fixed inset-0 top-[76px] z-40">
+                        <div className="absolute inset-0 bg-slate-900/45" onClick={() => setMobileMenuOpen(false)} />
+                        <div className="absolute inset-x-0 top-0 max-h-[calc(100vh-76px)] overflow-y-auto rounded-t-2xl bg-gradient-to-b from-blue-500 to-blue-600 shadow-2xl border-t border-blue-300/40">
+                            <div className="p-4">
+                                <div className="bg-white/95 rounded-2xl p-3 mb-3 shadow-sm">
+                                    <AuthSection
+                                        handleOpenLogin={() => { setMobileMenuOpen(false); handleOpenLogin(); }}
+                                        handleOpenRegister={() => { setMobileMenuOpen(false); handleOpenRegister(); }}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                    <Link
+                                        href="/chat"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="flex items-center justify-between rounded-xl bg-white/15 px-3 py-2.5 text-white backdrop-blur-sm"
+                                    >
+                                        <span className="text-sm font-semibold">Tin nhắn</span>
+                                        <ChatBadge iconClassName="text-white" />
+                                    </Link>
+                                    <Link
+                                        href="/cart"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="flex items-center justify-between rounded-xl bg-white/15 px-3 py-2.5 text-white backdrop-blur-sm"
+                                    >
+                                        <span className="text-sm font-semibold">Giỏ hàng</span>
+                                        <Badge count={cart?.cartItems?.length || 0} size="small">
+                                            <MdOutlineShoppingCart className="text-lg text-white" />
+                                        </Badge>
+                                    </Link>
+                                </div>
+
+                                <div className="rounded-2xl bg-white/12 p-3 backdrop-blur-sm border border-white/20">
+                                    <div className="flex items-center gap-2 text-white mb-2.5">
+                                        <BiCategory className="text-lg" />
+                                        <span className="text-sm font-semibold">Danh mục nổi bật</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {parentCategories.slice(0, 8).map((cat) => (
+                                            <Link
+                                                key={cat._id}
+                                                href={`/collection/${cat.slug}`}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className="rounded-lg bg-white text-slate-700 px-3 py-2 text-sm font-medium hover:bg-blue-50 transition-colors"
+                                            >
+                                                {cat.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 rounded-2xl bg-white/10 border border-white/20 p-3 text-sm text-blue-50 space-y-2">
+                                    <p className="flex items-center gap-2"><FaStore className="text-blue-100" /> Cửa hàng gần bạn</p>
+                                    <p className="flex items-center gap-2"><IoDocumentOutline className="text-blue-100" /> Tra cứu đơn hàng</p>
+                                    <p className="flex items-center gap-2"><FaPhoneAlt className="text-blue-100" /> 1800 2097</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -512,24 +557,6 @@ function AuthSection({
                 <Link href="/profile/detail" className="flex items-center gap-2">
                     <UserOutlined />
                     <span>Thông tin cá nhân</span>
-                </Link>
-            ),
-        },
-        {
-            key: 'password',
-            label: (
-                <Link href="/profile/password" className="flex items-center gap-2">
-                    <CloudSyncOutlined />
-                    <span>Thay đổi mật khẩu</span>
-                </Link>
-            ),
-        },
-        {
-            key: 'address',
-            label: (
-                <Link href="/profile/address" className="flex items-center gap-2">
-                    <CarFilled />
-                    <span>Thông tin địa chỉ</span>
                 </Link>
             ),
         },
@@ -609,14 +636,14 @@ function AuthSection({
 }
 
 // Chat Badge with unread count
-function ChatBadge() {
+function ChatBadge({ iconClassName = "text-[#3b82f6]" }: { iconClassName?: string }) {
     const { user } = useAuthUser();
     const { data } = useUnreadCount(user?._id);
     const count = data?.unreadCount || 0;
 
     return (
         <Badge count={count} size="small" offset={[2, -2]}>
-            <MdOutlineChatBubbleOutline className="text-xl text-[#3b82f6]" />
+            <MdOutlineChatBubbleOutline className={`text-xl ${iconClassName}`} />
         </Badge>
     );
 }

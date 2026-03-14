@@ -33,9 +33,11 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
             <h2 className='italic font-semibold text-lg'>
               {collapsed ? "" : "Arisu"}
             </h2>
-            <Button variant='outlined' color='blue' onClick={() => setCollapsed(!collapsed)} className={collapsed ? "ml-2" : "ml-15"}>
-              {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            </Button>
+            <div>
+              <Button variant='outlined' color='blue' onClick={() => setCollapsed(!collapsed)} className={collapsed ? "" : "ml-32"}>
+                {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              </Button>
+            </div>
           </div>
           <div className="flex justify-center gap-3 items-center">
             <div className='relative cursor-pointer'>

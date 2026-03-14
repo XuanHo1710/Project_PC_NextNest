@@ -298,7 +298,7 @@ export default function HomeClient() {
                             {brands.data.map((brand) => (
                                 <div key={brand._id} className="px-2">
                                     <Link
-                                        href={`/collection/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
+                                        href={`/brand/${brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-')}`}
                                         className="group block"
                                     >
                                         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex flex-col items-center text-center

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import {
     Table, Input, Button, Tag, Space, Popconfirm, Image, Tooltip, Pagination,
     Modal, Form, Select, message, InputNumber, Spin, Tabs, Divider, Card, Badge,
@@ -69,10 +69,6 @@ export default function MyProductsPage() {
     const [search, setSearch] = useState("");
     const [searchInput, setSearchInput] = useState("");
 
-    // Variants map for table display
-    const [variantsMap, setVariantsMap] = useState<Record<string, IProductVariant[]>>({});
-    const [loadingTableVariants, setLoadingTableVariants] = useState(false);
-
     // Edit modal
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
@@ -108,29 +104,7 @@ export default function MyProductsPage() {
     const activeCount = products.filter((p) => p.status === "ACTIVE").length;
     const inactiveCount = products.filter((p) => p.status === "INACTIVE").length;
 
-    // Fetch variants for table display
-    useEffect(() => {
-        if (products.length === 0) { setVariantsMap({}); return; }
-        setLoadingTableVariants(true);
-        Promise.all(
-            products.map((p) =>
-                productManageClientService.getVariantsByProduct(p._id)
-                    .then((res) => ({ id: p._id, variants: ((res as any)?.data || []) as IProductVariant[] }))
-                    .catch(() => ({ id: p._id, variants: [] as IProductVariant[] })),
-            ),
-        ).then((results) => {
-            const map: Record<string, IProductVariant[]> = {};
-            results.forEach((r) => { map[r.id] = r.variants; });
-            setVariantsMap(map);
-            setLoadingTableVariants(false);
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data]);
-
-    const outOfStockCount = products.filter((p) => {
-        const variants = variantsMap[p._id] || [];
-        return variants.reduce((sum, v) => sum + (v.stock || 0), 0) === 0;
-    }).length;
+    const outOfStockCount = products.filter((p) => (p.totalStock || 0) === 0).length;
 
     const handleSearch = () => { setSearch(searchInput); setPage(1); };
 
@@ -452,7 +426,7 @@ export default function MyProductsPage() {
         {
             title: "Ảnh", key: "image", width: 70,
             render: (_, record) => {
-                const img = (variantsMap[record._id] || []).flatMap((v) => v.images || []).find(Boolean);
+                const img = record.defaultVariant?.images?.[0];
                 return img ? (
                     <Image src={img} alt={record.name} width={50} height={50}
                         style={{ objectFit: "cover", borderRadius: 8 }}
@@ -460,7 +434,7 @@ export default function MyProductsPage() {
                     />
                 ) : (
                     <div className="w-[50px] h-[50px] bg-gray-50 rounded-lg flex items-center justify-center border border-dashed border-gray-200">
-                        {loadingTableVariants ? <Spin size="small" /> : <PictureOutlined className="text-gray-300" />}
+                        <PictureOutlined className="text-gray-300" />
                     </div>
                 );
             },
@@ -488,8 +462,8 @@ export default function MyProductsPage() {
         {
             title: "Tồn kho", key: "stock", width: 80, align: "center",
             render: (_, record) => {
-                const total = (variantsMap[record._id] || []).reduce((s, v) => s + (v.stock || 0), 0);
-                return loadingTableVariants ? <Spin size="small" /> : (
+                const total = record.totalStock || 0;
+                return (
                     <Badge count={total} overflowCount={9999} showZero
                         style={{ backgroundColor: total === 0 ? "#ef4444" : "#22c55e", fontSize: 11 }} />
                 );

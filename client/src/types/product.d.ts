@@ -99,6 +99,15 @@ export interface IProduct {
   avgRating?: number;
   createdBy?: string | ICreatorInfo;
   totalStock?: number;
+  defaultVariant?: {
+    _id: string;
+    sku: string;
+    price: number;
+    discount: number;
+    images: string[];
+    combination: Record<string, string>;
+    stock?: number;
+  };
   createdAt?: string;
   updatedAt?: string;
   isDeleted?: boolean;

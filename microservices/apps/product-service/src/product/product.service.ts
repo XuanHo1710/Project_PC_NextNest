@@ -119,6 +119,100 @@ export class ProductService {
     };
   }
 
+  /**
+   * Batch-enrich product list with defaultVariant and totalStock to avoid N+1 queries.
+   */
+  private async enrichProductsWithVariantData(products: any[]) {
+    if (!products || products.length === 0) return [];
+
+    const productIds = products.map((p) => p._id);
+    const defaultVariantIds = Array.from(
+      new Set(
+        products
+          .map((p) => p.defaultProductVariantId?.toString())
+          .filter(Boolean),
+      ),
+    ).map((id) => new Types.ObjectId(id));
+
+    const [defaultVariants, firstVariantsByProduct, stockAgg] =
+      await Promise.all([
+        defaultVariantIds.length > 0
+          ? this.productVariantModel
+              .find({ _id: { $in: defaultVariantIds }, isDeleted: false })
+              .lean()
+              .exec()
+          : Promise.resolve([]),
+        this.productVariantModel
+          .aggregate([
+            {
+              $match: {
+                isDeleted: false,
+                product: {
+                  $in: productIds.map((id) => new Types.ObjectId(id)),
+                },
+              },
+            },
+            { $sort: { createdAt: 1 } },
+            {
+              $group: {
+                _id: '$product',
+                variant: { $first: '$$ROOT' },
+              },
+            },
+          ])
+          .exec(),
+        this.productVariantModel
+          .aggregate([
+            {
+              $match: {
+                isDeleted: false,
+                product: {
+                  $in: productIds.map((id) => new Types.ObjectId(id)),
+                },
+              },
+            },
+            {
+              $group: {
+                _id: '$product',
+                totalStock: { $sum: '$stock' },
+              },
+            },
+          ])
+          .exec(),
+      ]);
+
+    const defaultVariantMap = new Map(
+      defaultVariants.map((v: any) => [v._id.toString(), v]),
+    );
+    const firstVariantMap = new Map(
+      firstVariantsByProduct.map((v: any) => [v._id.toString(), v.variant]),
+    );
+    const stockMap = new Map(
+      stockAgg.map((s: any) => [s._id.toString(), s.totalStock || 0]),
+    );
+
+    return products.map((product) => {
+      const pid = product._id.toString();
+      const defaultVariantId = product.defaultProductVariantId?.toString();
+      const variant =
+        (defaultVariantId && defaultVariantMap.get(defaultVariantId)) ||
+        firstVariantMap.get(pid);
+
+      if (variant) {
+        product['defaultVariant'] = {
+          ...variant,
+          combination:
+            variant.combination instanceof Map
+              ? Object.fromEntries(variant.combination)
+              : variant.combination,
+        };
+      }
+
+      product['totalStock'] = stockMap.get(pid) || 0;
+      return product;
+    });
+  }
+
   // ============= PRODUCT CRUD =============
   async createProduct(createProductDto: CreateProductDto) {
     console.log('createProductDto', createProductDto);
@@ -178,30 +272,7 @@ export class ProductService {
       this.productModel.countDocuments(query).exec(),
     ]);
 
-    // Populate defaultVariant for each product (same pattern as findAllClientProducts)
-    const items = await Promise.all(
-      products.map(async (product) => {
-        if (product.defaultProductVariantId) {
-          const variant = await this.productVariantModel
-            .findOne({
-              _id: product.defaultProductVariantId,
-              isDeleted: false,
-            })
-            .lean()
-            .exec();
-          if (variant) {
-            product['defaultVariant'] = {
-              ...variant,
-              combination:
-                variant.combination instanceof Map
-                  ? Object.fromEntries(variant.combination)
-                  : variant.combination,
-            };
-          }
-        }
-        return product;
-      }),
-    );
+    const items = await this.enrichProductsWithVariantData(products);
 
     return {
       data: items,
@@ -462,29 +533,7 @@ export class ProductService {
       this.productModel.countDocuments(query).exec(),
     ]);
 
-    const items = await Promise.all(
-      products.map(async (product) => {
-        if (product.defaultProductVariantId) {
-          const variant = await this.productVariantModel
-            .findOne({
-              _id: product.defaultProductVariantId,
-              isDeleted: false,
-            })
-            .lean()
-            .exec();
-          if (variant) {
-            product['defaultVariant'] = {
-              ...variant,
-              combination:
-                variant.combination instanceof Map
-                  ? Object.fromEntries(variant.combination)
-                  : variant.combination,
-            };
-          }
-        }
-        return product;
-      }),
-    );
+    const items = await this.enrichProductsWithVariantData(products);
 
     return {
       data: items,
@@ -520,29 +569,7 @@ export class ProductService {
       this.productModel.countDocuments(query).exec(),
     ]);
 
-    const items = await Promise.all(
-      products.map(async (product) => {
-        if (product.defaultProductVariantId) {
-          const variant = await this.productVariantModel
-            .findOne({
-              _id: product.defaultProductVariantId,
-              isDeleted: false,
-            })
-            .lean()
-            .exec();
-          if (variant) {
-            product['defaultVariant'] = {
-              ...variant,
-              combination:
-                variant.combination instanceof Map
-                  ? Object.fromEntries(variant.combination)
-                  : variant.combination,
-            };
-          }
-        }
-        return product;
-      }),
-    );
+    const items = await this.enrichProductsWithVariantData(products);
 
     return {
       data: items,
@@ -622,66 +649,63 @@ export class ProductService {
     return items;
   }
 
-  // ============= COLLECTION (Category + Brand by Slug) =============
-  async findByCollection(
+  // ============= COLLECTION (Category or Brand by Slug) =============
+  private async findByCollectionCore(
+    collectionType: 'category' | 'brand',
     slug: string,
     page = 1,
     limit = 12,
     sort?: string,
     filters?: { cpu?: string; ram?: string; storage?: string },
   ) {
-    // Find by category slug or brand slug using $or
-    const [category, brand] = await Promise.all([
-      this.categoryModel
+    const query: any = { isDeleted: false, status: 'ACTIVE' };
+    let category: any = null;
+    let brand: any = null;
+    let childCategories: any[] = [];
+
+    if (collectionType === 'category') {
+      category = await this.categoryModel
         .findOne({ slug, isDeleted: { $ne: true } })
         .lean()
-        .exec(),
-      this.brandModel.findOne({ slug, isDeleted: false }).lean().exec(),
-    ]);
+        .exec();
 
-    if (!category && !brand) {
-      throw new NotFoundException(
-        `No category or brand found with slug "${slug}"`,
-      );
-    }
+      if (!category) {
+        throw new NotFoundException(`Category with slug "${slug}" not found`);
+      }
 
-    const query: any = { isDeleted: false, status: 'ACTIVE' };
-    const conditions: any[] = [];
-
-    if (category) {
-      // Check if this is a parent category (has children)
-      const childCategories = await this.categoryModel
+      childCategories = await this.categoryModel
         .find({ parentId: category._id, isDeleted: { $ne: true } })
+        .select('name slug')
         .lean()
         .exec();
 
       if (childCategories.length > 0) {
-        // Parent category → include all children + self
-        const allCategoryIds = [
-          category._id,
-          ...childCategories.map((c) => c._id),
-        ];
-        conditions.push({ category: { $in: allCategoryIds } });
+        query.category = {
+          $in: [category._id, ...childCategories.map((c) => c._id)],
+        };
       } else {
-        // Leaf (child) category → only this category
-        conditions.push({ category: category._id });
+        query.category = category._id;
       }
     }
-    if (brand) conditions.push({ brand: brand._id });
 
-    if (conditions.length > 1) {
-      query.$or = conditions;
-    } else {
-      Object.assign(query, conditions[0]);
+    if (collectionType === 'brand') {
+      brand = await this.brandModel
+        .findOne({ slug, isDeleted: false })
+        .lean()
+        .exec();
+
+      if (!brand) {
+        throw new NotFoundException(`Brand with slug "${slug}" not found`);
+      }
+
+      query.brand = brand._id;
     }
 
-    // Apply CPU/RAM/Storage filters via variant combination matching
     if (filters?.cpu || filters?.ram || filters?.storage) {
       const variantFilter: any = { isDeleted: false };
       const combinationConditions: any[] = [];
 
       if (filters.cpu) {
-        // Match any combination key containing 'cpu' (case-insensitive) with value containing the filter
         combinationConditions.push({
           $or: [
             { [`combination.CPU`]: { $regex: filters.cpu, $options: 'i' } },
@@ -722,12 +746,7 @@ export class ProductService {
                 $options: 'i',
               },
             },
-            {
-              [`combination.SSD`]: {
-                $regex: filters.storage,
-                $options: 'i',
-              },
-            },
+            { [`combination.SSD`]: { $regex: filters.storage, $options: 'i' } },
             {
               [`combination.Ổ cứng`]: {
                 $regex: filters.storage,
@@ -772,30 +791,7 @@ export class ProductService {
       this.productModel.countDocuments(query).exec(),
     ]);
 
-    // Populate defaultVariant for each product
-    const items = await Promise.all(
-      products.map(async (product) => {
-        if (product.defaultProductVariantId) {
-          const variant = await this.productVariantModel
-            .findOne({
-              _id: product.defaultProductVariantId,
-              isDeleted: false,
-            })
-            .lean()
-            .exec();
-          if (variant) {
-            product['defaultVariant'] = {
-              ...variant,
-              combination:
-                variant.combination instanceof Map
-                  ? Object.fromEntries(variant.combination)
-                  : variant.combination,
-            };
-          }
-        }
-        return product;
-      }),
-    );
+    const items = await this.enrichProductsWithVariantData(products);
 
     return {
       data: items,
@@ -808,15 +804,47 @@ export class ProductService {
       collectionInfo: {
         category: category || null,
         brand: brand || null,
-        childCategories: category
-          ? await this.categoryModel
-              .find({ parentId: category._id, isDeleted: { $ne: true } })
-              .select('name slug')
-              .lean()
-              .exec()
-          : [],
+        childCategories,
       },
     };
+  }
+
+  async findByCategorySlug(
+    slug: string,
+    page = 1,
+    limit = 12,
+    sort?: string,
+    filters?: { cpu?: string; ram?: string; storage?: string },
+  ) {
+    return this.findByCollectionCore(
+      'category',
+      slug,
+      page,
+      limit,
+      sort,
+      filters,
+    );
+  }
+
+  async findByBrandSlug(
+    slug: string,
+    page = 1,
+    limit = 12,
+    sort?: string,
+    filters?: { cpu?: string; ram?: string; storage?: string },
+  ) {
+    return this.findByCollectionCore('brand', slug, page, limit, sort, filters);
+  }
+
+  // Backward-compatible alias (legacy route)
+  async findByCollection(
+    slug: string,
+    page = 1,
+    limit = 12,
+    sort?: string,
+    filters?: { cpu?: string; ram?: string; storage?: string },
+  ) {
+    return this.findByCategorySlug(slug, page, limit, sort, filters);
   }
 
   // ============= PRODUCT VARIANT CRUD =============

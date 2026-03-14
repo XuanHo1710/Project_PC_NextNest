@@ -79,7 +79,7 @@ export default function ContentCategory() {
             dataIndex: 'parentName',
             key: 'parentName',
             render: (_, record) => {
-                return <>{record.parentName || 'Không có'}</>;
+                return <>{record.parentName || ''}</>;
             }
         },
         {

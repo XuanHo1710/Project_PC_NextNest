@@ -50,13 +50,13 @@ const columns: ColumnsType<RecentOrder> = [
     {
         title: 'Thanh toán',
         key: 'payment',
-        width: 120,
+        width: 170,
         render: (_: unknown, record: RecentOrder) => (
             <div>
-                <Tag color={record.payment?.type === 'CARD' ? 'blue' : 'gold'}>
+                <Tag className="!mr-2" color={record.payment?.type === 'CARD' ? 'blue' : 'gold'}>
                     {record.payment?.type || 'COD'}
                 </Tag>
-                {record.payment?.isCheckout && <Tag color="green" className="!text-[10px]">Đã TT</Tag>}
+                {record.payment?.isCheckout && <Tag color="green" className="!text-[10px]">Đã thanh toán</Tag>}
             </div>
         ),
     },
