@@ -474,67 +474,69 @@ export default function HeaderClient() {
                 </div>
 
                 {/* Mobile Menu Drawer */}
-                {mobileMenuOpen && (
-                    <div className="md:hidden fixed inset-0 top-[76px] z-40">
-                        <div className="absolute inset-0 bg-slate-900/45" onClick={() => setMobileMenuOpen(false)} />
-                        <div className="absolute inset-x-0 top-0 max-h-[calc(100vh-76px)] overflow-y-auto rounded-t-2xl bg-gradient-to-b from-blue-500 to-blue-600 shadow-2xl border-t border-blue-300/40">
-                            <div className="p-4">
-                                <div className="bg-white/95 rounded-2xl p-3 mb-3 shadow-sm">
-                                    <AuthSection
-                                        handleOpenLogin={() => { setMobileMenuOpen(false); handleOpenLogin(); }}
-                                        handleOpenRegister={() => { setMobileMenuOpen(false); handleOpenRegister(); }}
-                                    />
-                                </div>
+                <div
+                    className={`md:hidden fixed inset-0 top-[76px] z-40 transition-opacity duration-200 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                >
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px]" onClick={() => setMobileMenuOpen(false)} />
+                    <div
+                        className={`absolute inset-x-2 top-2 max-h-[calc(100vh-88px)] overflow-y-auto rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 shadow-2xl border border-blue-300/40 transition-all duration-300 ${mobileMenuOpen ? 'translate-y-0 scale-100' : 'translate-y-4 scale-[0.98]'}`}
+                    >
+                        <div className="p-3">
+                            <div className="bg-white/95 rounded-xl p-2.5 mb-2 shadow-sm">
+                                <AuthSection
+                                    handleOpenLogin={() => { setMobileMenuOpen(false); handleOpenLogin(); }}
+                                    handleOpenRegister={() => { setMobileMenuOpen(false); handleOpenRegister(); }}
+                                />
+                            </div>
 
-                                <div className="grid grid-cols-2 gap-2 mb-3">
-                                    <Link
-                                        href="/chat"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="flex items-center justify-between rounded-xl bg-white/15 px-3 py-2.5 text-white backdrop-blur-sm"
-                                    >
-                                        <span className="text-sm font-semibold">Tin nhắn</span>
-                                        <ChatBadge iconClassName="text-white" />
-                                    </Link>
-                                    <Link
-                                        href="/cart"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="flex items-center justify-between rounded-xl bg-white/15 px-3 py-2.5 text-white backdrop-blur-sm"
-                                    >
-                                        <span className="text-sm font-semibold">Giỏ hàng</span>
-                                        <Badge count={cart?.cartItems?.length || 0} size="small">
-                                            <MdOutlineShoppingCart className="text-lg text-white" />
-                                        </Badge>
-                                    </Link>
-                                </div>
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                                <Link
+                                    href="/chat"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="flex items-center justify-between rounded-lg bg-white/18 px-3 py-2 text-white"
+                                >
+                                    <span className="text-sm font-semibold">Tin nhắn</span>
+                                    <ChatBadge iconClassName="text-white" />
+                                </Link>
+                                <Link
+                                    href="/cart"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="flex items-center justify-between rounded-lg bg-white/18 px-3 py-2 text-white"
+                                >
+                                    <span className="text-sm font-semibold">Giỏ hàng</span>
+                                    <Badge count={cart?.cartItems?.length || 0} size="small">
+                                        <MdOutlineShoppingCart className="text-lg text-white" />
+                                    </Badge>
+                                </Link>
+                            </div>
 
-                                <div className="rounded-2xl bg-white/12 p-3 backdrop-blur-sm border border-white/20">
-                                    <div className="flex items-center gap-2 text-white mb-2.5">
-                                        <BiCategory className="text-lg" />
-                                        <span className="text-sm font-semibold">Danh mục nổi bật</span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {parentCategories.slice(0, 8).map((cat) => (
-                                            <Link
-                                                key={cat._id}
-                                                href={`/collection/${cat.slug}`}
-                                                onClick={() => setMobileMenuOpen(false)}
-                                                className="rounded-lg bg-white text-slate-700 px-3 py-2 text-sm font-medium hover:bg-blue-50 transition-colors"
-                                            >
-                                                {cat.name}
-                                            </Link>
-                                        ))}
-                                    </div>
+                            <div className="rounded-xl bg-white/12 p-3 border border-white/20">
+                                <div className="flex items-center gap-2 text-white mb-2">
+                                    <BiCategory className="text-lg" />
+                                    <span className="text-sm font-semibold">Danh mục nổi bật</span>
                                 </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {parentCategories.slice(0, 8).map((cat) => (
+                                        <Link
+                                            key={cat._id}
+                                            href={`/collection/${cat.slug}`}
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className="rounded-md bg-white text-slate-700 px-3 py-2 text-sm font-medium hover:bg-blue-50 transition-all duration-200"
+                                        >
+                                            {cat.name}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
 
-                                <div className="mt-3 rounded-2xl bg-white/10 border border-white/20 p-3 text-sm text-blue-50 space-y-2">
-                                    <p className="flex items-center gap-2"><FaStore className="text-blue-100" /> Cửa hàng gần bạn</p>
-                                    <p className="flex items-center gap-2"><IoDocumentOutline className="text-blue-100" /> Tra cứu đơn hàng</p>
-                                    <p className="flex items-center gap-2"><FaPhoneAlt className="text-blue-100" /> 1800 2097</p>
-                                </div>
+                            <div className="mt-2 rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-blue-50 space-y-1.5">
+                                <p className="flex items-center gap-2"><FaStore className="text-blue-100" /> Cửa hàng gần bạn</p>
+                                <p className="flex items-center gap-2"><IoDocumentOutline className="text-blue-100" /> Tra cứu đơn hàng</p>
+                                <p className="flex items-center gap-2"><FaPhoneAlt className="text-blue-100" /> 1800 2097</p>
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
             </header>
         </>
     )

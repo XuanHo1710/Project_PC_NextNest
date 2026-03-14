@@ -285,7 +285,7 @@ export default function CollectionPageContent({ mode }: { mode: CollectionMode }
                 )}
             </Drawer>
 
-            <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
+            <div className="md:pt-3 pt-24 bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
                 <div className="mx-5 xl:mx-32">
                     <Breadcrumb items={[...(collectionName ? [{ label: collectionName }] : [])]} />
                 </div>

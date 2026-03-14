@@ -242,10 +242,14 @@ export class ProductService {
     let frontier: Types.ObjectId[] = [new Types.ObjectId(rootCategoryId)];
 
     while (frontier.length > 0) {
+      const frontierStrings = frontier.map((id) => id.toString());
       const children = await this.categoryModel
         .find({
-          parentId: { $in: frontier },
           isDeleted: { $ne: true },
+          $or: [
+            { parentId: { $in: frontier } },
+            { parentId: { $in: frontierStrings } },
+          ],
         })
         .select('_id')
         .lean()
@@ -264,6 +268,10 @@ export class ProductService {
     }
 
     return Array.from(collected).map((id) => new Types.ObjectId(id));
+  }
+
+  private escapeRegex(text: string) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   // ============= PRODUCT CRUD =============
@@ -727,7 +735,13 @@ export class ProductService {
       }
 
       childCategories = await this.categoryModel
-        .find({ parentId: category._id, isDeleted: { $ne: true } })
+        .find({
+          isDeleted: { $ne: true },
+          $or: [
+            { parentId: category._id },
+            { parentId: category._id.toString() },
+          ],
+        })
         .select('name slug')
         .lean()
         .exec();
@@ -735,8 +749,11 @@ export class ProductService {
       const categoryIds = await this.getDescendantCategoryIds(
         new Types.ObjectId(category._id),
       );
+      const categoryIdStrings = categoryIds.map((id) => id.toString());
       query.category =
-        categoryIds.length > 1 ? { $in: categoryIds } : category._id;
+        categoryIds.length > 1
+          ? { $in: [...categoryIds, ...categoryIdStrings] }
+          : { $in: [category._id, category._id.toString()] };
     }
 
     if (collectionType === 'brand') {
@@ -829,9 +846,11 @@ export class ProductService {
     }
 
     const skip = (page - 1) * limit;
-    const [products, total] = await Promise.all([
+
+    let queryToUse = query;
+    let [products, total] = await Promise.all([
       this.productModel
-        .find(query)
+        .find(queryToUse)
         .populate('brand', 'name slug logo')
         .populate('category', 'name slug')
         .sort(sortOption)
@@ -839,8 +858,74 @@ export class ProductService {
         .limit(limit)
         .lean()
         .exec(),
-      this.productModel.countDocuments(query).exec(),
+      this.productModel.countDocuments(queryToUse).exec(),
     ]);
+
+    // Fallback for legacy data: products are sometimes assigned to parent category only.
+    // If current category is child-level and has no result, search in parent subtree by child keyword.
+    if (collectionType === 'category' && category?.parentId && total === 0) {
+      const parentCategory = await this.categoryModel
+        .findOne({ _id: category.parentId, isDeleted: { $ne: true } })
+        .lean()
+        .exec();
+
+      if (parentCategory) {
+        const parentDescendantIds = await this.getDescendantCategoryIds(
+          new Types.ObjectId(parentCategory._id),
+        );
+        const parentDescendantIdStrings = parentDescendantIds.map((id) =>
+          id.toString(),
+        );
+
+        const parentTokens = (parentCategory.name || '')
+          .toLowerCase()
+          .split(/\s+/)
+          .filter(Boolean);
+        const childTokens = (category.name || '')
+          .toLowerCase()
+          .split(/\s+/)
+          .filter(Boolean);
+
+        let keywordTokens = childTokens.filter((token, idx) => {
+          return token !== parentTokens[idx];
+        });
+
+        if (keywordTokens.length === 0) {
+          keywordTokens = childTokens;
+        }
+
+        const fallbackQuery: any = {
+          ...query,
+          category: {
+            $in: [...parentDescendantIds, ...parentDescendantIdStrings],
+          },
+        };
+
+        if (keywordTokens.length > 0) {
+          const tokenRegex = keywordTokens
+            .map((token) => `(?=.*\\b${this.escapeRegex(token)}\\b)`)
+            .join('');
+          fallbackQuery.name = {
+            $regex: `${tokenRegex}.*`,
+            $options: 'i',
+          };
+        }
+
+        queryToUse = fallbackQuery;
+        [products, total] = await Promise.all([
+          this.productModel
+            .find(queryToUse)
+            .populate('brand', 'name slug logo')
+            .populate('category', 'name slug')
+            .sort(sortOption)
+            .skip(skip)
+            .limit(limit)
+            .lean()
+            .exec(),
+          this.productModel.countDocuments(queryToUse).exec(),
+        ]);
+      }
+    }
 
     const items = await this.enrichProductsWithVariantData(products);
 

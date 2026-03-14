@@ -144,7 +144,7 @@ export default function HomeClient() {
                 ogDescription="Hệ thống bán lẻ PC, Laptop, linh kiện chính hãng uy tín với giá tốt nhất. Bảo hành toàn diện, giao hàng nhanh, hỗ trợ trả góp 0%."
                 ogImage="/logo.jpg"
             />
-            <div className="dark:bg-slate-900 md:pt-3 pt-44 py-10 bg-gray-50">
+            <div className="dark:bg-slate-900 md:pt-3 pt-24 py-10 bg-gray-50">
 
                 {/* ============= HERO: Category sidebar + Banner ============= */}
                 <div className="content-header mx-4 sm:mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5">
