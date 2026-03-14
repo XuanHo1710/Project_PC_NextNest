@@ -161,7 +161,7 @@ export default function SelectAttributesStep({
                                 <Card
                                     key={attrId}
                                     size="small"
-                                    className="border-l-4 border-l-blue-500"
+                                    className="border-l-4 !mt-2 border-l-blue-500"
                                     title={
                                         <div className="flex items-center gap-3">
                                             <span className="font-semibold text-gray-800">{attr?.name}</span>
@@ -259,7 +259,7 @@ export default function SelectAttributesStep({
             {/* Variants Preview Summary */}
             {
                 totalVariantsPreview > 0 && (
-                    <Card className="border shadow-sm">
+                    <Card className="border !mt-3 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <span className="text-2xl font-bold text-blue-600">{totalVariantsPreview}</span>
@@ -270,20 +270,13 @@ export default function SelectAttributesStep({
                                     </div>
                                 </div>
                             </div>
-                            {totalVariantsPreview > 100 && (
-                                <Alert
-                                    type="warning"
-                                    message="Số lượng biến thể lớn có thể ảnh hưởng hiệu năng"
-                                    className="m-0"
-                                />
-                            )}
                         </div>
                     </Card>
                 )
             }
 
             {/* Navigation */}
-            <div className="flex justify-between">
+            <div className="flex mt-2 justify-between">
                 <Button
                     size="large"
                     icon={<ArrowLeftOutlined />}

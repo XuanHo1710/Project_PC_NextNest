@@ -344,7 +344,7 @@ export default function ClientCreateProduct() {
             </Card>
 
             {/* Step Content — ProductInfoStep always rendered to keep <Form form={form}> connected */}
-            <div className="step-content">
+            <div className="step-content mt-3">
                 <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>
                     <ProductInfoStep
                         form={form}

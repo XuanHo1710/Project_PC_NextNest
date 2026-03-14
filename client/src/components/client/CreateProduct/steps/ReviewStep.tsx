@@ -137,7 +137,7 @@ export default function ReviewStep({
         {
             title: <span className="text-xs font-semibold">Giá gốc</span>,
             key: 'price',
-            width: 110,
+            width: 140,
             render: (_: unknown, record: VariantRow) => (
                 <span className="text-xs font-medium">
                     {record.price.toLocaleString()}đ
@@ -216,7 +216,7 @@ export default function ReviewStep({
 
             {/* Product Info Summary */}
             <Card
-                className="border shadow-sm"
+                className="border shadow-sm !mt-3"
                 title="Thông tin sản phẩm"
             >
                 <Descriptions
@@ -256,7 +256,7 @@ export default function ReviewStep({
 
             {/* Attributes Summary */}
             <Card
-                className="border shadow-sm"
+                className="border shadow-sm !mt-3"
                 title={`Thuộc tính đã chọn (${selectedAttributes.length})`}
             >
                 <div className="space-y-3">
@@ -297,13 +297,13 @@ export default function ReviewStep({
             </Card>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid !mt-3 grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="border shadow-sm">
                     <Statistic
                         title={<span className="text-gray-500 text-xs">Biến thể hoạt động</span>}
                         value={stats.enabledCount}
                         suffix={<span className="text-sm text-gray-400">/ {stats.totalCount}</span>}
-                        valueStyle={{ fontWeight: 700, fontSize: 28 }}
+                        valueStyle={{ fontWeight: 700, fontSize: 20 }}
                     />
                 </Card>
                 <Card className="border shadow-sm">
@@ -312,8 +312,8 @@ export default function ReviewStep({
                         value={stats.minPrice.toLocaleString()}
                         suffix={
                             stats.minPrice !== stats.maxPrice
-                                ? <span className="text-sm"> — {stats.maxPrice.toLocaleString()}đ</span>
-                                : <span className="text-sm">đ</span>
+                                ? <span className="text-xl"> — {stats.maxPrice.toLocaleString()} đ</span>
+                                : <span className="text-xl"> đ</span>
                         }
                         valueStyle={{ fontWeight: 700, fontSize: 20 }}
                     />
@@ -323,14 +323,16 @@ export default function ReviewStep({
                         title={<span className="text-gray-500 text-xs">Tổng tồn kho</span>}
                         value={stats.totalStock}
                         suffix="sản phẩm"
-                        valueStyle={{ fontWeight: 700, fontSize: 28 }}
+                        valueStyle={{ fontWeight: 700, fontSize: 20 }}
                     />
                 </Card>
                 <Card className="border shadow-sm">
                     <Statistic
                         title={<span className="text-gray-500 text-xs">Tổng giá trị kho</span>}
                         value={stats.totalRevenue.toLocaleString()}
-                        suffix="đ"
+                        suffix={
+                            <span className="text-xl"> đ</span>
+                        }
                         valueStyle={{ fontWeight: 700, fontSize: 20 }}
                     />
                 </Card>
@@ -358,7 +360,7 @@ export default function ReviewStep({
             </Card>
 
             {/* Submit Section */}
-            <Card className="border shadow-sm">
+            <Card className="border !mt-3 shadow-sm">
                 {isReady ? (
                     <Alert
                         type="success"

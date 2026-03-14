@@ -57,7 +57,7 @@ export default function CartClient() {
 
     const { user } = useAuthUser();
 
-    // Query user profile vÃ¡Â»â€ºi TanStack Query
+    // Query user profile với TanStack Query
     const {
         data: profile,
         isLoading: isLoadingProfile
@@ -68,15 +68,15 @@ export default function CartClient() {
             return await accountGuestService.getProfile();
         },
         enabled: !!user?.id,
-        staleTime: 5 * 60 * 1000, // 5 phÃƒÂºt
+        staleTime: 5 * 60 * 1000, // 5 phút
         retry: 2,
         refetchOnWindowFocus: false
     });
 
-    // LÃ¡ÂºÂ¥y saved addresses tÃ¡Â»Â« profile
+    // Lấy saved addresses từ profile
     const savedAddresses = profile?.addresses || [];
 
-    // Stock check Ã¢â‚¬â€ verify stock availability for all cart items on load
+    // Stock check - verify stock availability for all cart items on load
     const stockCheckItems = cart?.cartItems
         .filter(item => item.variant?._id)
         .map(item => ({ variantId: item.variant._id, quantity: item.quantity })) || [];
@@ -89,7 +89,7 @@ export default function CartClient() {
         refetchOnWindowFocus: true,
     });
 
-    // Map variantId Ã¢â€ â€™ stock check info for quick lookup
+    // Map variantId -> stock check info for quick lookup
     const stockMap = new Map<string, StockCheckItem>();
     if (stockCheckResult) {
         for (const item of stockCheckResult) {
@@ -101,7 +101,7 @@ export default function CartClient() {
 
     const [form] = Form.useForm();
 
-    // Update form values khi profile Ã„â€˜Ã†Â°Ã¡Â»Â£c load
+    // Update form values khi profile được load
     useEffect(() => {
         if (profile) {
             // Find default address or first address
@@ -130,7 +130,7 @@ export default function CartClient() {
                 setProvinces(data);
             } catch (error) {
                 console.error('Error fetching provinces:', error);
-                toast.error('KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ£i dÃ¡Â»Â¯ liÃ¡Â»â€¡u tÃ¡Â»â€°nh/thÃƒÂ nh phÃ¡Â»â€˜');
+                toast.error('Không thể lấy được địa chỉ');
             } finally {
                 setLoading(prev => ({ ...prev, provinces: false }));
             }
@@ -150,7 +150,7 @@ export default function CartClient() {
             setSelectedWard(undefined);
         } catch (error) {
             console.error('Error fetching districts:', error);
-            toast.error('KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ£i dÃ¡Â»Â¯ liÃ¡Â»â€¡u quÃ¡ÂºÂ­n/huyÃ¡Â»â€¡n');
+            toast.error('Không thể lấy được địa chỉ');
         } finally {
             setLoading(prev => ({ ...prev, districts: false }));
         }
@@ -165,7 +165,7 @@ export default function CartClient() {
             setSelectedWard(undefined);
         } catch (error) {
             console.error('Error fetching wards:', error);
-            toast.error('KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ£i dÃ¡Â»Â¯ liÃ¡Â»â€¡u phÃ†Â°Ã¡Â»Âng/xÃƒÂ£');
+            toast.error('Không thể lấy được địa chỉ');
         } finally {
             setLoading(prev => ({ ...prev, wards: false }));
         }
@@ -230,44 +230,30 @@ export default function CartClient() {
     const handlePlaceOrder = async (data: OrderFormData) => {
         console.log(data);
 
-        // Validate giÃ¡Â»Â hÃƒÂ ng khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c trÃ¡Â»â€˜ng
         if (!cart || cart.cartItems.length === 0) {
-            toast.error("GiÃ¡Â»Â hÃƒÂ ng trÃ¡Â»â€˜ng! Vui lÃƒÂ²ng thÃƒÂªm sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m Ã„â€˜Ã¡Â»Æ’ Ã„â€˜Ã¡ÂºÂ·t hÃƒÂ ng.");
+            toast.error("Giỏ hàng trống! Vui lòng thêm sản phẩm để đặt hàng.");
             return;
         }
 
         // Validate stock availability
         if (hasStockIssues) {
-            toast.error("MÃ¡Â»â„¢t sÃ¡Â»â€˜ sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m trong giÃ¡Â»Â hÃƒÂ ng Ã„â€˜ÃƒÂ£ hÃ¡ÂºÂ¿t hÃƒÂ ng hoÃ¡ÂºÂ·c khÃƒÂ´ng Ã„â€˜Ã¡Â»Â§ sÃ¡Â»â€˜ lÃ†Â°Ã¡Â»Â£ng. Vui lÃƒÂ²ng kiÃ¡Â»Æ’m tra lÃ¡ÂºÂ¡i!");
+            toast.error("Một số sản phẩm trong giỏ hàng đã hết hàng hoặc không đủ số lượng. Vui lòng kiểm tra lại!");
             return;
         }
 
-        // Validate tÃ¡Â»â€¢ng tiÃ¡Â»Ân phÃ¡ÂºÂ£i > 0 vÃƒÂ  >= Ã„â€˜Ã†Â¡n hÃƒÂ ng tÃ¡Â»â€˜i thiÃ¡Â»Æ’u
         const totalAmount = calculateTotal();
-        // const minOrderAmount = 100000; // 100k VND
 
-        // if (totalAmount <= 0) {
-        //     toast.error("TÃ¡Â»â€¢ng tiÃ¡Â»Ân Ã„â€˜Ã†Â¡n hÃƒÂ ng khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡!");
-        //     return;
-        // }
-
-        // if (totalAmount < minOrderAmount) {
-        //     toast.error(`Ã„ÂÃ†Â¡n hÃƒÂ ng tÃ¡Â»â€˜i thiÃ¡Â»Æ’u ${minOrderAmount.toLocaleString()}Ã„â€˜! HiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i: ${totalAmount.toLocaleString()}Ã„â€˜`);
-        //     return;
-        // }
-
-        // Validate Ã„â€˜Ã¡Â»â€¹a chÃ¡Â»â€° Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§
         if (!data.province || !data.district || !data.ward || !data.detailAddress) {
-            toast.error("Vui lÃƒÂ²ng nhÃ¡ÂºÂ­p Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§ thÃƒÂ´ng tin Ã„â€˜Ã¡Â»â€¹a chÃ¡Â»â€° giao hÃƒÂ ng!");
+            toast.error("Vui lòng điền thông tin đầy đủ trước khi đặt hàng!");
             return;
         }
 
-        // TÃƒÂ¬m tÃƒÂªn province, district, ward tÃ¡Â»Â« code
+        // Tìm tên province, district, ward từ code
         const provinceName = provinces.find(p => p.code === data.province)?.name || '';
         const districtName = districts.find(d => d.code === data.district)?.name || '';
         const wardName = wards.find(w => w.code === data.ward)?.name || '';
 
-        // TÃ¡ÂºÂ¡o Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§ Ã„â€˜Ã¡Â»â€¹a chÃ¡Â»â€°
+        // Tạo đầy đủ địa chỉ
         const fullAddress = `${data.detailAddress}, ${wardName}, ${districtName}, ${provinceName}`;
 
         // Prepare order data
@@ -306,24 +292,24 @@ export default function CartClient() {
     return (
         <>
             <DynamicMetadata
-                title={`GiÃ¡Â»Â hÃƒÂ ng cÃ¡Â»Â§a bÃ¡ÂºÂ¡n - PC Store`}
-                description={`Xem lÃ¡ÂºÂ¡i giÃ¡Â»Â hÃƒÂ ng vÃƒÂ  hoÃƒÂ n tÃ¡ÂºÂ¥t Ã„â€˜Ã†Â¡n hÃƒÂ ng cÃ¡Â»Â§a bÃ¡ÂºÂ¡n tÃ¡ÂºÂ¡i PC Store. MiÃ¡Â»â€¦n phÃƒÂ­ vÃ¡ÂºÂ­n chuyÃ¡Â»Æ’n cho Ã„â€˜Ã†Â¡n hÃƒÂ ng trÃƒÂªn 2 triÃ¡Â»â€¡u. HÃ¡Â»â€” trÃ¡Â»Â£ trÃ¡ÂºÂ£ gÃƒÂ³p 0%.`}
-                keywords="giÃ¡Â»Â hÃƒÂ ng, thanh toÃƒÂ¡n, mua hÃƒÂ ng, Ã„â€˜Ã†Â¡n hÃƒÂ ng, pc store"
-                ogTitle={`GiÃ¡Â»Â hÃƒÂ ng`}
-                ogDescription="HoÃƒÂ n tÃ¡ÂºÂ¥t Ã„â€˜Ã†Â¡n hÃƒÂ ng ngay Ã„â€˜Ã¡Â»Æ’ nhÃ¡ÂºÂ­n Ã†Â°u Ã„â€˜ÃƒÂ£i miÃ¡Â»â€¦n phÃƒÂ­ vÃ¡ÂºÂ­n chuyÃ¡Â»Æ’n vÃƒÂ  trÃ¡ÂºÂ£ gÃƒÂ³p 0%"
+                title={`Giỏ hàng của bạn - PC Store`}
+                description={`Xem lại giỏ hàng và hoàn tất đơn hàng của bạn tại PC Store. Miễn phí vận chuyển cho đơn hàng trên 2 triệu. Hỗ trợ trả góp 0%.`}
+                keywords="giỏ hàng, thanh toán, mua hàng, đơn hàng, pc store"
+                ogTitle={`Giỏ hàng`}
+                ogDescription="Hoàn tất đơn hàng ngay để nhận ưu đãi miễn phí vận chuyển và trả góp 0%"
             />
             <div className="md:pt-4 pt-52 pb-10 dark:bg-slate-900 min-h-screen bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     {/* Breadcrumb */}
-                    <Breadcrumb items={[{ label: 'GiÃ¡Â»Â hÃƒÂ ng' }]} />
+                    <Breadcrumb items={[{ label: 'Giỏ hàng' }]} />
 
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
                         <h1 className="font-bold text-2xl lg:text-3xl text-gray-800 dark:text-white flex items-center gap-3">
                             <ShoppingCartOutlined className="text-blue-500" />
-                            GiÃ¡Â»Â hÃƒÂ ng
+                            Giỏ hàng
                             <span className="text-base font-normal text-gray-400">
-                                ({cart?.cartItems.length || 0} sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m)
+                                ({cart?.cartItems.length || 0} sản phẩm)
                             </span>
                         </h1>
                     </div>
@@ -337,9 +323,9 @@ export default function CartClient() {
                                     <div className="mb-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 flex items-start gap-3">
                                         <WarningOutlined className="text-orange-500 text-lg mt-0.5" />
                                         <div>
-                                            <p className="font-semibold text-orange-700 dark:text-orange-400 text-sm">MÃ¡Â»â„¢t sÃ¡Â»â€˜ sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m Ã„â€˜ÃƒÂ£ thay Ã„â€˜Ã¡Â»â€¢i tÃ¡Â»â€œn kho</p>
+                                            <p className="font-semibold text-orange-700 dark:text-orange-400 text-sm">Một số sản phẩm đã thay đổi tồn kho</p>
                                             <p className="text-xs text-orange-600 dark:text-orange-300 mt-1">
-                                                Vui lÃƒÂ²ng kiÃ¡Â»Æ’m tra lÃ¡ÂºÂ¡i sÃ¡Â»â€˜ lÃ†Â°Ã¡Â»Â£ng hoÃ¡ÂºÂ·c xÃƒÂ³a sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m hÃ¡ÂºÂ¿t hÃƒÂ ng trÃ†Â°Ã¡Â»â€ºc khi Ã„â€˜Ã¡ÂºÂ·t hÃƒÂ ng.
+                                                Vui lòng kiểm tra lại số lượng hoặc xóa sản phẩm hết hàng trước khi đặt hàng.
                                             </p>
                                         </div>
                                     </div>
@@ -348,10 +334,10 @@ export default function CartClient() {
                                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
                                     {/* Cart Header */}
                                     <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-750 border-b border-gray-100 dark:border-gray-700 text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                        <div className="col-span-6">SÃ¡ÂºÂ£n phÃ¡ÂºÂ©m</div>
-                                        <div className="col-span-2 text-center">Ã„ÂÃ†Â¡n giÃƒÂ¡</div>
-                                        <div className="col-span-2 text-center">SÃ¡Â»â€˜ lÃ†Â°Ã¡Â»Â£ng</div>
-                                        <div className="col-span-2 text-right">ThÃƒÂ nh tiÃ¡Â»Ân</div>
+                                        <div className="col-span-6">Sản phẩm</div>
+                                        <div className="col-span-2 text-center">Đơn giá</div>
+                                        <div className="col-span-2 text-center">Số lượng</div>
+                                        <div className="col-span-2 text-right">Thành tiền</div>
                                     </div>
 
                                     {/* Cart Items */}
@@ -371,7 +357,7 @@ export default function CartClient() {
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <span className="text-gray-600 dark:text-gray-300 font-medium">
-                                                    TÃ¡Â»â€¢ng ({cart.cartItems.length} sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m):
+                                                    Tổng ({cart.cartItems.length} sản phẩm):
                                                 </span>
                                             </div>
                                             <div className="text-right">
@@ -380,14 +366,14 @@ export default function CartClient() {
                                                 </p>
                                                 {calculateTotal() >= 2000000 && (
                                                     <p className="text-xs text-green-600 mt-0.5 font-medium">
-                                                        <CarOutlined className="mr-1" />MiÃ¡Â»â€¦n phÃƒÂ­ vÃ¡ÂºÂ­n chuyÃ¡Â»Æ’n
+                                                        <CarOutlined className="mr-1" />Miễn phí vận chuyển
                                                     </p>
                                                 )}
                                             </div>
                                         </div>
                                         {/* {calculateTotal() < 100000 && (
                                             <div className="mt-2 text-xs text-orange-600 bg-orange-50 dark:bg-orange-900/20 px-3 py-1.5 rounded-md">
-                                                Ã„ÂÃ†Â¡n hÃƒÂ ng tÃ¡Â»â€˜i thiÃ¡Â»Æ’u 100.000Ã„â€˜. ThÃƒÂªm {formatCurrencyVND(100000 - calculateTotal())} nÃ¡Â»Â¯a Ã„â€˜Ã¡Â»Æ’ Ã„â€˜Ã¡ÂºÂ·t hÃƒÂ ng.
+                                                Đơn hàng tối thiểu 100.000đ. Thêm {formatCurrencyVND(100000 - calculateTotal())} nữa để đặt hàng.
                                             </div>
                                         )} */}
                                     </div>
@@ -397,15 +383,15 @@ export default function CartClient() {
                                 <div className="grid grid-cols-3 gap-3 mt-4">
                                     <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
                                         <SafetyCertificateOutlined className="text-green-500 text-lg" />
-                                        <span className="text-xs text-gray-600 dark:text-gray-300">BÃ¡ÂºÂ£o hÃƒÂ nh chÃƒÂ­nh hÃƒÂ£ng</span>
+                                        <span className="text-xs text-gray-600 dark:text-gray-300">Bảo hành chính hãng</span>
                                     </div>
                                     <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
                                         <CarOutlined className="text-blue-500 text-lg" />
-                                        <span className="text-xs text-gray-600 dark:text-gray-300">Giao hÃƒÂ ng toÃƒÂ n quÃ¡Â»â€˜c</span>
+                                        <span className="text-xs text-gray-600 dark:text-gray-300">Giao hàng toàn quốc</span>
                                     </div>
                                     <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
                                         <CustomerServiceOutlined className="text-orange-500 text-lg" />
-                                        <span className="text-xs text-gray-600 dark:text-gray-300">HÃ¡Â»â€” trÃ¡Â»Â£ 24/7</span>
+                                        <span className="text-xs text-gray-600 dark:text-gray-300">Hỗ trợ 24/7</span>
                                     </div>
                                 </div>
                             </div>
@@ -416,7 +402,7 @@ export default function CartClient() {
                                     <div className="p-5">
                                         <h2 className="font-bold text-lg text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                                             <i className="fa-solid fa-clipboard-list text-blue-500"></i>
-                                            ThÃƒÂ´ng tin Ã„â€˜Ã¡ÂºÂ·t hÃƒÂ ng
+                                            Thông tin đặt hàng
                                         </h2>
 
                                         {/* User Profile Badge */}
@@ -442,8 +428,8 @@ export default function CartClient() {
                                         ) : (
                                             <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 mb-4 border border-amber-200 dark:border-amber-800">
                                                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                                                    <Link href="#" className="text-blue-500 font-semibold hover:underline">Ã„ÂÃ„Æ’ng nhÃ¡ÂºÂ­p</Link>
-                                                    {" "}Ã„â€˜Ã¡Â»Æ’ tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng Ã„â€˜iÃ¡Â»Ân thÃƒÂ´ng tin vÃƒÂ  sÃ¡Â»Â­ dÃ¡Â»Â¥ng Ã„â€˜Ã¡Â»â€¹a chÃ¡Â»â€° Ã„â€˜ÃƒÂ£ lÃ†Â°u.
+                                                    <Link href="#" className="text-blue-500 font-semibold hover:underline">Đăng nhập</Link>
+                                                    {" "}để tự động điền thông tin và sử dụng địa chỉ đã lưu.
                                                 </p>
                                             </div>
                                         )}
@@ -467,26 +453,26 @@ export default function CartClient() {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <Form.Item
                                                     name='fullname'
-                                                    label={<span className="text-xs font-medium">HÃ¡Â»Â vÃƒÂ  tÃƒÂªn</span>}
+                                                    label={<span className="text-xs font-medium">Họ và tên</span>}
                                                     rules={[
-                                                        { required: true, message: 'Vui lÃƒÂ²ng nhÃ¡ÂºÂ­p hÃ¡Â»Â tÃƒÂªn!' },
-                                                        { min: 2, message: 'TÃ¡Â»â€˜i thiÃ¡Â»Æ’u 2 kÃƒÂ½ tÃ¡Â»Â±!' },
-                                                        { max: 50, message: 'TÃ¡Â»â€˜i Ã„â€˜a 50 kÃƒÂ½ tÃ¡Â»Â±!' },
+                                                        { required: true, message: 'Vui lòng nhập họ tên!' },
+                                                        { min: 2, message: 'Tối thiểu 2 ký tự!' },
+                                                        { max: 50, message: 'Tối đa 50 ký tự!' },
                                                     ]}
                                                     className="!mb-3"
                                                 >
-                                                    <Input placeholder="NhÃ¡ÂºÂ­p hÃ¡Â»Â vÃƒÂ  tÃƒÂªn" className="!py-2" />
+                                                    <Input placeholder="Nhập họ và tên" className="!py-2" />
                                                 </Form.Item>
                                                 <Form.Item
                                                     name='phone'
-                                                    label={<span className="text-xs font-medium">SÃ¡Â»â€˜ Ã„â€˜iÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i</span>}
+                                                    label={<span className="text-xs font-medium">Số điện thoại</span>}
                                                     rules={[
-                                                        { required: true, message: 'Vui lÃƒÂ²ng nhÃ¡ÂºÂ­p SÃ„ÂT!' },
-                                                        { pattern: /^(0|84|\+84)[1-9][0-9]{8,9}$/, message: 'SÃ„ÂT khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡!' },
+                                                        { required: true, message: 'Vui lòng nhập SĐT!' },
+                                                        { pattern: /^(0|84|\+84)[1-9][0-9]{8,9}$/, message: 'SĐT không hợp lệ!' },
                                                     ]}
                                                     className="!mb-3"
                                                 >
-                                                    <Input placeholder="NhÃ¡ÂºÂ­p sÃ¡Â»â€˜ Ã„â€˜iÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i" className="!py-2" />
+                                                    <Input placeholder="Nhập số điện thoại" className="!py-2" />
                                                 </Form.Item>
                                             </div>
 
@@ -494,12 +480,12 @@ export default function CartClient() {
                                                 name='email'
                                                 label={<span className="text-xs font-medium">Email</span>}
                                                 rules={[
-                                                    { required: true, message: 'Vui lÃƒÂ²ng nhÃ¡ÂºÂ­p email!' },
-                                                    { type: 'email', message: 'Email khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡!' },
+                                                    { required: true, message: 'Vui lòng nhập email!' },
+                                                    { type: 'email', message: 'Email không hợp lệ!' },
                                                 ]}
                                                 className="!mb-3"
                                             >
-                                                <Input placeholder="NhÃ¡ÂºÂ­p email" className="!py-2" />
+                                                <Input placeholder="Nhập email" className="!py-2" />
                                             </Form.Item>
 
                                             <Divider className="!my-3" />
@@ -514,8 +500,8 @@ export default function CartClient() {
                                                         return (
                                                             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-3 border border-blue-200 dark:border-blue-800">
                                                                 <div className="flex items-center gap-2 mb-1">
-                                                                    <span className="text-sm">Ã°Å¸ÂÂ </span>
-                                                                    <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Ã„ÂÃ¡Â»â€¹a chÃ¡Â»â€° mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh</span>
+                                                                    <span className="text-sm">🏠</span>
+                                                                    <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Địa chỉ mặc định</span>
                                                                     <span className="ml-auto text-xs bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-full">{defaultAddr.label}</span>
                                                                 </div>
                                                                 <p className="text-xs text-gray-600 dark:text-gray-300">{defaultAddr.detailAddress}</p>
@@ -524,18 +510,18 @@ export default function CartClient() {
                                                     })()}
                                                     <Form.Item
                                                         name="savedAddress"
-                                                        label={<span className="text-xs font-medium">Ã„ÂÃ¡Â»â€¹a chÃ¡Â»â€° giao hÃƒÂ ng</span>}
+                                                        label={<span className="text-xs font-medium">Địa chỉ giao hàng</span>}
                                                         className="!mb-3"
                                                     >
                                                         <Select
-                                                            placeholder="ChÃ¡Â»Ân Ã„â€˜Ã¡Â»â€¹a chÃ¡Â»â€° hoÃ¡ÂºÂ·c nhÃ¡ÂºÂ­p mÃ¡Â»â€ºi"
+                                                            placeholder="Chọn địa chỉ hoặc nhập mới"
                                                             onChange={handleSavedAddressChange}
                                                             className="w-full"
                                                         >
-                                                            <Select.Option value="new">+ NhÃ¡ÂºÂ­p Ã„â€˜Ã¡Â»â€¹a chÃ¡Â»â€° mÃ¡Â»â€ºi</Select.Option>
+                                                            <Select.Option value="new">+ Nhập địa chỉ mới</Select.Option>
                                                             {savedAddresses.map((address) => (
                                                                 <Select.Option key={address._id} value={address._id}>
-                                                                    {address.isDefault ? 'Ã°Å¸ÂÂ ' : 'Ã°Å¸â€œÂ'} {address.label} - {address.detailAddress}
+                                                                    {address.isDefault ? '🏠' : '📍'} {address.label} - {address.detailAddress}
                                                                 </Select.Option>
                                                             ))}
                                                         </Select>
@@ -546,12 +532,12 @@ export default function CartClient() {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <Form.Item
                                                     name="province"
-                                                    label={<span className="text-xs font-medium">TÃ¡Â»â€°nh/ThÃƒÂ nh phÃ¡Â»â€˜</span>}
-                                                    rules={[{ required: true, message: 'ChÃ¡Â»Ân tÃ¡Â»â€°nh/TP!' }]}
+                                                    label={<span className="text-xs font-medium">Tỉnh/Thành phố</span>}
+                                                    rules={[{ required: true, message: 'Chọn tỉnh/TP!' }]}
                                                     className="!mb-3"
                                                 >
                                                     <Select
-                                                        placeholder="ChÃ¡Â»Ân tÃ¡Â»â€°nh/TP"
+                                                        placeholder="Chọn tỉnh/TP"
                                                         loading={loading.provinces}
                                                         onChange={handleProvinceChange}
                                                         value={selectedProvince}
@@ -569,12 +555,12 @@ export default function CartClient() {
                                                 </Form.Item>
                                                 <Form.Item
                                                     name="district"
-                                                    label={<span className="text-xs font-medium">QuÃ¡ÂºÂ­n/HuyÃ¡Â»â€¡n</span>}
-                                                    rules={[{ required: true, message: 'ChÃ¡Â»Ân quÃ¡ÂºÂ­n/huyÃ¡Â»â€¡n!' }]}
+                                                    label={<span className="text-xs font-medium">Quận/Huyện</span>}
+                                                    rules={[{ required: true, message: 'Chọn quận/huyện!' }]}
                                                     className="!mb-3"
                                                 >
                                                     <Select
-                                                        placeholder="ChÃ¡Â»Ân quÃ¡ÂºÂ­n/huyÃ¡Â»â€¡n"
+                                                        placeholder="Chọn quận/huyện"
                                                         loading={loading.districts}
                                                         onChange={handleDistrictChange}
                                                         value={selectedDistrict}
@@ -596,12 +582,12 @@ export default function CartClient() {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <Form.Item
                                                     name="ward"
-                                                    label={<span className="text-xs font-medium">PhÃ†Â°Ã¡Â»Âng/XÃƒÂ£</span>}
-                                                    rules={[{ required: true, message: 'ChÃ¡Â»Ân phÃ†Â°Ã¡Â»Âng/xÃƒÂ£!' }]}
+                                                    label={<span className="text-xs font-medium">Phường/Xã</span>}
+                                                    rules={[{ required: true, message: 'Chọn phường/xã!' }]}
                                                     className="!mb-3"
                                                 >
                                                     <Select
-                                                        placeholder="ChÃ¡Â»Ân phÃ†Â°Ã¡Â»Âng/xÃƒÂ£"
+                                                        placeholder="Chọn phường/xã"
                                                         loading={loading.wards}
                                                         onChange={handleWardChange}
                                                         value={selectedWard}
@@ -620,25 +606,25 @@ export default function CartClient() {
                                                 </Form.Item>
                                                 <Form.Item
                                                     name='detailAddress'
-                                                    label={<span className="text-xs font-medium">Ã„ÂÃ¡Â»â€¹a chÃ¡Â»â€° cÃ¡Â»Â¥ thÃ¡Â»Æ’</span>}
+                                                    label={<span className="text-xs font-medium">Địa chỉ cụ thể</span>}
                                                     rules={[
-                                                        { required: true, message: 'NhÃ¡ÂºÂ­p Ã„â€˜Ã¡Â»â€¹a chÃ¡Â»â€°!' },
-                                                        { min: 5, message: 'TÃ¡Â»â€˜i thiÃ¡Â»Æ’u 5 kÃƒÂ½ tÃ¡Â»Â±!' },
+                                                        { required: true, message: 'Nhập địa chỉ!' },
+                                                        { min: 5, message: 'Tối thiểu 5 ký tự!' },
                                                     ]}
                                                     className="!mb-3"
                                                 >
-                                                    <Input placeholder="SÃ¡Â»â€˜ nhÃƒÂ , tÃƒÂªn Ã„â€˜Ã†Â°Ã¡Â»Âng..." className="!py-2" />
+                                                    <Input placeholder="Số nhà, tên đường..." className="!py-2" />
                                                 </Form.Item>
                                             </div>
 
                                             <Form.Item
                                                 name='note'
-                                                label={<span className="text-xs font-medium">Ghi chÃƒÂº</span>}
+                                                label={<span className="text-xs font-medium">Ghi chú</span>}
                                                 className="!mb-4"
                                             >
                                                 <TextArea
                                                     rows={3}
-                                                    placeholder="Ghi chÃƒÂº cho Ã„â€˜Ã†Â¡n hÃƒÂ ng (tÃƒÂ¹y chÃ¡Â»Ân)"
+                                                    placeholder="Ghi chú cho đơn hàng (tùy chọn)"
                                                     showCount
                                                     maxLength={500}
                                                     className="!text-sm"
@@ -648,18 +634,18 @@ export default function CartClient() {
                                             {/* Order Summary */}
                                             <div className="bg-gray-50 dark:bg-gray-750 rounded-lg p-3 mb-4 space-y-2">
                                                 <div className="flex justify-between text-sm">
-                                                    <span className="text-gray-500">TÃ¡ÂºÂ¡m tÃƒÂ­nh ({cart.cartItems.length} sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m)</span>
+                                                    <span className="text-gray-500">Tạm tính ({cart.cartItems.length} sản phẩm)</span>
                                                     <span className="font-medium">{formatCurrencyVND(calculateTotal())}</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm">
-                                                    <span className="text-gray-500">PhÃƒÂ­ vÃ¡ÂºÂ­n chuyÃ¡Â»Æ’n</span>
+                                                    <span className="text-gray-500">Phí vận chuyển</span>
                                                     <span className="font-medium text-green-600">
-                                                        {calculateTotal() >= 2000000 ? 'MiÃ¡Â»â€¦n phÃƒÂ­' : 'TÃƒÂ­nh khi giao hÃƒÂ ng'}
+                                                        {calculateTotal() >= 2000000 ? 'Miễn phí' : 'Tính khi giao hàng'}
                                                     </span>
                                                 </div>
                                                 <Divider className="!my-2" />
                                                 <div className="flex justify-between">
-                                                    <span className="font-bold text-gray-800 dark:text-white">TÃ¡Â»â€¢ng cÃ¡Â»â„¢ng</span>
+                                                    <span className="font-bold text-gray-800 dark:text-white">Tổng cộng</span>
                                                     <span className="font-bold text-xl text-red-500">{formatCurrencyVND(calculateTotal())}</span>
                                                 </div>
                                             </div>
@@ -673,14 +659,14 @@ export default function CartClient() {
                                                 disabled={!cart || cart.cartItems.length === 0 || calculateTotal() < 2000}
                                             >
                                                 {(!cart || cart.cartItems.length === 0)
-                                                    ? 'GiÃ¡Â»Â hÃƒÂ ng trÃ¡Â»â€˜ng'
+                                                    ? 'Giỏ hàng trống'
                                                     : calculateTotal() < 2000
-                                                        ? `ThÃƒÂªm ${formatCurrencyVND(2000 - calculateTotal())} Ã„â€˜Ã¡Â»Æ’ Ã„â€˜Ã¡ÂºÂ·t hÃƒÂ ng`
-                                                        : 'Ã„ÂÃ¡ÂºÂ¶T HÃƒâ‚¬NG NGAY'
+                                                        ? `Thêm ${formatCurrencyVND(2000 - calculateTotal())} để đặt hàng`
+                                                        : 'ĐẶT HÀNG NGAY'
                                                 }
                                             </Button>
                                             <p className="text-center text-xs text-gray-400 mt-2">
-                                                NhÃƒÂ¢n viÃƒÂªn sÃ¡ÂºÂ½ liÃƒÂªn hÃ¡Â»â€¡ xÃƒÂ¡c nhÃ¡ÂºÂ­n Ã„â€˜Ã†Â¡n hÃƒÂ ng qua Ã„â€˜iÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i
+                                                Nhân viên sẽ liên hệ xác nhận đơn hàng qua điện thoại
                                             </p>
                                         </Form>
                                     </div>
@@ -693,15 +679,15 @@ export default function CartClient() {
                             <div className="w-32 h-32 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
                                 <ShoppingCartOutlined className="text-6xl text-blue-300 dark:text-blue-500" />
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">GiÃ¡Â»Â hÃƒÂ ng trÃ¡Â»â€˜ng</h2>
+                            <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">Giỏ hàng trống</h2>
                             <p className="text-gray-400 mb-6 text-center max-w-md">
-                                BÃ¡ÂºÂ¡n chÃ†Â°a cÃƒÂ³ sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m nÃƒÂ o trong giÃ¡Â»Â hÃƒÂ ng. HÃƒÂ£y khÃƒÂ¡m phÃƒÂ¡ cÃƒÂ¡c sÃ¡ÂºÂ£n phÃ¡ÂºÂ©m cÃƒÂ´ng nghÃ¡Â»â€¡ hÃ¡ÂºÂ¥p dÃ¡ÂºÂ«n ngay!
+                                Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm công nghệ hấp dẫn ngay!
                             </p>
                             <Link
                                 href="/home"
                                 className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-8 py-3 rounded-lg transition-colors shadow-sm"
                             >
-                                TiÃ¡ÂºÂ¿p tÃ¡Â»Â¥c mua sÃ¡ÂºÂ¯m
+                                Tiếp tục mua sắm
                             </Link>
                         </div>
                     )}

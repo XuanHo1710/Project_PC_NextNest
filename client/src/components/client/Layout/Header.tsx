@@ -457,8 +457,8 @@ export default function HeaderClient() {
                         </div>
 
                         {/* Mobile: Cart + Hamburger */}
-                        <div className="flex md:hidden items-center gap-1.5">
-                            <Link href="/cart" className="relative p-2">
+                        <div className="flex md:hidden items-center gap-2">
+                            <Link href="/cart" className="relative p-2 rounded-lg bg-white/10 active:scale-95 transition-all">
                                 <Badge count={cart?.cartItems?.length || 0} size="small" offset={[0, 0]}>
                                     <MdOutlineShoppingCart className="text-xl text-white" />
                                 </Badge>
@@ -478,27 +478,28 @@ export default function HeaderClient() {
                 <div
                     className={`md:hidden fixed inset-0 top-[76px] z-40 transition-opacity duration-200 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                 >
-                    <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-[2px]" onClick={() => setMobileMenuOpen(false)} />
+                    <div className="absolute inset-0 bg-slate-900/35 backdrop-blur-[1px]" onClick={() => setMobileMenuOpen(false)} />
                     <div
-                        className={`absolute inset-x-2 bottom-2 max-h-[calc(100vh-96px)] overflow-y-auto rounded-2xl bg-gradient-to-b from-blue-500 via-blue-600 to-blue-700 shadow-2xl border border-blue-300/30 transition-all duration-300 ${mobileMenuOpen ? 'translate-y-0 scale-100' : 'translate-y-6 scale-[0.985]'}`}
+                        className={`absolute inset-x-0 top-0 max-h-[calc(100vh-76px)] overflow-y-auto bg-white rounded-b-2xl shadow-2xl border-b border-slate-200 transition-all duration-300 origin-top ${mobileMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-3 opacity-0'}`}
                     >
-                        <div className="p-3 space-y-2.5">
-                            <div className="flex items-center justify-between text-white/95 px-1">
-                                <p className="text-sm font-semibold tracking-wide">Điều hướng nhanh</p>
+                        <div className="px-4 py-3 space-y-3">
+                            <div className="flex items-center justify-between text-slate-800">
+                                <p className="text-sm font-bold tracking-wide">Điều hướng nhanh</p>
                                 <button
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center"
+                                    className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"
                                     aria-label="Đóng"
                                 >
                                     <IoClose className="text-base" />
                                 </button>
                             </div>
 
-                            <div className="bg-white/95 rounded-xl p-2.5 shadow-sm">
+                            <div className="rounded-xl p-2.5 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100">
                                 <AuthSection
                                     mode="mobile"
                                     handleOpenLogin={() => { setMobileMenuOpen(false); handleOpenLogin(); }}
                                     handleOpenRegister={() => { setMobileMenuOpen(false); handleOpenRegister(); }}
+                                    onMobileClose={() => setMobileMenuOpen(false)}
                                 />
                             </div>
 
@@ -506,26 +507,26 @@ export default function HeaderClient() {
                                 <Link
                                     href="/chat"
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="flex items-center justify-between rounded-xl bg-white/18 px-3 py-2.5 text-white border border-white/20"
+                                    className="flex items-center justify-between rounded-xl bg-white px-3 py-2.5 text-slate-700 border border-slate-200 shadow-sm"
                                 >
                                     <span className="text-sm font-semibold">Tin nhắn</span>
-                                    <ChatBadge iconClassName="text-white" />
+                                    <ChatBadge iconClassName="text-blue-500" />
                                 </Link>
                                 <Link
                                     href="/cart"
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="flex items-center justify-between rounded-xl bg-white/18 px-3 py-2.5 text-white border border-white/20"
+                                    className="flex items-center justify-between rounded-xl bg-white px-3 py-2.5 text-slate-700 border border-slate-200 shadow-sm"
                                 >
                                     <span className="text-sm font-semibold">Giỏ hàng</span>
                                     <Badge count={cart?.cartItems?.length || 0} size="small">
-                                        <MdOutlineShoppingCart className="text-lg text-white" />
+                                        <MdOutlineShoppingCart className="text-lg text-blue-500" />
                                     </Badge>
                                 </Link>
                             </div>
 
-                            <div className="rounded-xl bg-white/12 p-3 border border-white/20 shadow-inner shadow-blue-800/10">
-                                <div className="flex items-center gap-2 text-white mb-2.5">
-                                    <BiCategory className="text-lg" />
+                            <div className="rounded-xl p-3 border border-slate-200 bg-slate-50">
+                                <div className="flex items-center gap-2 text-slate-800 mb-2.5">
+                                    <BiCategory className="text-lg text-blue-500" />
                                     <span className="text-sm font-semibold">Danh mục nổi bật</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
@@ -534,7 +535,7 @@ export default function HeaderClient() {
                                             key={cat._id}
                                             href={`/collection/${cat.slug}`}
                                             onClick={() => setMobileMenuOpen(false)}
-                                            className="rounded-lg bg-white text-slate-700 px-3 py-2.5 text-sm font-semibold hover:bg-blue-50 active:scale-[0.98] transition-all duration-200"
+                                            className="rounded-lg bg-white text-slate-700 px-3 py-2.5 text-sm font-semibold border border-slate-200 hover:border-blue-300 hover:text-blue-600 active:scale-[0.98] transition-all duration-200"
                                         >
                                             {cat.name}
                                         </Link>
@@ -542,10 +543,10 @@ export default function HeaderClient() {
                                 </div>
                             </div>
 
-                            <div className="rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-blue-50 space-y-1.5">
-                                <p className="flex items-center gap-2"><FaStore className="text-blue-100" /> Cửa hàng gần bạn</p>
-                                <p className="flex items-center gap-2"><IoDocumentOutline className="text-blue-100" /> Tra cứu đơn hàng</p>
-                                <p className="flex items-center gap-2"><FaPhoneAlt className="text-blue-100" /> 1800 2097</p>
+                            <div className="rounded-xl bg-[#f7fbff] border border-blue-100 p-3 text-sm text-slate-700 space-y-1.5">
+                                <p className="flex items-center gap-2"><FaStore className="text-blue-500" /> Cửa hàng gần bạn</p>
+                                <p className="flex items-center gap-2"><IoDocumentOutline className="text-blue-500" /> Tra cứu đơn hàng</p>
+                                <p className="flex items-center gap-2"><FaPhoneAlt className="text-blue-500" /> 1800 2097</p>
                             </div>
                         </div>
                     </div>
@@ -559,13 +560,23 @@ export default function HeaderClient() {
 function AuthSection({
     mode = "desktop",
     handleOpenLogin,
-    handleOpenRegister
+    handleOpenRegister,
+    onMobileClose
 }: {
     mode?: "desktop" | "mobile";
     handleOpenLogin: () => void;
     handleOpenRegister: () => void;
+    onMobileClose?: () => void;
 }) {
     const { user, logout } = useAuthUser();
+    const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
+    const isMobileMode = mode === "mobile";
+
+    const handleMobileMenuClose = () => {
+        if (!isMobileMode) return;
+        setMobileUserMenuOpen(false);
+        onMobileClose?.();
+    };
 
     const userMenuItems: MenuProps['items'] = [
         {
@@ -606,22 +617,96 @@ function AuthSection({
                     <span>Đăng xuất</span>
                 </div>
             ),
-            onClick: logout,
+            onClick: () => {
+                logout();
+                handleMobileMenuClose();
+            },
         },
     ];
 
+    const normalizedUserMenuItems: MenuProps['items'] = userMenuItems.map((item) => {
+        if (!item || item.type === 'divider') return item;
+        if (item.key === 'logout') return item;
+        return {
+            ...item
+        };
+    });
+
+    const handleMobileNavigate = () => {
+        setMobileUserMenuOpen(false);
+        onMobileClose?.();
+    };
+
     if (user) {
+        if (isMobileMode) {
+            return (
+                <div className="w-full">
+                    <button
+                        onClick={() => setMobileUserMenuOpen((prev) => !prev)}
+                        className="w-full flex items-center gap-2 cursor-pointer font-medium px-4 py-2 rounded-lg transition-all bg-slate-100 text-slate-800 border border-slate-200"
+                        aria-expanded={mobileUserMenuOpen}
+                        aria-label="Mở menu tài khoản"
+                    >
+                        <Avatar
+                            src={user?.avatar || null}
+                            icon={<UserOutlined />}
+                            size="small"
+                        />
+                        <span className="max-w-24 truncate text-sm">{user.fullname}</span>
+                        <IoIosArrowDown className={`ml-auto text-xs text-blue-400 transition-transform ${mobileUserMenuOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {mobileUserMenuOpen && (
+                        <div className="mt-2 rounded-lg border border-slate-200 bg-white overflow-hidden">
+                            <Link
+                                href="/profile/detail"
+                                onClick={handleMobileNavigate}
+                                className="flex items-center gap-2 px-4 py-3 text-[15px] text-slate-700 border-b border-slate-100 active:bg-slate-50"
+                            >
+                                <UserOutlined />
+                                <span>Thông tin cá nhân</span>
+                            </Link>
+                            <Link
+                                href="/profile/order"
+                                onClick={handleMobileNavigate}
+                                className="flex items-center gap-2 px-4 py-3 text-[15px] text-slate-700 border-b border-slate-100 active:bg-slate-50"
+                            >
+                                <PicRightOutlined />
+                                <span>Đơn hàng của tôi</span>
+                            </Link>
+                            <Link
+                                href="/create-product"
+                                onClick={handleMobileNavigate}
+                                className="flex items-center gap-2 px-4 py-3 text-[15px] text-slate-700 border-b border-slate-100 active:bg-slate-50"
+                            >
+                                <ShopOutlined />
+                                <span>Đăng bán sản phẩm</span>
+                            </Link>
+                            <button
+                                onClick={() => {
+                                    logout();
+                                    handleMobileMenuClose();
+                                }}
+                                className="w-full text-left flex items-center gap-2 px-4 py-3 text-[15px] text-red-500 active:bg-red-50"
+                            >
+                                <LogoutOutlined />
+                                <span>Đăng xuất</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         return (
             <div className="flex items-center gap-2">
                 <Dropdown
-                    menu={{ items: userMenuItems }}
+                    menu={{ items: normalizedUserMenuItems }}
                     placement="bottomRight"
+                    trigger={['hover']}
                     arrow
                 >
-                    <div className={`flex items-center gap-2 cursor-pointer font-medium px-4 py-2 rounded-lg transition-all ${mode === "mobile"
-                            ? "bg-slate-100 text-slate-800 border border-slate-200"
-                            : "bg-white text-black"
-                        }`}>
+                    <div className="flex items-center gap-2 cursor-pointer font-medium px-4 py-2 rounded-lg transition-all bg-white text-black">
                         <Avatar
                             src={user?.avatar || null}
                             icon={<UserOutlined />}
@@ -640,8 +725,8 @@ function AuthSection({
             <button
                 onClick={handleOpenLogin}
                 className={`flex items-center gap-2 cursor-pointer font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm ${mode === "mobile"
-                        ? "bg-blue-50 hover:bg-blue-100 text-blue-700"
-                        : "bg-white/10 hover:bg-white/20 text-white"
+                    ? "bg-blue-50 hover:bg-blue-100 text-blue-700"
+                    : "bg-white/10 hover:bg-white/20 text-white"
                     }`}
             >
                 <span>Đăng nhập</span>
@@ -650,8 +735,8 @@ function AuthSection({
             <button
                 onClick={handleOpenRegister}
                 className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm font-medium ${mode === "mobile"
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-white text-blue-600 hover:bg-blue-50"
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-white text-blue-600 hover:bg-blue-50"
                     }`}
             >
                 <span>Đăng ký</span>

@@ -159,7 +159,7 @@ export default function ProductInfoStep({
             </Card>
 
             {/* Navigation */}
-            <div className="flex justify-end">
+            <div className="flex mt-2 justify-end">
                 <Button
                     type="primary"
                     size="large"

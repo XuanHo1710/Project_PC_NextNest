@@ -387,7 +387,7 @@ export default function ConfigureVariantsStep({
     return (
         <div className="space-y-6">
             {/* Generate Card */}
-            <Card className="border shadow-sm">
+            <Card className="border !mb-3 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <h2 className="text-lg font-bold m-0">Sinh biến thể sản phẩm</h2>
@@ -407,7 +407,7 @@ export default function ConfigureVariantsStep({
 
                 {/* Batch Settings */}
                 {variantsGenerated && variants.length > 0 && (
-                    <div className="border-t pt-4">
+                    <div className="border-t mt-3 pt-4">
                         <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
                             Cài đặt hàng loạt
                         </h4>
@@ -538,7 +538,7 @@ export default function ConfigureVariantsStep({
             )}
 
             {/* Navigation */}
-            <Card className="border shadow-sm">
+            <Card className="border !mt-3 shadow-sm">
                 <div className="flex justify-between items-center">
                     <Button
                         size="large"
