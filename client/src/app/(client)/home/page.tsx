@@ -172,7 +172,7 @@ export default function HomeClient() {
                         {hoveredCategoryId && hoveredChildren.length > 0 && (
                             <div
                                 style={{ scrollbarWidth: "none" }}
-                                className="absolute left-full top-0 ml-1 w-4xl h-full overflow-auto bg-white border border-gray-200 shadow-2xl rounded-lg p-5 z-50 grid grid-cols-3 gap-4"
+                                className="absolute left-full top-0 ml-1 w-4xl h-full overflow-auto bg-white border border-gray-200 shadow-2xl rounded-lg p-5 z-25 grid grid-cols-3 gap-4"
                             >
                                 {hoveredChildren.map((child) => {
                                     const subChildren = childrenMap[child._id] || [];

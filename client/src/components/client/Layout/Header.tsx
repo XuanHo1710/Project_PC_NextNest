@@ -27,7 +27,7 @@ import { getProductImage } from "@/utils/productHelpers";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
 import { Dropdown, Avatar } from "antd";
 import type { MenuProps } from 'antd';
-import { UserOutlined, LogoutOutlined, PicRightOutlined, CloudSyncOutlined, CarFilled, ShopOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, PicRightOutlined, ShopOutlined } from '@ant-design/icons';
 import useAuthUser from "@/hooks/useAuthUser";
 
 
@@ -457,7 +457,7 @@ export default function HeaderClient() {
                         </div>
 
                         {/* Mobile: Cart + Hamburger */}
-                        <div className="flex md:hidden items-center gap-2">
+                        <div className="flex md:hidden items-center gap-1.5">
                             <Link href="/cart" className="relative p-2">
                                 <Badge count={cart?.cartItems?.length || 0} size="small" offset={[0, 0]}>
                                     <MdOutlineShoppingCart className="text-xl text-white" />
@@ -465,7 +465,8 @@ export default function HeaderClient() {
                             </Link>
                             <button
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="p-2 text-white"
+                                className="p-2 text-white rounded-lg bg-white/10 active:scale-95 transition-all"
+                                aria-label={mobileMenuOpen ? 'Đóng menu' : 'Mở menu'}
                             >
                                 {mobileMenuOpen ? <IoClose className="text-2xl" /> : <HiOutlineMenuAlt3 className="text-2xl" />}
                             </button>
@@ -477,23 +478,35 @@ export default function HeaderClient() {
                 <div
                     className={`md:hidden fixed inset-0 top-[76px] z-40 transition-opacity duration-200 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                 >
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[1px]" onClick={() => setMobileMenuOpen(false)} />
+                    <div className="absolute inset-0 bg-slate-900/45 backdrop-blur-[2px]" onClick={() => setMobileMenuOpen(false)} />
                     <div
-                        className={`absolute inset-x-2 top-2 max-h-[calc(100vh-88px)] overflow-y-auto rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 shadow-2xl border border-blue-300/40 transition-all duration-300 ${mobileMenuOpen ? 'translate-y-0 scale-100' : 'translate-y-4 scale-[0.98]'}`}
+                        className={`absolute inset-x-2 bottom-2 max-h-[calc(100vh-96px)] overflow-y-auto rounded-2xl bg-gradient-to-b from-blue-500 via-blue-600 to-blue-700 shadow-2xl border border-blue-300/30 transition-all duration-300 ${mobileMenuOpen ? 'translate-y-0 scale-100' : 'translate-y-6 scale-[0.985]'}`}
                     >
-                        <div className="p-3">
-                            <div className="bg-white/95 rounded-xl p-2.5 mb-2 shadow-sm">
+                        <div className="p-3 space-y-2.5">
+                            <div className="flex items-center justify-between text-white/95 px-1">
+                                <p className="text-sm font-semibold tracking-wide">Điều hướng nhanh</p>
+                                <button
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center"
+                                    aria-label="Đóng"
+                                >
+                                    <IoClose className="text-base" />
+                                </button>
+                            </div>
+
+                            <div className="bg-white/95 rounded-xl p-2.5 shadow-sm">
                                 <AuthSection
+                                    mode="mobile"
                                     handleOpenLogin={() => { setMobileMenuOpen(false); handleOpenLogin(); }}
                                     handleOpenRegister={() => { setMobileMenuOpen(false); handleOpenRegister(); }}
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 mb-2">
+                            <div className="grid grid-cols-2 gap-2">
                                 <Link
                                     href="/chat"
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="flex items-center justify-between rounded-lg bg-white/18 px-3 py-2 text-white"
+                                    className="flex items-center justify-between rounded-xl bg-white/18 px-3 py-2.5 text-white border border-white/20"
                                 >
                                     <span className="text-sm font-semibold">Tin nhắn</span>
                                     <ChatBadge iconClassName="text-white" />
@@ -501,7 +514,7 @@ export default function HeaderClient() {
                                 <Link
                                     href="/cart"
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="flex items-center justify-between rounded-lg bg-white/18 px-3 py-2 text-white"
+                                    className="flex items-center justify-between rounded-xl bg-white/18 px-3 py-2.5 text-white border border-white/20"
                                 >
                                     <span className="text-sm font-semibold">Giỏ hàng</span>
                                     <Badge count={cart?.cartItems?.length || 0} size="small">
@@ -510,8 +523,8 @@ export default function HeaderClient() {
                                 </Link>
                             </div>
 
-                            <div className="rounded-xl bg-white/12 p-3 border border-white/20">
-                                <div className="flex items-center gap-2 text-white mb-2">
+                            <div className="rounded-xl bg-white/12 p-3 border border-white/20 shadow-inner shadow-blue-800/10">
+                                <div className="flex items-center gap-2 text-white mb-2.5">
                                     <BiCategory className="text-lg" />
                                     <span className="text-sm font-semibold">Danh mục nổi bật</span>
                                 </div>
@@ -521,7 +534,7 @@ export default function HeaderClient() {
                                             key={cat._id}
                                             href={`/collection/${cat.slug}`}
                                             onClick={() => setMobileMenuOpen(false)}
-                                            className="rounded-md bg-white text-slate-700 px-3 py-2 text-sm font-medium hover:bg-blue-50 transition-all duration-200"
+                                            className="rounded-lg bg-white text-slate-700 px-3 py-2.5 text-sm font-semibold hover:bg-blue-50 active:scale-[0.98] transition-all duration-200"
                                         >
                                             {cat.name}
                                         </Link>
@@ -529,7 +542,7 @@ export default function HeaderClient() {
                                 </div>
                             </div>
 
-                            <div className="mt-2 rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-blue-50 space-y-1.5">
+                            <div className="rounded-xl bg-white/10 border border-white/20 p-3 text-sm text-blue-50 space-y-1.5">
                                 <p className="flex items-center gap-2"><FaStore className="text-blue-100" /> Cửa hàng gần bạn</p>
                                 <p className="flex items-center gap-2"><IoDocumentOutline className="text-blue-100" /> Tra cứu đơn hàng</p>
                                 <p className="flex items-center gap-2"><FaPhoneAlt className="text-blue-100" /> 1800 2097</p>
@@ -544,9 +557,11 @@ export default function HeaderClient() {
 
 // Auth Section Component  
 function AuthSection({
+    mode = "desktop",
     handleOpenLogin,
     handleOpenRegister
 }: {
+    mode?: "desktop" | "mobile";
     handleOpenLogin: () => void;
     handleOpenRegister: () => void;
 }) {
@@ -603,7 +618,10 @@ function AuthSection({
                     placement="bottomRight"
                     arrow
                 >
-                    <div className="flex items-center gap-2 cursor-pointer bg-white text-black font-medium px-4 py-2 rounded-lg transition-all">
+                    <div className={`flex items-center gap-2 cursor-pointer font-medium px-4 py-2 rounded-lg transition-all ${mode === "mobile"
+                            ? "bg-slate-100 text-slate-800 border border-slate-200"
+                            : "bg-white text-black"
+                        }`}>
                         <Avatar
                             src={user?.avatar || null}
                             icon={<UserOutlined />}
@@ -621,17 +639,23 @@ function AuthSection({
         <div className="flex items-center gap-2">
             <button
                 onClick={handleOpenLogin}
-                className="flex items-center gap-2 cursor-pointer bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm"
+                className={`flex items-center gap-2 cursor-pointer font-medium px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm ${mode === "mobile"
+                        ? "bg-blue-50 hover:bg-blue-100 text-blue-700"
+                        : "bg-white/10 hover:bg-white/20 text-white"
+                    }`}
             >
                 <span>Đăng nhập</span>
-                <FaRegUserCircle className="text-white" />
+                <FaRegUserCircle className={mode === "mobile" ? "text-blue-700" : "text-white"} />
             </button>
             <button
                 onClick={handleOpenRegister}
-                className="flex items-center gap-2 cursor-pointer bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm font-medium"
+                className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg transition-all whitespace-nowrap text-sm font-medium ${mode === "mobile"
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-white text-blue-600 hover:bg-blue-50"
+                    }`}
             >
                 <span>Đăng ký</span>
-                <FaUserPlus />
+                <FaUserPlus className={mode === "mobile" ? "text-white" : "text-current"} />
             </button>
         </div>
     );
