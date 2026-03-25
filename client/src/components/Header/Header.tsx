@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
-import { BellOutlined, CheckOutlined, MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined } from '@ant-design/icons';
+import { BellOutlined, CheckOutlined, MenuFoldOutlined, MenuUnfoldOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons';
 import { Avatar, Button } from "antd";
 
 import axios from 'axios';
@@ -11,7 +11,17 @@ import { pathAdminRoutes } from '@/config/route';
 import { useRouter } from 'next/navigation';
 
 
-export default function Header({ setCollapsed, collapsed }: { setCollapsed: (collapsed: boolean) => void, collapsed: boolean }) {
+export default function Header({
+  setCollapsed,
+  collapsed,
+  mobileOpen,
+  setMobileOpen,
+}: {
+  setCollapsed: (collapsed: boolean) => void;
+  collapsed: boolean;
+  mobileOpen?: boolean;
+  setMobileOpen?: (open: boolean) => void;
+}) {
   const [displayNotify, setDisplayNotify] = useState(false);
   const { accountLogin, resetAuth } = useAuthEmployee();
   const router = useRouter();
@@ -27,24 +37,34 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
   }
   return (
     <>
-      <header className="fixed top-0 bg-white z-50 left-0 right-0 py-5 px-5 border-b-2 border-slate-100 border-solid">
-        <div className="flex justify-between text-center">
-          <div className='flex items-center justify-between px-2'>
-            <h2 className='italic font-semibold text-lg'>
+      <header className="fixed top-0 bg-white z-50 left-0 right-0 py-3 md:py-5 px-3 md:px-5 border-b-2 border-slate-100 border-solid">
+        <div className="flex justify-between items-center">
+          <div className='flex items-center gap-2'>
+            {/* Mobile hamburger */}
+            <button
+              className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-600"
+              onClick={() => setMobileOpen?.(!mobileOpen)}
+              aria-label="Toggle menu"
+            >
+              <MenuOutlined className="text-lg" />
+            </button>
+
+            <h2 className='italic font-semibold text-lg whitespace-nowrap'>
               {collapsed ? "" : "Arisu"}
             </h2>
-            <div>
+            {/* Desktop collapse toggle */}
+            <div className="hidden md:block">
               <Button variant='outlined' color='blue' onClick={() => setCollapsed(!collapsed)} className={collapsed ? "" : "ml-32"}>
                 {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               </Button>
             </div>
           </div>
-          <div className="flex justify-center gap-3 items-center">
+          <div className="flex justify-center gap-2 md:gap-3 items-center">
             <div className='relative cursor-pointer'>
-              <BellOutlined className='text-2xl' onClick={() => setDisplayNotify(!displayNotify)} />
+              <BellOutlined className='text-xl md:text-2xl' onClick={() => setDisplayNotify(!displayNotify)} />
               <span className='absolute -top-2 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center'>3</span>
               <div className={`absolute top-10 cursor-default z-10 right-0 ${displayNotify ? "block" : "hidden"}`}>
-                <div className='bg-white shadow-lg rounded-md w-96'>
+                <div className='bg-white shadow-lg rounded-md w-[calc(100vw-2rem)] sm:w-96'>
                   <div className='flex items-center justify-between border-b-2 border-gray-100 px-4 py-5'>
                     <h4 className='font-semibold text-sm'>Thông báo</h4>
                     <CheckOutlined className='rounded-full border-2 p-0.5 !text-green-500 border-green-500' />
@@ -87,9 +107,9 @@ export default function Header({ setCollapsed, collapsed }: { setCollapsed: (col
               ) : (
                 <UserOutlined className="rounded-full border-2 p-1" />
               )}
-              <h3 className='text-sm font-semibold'>{accountLogin?.username}</h3>
+              <h3 className='text-sm font-semibold hidden sm:block'>{accountLogin?.username}</h3>
             </Link>
-            <Button onClick={handleLogout} variant='outlined' color='red' className="mx-2">Đăng xuất</Button>
+            <Button onClick={handleLogout} variant='outlined' color='red' className="mx-1 md:mx-2 hidden sm:inline-flex">Đăng xuất</Button>
           </div>
         </div>
       </header>

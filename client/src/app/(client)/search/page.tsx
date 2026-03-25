@@ -123,7 +123,7 @@ export default function SearchPage() {
                 description={`Kết quả tìm kiếm cho "${q}" tại PC Store. Tổng ${totalItems} biến thể sản phẩm được tìm thấy.`}
             />
 
-            <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 min-h-screen">
+            <div className="md:pt-3 pt-20 bg-slate-50 dark:bg-gray-900 min-h-screen">
                 {/* Breadcrumb */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <Breadcrumb items={[{ label: 'Tìm kiếm' }]} />

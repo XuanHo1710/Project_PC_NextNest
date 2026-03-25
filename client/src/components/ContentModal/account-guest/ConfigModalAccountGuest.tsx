@@ -30,7 +30,7 @@ export default function ConfigModalAccountGuest({ ConfigFields }: { ConfigFields
         <>
             <div className='grid grid-cols-12 gap-4 grid-flow-row'>
                 {fieldConfigs.map((field) => (
-                    <div key={field.key} className='col-span-6 p-4 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
+                    <div key={field.key} className='col-span-12 sm:col-span-6 p-4 flex items-center justify-between border-[1px] border-slate-100 rounded-lg'>
                         <h2 className='text-base font-semibold'>{field.label}:</h2>
                         <Switch
                             defaultChecked={ConfigFields.fields.includes(field.key)}

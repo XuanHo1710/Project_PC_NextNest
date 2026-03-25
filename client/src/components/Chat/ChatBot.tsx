@@ -528,7 +528,7 @@ const ChatBot = () => {
                                 </div>
                             )}
 
-                            <div className="relative">
+                            <div className="relative flex items-end gap-1.5 bg-gray-50/80 rounded-2xl border border-gray-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
                                 <textarea
                                     ref={inputRef}
                                     id="chat-input"
@@ -547,27 +547,27 @@ const ChatBot = () => {
                                             handleSend();
                                         }
                                     }}
-                                    className="w-full resize-none rounded-2xl pr-24 sm:pr-28 pl-4 py-2.5 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    className="flex-1 resize-none bg-transparent pl-4 pr-2 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none disabled:text-gray-400 disabled:cursor-not-allowed"
                                     rows={1}
-                                    style={{ maxHeight: '120px', overflowY: 'auto' }}
+                                    style={{ maxHeight: '120px', overflowY: 'auto', scrollbarWidth: 'none' }}
                                     disabled={isInputDisabled}
                                 />
-                                <div className="absolute right-1 bottom-1 flex items-center">
+                                <div className="flex items-center pr-1.5 pb-1.5 shrink-0">
                                     <button
                                         onClick={() => setShowEmoji(!showEmoji)}
-                                        className="h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 emoji-trigger mr-1 transition-colors"
+                                        className="h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 emoji-trigger mr-1 transition-colors"
                                     >
                                         <FiSmile size={18} />
                                     </button>
                                     <button
                                         onClick={handleSend}
-                                        className={`px-3 h-8 rounded-full flex items-center justify-center transition-all ${inputValue.trim() && !isInputDisabled
-                                            ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white shadow-sm hover:opacity-90 active:scale-95'
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${inputValue.trim() && !isInputDisabled
+                                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm hover:opacity-90 active:scale-95'
                                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                             }`}
                                         disabled={!inputValue.trim() || isInputDisabled}
                                     >
-                                        <FiSend size={16} />
+                                        <FiSend size={14} />
                                     </button>
                                 </div>
                             </div>

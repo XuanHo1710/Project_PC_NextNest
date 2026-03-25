@@ -13,12 +13,12 @@ export default function FooterClient() {
                         <p className="text-blue-200 text-sm mb-4 max-w-md">
                             Hệ thống bán lẻ PC, Laptop và phụ kiện công nghệ hàng đầu. Cam kết chính hãng, giá tốt nhất thị trường.
                         </p>
-                        <div className="flex items-center mt-3 max-w-md">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center mt-3 max-w-md gap-2 sm:gap-0">
                             <input
-                                className="px-4 py-2.5 bg-white border border-blue-400/30 focus:outline-none focus:border-blue-300 transition-all text-black placeholder-gray-300 w-full rounded-l-lg text-sm"
+                                className="px-4 py-2.5 bg-white border border-blue-400/30 focus:outline-none focus:border-blue-300 transition-all text-black placeholder-gray-300 w-full rounded-lg sm:rounded-l-lg sm:rounded-r-none text-sm"
                                 placeholder="Nhập email để nhận ưu đãi"
                             />
-                            <button className="bg-blue-400 hover:bg-blue-300 transition-colors font-semibold px-5 py-2.5 rounded-r-lg text-sm whitespace-nowrap">
+                            <button className="bg-blue-400 hover:bg-blue-300 transition-colors font-semibold px-5 py-2.5 rounded-lg sm:rounded-l-none sm:rounded-r-lg text-sm whitespace-nowrap">
                                 Đăng ký
                             </button>
                         </div>

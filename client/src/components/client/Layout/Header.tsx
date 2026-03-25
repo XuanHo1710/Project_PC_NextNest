@@ -244,7 +244,7 @@ export default function HeaderClient() {
                             )}
 
                             {isOpenCategory && isOpenItemCategory && (
-                                <div style={{ scrollbarWidth: "none" }} className="z-40 gap-5 absolute w-[900px] max-h-[500px] min-h-[500px] overflow-auto grid grid-flow-row grid-cols-12 top-12 left-64 p-5 text-base bg-white border border-gray-200 shadow-2xl rounded-md">
+                                <div style={{ scrollbarWidth: "none" }} className="z-40 gap-5 absolute w-[calc(100vw-2rem)] lg:w-[700px] xl:w-[900px] max-h-[500px] min-h-[300px] lg:min-h-[500px] overflow-auto grid grid-flow-row grid-cols-6 lg:grid-cols-12 top-12 left-0 lg:left-64 p-4 lg:p-5 text-base bg-white border border-gray-200 shadow-2xl rounded-md">
                                     {childrenCategories.length > 0 && renderCategoryGrid(childrenCategories, 3)}
                                 </div>
                             )}
@@ -270,7 +270,7 @@ export default function HeaderClient() {
 
                             {/* Search Results */}
                             {isOpenSearch && (
-                                <div style={{ scrollbarWidth: "none" }} className="z-20 absolute top-full w-full md:w-[480px] rounded-lg left-0 mt-1 max-h-[380px] bg-white overflow-y-auto shadow-xl border border-gray-200">
+                                <div style={{ scrollbarWidth: "none" }} className="z-20 absolute top-full w-full max-w-[480px] rounded-lg left-0 mt-1 max-h-[380px] bg-white overflow-y-auto shadow-xl border border-gray-200">
                                     {loadingSearch ? (
                                         <div className="flex items-center justify-center py-12">
                                             <Spin size="large" />
@@ -364,7 +364,7 @@ export default function HeaderClient() {
 
                             {/* Cart Dropdown */}
                             {isOpenCart && (
-                                <div className='bg-white shadow-2xl z-30 min-h-36 right-0 rounded-xl absolute top-12 w-[400px] border border-gray-200'>
+                                <div className='bg-white shadow-2xl z-30 min-h-36 right-0 rounded-xl absolute top-12 w-[calc(100vw-2rem)] sm:w-[400px] border border-gray-200'>
                                     <div className='py-3 border-b border-gray-200 uppercase text-center text-xl font-medium text-slate-700'>
                                         Giỏ hàng
                                     </div>
