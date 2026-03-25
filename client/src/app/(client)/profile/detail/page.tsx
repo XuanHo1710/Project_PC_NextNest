@@ -146,14 +146,14 @@ export default function ProfileDetail() {
                 ogDescription="Cập nhật và quản lý thông tin cá nhân của bạn"
             />
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 dark:text-white">
-                <div className='mx-5 xl:mx-32'>
+                <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                     <Breadcrumb items={[
                         { label: 'Hồ sơ người dùng', href: '/profile/detail' },
                         { label: 'Thông tin chi tiết' },
                     ]} />
                 </div>
 
-                <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
+                <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
                     <ProfileSidebar user={user} activePage="detail" />
 
                     <div className='col-span-12 lg:col-span-9 p-6 bg-white rounded-2xl shadow-xl dark:bg-gray-800 dark:text-white'>

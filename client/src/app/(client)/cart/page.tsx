@@ -450,7 +450,7 @@ export default function CartClient() {
                                                 note: ""
                                             }}
                                         >
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <Form.Item
                                                     name='fullname'
                                                     label={<span className="text-xs font-medium">Họ và tên</span>}
@@ -529,7 +529,7 @@ export default function CartClient() {
                                                 </>
                                             )}
 
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <Form.Item
                                                     name="province"
                                                     label={<span className="text-xs font-medium">Tỉnh/Thành phố</span>}
@@ -579,7 +579,7 @@ export default function CartClient() {
                                                 </Form.Item>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <Form.Item
                                                     name="ward"
                                                     label={<span className="text-xs font-medium">Phường/Xã</span>}

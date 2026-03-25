@@ -94,7 +94,7 @@ export default function WishlistPage() {
     };
 
     const breadcrumb = (
-        <div className="mx-5 xl:mx-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Breadcrumb items={[
                 { label: 'Hồ sơ', href: '/profile/detail' },
                 { label: 'Yêu thích' },
@@ -106,7 +106,7 @@ export default function WishlistPage() {
         return (
             <div className="container mx-auto">
                 {breadcrumb}
-                <div className="mx-5 xl:mx-32 mt-5 pb-5 grid grid-cols-12 gap-0 lg:gap-9">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 pb-5 grid grid-cols-12 gap-0 lg:gap-9">
                     <ProfileSidebar user={user} activePage="wishlist" />
                     <div className="col-span-12 lg:col-span-9">
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
@@ -131,7 +131,7 @@ export default function WishlistPage() {
             <div className="container mx-auto">
                 {breadcrumb}
 
-                <div className="mx-5 xl:mx-32 mt-5 pb-5 grid grid-cols-12 gap-0 lg:gap-9">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 pb-5 grid grid-cols-12 gap-0 lg:gap-9">
                     <ProfileSidebar user={user} activePage="wishlist" />
 
                     <div className="col-span-12 lg:col-span-9">

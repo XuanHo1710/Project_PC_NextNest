@@ -6,7 +6,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 const HomePageSkeleton = () => {
     return (
         <div className="md:pt-3 pt-52 py-10 bg-slate-50">
-            <div className='content-header mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5'>
+            <div className='content-header max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5'>
                 {/* Category sidebar skeleton */}
                 <div className='row-span-3 hidden xl:block col-span-3 rounded-lg shadow-lg bg-white'>
                     <div className='m-0 pl-0 rounded-lg max-h-[700px] overflow-y-hidden'>
@@ -39,7 +39,7 @@ const HomePageSkeleton = () => {
 
             {/* Button categories skeleton */}
             <div className='content-center my-10'>
-                <div className='mx-5 xl:mx-32 grid grid-flow-row grid-cols-6 lg:flex gap-2 lg:gap-4 my-16'>
+                <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-flow-row grid-cols-6 lg:flex gap-2 lg:gap-4 my-16'>
                     {Array(5).fill(0).map((_, i) => (
                         <div key={i} className='col-span-2 lg:basis-1/5'>
                             <Skeleton height={60} className="w-full rounded-3xl" />
@@ -48,7 +48,7 @@ const HomePageSkeleton = () => {
                 </div>
 
                 {/* Product carousel skeleton */}
-                <div className='mx-5 xl:mx-32 gap-10 pb-12 border-none'>
+                <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 gap-10 pb-12 border-none'>
                     <div className='grid grid-cols-5 gap-4'>
                         {Array(5).fill(0).map((_, i) => (
                             <div key={i} className='px-1.5'>
@@ -66,23 +66,25 @@ const HomePageSkeleton = () => {
 
             {/* Product categories sections skeleton */}
             {Array(3).fill(0).map((_, i) => (
-                <div key={i} className='box-promotion mx-5 xl:mx-32 my-10 rounded-lg bg-white py-10 px-7 shadow-lg'>
-                    <div className='flex items-center justify-between mb-8'>
-                        <Skeleton width={200} height={36} />
-                        <Skeleton width={80} height={24} />
-                    </div>
+                <div key={i} className='box-promotion max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-10'>
+                    <div className='rounded-lg bg-white py-10 px-7 shadow-lg'>
+                        <div className='flex items-center justify-between mb-8'>
+                            <Skeleton width={200} height={36} />
+                            <Skeleton width={80} height={24} />
+                        </div>
 
-                    <div className='grid grid-cols-5 gap-4'>
-                        {Array(5).fill(0).map((_, j) => (
-                            <div key={j} className='px-1.5'>
-                                <div className="p-3 bg-white rounded-lg shadow-sm border border-gray-100">
-                                    <Skeleton height={150} className="mb-3" />
-                                    <Skeleton count={2} className="mb-2" />
-                                    <Skeleton width={100} className="mb-3" />
-                                    <Skeleton height={30} className="mt-2" />
+                        <div className='grid grid-cols-5 gap-4'>
+                            {Array(5).fill(0).map((_, j) => (
+                                <div key={j} className='px-1.5'>
+                                    <div className="p-3 bg-white rounded-lg shadow-sm border border-gray-100">
+                                        <Skeleton height={150} className="mb-3" />
+                                        <Skeleton count={2} className="mb-2" />
+                                        <Skeleton width={100} className="mb-3" />
+                                        <Skeleton height={30} className="mt-2" />
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
             ))}
@@ -93,23 +95,25 @@ const HomePageSkeleton = () => {
             </div>
 
             {/* Showroom information skeleton */}
-            <div className='mx-5 xl:mx-32 rounded-lg bg-white py-10 px-7 shadow-md'>
-                <div className='flex items-center justify-center mb-8'>
-                    <Skeleton width={500} height={36} />
-                </div>
-                <div className='mt-12 grid grid-flow-row grid-cols-12 gap-3'>
-                    {Array(4).fill(0).map((_, i) => (
-                        <div key={i} className='col-span-12 my-3 sm:col-span-6 xl:col-span-3'>
-                            <div className='flex items-center mb-3'>
-                                <Skeleton width={60} height={60} className="mr-4 rounded-md" />
-                                <div>
-                                    <Skeleton width={150} height={16} className="mb-2" />
-                                    <Skeleton width={180} height={20} />
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+                <div className='rounded-lg bg-white py-10 px-7 shadow-md'>
+                    <div className='flex items-center justify-center mb-8'>
+                        <Skeleton width={500} height={36} />
+                    </div>
+                    <div className='mt-12 grid grid-flow-row grid-cols-12 gap-3'>
+                        {Array(4).fill(0).map((_, i) => (
+                            <div key={i} className='col-span-12 my-3 sm:col-span-6 xl:col-span-3'>
+                                <div className='flex items-center mb-3'>
+                                    <Skeleton width={60} height={60} className="mr-4 rounded-md" />
+                                    <div>
+                                        <Skeleton width={150} height={16} className="mb-2" />
+                                        <Skeleton width={180} height={20} />
+                                    </div>
                                 </div>
+                                <Skeleton count={5} className="mb-2" />
                             </div>
-                            <Skeleton count={5} className="mb-2" />
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

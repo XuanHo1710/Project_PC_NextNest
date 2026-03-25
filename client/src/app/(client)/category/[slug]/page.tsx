@@ -264,16 +264,16 @@ export default function CategoryClient() {
                 </Button>
             </Drawer>
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-white">
-                <div className='mx-5 xl:mx-32'>
+                <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                     <Breadcrumb items={[
                         ...(dataCategory ? [{ label: dataCategory.name }] : []),
                     ]} />
                 </div>
-                <h1 className='mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3 font-bold text-xl lg:text-3xl uppercase text-blue-500'>
+                <h1 className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3 font-bold text-xl lg:text-3xl uppercase text-blue-500'>
                     {dataCategory && dataCategory.name}
                     <span className='ml-2 text-sm border-none text-stone-400 lowercase font-medium'>(Tổng {dataProduct && dataProduct.pagination?.totalItems} sản phẩm)</span>
                 </h1>
-                <div className='mx-5 xl:mx-32 mt-5 content-body grid grid-flow-row grid-cols-12 lg:gap-12 '>
+                <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 content-body grid grid-flow-row grid-cols-12 lg:gap-12 '>
                     <div className='hidden lg:block lg:col-span-3 p-5 rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-h-max'>
 
                         <button onClick={handleFilterProduct} className="w-full transition-all button-primary">Lọc sản phẩm</button>

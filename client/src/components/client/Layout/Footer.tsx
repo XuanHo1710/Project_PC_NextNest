@@ -6,7 +6,7 @@ export default function FooterClient() {
     return (
         <footer className="bg-[#0062b9] text-white">
             {/* Newsletter section */}
-            <div className="px-5 xl:px-32 pt-10 pb-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 border-b border-blue-400/30 pb-8">
                     <div className="lg:col-span-2">
                         <h2 className="text-2xl font-bold mb-2">Arisu Store</h2>
@@ -43,7 +43,7 @@ export default function FooterClient() {
             </div>
 
             {/* Main footer links */}
-            <div className="px-5 xl:px-32 pb-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div>
                         <h3 className="font-bold text-base mb-4 text-white">Hỗ trợ khách hàng</h3>
@@ -102,23 +102,25 @@ export default function FooterClient() {
             </div>
 
             {/* Bottom bar */}
-            <div className="bg-[#004a85] px-5 xl:px-32 py-5">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-                    <div className="text-center md:text-left">
-                        <p className="font-semibold text-sm flex items-center gap-2">
-                            <HiShieldCheck className="text-blue-300" />
-                            ARISU STORE © {new Date().getFullYear()}
-                        </p>
-                        <p className="text-blue-200 text-xs mt-1">
-                            Tất cả quyền được bảo lưu. Bản quyền thuộc về Arisu Store.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-4 text-blue-200 text-xs">
-                        <a href="#" className="hover:text-white transition-colors">Điều khoản sử dụng</a>
-                        <span>|</span>
-                        <a href="#" className="hover:text-white transition-colors">Chính sách bảo mật</a>
-                        <span>|</span>
-                        <a href="#" className="hover:text-white transition-colors">Sitemap</a>
+            <div className="bg-[#004a85] py-5">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                        <div className="text-center md:text-left">
+                            <p className="font-semibold text-sm flex items-center gap-2">
+                                <HiShieldCheck className="text-blue-300" />
+                                ARISU STORE © {new Date().getFullYear()}
+                            </p>
+                            <p className="text-blue-200 text-xs mt-1">
+                                Tất cả quyền được bảo lưu. Bản quyền thuộc về Arisu Store.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-4 text-blue-200 text-xs">
+                            <a href="#" className="hover:text-white transition-colors">Điều khoản sử dụng</a>
+                            <span>|</span>
+                            <a href="#" className="hover:text-white transition-colors">Chính sách bảo mật</a>
+                            <span>|</span>
+                            <a href="#" className="hover:text-white transition-colors">Sitemap</a>
+                        </div>
                     </div>
                 </div>
             </div>

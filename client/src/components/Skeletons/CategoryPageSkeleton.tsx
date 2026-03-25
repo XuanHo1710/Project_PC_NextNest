@@ -7,19 +7,19 @@ const CategoryPageSkeleton = () => {
     return (
         <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-white">
             {/* Breadcrumb skeleton */}
-            <div className='mx-5 xl:mx-32 flex items-center gap-2 py-3'>
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 py-3'>
                 <Skeleton width={80} height={18} />
                 <span className="text-gray-300">/</span>
                 <Skeleton width={140} height={18} />
             </div>
 
             {/* Category title skeleton */}
-            <div className="mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3">
                 <Skeleton width={300} height={40} />
                 <Skeleton width={120} height={16} className="ml-2 mt-1" />
             </div>
 
-            <div className='mx-5 xl:mx-32 mt-5 content-body grid grid-flow-row grid-cols-12 lg:gap-12'>
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 content-body grid grid-flow-row grid-cols-12 lg:gap-12'>
                 {/* Filter sidebar skeleton - Desktop */}
                 <div className='hidden lg:block lg:col-span-3 p-5 rounded-2xl bg-white dark:bg-gray-800 shadow-lg max-h-max'>
                     <Skeleton height={40} className="w-full mb-5" />

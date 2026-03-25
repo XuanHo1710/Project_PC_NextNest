@@ -147,7 +147,7 @@ export default function HomeClient() {
             <div className="dark:bg-slate-900 md:pt-3 pt-24 py-10 bg-gray-50">
 
                 {/* ============= HERO: Category sidebar + Banner ============= */}
-                <div className="content-header mx-4 sm:mx-5 xl:mx-32 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5">
+                <div className="content-header max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-12 grid-flow-row gap-2 xl:gap-5">
                     {/* Category sidebar with hover children panel */}
                     <div
                         className="row-span-3 hidden xl:block col-span-3 rounded-lg shadow-sm bg-white border border-gray-100 relative"
@@ -211,8 +211,8 @@ export default function HomeClient() {
                                 <div className="relative h-[300px] md:h-[420px]  flex items-center">
                                     <div className="absolute inset-0" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
                                     <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
-                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">PC Gaming</h2>
-                                        <p className="text-lg md:text-xl opacity-90 mb-4">Hiệu năng vượt trội, chiến mọi tựa game!</p>
+                                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-3">PC Gaming</h2>
+                                        <p className="text-base sm:text-lg md:text-xl opacity-90 mb-4">Hiệu năng vượt trội, chiến mọi tựa game!</p>
                                         <Link
                                             href="/collection/phu-kien"
                                             className="inline-block mt-6 px-6 py-3
@@ -230,11 +230,11 @@ export default function HomeClient() {
                                 </div>
                             </div>
                             <div>
-                                <div className="relative h-[300px] md:h-[420px] flex items-center">
+                                <div className="relative h-[200px] sm:h-[300px] md:h-[380px] lg:h-[420px] flex items-center">
                                     <div className="absolute inset-0" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                                    <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
-                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Laptop Gaming</h2>
-                                        <p className="text-lg md:text-xl opacity-90 mb-4">Mỏng nhẹ, mạnh mẽ, chiến game mọi nơi!</p>
+                                    <div className="relative z-10 text-white p-6 sm:p-8 md:p-12 max-w-xl">
+                                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-3">Laptop Gaming</h2>
+                                        <p className="text-base sm:text-lg md:text-xl opacity-90 mb-4">Mỏng nhẹ, mạnh mẽ, chiến game mọi nơi!</p>
                                         <Link
                                             href="/collection/phu-kien"
                                             className="inline-block mt-6 px-6 py-3
@@ -252,11 +252,11 @@ export default function HomeClient() {
                                 </div>
                             </div>
                             <div>
-                                <div className="relative h-[300px] md:h-[420px] flex items-center">
+                                <div className="relative h-[200px] sm:h-[300px] md:h-[380px] lg:h-[420px] flex items-center">
                                     <div className="absolute inset-0" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1547082299-de196ea013d6?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                                    <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
-                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Khuyến mãi HOT</h2>
-                                        <p className="text-lg md:text-xl opacity-90 mb-4">Giảm giá đến 50%, số lượng có hạn!</p>
+                                    <div className="relative z-10 text-white p-6 sm:p-8 md:p-12 max-w-xl">
+                                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-3">Khuyến mãi HOT</h2>
+                                        <p className="text-base sm:text-lg md:text-xl opacity-90 mb-4">Giảm giá đến 50%, số lượng có hạn!</p>
                                         <Link
                                             href="/collection/phu-kien"
                                             className="inline-block mt-6 px-6 py-3
@@ -274,11 +274,11 @@ export default function HomeClient() {
                                 </div>
                             </div>
                             <div>
-                                <div className="relative h-[300px] md:h-[420px]  flex items-center">
+                                <div className="relative h-[200px] sm:h-[300px] md:h-[380px] lg:h-[420px]  flex items-center">
                                     <div className="absolute inset-0" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                                    <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
-                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Màn hình Gaming</h2>
-                                        <p className="text-lg md:text-xl opacity-90 mb-4">144Hz+, IPS, chuẩn màu chuyên nghiệp!</p>
+                                    <div className="relative z-10 text-white p-6 sm:p-8 md:p-12 max-w-xl">
+                                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-3">Màn hình Gaming</h2>
+                                        <p className="text-base sm:text-lg md:text-xl opacity-90 mb-4">144Hz+, IPS, chuẩn màu chuyên nghiệp!</p>
                                         <Link
                                             href="/collection/phu-kien"
                                             className="inline-block mt-6 px-6 py-3
@@ -296,11 +296,11 @@ export default function HomeClient() {
                                 </div>
                             </div>
                             <div>
-                                <div className="relative h-[300px] md:h-[420px] flex items-center">
+                                <div className="relative h-[200px] sm:h-[300px] md:h-[380px] lg:h-[420px] flex items-center">
                                     <div className="absolute inset-0" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1625225233840-695456021cde?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                                    <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
-                                        <h2 className="text-3xl md:text-5xl font-extrabold mb-3">Phụ kiện Gaming</h2>
-                                        <p className="text-lg md:text-xl opacity-90 mb-4">Bàn phím cơ, chuột, tai nghe chính hãng!</p>
+                                    <div className="relative z-10 text-white p-6 sm:p-8 md:p-12 max-w-xl">
+                                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-3">Phụ kiện Gaming</h2>
+                                        <p className="text-base sm:text-lg md:text-xl opacity-90 mb-4">Bàn phím cơ, chuột, tai nghe chính hãng!</p>
                                         <Link
                                             href="/collection/phu-kien"
                                             className="inline-block mt-6 px-6 py-3
@@ -323,28 +323,30 @@ export default function HomeClient() {
 
                 {/* ============= RECENTLY VIEWED (only for logged-in users) ============= */}
                 {recentlyViewed && recentlyViewed.length > 0 && (
-                    <div className="mx-4 sm:mx-5 xl:mx-32 my-8 dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-6">
-                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
-                                Sản phẩm xem gần đây
-                            </h1>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+                        <div className="dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between mb-6">
+                                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
+                                    Sản phẩm xem gần đây
+                                </h1>
+                            </div>
+                            <Carousel
+                                slidesToShow={5} slidesToScroll={1} draggable dots={false}
+                                arrows autoplaySpeed={3000} responsive={responsiveSettings}
+                            >
+                                {recentlyViewed.map((product: IProductCard) => (
+                                    <div key={product._id} className="px-1.5">
+                                        <CardProduct css="p-3" product={product} />
+                                    </div>
+                                ))}
+                            </Carousel>
                         </div>
-                        <Carousel
-                            slidesToShow={5} slidesToScroll={1} draggable dots={false}
-                            arrows autoplaySpeed={3000} responsive={responsiveSettings}
-                        >
-                            {recentlyViewed.map((product: IProductCard) => (
-                                <div key={product._id} className="px-1.5">
-                                    <CardProduct css="p-3" product={product} />
-                                </div>
-                            ))}
-                        </Carousel>
                     </div>
                 )}
 
                 {/* ============= BRAND CAROUSEL ============= */}
                 {brands?.data && brands.data.length > 0 && (
-                    <div className="mx-4 sm:mx-5 xl:mx-32 my-8">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
                         <div className="flex items-center justify-between mb-6">
                             <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
                                 Thương hiệu nổi bật
@@ -389,7 +391,7 @@ export default function HomeClient() {
 
                 {/* ============= FLASH SALE — TOP DISCOUNT PRODUCTS ============= */}
                 {topDiscountProducts && topDiscountProducts.length > 0 && (
-                    <div id="top-discount" className="mx-4 sm:mx-5 xl:mx-32 my-8">
+                    <div id="top-discount" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
                         <div className="bg-red-600 rounded-lg shadow-lg overflow-hidden">
                             {/* Flash sale header */}
                             <div className="flex flex-wrap items-center justify-between px-7 py-4 bg-red-700">
@@ -439,49 +441,53 @@ export default function HomeClient() {
 
                 {/* ============= AI RECOMMENDATIONS — Gợi ý AI cho bạn ============= */}
                 {aiRecommendations && aiRecommendations.length > 0 && (
-                    <div className="mx-4 sm:mx-5 xl:mx-32 my-8 dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
-                        <div className="flex items-center justify-between mb-6">
-                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white flex items-center gap-2">
-                                <HiOutlineSparkles className="text-yellow-500" />
-                                {user?._id ? 'AI Gợi ý cho bạn' : 'Sản phẩm phổ biến'}
-                            </h1>
-                            <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                                Powered by AI
-                            </span>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+                        <div className="dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
+                            <div className="flex items-center justify-between mb-6">
+                                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white flex items-center gap-2">
+                                    <HiOutlineSparkles className="text-yellow-500" />
+                                    {user?._id ? 'AI Gợi ý cho bạn' : 'Sản phẩm phổ biến'}
+                                </h1>
+                                <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                                    Powered by AI
+                                </span>
+                            </div>
+                            <Carousel
+                                slidesToShow={5} slidesToScroll={1} draggable dots={false}
+                                arrows autoplaySpeed={3500} responsive={responsiveSettings}
+                            >
+                                {aiRecommendations.map((product: IProductCard) => (
+                                    <div key={product._id} className="px-1.5">
+                                        <CardProduct css="p-3" product={product} />
+                                    </div>
+                                ))}
+                            </Carousel>
                         </div>
-                        <Carousel
-                            slidesToShow={5} slidesToScroll={1} draggable dots={false}
-                            arrows autoplaySpeed={3500} responsive={responsiveSettings}
-                        >
-                            {aiRecommendations.map((product: IProductCard) => (
-                                <div key={product._id} className="px-1.5">
-                                    <CardProduct css="p-3" product={product} />
-                                </div>
-                            ))}
-                        </Carousel>
                     </div>
                 )}
 
                 {/* ============= PRODUCT GRID — Gợi ý cho bạn ============= */}
-                <div className="mx-4 sm:mx-5 xl:mx-32 my-8 dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
-                    <div className="flex items-center justify-between mb-6">
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
-                            Gợi ý cho bạn
-                        </h1>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+                    <div className="dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between mb-6">
+                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
+                                Gợi ý cho bạn
+                            </h1>
+                        </div>
+                        {clientProducts && clientProducts.data && clientProducts.data.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                                {clientProducts.data.map((product: IProductCard) => (
+                                    <div key={product._id}>
+                                        <CardProduct css="p-3" product={product} />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-16 text-gray-400">
+                                <p>Chưa có sản phẩm nào</p>
+                            </div>
+                        )}
                     </div>
-                    {clientProducts && clientProducts.data && clientProducts.data.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                            {clientProducts.data.map((product: IProductCard) => (
-                                <div key={product._id}>
-                                    <CardProduct css="p-3" product={product} />
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-16 text-gray-400">
-                            <p>Chưa có sản phẩm nào</p>
-                        </div>
-                    )}
                 </div>
 
                 {/* ============= TAGLINE ============= */}
@@ -490,134 +496,136 @@ export default function HomeClient() {
                 </div>
 
                 {/* ============= SHOWROOM — Original layout ============= */}
-                <div className="mx-4 sm:mx-5 xl:mx-32 dark:bg-slate-800 rounded-lg bg-white py-10 px-5 sm:px-7 shadow-sm border border-gray-100">
-                    <div className="flex items-center justify-center">
-                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-500">HỆ THỐNG SHOWROOM</h1>
-                    </div>
-                    <div className="mt-12 grid grid-flow-row grid-cols-12 gap-3">
-                        {/* Showroom 1 */}
-                        <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
-                            <div className="flex items-center">
-                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-blue-100 text-blue-600">1</div>
-                                <div className="font-bold text-blue-500">
-                                    <h5>Showroom bán hàng</h5>
-                                    <h2>QUẬN CẦU GIẤY, HÀ NỘI</h2>
-                                </div>
-                            </div>
-                            <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">41 Khúc Thừa Dụ, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội</h2>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hình ảnh showroom</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hotline bảo hành: 19006100</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
-                            </p>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="dark:bg-slate-800 rounded-lg bg-white py-10 px-5 sm:px-7 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-center">
+                            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-500">HỆ THỐNG SHOWROOM</h1>
                         </div>
-                        {/* Showroom 2 */}
-                        <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
-                            <div className="flex items-center">
-                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-purple-100 text-purple-600">2</div>
-                                <div className="font-bold text-blue-500">
-                                    <h5>Showroom bán hàng</h5>
-                                    <h2>QUẬN ĐỐNG ĐA, HÀ NỘI</h2>
+                        <div className="mt-12 grid grid-flow-row grid-cols-12 gap-3">
+                            {/* Showroom 1 */}
+                            <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
+                                <div className="flex items-center">
+                                    <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-blue-100 text-blue-600">1</div>
+                                    <div className="font-bold text-blue-500">
+                                        <h5>Showroom bán hàng</h5>
+                                        <h2>QUẬN CẦU GIẤY, HÀ NỘI</h2>
+                                    </div>
                                 </div>
+                                <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">41 Khúc Thừa Dụ, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội</h2>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hình ảnh showroom</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hotline bảo hành: 19006100</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
+                                </p>
                             </div>
-                            <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">94E-94F Đường Láng, Phường Ngã Tư Sở, Quận Đống Đa, Hà Nội</h2>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hình ảnh showroom</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hotline bảo hành: 19006100</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
-                            </p>
-                        </div>
-                        {/* Showroom 3 */}
-                        <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
-                            <div className="flex items-center">
-                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-emerald-100 text-emerald-600">3</div>
-                                <div className="font-bold text-blue-500 w-2/3">
-                                    <h5>Showroom bán hàng</h5>
-                                    <h2>VINH, NGHỆ AN</h2>
+                            {/* Showroom 2 */}
+                            <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
+                                <div className="flex items-center">
+                                    <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-purple-100 text-purple-600">2</div>
+                                    <div className="font-bold text-blue-500">
+                                        <h5>Showroom bán hàng</h5>
+                                        <h2>QUẬN ĐỐNG ĐA, HÀ NỘI</h2>
+                                    </div>
                                 </div>
+                                <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">94E-94F Đường Láng, Phường Ngã Tư Sở, Quận Đống Đa, Hà Nội</h2>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hình ảnh showroom</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hotline bảo hành: 19006100</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
+                                </p>
                             </div>
-                            <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">72 Lê Lợi, Thành Phố Vinh, Nghệ An</h2>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hình ảnh showroom</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hotline bảo hành: 19006100</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
-                            </p>
-                        </div>
-                        {/* Showroom 4 */}
-                        <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
-                            <div className="flex items-center">
-                                <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-rose-100 text-rose-600">4</div>
-                                <div className="font-bold text-blue-500">
-                                    <h5>Showroom bán hàng</h5>
-                                    <h2>QUẬN 10, HỒ CHÍ MINH</h2>
+                            {/* Showroom 3 */}
+                            <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
+                                <div className="flex items-center">
+                                    <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-emerald-100 text-emerald-600">3</div>
+                                    <div className="font-bold text-blue-500 w-2/3">
+                                        <h5>Showroom bán hàng</h5>
+                                        <h2>VINH, NGHỆ AN</h2>
+                                    </div>
                                 </div>
+                                <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">72 Lê Lợi, Thành Phố Vinh, Nghệ An</h2>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hình ảnh showroom</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hotline bảo hành: 19006100</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
+                                </p>
                             </div>
-                            <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">260 Lý Thường Kiệt, Phường 14, Quận 10, Hồ Chí Minh</h2>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hình ảnh showroom</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Hotline bảo hành: 19006100</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
-                            </p>
-                            <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
-                                <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
-                                <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
-                            </p>
+                            {/* Showroom 4 */}
+                            <div className="dark:text-white col-span-12 my-3 sm:col-span-6 xl:col-span-3">
+                                <div className="flex items-center">
+                                    <div className="text-6xl px-6 rounded-md py-3 mr-4 bg-rose-100 text-rose-600">4</div>
+                                    <div className="font-bold text-blue-500">
+                                        <h5>Showroom bán hàng</h5>
+                                        <h2>QUẬN 10, HỒ CHÍ MINH</h2>
+                                    </div>
+                                </div>
+                                <h2 className="ml-2 mt-3 mb-5 text-sm sm:text-base">260 Lý Thường Kiệt, Phường 14, Quận 10, Hồ Chí Minh</h2>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-images w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hình ảnh showroom</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-solid fa-headphones w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hotline mua hàng: 0969.123.666</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-solid fa-phone w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Hotline bảo hành: 19006100</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-envelope w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Email: xuanhodcbas@gmail.com</span>
+                                </p>
+                                <p className="ml-2 my-3 text-sm sm:text-base flex items-center cursor-pointer hover:text-blue-500">
+                                    <i className="fa-regular fa-clock w-1/6 text-xl sm:text-2xl"></i>
+                                    <span className="w-5/6">Thời gian làm việc: 8h00 - 18h30</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

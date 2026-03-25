@@ -4,7 +4,7 @@ import React from 'react';
 const ProfilePageSkeleton = ({ children }: { children: React.ReactNode }) => {
     return (
         <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-slate-900 animate-pulse">
-            <div className='mx-5 xl:mx-32 flex items-center gap-2 py-3'>
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 py-3'>
                 <Skeleton.Input style={{ width: 80, height: 18 }} active />
                 <span className="text-gray-300">/</span>
                 <Skeleton.Input style={{ width: 120, height: 18 }} active />
@@ -12,7 +12,7 @@ const ProfilePageSkeleton = ({ children }: { children: React.ReactNode }) => {
                 <Skeleton.Input style={{ width: 140, height: 18 }} active />
             </div>
 
-            <div className='mx-5 xl:mx-32 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 pb-5 grid grid-flow-row grid-cols-12 gap-0 lg:gap-9'>
                 {/* Sidebar Skeleton */}
                 <div className='col-span-12 lg:col-span-3'>
                     <div className='flex items-center'>

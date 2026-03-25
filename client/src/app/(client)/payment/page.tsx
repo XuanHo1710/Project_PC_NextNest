@@ -60,7 +60,7 @@ const PaymentPage = () => {
             />
             <div className="min-h-screen my-5 bg-slate-50 dark:bg-gray-900 dark:text-white pt-3">
                 {/* Breadcrumb */}
-                <div className='mx-5 xl:mx-32 mb-6'>
+                <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6'>
                     <Breadcrumb items={[
                         { label: 'Giỏ hàng', href: '/cart' },
                         { label: 'Thanh toán' },

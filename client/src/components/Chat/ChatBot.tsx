@@ -299,7 +299,7 @@ const ChatBot = () => {
 
     // ── Render ──────────────────────────────────────────────────────
     return (
-        <div className="fixed bottom-20 sm:bottom-24 right-3 sm:right-5 z-50 flex flex-col items-end">
+        <div className="fixed bottom-4 sm:bottom-6 right-3 sm:right-5 z-50 flex flex-col items-end">
             {/* Floating button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
@@ -319,7 +319,7 @@ const ChatBot = () => {
                     className="bg-white rounded-2xl shadow-2xl w-[calc(100vw-24px)] sm:w-[440px] overflow-hidden mb-2 border border-blue-100 flex flex-col"
                     style={{
                         maxWidth: '480px',
-                        maxHeight: 'min(650px, calc(100vh - 140px))',
+                        maxHeight: 'min(650px, calc(100vh - 100px))',
                         animation: 'chatSlideUp 0.25s ease-out forwards',
                     }}
                 >
@@ -350,7 +350,7 @@ const ChatBot = () => {
                         ref={messagesContainerRef}
                         onScroll={handleScroll}
                         className="flex-1 overflow-y-auto p-3 sm:p-4 bg-gradient-to-b from-blue-50/30 to-white relative"
-                        style={{ minHeight: '300px' }}
+                        style={{ minHeight: '200px' }}
                     >
                         {messages.map((msg, index) => (
                             <div
@@ -472,16 +472,18 @@ const ChatBot = () => {
 
                     {/* Scroll-to-bottom FAB */}
                     {showScrollBtn && (
-                        <button
-                            onClick={() => {
-                                isAtBottomRef.current = true;
-                                scrollToBottom();
-                            }}
-                            className="absolute bottom-[72px] right-4 w-8 h-8 rounded-full bg-white shadow-lg border border-blue-200 flex items-center justify-center text-blue-500 hover:bg-blue-50 transition-colors z-10"
-                            style={{ animation: 'chatMsgIn 0.15s ease-out both' }}
-                        >
-                            <FiChevronDown size={18} />
-                        </button>
+                        <div className="flex justify-end px-4 py-1 bg-transparent">
+                            <button
+                                onClick={() => {
+                                    isAtBottomRef.current = true;
+                                    scrollToBottom();
+                                }}
+                                className="w-8 h-8 rounded-full bg-white shadow-lg border border-blue-200 flex items-center justify-center text-blue-500 hover:bg-blue-50 transition-colors z-10"
+                                style={{ animation: 'chatMsgIn 0.15s ease-out both' }}
+                            >
+                                <FiChevronDown size={18} />
+                            </button>
+                        </div>
                     )}
 
                     {/* ── Input area ── */}

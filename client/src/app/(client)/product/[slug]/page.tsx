@@ -257,7 +257,7 @@ export default function ProductDetailClient() {
 
             <div className="pt-3 bg-slate-50 dark:bg-gray-900 dark:text-white min-h-screen">
                 {/* Breadcrumb */}
-                <div className="mx-5 xl:mx-32 mb-4">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
                     <BreadcrumbNav items={[
                         ...(product.category ? [{ label: product.category.name, href: `/collection/${product.category.slug}` }] : []),
                         { label: product.name },
@@ -265,292 +265,297 @@ export default function ProductDetailClient() {
                 </div>
 
                 {/* Main Product Card */}
-                <div className="mx-5 xl:mx-32 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 md:p-8 mb-6">
-                    {/* Product Title */}
-                    <h1 className="font-bold text-2xl items-center lg:text-4xl text-gray-900 dark:text-white pb-4 border-b border-gray-100 dark:border-gray-700 flex gap-3 flex-wrap">
-                        {product.name}
-                        {displayDiscount > 0 && (
-                            <Tag color="red" className="!text-lg !font-semibold !rounded-lg !px-3">
-                                <FireFilled className="mr-1" /> -{displayDiscount}%
-                            </Tag>
-                        )}
-                        {product.brand?.name && (
-                            <Tag color="blue" className="!rounded-lg !text-xl">{product.brand.name}</Tag>
-                        )}
-                    </h1>
+                <div className="max-w-7xl mx-auto mb-6 px-4 sm:px-6 lg:px-8">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 md:p-8">
+                        {/* Product Title */}
+                        <h1 className="font-bold text-2xl items-center lg:text-4xl text-gray-900 dark:text-white pb-4 border-b border-gray-100 dark:border-gray-700 flex gap-3 flex-wrap">
+                            {product.name}
+                            {displayDiscount > 0 && (
+                                <Tag color="red" className="!text-lg !font-semibold !rounded-lg !px-3">
+                                    <FireFilled className="mr-1" /> -{displayDiscount}%
+                                </Tag>
+                            )}
+                            {product.brand?.name && (
+                                <Tag color="blue" className="!rounded-lg !text-xl">{product.brand.name}</Tag>
+                            )}
+                        </h1>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 mt-6 gap-8">
-                        {/* Left: Image Gallery */}
-                        <div className="lg:col-span-5">
-                            <ProductImageGallery
-                                images={displayImages}
-                                productName={product.name}
-                            />
+                        <div className="grid grid-cols-1 lg:grid-cols-12 mt-6 gap-8">
+                            {/* Left: Image Gallery */}
+                            <div className="lg:col-span-5">
+                                <ProductImageGallery
+                                    images={displayImages}
+                                    productName={product.name}
+                                />
 
-                            {/* Rating + Stats */}
-                            <div className="mt-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-xl flex items-center justify-between">
-                                <div className="flex flex-col items-center">
-                                    <Rate disabled defaultValue={product.avgRating || 0} allowHalf className="text-sm" />
-                                    <span className="text-xs text-gray-500 mt-1">{product.totalRatings || 0} đánh giá</span>
-                                </div>
-                                <Divider orientation="vertical" className="!h-10 !border-gray-300" />
-                                <div className="flex flex-col text-sm">
-                                    <span className="text-green-600 font-semibold flex items-center gap-1">
-                                        <CheckCircleFilled /> Hàng chính hãng
-                                    </span>
-                                    <span className="text-blue-500 flex items-center gap-1 mt-1">
-                                        <SafetyCertificateFilled /> Bảo hành đầy đủ
-                                    </span>
+                                {/* Rating + Stats */}
+                                <div className="mt-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-xl flex items-center justify-between">
+                                    <div className="flex flex-col items-center">
+                                        <Rate disabled defaultValue={product.avgRating || 0} allowHalf className="text-sm" />
+                                        <span className="text-xs text-gray-500 mt-1">{product.totalRatings || 0} đánh giá</span>
+                                    </div>
+                                    <Divider orientation="vertical" className="!h-10 !border-gray-300" />
+                                    <div className="flex flex-col text-sm">
+                                        <span className="text-green-600 font-semibold flex items-center gap-1">
+                                            <CheckCircleFilled /> Hàng chính hãng
+                                        </span>
+                                        <span className="text-blue-500 flex items-center gap-1 mt-1">
+                                            <SafetyCertificateFilled /> Bảo hành đầy đủ
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Right: Product Info */}
-                        <div className="lg:col-span-7 space-y-5">
-                            {/* Price Section */}
-                            <div className="bg-gradient-to-r from-blue-50 to-blue-50 dark:from-gray-700 dark:to-gray-700 rounded-xl p-5">
-                                <div className="flex items-end gap-4 flex-wrap">
-                                    <span className="text-blue-600 dark:text-blue-400 font-bold text-3xl xl:text-4xl">
-                                        {displayFinalPrice.toLocaleString()}đ
-                                    </span>
-                                    {displayDiscount > 0 && (
-                                        <>
-                                            <span className="line-through text-gray-400 text-xl font-semibold">
-                                                {displayPrice.toLocaleString()}đ
-                                            </span>
-                                            <Tag color="red" className="!text-sm !font-bold !rounded-lg">
-                                                Tiết kiệm {(displayPrice - displayFinalPrice).toLocaleString()}đ
-                                            </Tag>
-                                        </>
+                            {/* Right: Product Info */}
+                            <div className="lg:col-span-7 space-y-5">
+                                {/* Price Section */}
+                                <div className="bg-gradient-to-r from-blue-50 to-blue-50 dark:from-gray-700 dark:to-gray-700 rounded-xl p-5">
+                                    <div className="flex items-end gap-4 flex-wrap">
+                                        <span className="text-blue-600 dark:text-blue-400 font-bold text-3xl xl:text-4xl">
+                                            {displayFinalPrice.toLocaleString()}đ
+                                        </span>
+                                        {displayDiscount > 0 && (
+                                            <>
+                                                <span className="line-through text-gray-400 text-xl font-semibold">
+                                                    {displayPrice.toLocaleString()}đ
+                                                </span>
+                                                <Tag color="red" className="!text-sm !font-bold !rounded-lg">
+                                                    Tiết kiệm {(displayPrice - displayFinalPrice).toLocaleString()}đ
+                                                </Tag>
+                                            </>
+                                        )}
+                                    </div>
+                                    {displayStock > 0 ? (
+                                        <div className="mt-2 flex items-center gap-2">
+                                            <Badge status="success" />
+                                            <span className="text-green-600 text-sm font-medium">Còn {displayStock} sản phẩm</span>
+                                        </div>
+                                    ) : (
+                                        <div className="mt-2 flex items-center gap-2">
+                                            <Badge status="error" />
+                                            <span className="text-red-500 text-sm font-medium">Tạm hết hàng</span>
+                                        </div>
                                     )}
-                                </div>
-                                {displayStock > 0 ? (
-                                    <div className="mt-2 flex items-center gap-2">
-                                        <Badge status="success" />
-                                        <span className="text-green-600 text-sm font-medium">Còn {displayStock} sản phẩm</span>
-                                    </div>
-                                ) : (
-                                    <div className="mt-2 flex items-center gap-2">
-                                        <Badge status="error" />
-                                        <span className="text-red-500 text-sm font-medium">Tạm hết hàng</span>
-                                    </div>
-                                )}
-                                <div className='mt-2 flex flex-col gap-2 items-start justify-center w-full'>
-                                    <p>Mô tả ngắn: </p>
-                                    <div className="w-full max-w-full">
-                                        <p className="whitespace-normal text-sm text-stone-500 !break-words max-w-full">{selectedVariant?.subDescription || ""}</p>
+                                    <div className='mt-2 flex flex-col gap-2 items-start justify-center w-full'>
+                                        <p>Mô tả ngắn: </p>
+                                        <div className="w-full max-w-full">
+                                            <p className="whitespace-normal text-sm text-stone-500 !break-words max-w-full">{selectedVariant?.subDescription || ""}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Variant Selection */}
-                            {attributeGroups.length > 0 && (
-                                <div className="space-y-4">
-                                    {attributeGroups.map(group => (
-                                        <div key={group.attribute._id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2.5 block">
-                                                {group.attribute.name}
-                                            </label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {group.values.map(val => {
-                                                    const isSelected = selectedCombination[group.attribute.code] === val.label;
-                                                    return (
-                                                        <button
-                                                            key={val._id}
-                                                            onClick={() => handleCombinationSelect(group.attribute.code, val.label)}
-                                                            className={`
+                                {/* Variant Selection */}
+                                {attributeGroups.length > 0 && (
+                                    <div className="space-y-4">
+                                        {attributeGroups.map(group => (
+                                            <div key={group.attribute._id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2.5 block">
+                                                    {group.attribute.name}
+                                                </label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {group.values.map(val => {
+                                                        const isSelected = selectedCombination[group.attribute.code] === val.label;
+                                                        return (
+                                                            <button
+                                                                key={val._id}
+                                                                onClick={() => handleCombinationSelect(group.attribute.code, val.label)}
+                                                                className={`
                                                                 px-4 py-2 rounded-lg border-2 transition-all flex items-center gap-2 text-sm font-medium
                                                                 ${isSelected
-                                                                    ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:bg-blue-900/30 dark:text-blue-300'
-                                                                    : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50/50 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500'
-                                                                }
+                                                                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm dark:bg-blue-900/30 dark:text-blue-300'
+                                                                        : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50/50 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500'
+                                                                    }
                                                             `}
-                                                        >
-                                                            {group.attribute.displayType === 'COLOR' && val.colorHex && (
-                                                                <>
-                                                                    <span
-                                                                        className="w-5 h-5 rounded-full border-2 border-white shadow shrink-0"
-                                                                        style={{ backgroundColor: val.colorHex }}
-                                                                    />
+                                                            >
+                                                                {group.attribute.displayType === 'COLOR' && val.colorHex && (
+                                                                    <>
+                                                                        <span
+                                                                            className="w-5 h-5 rounded-full border-2 border-white shadow shrink-0"
+                                                                            style={{ backgroundColor: val.colorHex }}
+                                                                        />
+                                                                        <span>{val.label}</span>
+                                                                    </>
+                                                                )}
+                                                                {group.attribute.displayType === 'IMAGE' && val.imageUrl && (
+                                                                    <div className='flex flex-col gap-5 items-center justify-center'>
+                                                                        <Image src={val.imageUrl} alt={val.label} className="!w-20 !h-20 rounded object-cover" />
+                                                                        <p>{val.label}</p>
+                                                                    </div>
+                                                                )}
+                                                                {(group.attribute.displayType === 'BUTTON' || group.attribute.displayType === 'RADIO') &&
                                                                     <span>{val.label}</span>
-                                                                </>
-                                                            )}
-                                                            {group.attribute.displayType === 'IMAGE' && val.imageUrl && (
-                                                                <div className='flex flex-col gap-5 items-center justify-center'>
-                                                                    <Image src={val.imageUrl} alt={val.label} className="!w-20 !h-20 rounded object-cover" />
-                                                                    <p>{val.label}</p>
-                                                                </div>
-                                                            )}
-                                                            {(group.attribute.displayType === 'BUTTON' || group.attribute.displayType === 'RADIO') &&
-                                                                <span>{val.label}</span>
-                                                            }
-                                                            {isSelected && <CheckCircleFilled className="text-blue-500 text-xs" />}
-                                                        </button>
-                                                    );
-                                                })}
+                                                                }
+                                                                {isSelected && <CheckCircleFilled className="text-blue-500 text-xs" />}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Shipping Info */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[
+                                        { icon: <TruckOutlined className="text-blue-500" />, text: 'Giao hàng nhanh 24h' },
+                                        { icon: <SwapOutlined className="text-blue-500" />, text: 'Đổi trả miễn phí 7 ngày' },
+                                        { icon: <CreditCardOutlined className="text-blue-500" />, text: 'Hỗ trợ trả góp 0%' },
+                                        { icon: <PhoneOutlined className="text-blue-500" />, text: 'Hotline: 1900 1234' },
+                                    ].map((item, i) => (
+                                        <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2.5">
+                                            {item.icon}
+                                            <span>{item.text}</span>
                                         </div>
                                     ))}
                                 </div>
-                            )}
 
-                            {/* Shipping Info */}
-                            <div className="grid grid-cols-2 gap-3">
-                                {[
-                                    { icon: <TruckOutlined className="text-blue-500" />, text: 'Giao hàng nhanh 24h' },
-                                    { icon: <SwapOutlined className="text-blue-500" />, text: 'Đổi trả miễn phí 7 ngày' },
-                                    { icon: <CreditCardOutlined className="text-blue-500" />, text: 'Hỗ trợ trả góp 0%' },
-                                    { icon: <PhoneOutlined className="text-blue-500" />, text: 'Hotline: 1900 1234' },
-                                ].map((item, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2.5">
-                                        {item.icon}
-                                        <span>{item.text}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Seller Info */}
-                            {product.createdBy && typeof product.createdBy === 'object' && (product.createdBy as ICreatorInfo).fullname && (() => {
-                                const creator = product.createdBy as ICreatorInfo;
-                                const sellerOnline = isUserOnline(creator._id);
-                                const sellerLastActive = getLastActive(creator._id);
-                                return (
-                                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 block">
-                                            Người đăng bán
-                                        </label>
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative">
-                                                <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-sm overflow-hidden">
-                                                    {creator.avatar ? (
-                                                        <img src={creator.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        creator.fullname?.charAt(0)?.toUpperCase()
+                                {/* Seller Info */}
+                                {product.createdBy && typeof product.createdBy === 'object' && (product.createdBy as ICreatorInfo).fullname && (() => {
+                                    const creator = product.createdBy as ICreatorInfo;
+                                    const sellerOnline = isUserOnline(creator._id);
+                                    const sellerLastActive = getLastActive(creator._id);
+                                    return (
+                                        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                                            <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 block">
+                                                Người đăng bán
+                                            </label>
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative">
+                                                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-bold text-sm overflow-hidden">
+                                                        {creator.avatar ? (
+                                                            <img src={creator.avatar} alt="avatar" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            creator.fullname?.charAt(0)?.toUpperCase()
+                                                        )}
+                                                    </div>
+                                                    {sellerOnline && (
+                                                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-700 rounded-full" />
                                                     )}
                                                 </div>
-                                                {sellerOnline && (
-                                                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-700 rounded-full" />
-                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-sm text-gray-800 dark:text-white truncate">
+                                                        {creator.fullname}
+                                                    </p>
+                                                    <p className={`text-xs truncate ${sellerOnline ? 'text-green-500' : 'text-gray-500'}`}>
+                                                        {sellerOnline
+                                                            ? 'Đang hoạt động'
+                                                            : sellerLastActive
+                                                                ? `Hoạt động ${timeAgo(sellerLastActive)}`
+                                                                : creator.email}
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    icon={<CommentOutlined />}
+                                                    className="!rounded-lg !text-blue-500 !border-blue-300 hover:!bg-blue-50"
+                                                    onClick={() => {
+                                                        window.open(`/chat?sellerId=${creator._id}&sellerName=${encodeURIComponent(creator.fullname)}${creator.avatar ? `&sellerAvatar=${encodeURIComponent(creator.avatar)}` : ''}`, '_blank');
+                                                    }}
+                                                >
+                                                    Chat với người bán
+                                                </Button>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-semibold text-sm text-gray-800 dark:text-white truncate">
-                                                    {creator.fullname}
-                                                </p>
-                                                <p className={`text-xs truncate ${sellerOnline ? 'text-green-500' : 'text-gray-500'}`}>
-                                                    {sellerOnline
-                                                        ? 'Đang hoạt động'
-                                                        : sellerLastActive
-                                                            ? `Hoạt động ${timeAgo(sellerLastActive)}`
-                                                            : creator.email}
-                                                </p>
-                                            </div>
-                                            <Button
-                                                icon={<CommentOutlined />}
-                                                className="!rounded-lg !text-blue-500 !border-blue-300 hover:!bg-blue-50"
-                                                onClick={() => {
-                                                    window.open(`/chat?sellerId=${creator._id}&sellerName=${encodeURIComponent(creator.fullname)}${creator.avatar ? `&sellerAvatar=${encodeURIComponent(creator.avatar)}` : ''}`, '_blank');
-                                                }}
-                                            >
-                                                Chat với người bán
-                                            </Button>
                                         </div>
-                                    </div>
-                                );
-                            })()}
+                                    );
+                                })()}
 
-                            {/* Action Buttons */}
-                            <div className="flex flex-wrap gap-3 pt-2">
-                                <Button
-                                    size="large"
-                                    onClick={() => {
-                                        handleAddToCart();
-                                        Swal.fire({
-                                            icon: "success", title: "Thêm vào giỏ hàng thành công!",
-                                            showConfirmButton: false, timer: 1500,
-                                        });
-                                    }}
-                                    icon={<ShoppingCartOutlined />}
-                                    className="!bg-amber-500 !text-white !border-amber-500 hover:!bg-amber-600 !h-12 !px-8 !rounded-xl !font-semibold !text-base !shadow-lg !shadow-amber-500/20"
-                                    disabled={displayStock <= 0}
-                                >
-                                    Thêm vào giỏ
-                                </Button>
-                                <Button
-                                    size="large"
-                                    onClick={() => { handleAddToCart(); router.push('/cart'); }}
-                                    icon={<ThunderboltFilled />}
-                                    type="primary"
-                                    className="!h-12 !px-10 !rounded-xl !font-semibold !text-base !shadow-lg !shadow-blue-500/20"
-                                    disabled={displayStock <= 0}
-                                >
-                                    Mua ngay
-                                </Button>
-                                <Button
-                                    size="large"
-                                    icon={isWishlisted ? <HeartFilled /> : <HeartOutlined />}
-                                    onClick={() => handleAddToWishlist(product)}
-                                    loading={addToWishlistMutation.isPending}
-                                    className={`!h-12 !px-6 !rounded-xl !font-medium ${isWishlisted ? '!text-red-500 !border-red-300' : '!text-gray-500 !border-gray-300'} hover:!text-red-500`}
-                                >
-                                    {isWishlisted ? 'Đã yêu thích' : 'Yêu thích'}
-                                </Button>
+                                {/* Action Buttons */}
+                                <div className="flex flex-wrap gap-3 pt-2">
+                                    <Button
+                                        size="large"
+                                        onClick={() => {
+                                            handleAddToCart();
+                                            Swal.fire({
+                                                icon: "success", title: "Thêm vào giỏ hàng thành công!",
+                                                showConfirmButton: false, timer: 1500,
+                                            });
+                                        }}
+                                        icon={<ShoppingCartOutlined />}
+                                        className="!bg-amber-500 !text-white !border-amber-500 hover:!bg-amber-600 !h-12 !px-8 !rounded-xl !font-semibold !text-base !shadow-lg !shadow-amber-500/20"
+                                        disabled={displayStock <= 0}
+                                    >
+                                        Thêm vào giỏ
+                                    </Button>
+                                    <Button
+                                        size="large"
+                                        onClick={() => { handleAddToCart(); router.push('/cart'); }}
+                                        icon={<ThunderboltFilled />}
+                                        type="primary"
+                                        className="!h-12 !px-10 !rounded-xl !font-semibold !text-base !shadow-lg !shadow-blue-500/20"
+                                        disabled={displayStock <= 0}
+                                    >
+                                        Mua ngay
+                                    </Button>
+                                    <Button
+                                        size="large"
+                                        icon={isWishlisted ? <HeartFilled /> : <HeartOutlined />}
+                                        onClick={() => handleAddToWishlist(product)}
+                                        loading={addToWishlistMutation.isPending}
+                                        className={`!h-12 !px-6 !rounded-xl !font-medium ${isWishlisted ? '!text-red-500 !border-red-300' : '!text-gray-500 !border-gray-300'} hover:!text-red-500`}
+                                    >
+                                        {isWishlisted ? 'Đã yêu thích' : 'Yêu thích'}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Tabs: Description + Comments */}
-                <div className="mx-5 xl:mx-32 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mb-6">
-                    <Tabs
-                        defaultActiveKey="1"
-                        type="card"
-                        className="product-detail-tabs"
-                        size="large"
-                        items={[
-                            {
-                                key: '1',
-                                label: 'Mô tả sản phẩm',
-                                children: <DescriptionProduct product={product} />,
-                            },
-                            {
-                                key: '2',
-                                label: (
-                                    <span className="flex items-center gap-1.5">
-                                        <CommentOutlined /> Đánh giá & bình luận
-                                    </span>
-                                ),
-                                children: <ProductInteractionSection productId={product._id} />,
-                            }
-                        ]}
-                    />
-                </div>
-
-                {/* Related Products */}
-                {dataProduct && dataProduct.data?.length > 0 && (
-                    <div className="mx-5 xl:mx-32 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mb-10">
-                        <h2 className="font-bold text-blue-600 dark:text-white text-xl lg:text-2xl pb-4 border-b border-gray-100 flex items-center gap-2">
-                            <RocketFilled className="text-blue-500" /> Sản phẩm tương tự
-                        </h2>
-                        <Carousel
-                            slidesToShow={5}
-                            slidesToScroll={1}
-                            draggable
-                            className="mt-6 cursor-grab"
-                            dots={false}
-                            autoplay
-                            arrows
-                            autoplaySpeed={3000}
-                            responsive={responsiveSettings}
-                        >
-                            {dataProduct.data.map(item => (
-                                <div key={item._id} className="px-1.5">
-                                    <CardProduct css="hover:shadow-lg transition-all" product={item} />
-                                </div>
-                            ))}
-                        </Carousel>
+                    {/* Tabs: Description + Comments */}
+                    <div className="max-w-7xl mx-auto mb-6 px-4 sm:px-6 lg:px-8">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
+                            <Tabs
+                                defaultActiveKey="1"
+                                type="card"
+                                className="product-detail-tabs"
+                                size="large"
+                                items={[
+                                    {
+                                        key: '1',
+                                        label: 'Mô tả sản phẩm',
+                                        children: <DescriptionProduct product={product} />,
+                                    },
+                                    {
+                                        key: '2',
+                                        label: (
+                                            <span className="flex items-center gap-1.5">
+                                                <CommentOutlined /> Đánh giá & bình luận
+                                            </span>
+                                        ),
+                                        children: <ProductInteractionSection productId={product._id} />,
+                                    }
+                                ]}
+                            />
+                        </div>
                     </div>
-                )}
-            </div>
-        </>
-    );
+
+                    {/* Related Products */}
+                    {dataProduct && dataProduct.data?.length > 0 && (
+                        <div className="max-w-7xl mx-auto mb-10 px-4 sm:px-6 lg:px-8">
+                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
+                                <h2 className="font-bold text-blue-600 dark:text-white text-xl lg:text-2xl pb-4 border-b border-gray-100 flex items-center gap-2">
+                                    <RocketFilled className="text-blue-500" /> Sản phẩm tương tự
+                                </h2>
+                                <Carousel
+                                    slidesToShow={5}
+                                    slidesToScroll={1}
+                                    draggable
+                                    className="mt-6 cursor-grab"
+                                    dots={false}
+                                    autoplay
+                                    arrows
+                                    autoplaySpeed={3000}
+                                    responsive={responsiveSettings}
+                                >
+                                    {dataProduct.data.map(item => (
+                                        <div key={item._id} className="px-1.5">
+                                            <CardProduct css="hover:shadow-lg transition-all" product={item} />
+                                        </div>
+                                    ))}
+                                </Carousel>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </>
+            );
 }

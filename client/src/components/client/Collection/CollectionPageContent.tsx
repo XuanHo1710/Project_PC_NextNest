@@ -286,11 +286,11 @@ export default function CollectionPageContent({ mode }: { mode: CollectionMode }
             </Drawer>
 
             <div className="md:pt-3 pt-24 bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
-                <div className="mx-5 xl:mx-32">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <Breadcrumb items={[...(collectionName ? [{ label: collectionName }] : [])]} />
                 </div>
 
-                <div className="mx-5 xl:mx-32 mb-5">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-5">
                     <h1 className="font-bold text-xl lg:text-3xl uppercase text-blue-500 border-b-2 border-blue-400 pb-2 inline-block">
                         {collectionName}
                         <span className="ml-2 text-sm text-stone-400 lowercase font-medium">
@@ -331,7 +331,7 @@ export default function CollectionPageContent({ mode }: { mode: CollectionMode }
                     )}
                 </div>
 
-                <div className="mx-5 my-5 xl:mx-32 grid grid-cols-12 lg:gap-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-5 grid grid-cols-12 lg:gap-8">
                     <div className="hidden lg:block lg:col-span-3">
                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 sticky top-24">
                             <h3 className="font-bold text-base mb-4 text-gray-800 dark:text-white">Bộ lọc</h3>

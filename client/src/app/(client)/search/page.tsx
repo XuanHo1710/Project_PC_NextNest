@@ -125,12 +125,12 @@ export default function SearchPage() {
 
             <div className="md:pt-3 pt-52 bg-slate-50 dark:bg-gray-900 min-h-screen">
                 {/* Breadcrumb */}
-                <div className="mx-5 xl:mx-32">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <Breadcrumb items={[{ label: 'Tìm kiếm' }]} />
                 </div>
 
                 {/* Search Header */}
-                <div className="mx-5 xl:mx-32 mb-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 md:p-8">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-4">
                             Tìm kiếm sản phẩm
@@ -161,7 +161,7 @@ export default function SearchPage() {
                 </div>
 
                 {/* Sort & Results */}
-                <div className="mx-5 xl:mx-32 mb-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
                     {q && (
                         <>
                             {/* Sort bar */}
@@ -189,7 +189,7 @@ export default function SearchPage() {
                                 </div>
                             ) : variants.length > 0 ? (
                                 <>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
                                         {variants.map((variant) => (
                                             <div key={variant._id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
                                                 <CardProductVariant css="p-3" variant={variant} />

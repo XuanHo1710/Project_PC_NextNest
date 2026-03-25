@@ -4,15 +4,15 @@ import React from 'react';
 const CartPageSkeleton = () => {
     return (
         <div className="md:pt-3 pt-52 dark:bg-slate-900 animate-pulse">
-            <div className='mx-5 xl:mx-32 flex items-center gap-2 py-3'>
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 py-3'>
                 <Skeleton.Input style={{ width: 80, height: 18 }} active />
                 <span className="text-gray-300">/</span>
                 <Skeleton.Input style={{ width: 100, height: 18 }} active />
             </div>
-            <h1 className='mx-5 xl:mx-32 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3'>
+            <h1 className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 border-b-blue-400 border-solid border-b-2 md:w-2/3 xl:w-1/3'>
                 <Skeleton.Input style={{ width: 250, height: 40 }} active />
             </h1>
-            <div className='mx-5 xl:mx-32 mt-5 pb-10 content-body grid grid-flow-row grid-cols-12 gap-8 '>
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 pb-10 content-body grid grid-flow-row grid-cols-12 gap-8 '>
                 <div className='col-span-12 lg:col-span-7 max-h-max bg-white shadow-lg rounded-lg p-4'>
                     <div className='cart-list-product' style={{ maxHeight: "550px" }}>
                         {[...Array(3)].map((_, index) => (
