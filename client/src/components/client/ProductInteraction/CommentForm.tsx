@@ -112,7 +112,6 @@ export default function CommentForm({ productId }: CommentFormProps) {
     if (!isAuthenticated) {
         return (
             <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 text-center border border-gray-100 dark:border-gray-700">
-                <div className="text-4xl mb-3">💬</div>
                 <p className="text-gray-500 dark:text-gray-400 mb-4 text-base">
                     Đăng nhập để đánh giá sản phẩm này
                 </p>

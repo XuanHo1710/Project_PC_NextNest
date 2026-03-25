@@ -1,6 +1,6 @@
 """
-Embedding service: uses SentenceTransformer with BAAI/bge-m3 model to generate text embeddings.
-Dimension: 1024 (bge-m3 default).
+Embedding service: uses SentenceTransformer to generate text embeddings.
+Default model: all-MiniLM-L6-v2 (384-dim, ~80MB, fast).
 Distance: Cosine.
 
 Model is loaded once at module level and reused across all calls.
@@ -12,10 +12,19 @@ from config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-EMBEDDING_DIMENSION = 1024  # BAAI/bge-m3
+# Model dimension mapping
+_MODEL_DIMENSIONS = {
+    "all-MiniLM-L6-v2": 384,
+    "all-MiniLM-L12-v2": 384,
+    "paraphrase-MiniLM-L6-v2": 384,
+    "BAAI/bge-m3": 1024,
+    "BAAI/bge-small-en-v1.5": 384,
+}
+
+EMBEDDING_DIMENSION = _MODEL_DIMENSIONS.get(settings.EMBEDDING_MODEL, 384)
 
 # Load model once (downloads & caches on first run)
-logger.info(f"Loading embedding model: {settings.EMBEDDING_MODEL} ...")
+logger.info(f"Loading embedding model: {settings.EMBEDDING_MODEL} (dim={EMBEDDING_DIMENSION}) ...")
 _model = SentenceTransformer(settings.EMBEDDING_MODEL)
 logger.info("Embedding model loaded successfully.")
 

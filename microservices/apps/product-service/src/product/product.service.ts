@@ -122,6 +122,79 @@ export class ProductService {
   /**
    * Batch-enrich product list with defaultVariant and totalStock to avoid N+1 queries.
    */
+  /**
+   * Lightweight enrichment: only populates defaultVariant (no aggregation).
+   * Used for client-facing listing endpoints where totalStock/totalImages are not needed.
+   */
+  private async enrichProductsLightweight(products: any[]) {
+    if (!products || products.length === 0) return [];
+
+    const defaultVariantIds = Array.from(
+      new Set(
+        products
+          .map((p) => p.defaultProductVariantId?.toString())
+          .filter(Boolean),
+      ),
+    ).map((id) => new Types.ObjectId(id));
+
+    const productsWithoutDefault = products.filter(
+      (p) => !p.defaultProductVariantId,
+    );
+
+    const [defaultVariants, fallbackVariants] = await Promise.all([
+      defaultVariantIds.length > 0
+        ? this.productVariantModel
+            .find({ _id: { $in: defaultVariantIds }, isDeleted: false })
+            .lean()
+            .exec()
+        : Promise.resolve([]),
+      productsWithoutDefault.length > 0
+        ? this.productVariantModel
+            .find({
+              product: { $in: productsWithoutDefault.map((p) => p._id) },
+              isDeleted: false,
+            })
+            .sort({ createdAt: 1 })
+            .lean()
+            .exec()
+        : Promise.resolve([]),
+    ]);
+
+    const defaultVariantMap = new Map(
+      defaultVariants.map((v: any) => [v._id.toString(), v]),
+    );
+    const fallbackMap = new Map<string, any>();
+    for (const v of fallbackVariants as any[]) {
+      const pid = v.product.toString();
+      if (!fallbackMap.has(pid)) fallbackMap.set(pid, v);
+    }
+
+    return products.map((product) => {
+      const pid = product._id.toString();
+      const dvId = product.defaultProductVariantId?.toString();
+      const variant =
+        (dvId && defaultVariantMap.get(dvId)) || fallbackMap.get(pid);
+
+      if (variant) {
+        product['defaultVariant'] = {
+          ...variant,
+          combination:
+            variant.combination instanceof Map
+              ? Object.fromEntries(variant.combination)
+              : variant.combination,
+        };
+      }
+
+      product['thumbnail'] =
+        variant?.images?.[0] || product['defaultVariant']?.images?.[0] || null;
+      return product;
+    });
+  }
+
+  /**
+   * Full enrichment with aggregation for totalStock/totalImages.
+   * Used for admin pages and detail views where these stats are needed.
+   */
   private async enrichProductsWithVariantData(products: any[]) {
     if (!products || products.length === 0) return [];
 
@@ -134,82 +207,49 @@ export class ProductService {
       ),
     ).map((id) => new Types.ObjectId(id));
 
-    const [defaultVariants, firstVariantsByProduct, stockAgg, imageAgg] =
-      await Promise.all([
-        defaultVariantIds.length > 0
-          ? this.productVariantModel
-              .find({ _id: { $in: defaultVariantIds }, isDeleted: false })
-              .lean()
-              .exec()
-          : Promise.resolve([]),
-        this.productVariantModel
-          .aggregate([
-            {
-              $match: {
-                isDeleted: false,
-                product: {
-                  $in: productIds.map((id) => new Types.ObjectId(id)),
-                },
+    const [defaultVariants, combinedAgg] = await Promise.all([
+      defaultVariantIds.length > 0
+        ? this.productVariantModel
+            .find({ _id: { $in: defaultVariantIds }, isDeleted: false })
+            .lean()
+            .exec()
+        : Promise.resolve([]),
+      this.productVariantModel
+        .aggregate([
+          {
+            $match: {
+              isDeleted: false,
+              product: {
+                $in: productIds.map((id) => new Types.ObjectId(id)),
               },
             },
-            { $sort: { createdAt: 1 } },
-            {
-              $group: {
-                _id: '$product',
-                variant: { $first: '$$ROOT' },
+          },
+          { $sort: { createdAt: 1 } },
+          {
+            $group: {
+              _id: '$product',
+              firstVariant: { $first: '$$ROOT' },
+              totalStock: { $sum: '$stock' },
+              totalImages: {
+                $sum: { $size: { $ifNull: ['$images', []] } },
               },
             },
-          ])
-          .exec(),
-        this.productVariantModel
-          .aggregate([
-            {
-              $match: {
-                isDeleted: false,
-                product: {
-                  $in: productIds.map((id) => new Types.ObjectId(id)),
-                },
-              },
-            },
-            {
-              $group: {
-                _id: '$product',
-                totalStock: { $sum: '$stock' },
-              },
-            },
-          ])
-          .exec(),
-        this.productVariantModel
-          .aggregate([
-            {
-              $match: {
-                isDeleted: false,
-                product: {
-                  $in: productIds.map((id) => new Types.ObjectId(id)),
-                },
-              },
-            },
-            {
-              $group: {
-                _id: '$product',
-                totalImages: { $sum: { $size: { $ifNull: ['$images', []] } } },
-              },
-            },
-          ])
-          .exec(),
-      ]);
+          },
+        ])
+        .exec(),
+    ]);
 
     const defaultVariantMap = new Map(
       defaultVariants.map((v: any) => [v._id.toString(), v]),
     );
     const firstVariantMap = new Map(
-      firstVariantsByProduct.map((v: any) => [v._id.toString(), v.variant]),
+      combinedAgg.map((v: any) => [v._id.toString(), v.firstVariant]),
     );
     const stockMap = new Map(
-      stockAgg.map((s: any) => [s._id.toString(), s.totalStock || 0]),
+      combinedAgg.map((s: any) => [s._id.toString(), s.totalStock || 0]),
     );
     const imageMap = new Map(
-      imageAgg.map((img: any) => [img._id.toString(), img.totalImages || 0]),
+      combinedAgg.map((img: any) => [img._id.toString(), img.totalImages || 0]),
     );
 
     return products.map((product) => {
@@ -323,6 +363,7 @@ export class ProductService {
     const [products, total] = await Promise.all([
       this.productModel
         .find(query)
+        .select('-description')
         .populate('brand', 'name slug logo')
         .populate('category', 'name slug')
         .sort(sortObj)
@@ -384,56 +425,63 @@ export class ProductService {
   async findBySlug(slug: string) {
     const product = await this.productModel
       .findOne({ slug, isDeleted: false })
-      .populate('brand')
-      .populate('category')
+      .populate('brand', 'name slug logo description')
+      .populate('category', 'name slug')
       .populate('createdBy', 'fullname email avatar phone')
       .lean()
       .exec();
     if (!product) {
       throw new NotFoundException(`Product with slug "${slug}" not found`);
     }
-    // Populate default variant
-    let defaultVariant: any = null;
-    if (product.defaultProductVariantId) {
-      defaultVariant = await this.productVariantModel
-        .findOne({
-          _id: new Types.ObjectId(product.defaultProductVariantId),
-          isDeleted: false,
+
+    // Parallel: fetch default variant, all variants, and allow values at once
+    const productOid = new Types.ObjectId(product._id);
+    const [defaultVariant, variants, allowValues] = await Promise.all([
+      product.defaultProductVariantId
+        ? this.productVariantModel
+            .findOne({
+              _id: new Types.ObjectId(product.defaultProductVariantId),
+              isDeleted: false,
+            })
+            .lean()
+            .exec()
+        : Promise.resolve(null),
+      this.productVariantModel
+        .find({ product: productOid, isDeleted: false })
+        .lean()
+        .exec(),
+      this.productAttributeAllowValueModel
+        .find({ product: productOid, isDeleted: false })
+        .populate({
+          path: 'attributeValue',
+          populate: { path: 'attribute' },
         })
-        .exec();
-    }
+        .lean()
+        .exec(),
+    ]);
 
-    // Fetch all variants for this product
-    const variants = await this.productVariantModel
-      .find({ product: new Types.ObjectId(product._id), isDeleted: false })
-      .exec();
+    // Pick effective default variant
+    const effectiveDefault = defaultVariant || variants[0] || null;
 
-    // If default variant was soft-deleted, fall back to first available variant
-    if (!defaultVariant && variants.length > 0) {
-      defaultVariant = variants[0];
-    }
-
-    if (defaultVariant) {
-      const obj = defaultVariant.toObject();
-      const responseVariant = {
-        ...obj,
+    if (effectiveDefault) {
+      product['defaultVariant'] = {
+        ...effectiveDefault,
         combination:
-          obj.combination instanceof Map
-            ? Object.fromEntries(obj.combination)
-            : obj.combination,
+          effectiveDefault.combination instanceof Map
+            ? Object.fromEntries(effectiveDefault.combination)
+            : effectiveDefault.combination,
       };
-      product['defaultVariant'] = responseVariant;
     }
 
-    product['variants'] = variants;
-    // Fetch allow values with populated attribute values
-    const allowValues = await this.productAttributeAllowValueModel
-      .find({ product: new Types.ObjectId(product._id), isDeleted: false })
-      .populate({
-        path: 'attributeValue',
-        populate: { path: 'attribute' },
-      })
-      .exec();
+    // Convert variant combinations
+    product['variants'] = variants.map((v: any) => ({
+      ...v,
+      combination:
+        v.combination instanceof Map
+          ? Object.fromEntries(v.combination)
+          : v.combination,
+    }));
+
     product['allowValues'] = allowValues;
     return product;
   }
@@ -584,6 +632,7 @@ export class ProductService {
     const [products, total] = await Promise.all([
       this.productModel
         .find(query)
+        .select('-description')
         .populate('brand', 'name slug logo')
         .populate('category', 'name slug')
         .sort({ createdAt: -1 })
@@ -620,6 +669,7 @@ export class ProductService {
     const [products, total] = await Promise.all([
       this.productModel
         .find(query)
+        .select('-description')
         .populate('brand', 'name slug logo')
         .populate('category', 'name slug')
         .sort({ createdAt: -1 })
@@ -630,7 +680,7 @@ export class ProductService {
       this.productModel.countDocuments(query).exec(),
     ]);
 
-    const items = await this.enrichProductsWithVariantData(products);
+    const items = await this.enrichProductsLightweight(products);
 
     return {
       data: items,
@@ -664,19 +714,11 @@ export class ProductService {
 
     if (topVariants.length === 0) return [];
 
-    // Auto-update defaultProductVariantId for each product
-    const updatePromises = topVariants.map((item) =>
-      this.productModel.updateOne(
-        { _id: item._id },
-        { $set: { defaultProductVariantId: item.topVariant._id } },
-      ),
-    );
-    await Promise.all(updatePromises);
-
-    // Fetch products with populated fields
+    // Fetch products with populated fields (no unnecessary writes)
     const productIds = topVariants.map((v) => v._id);
     const products = await this.productModel
       .find({ _id: { $in: productIds }, isDeleted: false, status: 'ACTIVE' })
+      .select('-description')
       .populate('brand', 'name slug logo')
       .populate('category', 'name slug')
       .lean()
@@ -851,6 +893,7 @@ export class ProductService {
     let [products, total] = await Promise.all([
       this.productModel
         .find(queryToUse)
+        .select('-description')
         .populate('brand', 'name slug logo')
         .populate('category', 'name slug')
         .sort(sortOption)
@@ -915,6 +958,7 @@ export class ProductService {
         [products, total] = await Promise.all([
           this.productModel
             .find(queryToUse)
+            .select('-description')
             .populate('brand', 'name slug logo')
             .populate('category', 'name slug')
             .sort(sortOption)
@@ -927,7 +971,7 @@ export class ProductService {
       }
     }
 
-    const items = await this.enrichProductsWithVariantData(products);
+    const items = await this.enrichProductsLightweight(products);
 
     return {
       data: items,

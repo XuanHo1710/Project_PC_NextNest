@@ -184,13 +184,24 @@ def fetch_all_products() -> list[dict]:
 
 
 def ensure_collection():
-    """Create the Qdrant collection if it doesn't exist."""
+    """Create the Qdrant collection if it doesn't exist, or recreate if dimension changed."""
     try:
         client = get_qdrant_client()
         collection_name = settings.COLLECTION_NAME
         dim = get_embedding_dimension()
 
         collections = [c.name for c in client.get_collections().collections]
+        if collection_name in collections:
+            # Check if dimension matches
+            info = client.get_collection(collection_name)
+            existing_dim = info.config.params.vectors.size
+            if existing_dim != dim:
+                logger.warning(
+                    f"Collection dimension mismatch: {existing_dim} vs {dim}. Recreating..."
+                )
+                client.delete_collection(collection_name)
+                collections.remove(collection_name)
+
         if collection_name not in collections:
             logger.info(
                 f"Creating Qdrant collection '{collection_name}' with dim={dim}"
@@ -201,7 +212,7 @@ def ensure_collection():
             )
             logger.info(f"Collection '{collection_name}' created")
         else:
-            logger.info(f"Collection '{collection_name}' already exists")
+            logger.info(f"Collection '{collection_name}' already exists (dim={dim})")
     except Exception as e:
         error_msg = str(e)
         logger.warning(f"Failed to ensure Qdrant collection: {error_msg}")

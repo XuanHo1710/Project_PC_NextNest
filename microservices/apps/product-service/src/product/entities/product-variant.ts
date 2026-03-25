@@ -45,3 +45,7 @@ export class ProductVariant {
 
 export const ProductVariantSchema =
   SchemaFactory.createForClass(ProductVariant);
+
+ProductVariantSchema.index({ product: 1, isDeleted: 1 });
+ProductVariantSchema.index({ isDeleted: 1, discount: -1, stock: 1 });
+ProductVariantSchema.index({ product: 1, createdAt: 1 });

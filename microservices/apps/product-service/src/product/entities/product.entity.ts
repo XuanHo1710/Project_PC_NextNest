@@ -66,6 +66,10 @@ export class Product {
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
+ProductSchema.index({ isDeleted: 1, status: 1, createdAt: -1 });
+ProductSchema.index({ category: 1, isDeleted: 1, status: 1 });
+ProductSchema.index({ brand: 1, isDeleted: 1, status: 1 });
+
 ProductSchema.pre('save', async function () {
   if (!this.isModified('name')) return;
 
