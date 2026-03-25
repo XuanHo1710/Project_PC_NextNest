@@ -1,6 +1,6 @@
 """
 Embedding service: uses SentenceTransformer to generate text embeddings.
-Default model: all-MiniLM-L6-v2 (384-dim, ~80MB, fast).
+Default model: paraphrase-MiniLM-L3-v2 (384-dim, ~60MB, fastest MiniLM).
 Distance: Cosine.
 
 Model is loaded once at module level and reused across all calls.
@@ -17,6 +17,7 @@ _MODEL_DIMENSIONS = {
     "all-MiniLM-L6-v2": 384,
     "all-MiniLM-L12-v2": 384,
     "paraphrase-MiniLM-L6-v2": 384,
+    "paraphrase-MiniLM-L3-v2": 384,
     "BAAI/bge-m3": 1024,
     "BAAI/bge-small-en-v1.5": 384,
 }

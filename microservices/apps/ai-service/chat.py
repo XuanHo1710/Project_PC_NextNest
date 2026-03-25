@@ -22,14 +22,14 @@ def _build_product_catalog_context() -> str:
     """
     Build a compact product catalog summary for the AI system prompt.
     This gives the model knowledge about available products.
+    Uses cached lookup maps for performance.
     """
     db = get_mongo_db()
 
-    brands = {str(b["_id"]): b.get("name", "") for b in db["brands"].find({}, {"name": 1})}
-    categories = {
-        str(c["_id"]): c.get("name", "")
-        for c in db["categories"].find({}, {"name": 1})
-    }
+    from recommendation import _lookup_maps
+    brands_full, cats_full, attrs = _lookup_maps(db)
+    brands = {k: v.get("name", "") for k, v in brands_full.items()}
+    categories = {k: v.get("name", "") for k, v in cats_full.items()}
 
     products = list(
         db["products"]
@@ -41,14 +41,17 @@ def _build_product_catalog_context() -> str:
     if not products:
         return "Hiện tại cửa hàng chưa có sản phẩm nào."
 
-    # Build attribute map
-    attrs = {
-        a["code"]: a.get("name", a["code"])
-        for a in db["productattributes"].find(
-            {"isDeleted": {"$ne": True}}, {"code": 1, "name": 1}
+    # Batch-fetch all variants for the 100 products at once
+    product_ids = [p["_id"] for p in products]
+    all_variants = list(
+        db["productvariants"].find(
+            {"product": {"$in": product_ids}, "isDeleted": {"$ne": True}},
+            {"price": 1, "discount": 1, "stock": 1, "combination": 1, "product": 1},
         )
-        if a.get("code")
-    }
+    )
+    variants_by_product = {}
+    for v in all_variants:
+        variants_by_product.setdefault(v["product"], []).append(v)
 
     lines = []
     for p in products:
@@ -58,13 +61,8 @@ def _build_product_catalog_context() -> str:
         min_price = p.get("minPrice", 0)
         max_price = p.get("maxPrice", 0)
 
-        # Get variants info
-        variants = list(
-            db["productvariants"].find(
-                {"product": p["_id"], "isDeleted": {"$ne": True}},
-                {"price": 1, "discount": 1, "stock": 1, "combination": 1},
-            )
-        )
+        # Get variants from batch-fetched data (no per-product query)
+        variants = variants_by_product.get(p["_id"], [])
 
         var_info = []
         for v in variants:
@@ -110,6 +108,9 @@ def get_catalog_context() -> str:
 def refresh_catalog_context():
     global _catalog_context
     _catalog_context = None
+    # Also invalidate the lookup maps cache
+    from recommendation import invalidate_lookup_cache
+    invalidate_lookup_cache()
     logger.info("Product catalog context cache cleared")
 
 

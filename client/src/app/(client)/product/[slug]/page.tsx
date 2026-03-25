@@ -556,6 +556,7 @@ export default function ProductDetailClient() {
                         </div>
                     )}
                 </div>
-            </>
-            );
+            </div>
+        </>
+    );
 }

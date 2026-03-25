@@ -32,20 +32,47 @@ logger = logging.getLogger("ai-service")
 async def lifespan(app: FastAPI):
     logger.info("AI Service starting up...")
 
-    # Warm up embedding (first call downloads & caches in Ollama)
+    # Warm up embedding (first call downloads & caches)
     try:
         from embedding import generate_embedding
         generate_embedding("startup warmup")
-        logger.info("Embedding model warmed up via Ollama")
+        logger.info("Embedding model warmed up")
     except Exception as e:
         logger.warning(f"Failed to warm up embedding model: {e}")
 
-    # Ensure Qdrant collection exists
+    # Ensure Qdrant collection exists + sync embeddings if empty (non-blocking)
     try:
-        from product_index import ensure_collection
+        from product_index import ensure_collection, index_all_products
+        from database import get_qdrant_client
+        from config import get_settings
+        import threading
+
+        _settings = get_settings()
         ensure_collection()
+
+        # Check if products collection has any points, if empty → auto-index in background
+        client = get_qdrant_client()
+        collection_info = client.get_collection(collection_name=_settings.COLLECTION_NAME)
+        point_count = collection_info.points_count or 0
+        logger.info(f"Qdrant '{_settings.COLLECTION_NAME}' has {point_count} points")
+
+        if point_count == 0:
+            def _background_index():
+                try:
+                    logger.info("Background indexing started...")
+                    result = index_all_products()
+                    logger.info(f"Background indexing complete: {result}")
+                except Exception as ex:
+                    logger.error(f"Background indexing failed: {ex}")
+
+            thread = threading.Thread(target=_background_index, daemon=True)
+            thread.start()
+            logger.info("Initial indexing launched in background thread")
+        else:
+            logger.info(f"Embeddings already exist ({point_count} points), skipping initial indexing")
     except Exception as e:
-        logger.warning(f"Failed to ensure Qdrant collection: {e}")
+        logger.warning(f"Failed startup embedding sync: {e}")
+        logger.warning("Product vector search may be unavailable until Qdrant is fixed.")
 
     yield
 
@@ -89,6 +116,15 @@ class ChatMessageResponse(BaseModel):
 class ReindexResponse(BaseModel):
     message: str
     count: int
+
+
+class IndexProductRequest(BaseModel):
+    productId: str
+
+
+class IndexProductResponse(BaseModel):
+    message: str
+    indexed: bool = False
 
 
 # ============= Endpoints =============
@@ -170,6 +206,36 @@ async def get_popular_products_endpoint(
         return []
 
 
+@app.post("/api/v1/ai/index-product", response_model=IndexProductResponse)
+async def index_single_product_endpoint(request: IndexProductRequest):
+    """Index or re-index a single product in Qdrant vector DB."""
+    from product_index import index_single_product
+
+    try:
+        result = index_single_product(request.productId)
+        from chat import refresh_catalog_context
+        refresh_catalog_context()
+        return IndexProductResponse(**result)
+    except Exception as e:
+        logger.error(f"Index product error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/v1/ai/index-product/{product_id}")
+async def delete_product_index_endpoint(product_id: str):
+    """Remove a product from the Qdrant index."""
+    from product_index import delete_product_from_index
+
+    try:
+        result = delete_product_from_index(product_id)
+        from chat import refresh_catalog_context
+        refresh_catalog_context()
+        return result
+    except Exception as e:
+        logger.error(f"Delete product index error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/v1/ai/reindex", response_model=ReindexResponse)
 async def reindex_products():
     """Reindex all products from MongoDB to Qdrant vector DB."""
@@ -187,10 +253,11 @@ async def reindex_products():
 
 # ============= Main =============
 if __name__ == "__main__":
+    import os
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=settings.AI_SERVICE_PORT,
-        reload=True,
+        reload=os.environ.get("AI_NO_RELOAD") != "1",
         log_level="info",
     )

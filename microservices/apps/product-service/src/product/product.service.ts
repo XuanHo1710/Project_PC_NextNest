@@ -80,6 +80,31 @@ export class ProductService {
     }
   }
 
+  // ============= AI SERVICE (QDRANT) HELPERS =============
+  private emitAiIndexEvent(productId: string) {
+    const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+    fetch(`${aiUrl}/api/v1/ai/index-product`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId }),
+    }).catch((err) => {
+      this.logger.warn(
+        `AI index event failed for ${productId}: ${err.message}`,
+      );
+    });
+  }
+
+  private emitAiDeleteEvent(productId: string) {
+    const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+    fetch(`${aiUrl}/api/v1/ai/index-product/${productId}`, {
+      method: 'DELETE',
+    }).catch((err) => {
+      this.logger.warn(
+        `AI delete event failed for ${productId}: ${err.message}`,
+      );
+    });
+  }
+
   /**
    * Build a map of attribute code -> attribute name for ES combinationDisplay
    * e.g. { "ram": "Ram", "mau-sac": "Màu sắc" }
@@ -526,6 +551,9 @@ export class ProductService {
       });
     }
 
+    // Index to Qdrant AI
+    this.emitAiIndexEvent(id);
+
     return product;
   }
 
@@ -551,6 +579,9 @@ export class ProductService {
 
     // Emit ES delete event
     this.emitEsEvent('es.product.deleted', { productId: id });
+
+    // Remove from Qdrant AI index
+    this.emitAiDeleteEvent(id);
 
     return { message: 'Product deleted successfully', data: product };
   }
@@ -1083,6 +1114,9 @@ export class ProductService {
       });
     }
 
+    // Re-index product in Qdrant AI (variant data matters for embedding)
+    this.emitAiIndexEvent(createProductVariantDto.product);
+
     return saved;
   }
 
@@ -1113,6 +1147,9 @@ export class ProductService {
           attributeMap,
         });
       }
+
+      // Re-index product in Qdrant AI
+      this.emitAiIndexEvent(variants[0].product);
     }
     return results;
   }

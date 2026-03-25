@@ -69,6 +69,91 @@ async function fetchJSON(url) {
     return resp.data;
 }
 
+/**
+ * Clean raw scraped HTML description:
+ * - Remove script/style/noscript/iframe/link/meta/form tags
+ * - Remove navigation, header, footer chrome
+ * - Extract meaningful content from CellphoneS __nuxt pages
+ * - Remove tracking pixels, inline event handlers
+ * - Remove payment/shipping/coupon sections
+ * - Strip empty tags, collapse whitespace
+ * - Cap at 5000 chars
+ */
+function cleanDescription(html) {
+    if (!html || typeof html !== 'string') return '';
+    let cleaned = html;
+
+    // 1. Remove script, style, noscript, iframe, link, meta, form, object, embed
+    cleaned = cleaned.replace(/<script[\s\S]*?<\/script>/gi, '');
+    cleaned = cleaned.replace(/<style[\s\S]*?<\/style>/gi, '');
+    cleaned = cleaned.replace(/<(noscript|iframe|link|meta|object|embed|form|svg)[\s\S]*?(<\/\1>|\/?>)/gi, '');
+
+    // 2. Remove HTML comments
+    cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
+
+    // 3. For CellphoneS/Nuxt wrapped pages, extract article content
+    if (cleaned.includes('data-server-rendered') || cleaned.includes('__nuxt') || cleaned.includes('__layout')) {
+        const articleMatch = cleaned.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+        if (articleMatch) {
+            cleaned = articleMatch[1];
+        } else {
+            const mainMatch = cleaned.match(/<div[^>]*class="[^"]*(?:product-detail|content-body|detail-content|article-content)[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<\/div>)?/i);
+            if (mainMatch) cleaned = mainMatch[1];
+        }
+    }
+
+    // 4. Remove navigation, header, footer
+    cleaned = cleaned.replace(/<nav[\s\S]*?<\/nav>/gi, '');
+    cleaned = cleaned.replace(/<header[\s\S]*?<\/header>/gi, '');
+    cleaned = cleaned.replace(/<footer[\s\S]*?<\/footer>/gi, '');
+
+    // 5. Remove Shopify/site-chrome patterns
+    const sitePatterns = [
+        /DANH MỤC SẢN PHẨM/i,
+        /Giỏ hàng/i,
+        /ĐĂNG KÝ NHẬN TIN/i,
+        /Phương thức thanh toán/i,
+        /window\.__NUXT__/,
+        /gtm\.start/,
+        /googletagmanager\.com/,
+        /google-analytics\.com/,
+        /facebook\.com\/tr/,
+        /zalo\.me\/widget/,
+    ];
+    // Remove divs containing these patterns (up to 2000 chars around them)
+    for (const pat of sitePatterns) {
+        cleaned = cleaned.replace(new RegExp(`<div[^>]*>[\\s\\S]{0,2000}?${pat.source}[\\s\\S]{0,2000}?<\\/div>`, 'gi'), '');
+    }
+
+    // 6. Remove inline event handlers & data-tracking attributes
+    cleaned = cleaned.replace(/\s(on\w+|data-gtm|data-analytics|data-tracking|data-server-rendered)="[^"]*"/gi, '');
+
+    // 7. Remove tracking pixels and invisible images
+    cleaned = cleaned.replace(/<img[^>]*(?:tracking|pixel|facebook\.com\/tr|google-analytics|1x1|spacer)[^>]*\/?>/gi, '');
+
+    // 8. Remove empty tags (3 passes)
+    for (let i = 0; i < 3; i++) {
+        cleaned = cleaned.replace(/<(\w+)[^>]*>\s*<\/\1>/g, '');
+    }
+
+    // 9. Collapse whitespace
+    cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+    cleaned = cleaned.replace(/[ \t]{2,}/g, ' ');
+    cleaned = cleaned.trim();
+
+    // 10. Cap at 5000 chars at a good breakpoint
+    if (cleaned.length > 5000) {
+        const breakpoint = cleaned.lastIndexOf('</p>', 5000);
+        if (breakpoint > 3000) {
+            cleaned = cleaned.substring(0, breakpoint + 4);
+        } else {
+            cleaned = cleaned.substring(0, 5000);
+        }
+    }
+
+    return cleaned;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // BRAND DATA
 // ═══════════════════════════════════════════════════════════════
@@ -332,7 +417,7 @@ async function scrapeProductDetail(url) {
             images: images.slice(0, 8),
             variantOptions,
             specs,
-            description: description.substring(0, 5000),
+            description: cleanDescription(description),
         };
     } catch (err) {
         console.log(`  [!] Error: ${err.message}`);
@@ -376,7 +461,7 @@ async function scrapeGearVNCollection(handle, limit = 15) {
 
             products.push({
                 name: p.title,
-                description: p.body_html || '',
+                description: cleanDescription(p.body_html || ''),
                 salePrice: parsePrice(variant?.price || '0'),
                 marketPrice: parsePrice(variant?.compare_at_price || variant?.price || '0'),
                 images: (p.images || []).map(img => img.src).slice(0, 8),
@@ -781,8 +866,7 @@ async function main() {
                 const maxPrice = marketPrices.length > 0 ? Math.max(...marketPrices) : gvnP.marketPrice;
 
                 // Clean description HTML — remove Shopify-specific stuff
-                let cleanDesc = (gvnP.description || '').replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-                cleanDesc = cleanDesc.substring(0, 5000);
+                let cleanDesc = cleanDescription(gvnP.description || '');
 
                 const product = buildProduct({
                     name: gvnP.name,

@@ -7,6 +7,7 @@ Recommendation engine:
   (real _id, sku, combination, brand._id, category._id …).
 """
 import logging
+import time
 import numpy as np
 from bson import ObjectId
 from qdrant_client.models import Distance, VectorParams, PointStruct
@@ -19,10 +20,22 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-# ── helpers: shared lookups ───────────────────────────────────────
+# ── helpers: shared lookups with TTL cache ────────────────────────
 
-def _lookup_maps(db):
-    """Return (brands_map, categories_map, attrs_map) keyed by str(_id)/code."""
+_lookup_cache = {"data": None, "expires": 0}
+_CACHE_TTL = 300  # 5 minutes
+
+
+def _lookup_maps(db=None):
+    """Return (brands_map, categories_map, attrs_map) keyed by str(_id)/code.
+    Cached for 5 minutes to avoid redundant MongoDB queries."""
+    now = time.time()
+    if _lookup_cache["data"] and now < _lookup_cache["expires"]:
+        return _lookup_cache["data"]
+
+    if db is None:
+        db = get_mongo_db()
+
     brands = {
         str(b["_id"]): {"_id": str(b["_id"]), "name": b.get("name", ""), "logo": b.get("logo")}
         for b in db["brands"].find({}, {"name": 1, "logo": 1})
@@ -36,7 +49,16 @@ def _lookup_maps(db):
         for a in db["productattributes"].find({"isDeleted": {"$ne": True}}, {"code": 1, "name": 1})
         if a.get("code")
     }
-    return brands, categories, attrs
+    result = (brands, categories, attrs)
+    _lookup_cache["data"] = result
+    _lookup_cache["expires"] = now + _CACHE_TTL
+    return result
+
+
+def invalidate_lookup_cache():
+    """Clear the lookup cache (call after data changes)."""
+    _lookup_cache["data"] = None
+    _lookup_cache["expires"] = 0
 
 
 def _resolve_default_variant(db, product: dict) -> dict | None:
@@ -147,23 +169,43 @@ def build_and_store_user_vector(guest_id: str) -> list[float] | None:
     if not views:
         return None
 
-    _, _, attrs = _lookup_maps(db)
-    brands_simple = {
-        str(b["_id"]): b.get("name", "") for b in db["brands"].find({}, {"name": 1})
-    }
-    cats_simple = {
-        str(c["_id"]): c.get("name", "") for c in db["categories"].find({}, {"name": 1})
-    }
+    # Use cached lookup maps (avoids re-querying brands/categories/attrs every call)
+    brands_full, cats_full, attrs = _lookup_maps(db)
+    brands_simple = {k: v.get("name", "") for k, v in brands_full.items()}
+    cats_simple = {k: v.get("name", "") for k, v in cats_full.items()}
 
     from product_index import build_product_text
+
+    # Batch-fetch all viewed products at once (instead of N queries)
+    product_ids = [v["product"] for v in views]
+    products_docs = {
+        p["_id"]: p
+        for p in db["products"].find({
+            "_id": {"$in": product_ids},
+            "isDeleted": {"$ne": True},
+            "status": "ACTIVE",
+        })
+    }
+
+    # Batch-fetch all variants for those products at once
+    all_variants = list(
+        db["productvariants"].find({
+            "product": {"$in": list(products_docs.keys())},
+            "isDeleted": {"$ne": True},
+        })
+    )
+    variants_by_product = {}
+    for v in all_variants:
+        pid = v["product"]
+        variants_by_product.setdefault(pid, []).append(v)
 
     texts: list[str] = []
     weights: list[float] = []
 
     for v in views:
         pid = v["product"]
-        product = db["products"].find_one({"_id": pid})
-        if not product or product.get("isDeleted") or product.get("status") != "ACTIVE":
+        product = products_docs.get(pid)
+        if not product:
             continue
 
         brand_id = product.get("brand")
@@ -171,9 +213,7 @@ def build_and_store_user_vector(guest_id: str) -> list[float] | None:
         product["_brand_name"] = brands_simple.get(str(brand_id), "") if brand_id else ""
         product["_category_name"] = cats_simple.get(str(cat_id), "") if cat_id else ""
 
-        variants = list(
-            db["productvariants"].find({"product": pid, "isDeleted": {"$ne": True}})
-        )
+        variants = variants_by_product.get(pid, [])
         text = build_product_text(product, variants, attrs)
         texts.append(text)
         weights.append(float(v.get("viewCount", 1)))
@@ -324,7 +364,7 @@ def _fetch_product_cards(product_ids: list[str]) -> list[dict]:
     """
     Given a list of MongoDB product _id strings, return a list of
     IProductCard-compatible dicts with real _id, sku, combination, brand, category …
-    Preserves the input ordering.
+    Preserves the input ordering. Uses batch queries for performance.
     """
     if not product_ids:
         return []
@@ -338,11 +378,69 @@ def _fetch_product_cards(product_ids: list[str]) -> list[dict]:
         for p in db["products"].find({"_id": {"$in": oids}})
     }
 
+    # Batch-fetch all variants for these products at once
+    all_variants = list(
+        db["productvariants"].find({
+            "product": {"$in": oids},
+            "isDeleted": {"$ne": True},
+        }).sort("createdAt", 1)
+    )
+    variants_by_product = {}
+    for v in all_variants:
+        variants_by_product.setdefault(str(v["product"]), []).append(v)
+
     cards: list[dict] = []
     for pid in product_ids:
         p = products.get(pid)
         if not p:
             continue
-        cards.append(_product_to_card(p, brands, categories, attrs, db))
+
+        # Resolve default variant from batch data
+        product_variants = variants_by_product.get(pid, [])
+        default_vid = p.get("defaultProductVariantId")
+        variant = None
+        if default_vid and product_variants:
+            variant = next(
+                (v for v in product_variants if str(v["_id"]) == str(default_vid)), None
+            )
+        if not variant and product_variants:
+            variant = product_variants[0]
+
+        card = _product_to_card_with_variant(p, variant, brands, categories, attrs)
+        cards.append(card)
 
     return cards
+
+
+def _product_to_card_with_variant(
+    product: dict, variant: dict | None, brands: dict, categories: dict, attrs: dict
+) -> dict:
+    """Convert a MongoDB product doc into an IProductCard-compatible dict using a pre-resolved variant."""
+    pid = str(product["_id"])
+    brand_id = product.get("brand")
+    cat_id = product.get("category")
+
+    card: dict = {
+        "_id": pid,
+        "name": product.get("name", ""),
+        "slug": product.get("slug", ""),
+        "description": product.get("description"),
+        "minPrice": product.get("minPrice", 0),
+        "maxPrice": product.get("maxPrice", 0),
+        "status": product.get("status", "ACTIVE"),
+        "avgRating": product.get("avgRating", 0),
+        "totalRatings": product.get("totalRatings", 0),
+        "createdAt": str(product["createdAt"]) if product.get("createdAt") else None,
+        "updatedAt": str(product["updatedAt"]) if product.get("updatedAt") else None,
+    }
+
+    if variant:
+        card["defaultVariant"] = _variant_to_dict(variant, attrs)
+
+    if brand_id and str(brand_id) in brands:
+        card["brand"] = brands[str(brand_id)]
+
+    if cat_id and str(cat_id) in categories:
+        card["category"] = categories[str(cat_id)]
+
+    return card
