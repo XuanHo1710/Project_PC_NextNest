@@ -136,6 +136,7 @@ export const useMyProducts = (page = 1, limit = 10, search?: string) => {
         ...(search ? { search } : {}),
       }),
     staleTime: 2 * 60 * 1000,
+    placeholderData: (previousData: unknown) => previousData, // Keep old data while fetching new page
   });
 };
 

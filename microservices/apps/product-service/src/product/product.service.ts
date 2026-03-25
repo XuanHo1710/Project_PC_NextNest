@@ -1218,9 +1218,10 @@ export class ProductService {
     const [data, total] = await Promise.all([
       this.productVariantModel
         .find(query)
-        .populate('product')
+        .populate('product', 'name slug status')
         .skip(skip)
         .limit(limit)
+        .lean()
         .exec(),
       this.productVariantModel.countDocuments(query).exec(),
     ]);
@@ -1241,7 +1242,8 @@ export class ProductService {
     }
     const variant = await this.productVariantModel
       .findOne({ _id: new Types.ObjectId(id), isDeleted: false })
-      .populate('product')
+      .populate('product', 'name slug status brand category')
+      .lean()
       .exec();
     if (!variant) {
       throw new NotFoundException(`Product variant with ID ${id} not found`);
@@ -1628,10 +1630,11 @@ export class ProductService {
     const [data, total] = await Promise.all([
       this.productAttributeAllowValueModel
         .find(query)
-        .populate('product')
+        .populate('product', 'name slug')
         .populate('attributeValue')
         .skip(skip)
         .limit(limit)
+        .lean()
         .exec(),
       this.productAttributeAllowValueModel.countDocuments(query).exec(),
     ]);
@@ -1860,28 +1863,38 @@ export class ProductService {
   async checkVariantsStock(
     items: Array<{ variantId: string; quantity: number }>,
   ) {
-    const results: any[] = [];
+    // Batch fetch all variants at once instead of N+1 queries
+    const validItems = items.filter((item) =>
+      Types.ObjectId.isValid(item.variantId),
+    );
+    const invalidItems = items.filter(
+      (item) => !Types.ObjectId.isValid(item.variantId),
+    );
 
-    for (const item of items) {
-      if (!Types.ObjectId.isValid(item.variantId)) {
-        results.push({
-          variantId: item.variantId,
-          requested: item.quantity,
-          available: 0,
-          sufficient: false,
-        });
-        continue;
-      }
+    const variantIds = validItems.map(
+      (item) => new Types.ObjectId(item.variantId),
+    );
 
-      const variant = await this.productVariantModel
-        .findOne({
-          _id: new Types.ObjectId(item.variantId),
-          isDeleted: false,
-        })
-        .select('stock sku')
-        .lean()
-        .exec();
+    const variants =
+      variantIds.length > 0
+        ? await this.productVariantModel
+            .find({ _id: { $in: variantIds }, isDeleted: false })
+            .select('stock sku')
+            .lean()
+            .exec()
+        : [];
 
+    const variantMap = new Map(variants.map((v: any) => [v._id.toString(), v]));
+
+    const results: any[] = invalidItems.map((item) => ({
+      variantId: item.variantId,
+      requested: item.quantity,
+      available: 0,
+      sufficient: false,
+    }));
+
+    for (const item of validItems) {
+      const variant = variantMap.get(item.variantId);
       const available = variant?.stock ?? 0;
       results.push({
         variantId: item.variantId,
@@ -1914,19 +1927,30 @@ export class ProductService {
     // Build attribute code→name map once for all products
     const attributeMap = await this.getAttributeCodeToNameMap();
 
+    // Batch fetch ALL variants at once instead of N+1 queries per product
+    const productIds = products.map((p) => p._id);
+    const allVariants = await this.productVariantModel
+      .find({ product: { $in: productIds }, isDeleted: { $ne: true } })
+      .lean()
+      .exec();
+
+    // Group variants by product
+    const variantsByProduct = new Map<string, any[]>();
+    for (const v of allVariants) {
+      const pid = v.product.toString();
+      if (!variantsByProduct.has(pid)) variantsByProduct.set(pid, []);
+      variantsByProduct.get(pid)!.push(v);
+    }
+
     let totalVariants = 0;
 
     for (const product of products) {
-      const variants = await this.productVariantModel
-        .find({ product: product._id, isDeleted: { $ne: true } })
-        .lean()
-        .exec();
+      const variants = variantsByProduct.get(product._id.toString()) || [];
 
       if (variants.length === 0) continue;
 
       totalVariants += variants.length;
 
-      // Reuse existing handler — delete old docs for this product, then bulk index new
       this.emitEsEvent('es.variant.deleteAndRecreate', {
         productId: (product._id as any).toString(),
         variants,

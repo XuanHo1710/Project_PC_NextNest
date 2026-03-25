@@ -17,7 +17,7 @@ export class AccountEmployeeService {
   constructor(
     @InjectModel(AccountEmployee.name)
     private accountEmployeeModel: Model<AccountEmployee>,
-  ) { }
+  ) {}
 
   async create(createAccountEmployeeDto: CreateAccountEmployeeDto) {
     // Hash password
@@ -55,7 +55,7 @@ export class AccountEmployeeService {
     const sortAccount = {};
 
     const filterAccount = {
-      isDeleted: false
+      isDeleted: false,
     };
 
     if (filter.search) {
@@ -93,6 +93,7 @@ export class AccountEmployeeService {
         .sort(sortAccount)
         .skip(skip)
         .limit(limit)
+        .lean()
         .exec(),
       this.accountEmployeeModel.countDocuments(filterAccount),
     ]);
@@ -166,6 +167,10 @@ export class AccountEmployeeService {
   }
 
   async updateProfile(id: string, updateProfileDto: UpdateProfileDto) {
-    return await this.accountEmployeeModel.findByIdAndUpdate(id, updateProfileDto, { new: true });
+    return await this.accountEmployeeModel.findByIdAndUpdate(
+      id,
+      updateProfileDto,
+      { new: true },
+    );
   }
 }

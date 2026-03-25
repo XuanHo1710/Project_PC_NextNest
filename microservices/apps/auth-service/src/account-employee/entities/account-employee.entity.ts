@@ -97,3 +97,8 @@ export class AccountEmployee {
 
 export const AccountEmployeeSchema =
   SchemaFactory.createForClass(AccountEmployee);
+
+// === INDEXES for query optimization ===
+AccountEmployeeSchema.index({ isDeleted: 1, createdAt: -1 });
+AccountEmployeeSchema.index({ IDEmp: 1 });
+AccountEmployeeSchema.index({ roleId: 1, isDeleted: 1 });

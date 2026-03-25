@@ -33,3 +33,7 @@ export class ProductAttributeAllowValue {
 export const ProductAttributeAllowValueSchema = SchemaFactory.createForClass(
   ProductAttributeAllowValue,
 );
+
+// === INDEXES for query optimization ===
+ProductAttributeAllowValueSchema.index({ product: 1, isDeleted: 1 });
+ProductAttributeAllowValueSchema.index({ attributeValue: 1, isDeleted: 1 });

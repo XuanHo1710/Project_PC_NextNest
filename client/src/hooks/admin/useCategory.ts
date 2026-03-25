@@ -20,40 +20,30 @@ export const useCategories = (queryParams: string = "") => {
     queryKey: categoryKeys.list(queryParams),
     queryFn: () => categoryService.getAll(queryParams ? `?${queryParams}` : ""),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData: unknown) => previousData,
   });
 };
 
 // Hook to get ALL categories (no pagination) - for dropdown/select
-// Uses a reasonable limit for dropdown purposes
+// Uses a single request with large limit instead of loop pagination
 export const useCategoriesAll = () => {
   return useQuery({
     queryKey: [...categoryKeys.all, "dropdown"],
     queryFn: async () => {
-      const limit = 200;
-      let page = 1;
-      let totalPages = 1;
-      const allData: ICategory[] = [];
-
-      do {
-        const response = await categoryService.getAll(
-          `?page=${page}&limit=${limit}&sort=createdAt_desc`,
-        );
-        allData.push(...(response.data || []));
-        totalPages = response.pagination?.totalPages || 1;
-        page += 1;
-      } while (page <= totalPages);
-
+      const response = await categoryService.getAll(
+        `?page=1&limit=1000&sort=createdAt_desc`,
+      );
       return {
-        data: allData,
+        data: response.data || [],
         pagination: {
           currentPage: 1,
           totalPages: 1,
-          totalItems: allData.length,
-          itemsPerPage: allData.length,
+          totalItems: response.data?.length || 0,
+          itemsPerPage: response.data?.length || 0,
         },
       };
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes - categories rarely change
   });
 };
 

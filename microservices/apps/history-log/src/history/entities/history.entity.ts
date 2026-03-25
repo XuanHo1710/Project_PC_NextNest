@@ -5,23 +5,27 @@ export type HistoryDocument = History & Document;
 
 @Schema({ timestamps: true })
 export class History {
-    @Prop({ required: true })
-    adminId: string;
+  @Prop({ required: true })
+  adminId: string;
 
-    @Prop()
-    adminName: string;
+  @Prop()
+  adminName: string;
 
-    @Prop()
-    method: string;
+  @Prop()
+  method: string;
 
-    @Prop()
-    path: string;
+  @Prop()
+  path: string;
 
-    @Prop({ type: Object })
-    body: any;
+  @Prop({ type: Object })
+  body: any;
 
-    @Prop()
-    description: string;
+  @Prop()
+  description: string;
 }
 
 export const HistorySchema = SchemaFactory.createForClass(History);
+
+// === INDEXES for query optimization ===
+HistorySchema.index({ adminId: 1, createdAt: -1 });
+HistorySchema.index({ createdAt: -1 });

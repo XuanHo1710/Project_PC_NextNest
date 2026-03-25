@@ -39,6 +39,10 @@ export class ProductAttribute {
 export const ProductAttributeSchema =
   SchemaFactory.createForClass(ProductAttribute);
 
+// === INDEXES for query optimization ===
+ProductAttributeSchema.index({ isDeleted: 1, createdBy: 1 });
+ProductAttributeSchema.index({ code: 1, isDeleted: 1 });
+
 ProductAttributeSchema.pre('save', async function () {
   if (!this.isModified('name')) return;
 

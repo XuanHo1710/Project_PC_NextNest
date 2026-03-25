@@ -42,3 +42,7 @@ export class ProductAttributeValue {
 export const ProductAttributeValueSchema = SchemaFactory.createForClass(
   ProductAttributeValue,
 );
+
+// === INDEXES for query optimization ===
+ProductAttributeValueSchema.index({ attribute: 1, isDeleted: 1 });
+ProductAttributeValueSchema.index({ createdBy: 1, isDeleted: 1 });

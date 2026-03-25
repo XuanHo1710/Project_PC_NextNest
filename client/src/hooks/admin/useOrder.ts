@@ -27,6 +27,7 @@ export const useAdminOrders = (params?: {
     queryKey: orderKeys.list(key),
     queryFn: () => orderService.getAll(params),
     staleTime: 30 * 1000, // 30 seconds
+    placeholderData: (previousData: unknown) => previousData, // Keep old data while fetching new page
   });
 };
 

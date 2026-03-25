@@ -76,6 +76,7 @@ export class BrandService {
         .sort(sortOption)
         .skip(skip)
         .limit(limit)
+        .lean()
         .exec(),
       this.brandModel.countDocuments(query).exec(),
     ]);
@@ -94,6 +95,7 @@ export class BrandService {
   async findBySlug(slug: string) {
     const brand = await this.brandModel
       .findOne({ slug, isDeleted: false })
+      .lean()
       .exec();
     if (!brand) {
       throw new NotFoundException(`Brand with slug "${slug}" not found`);
@@ -107,6 +109,7 @@ export class BrandService {
     }
     const brand = await this.brandModel
       .findOne({ _id: id, isDeleted: false })
+      .lean()
       .exec();
     if (!brand) {
       throw new NotFoundException(`Brand with ID ${id} not found`);

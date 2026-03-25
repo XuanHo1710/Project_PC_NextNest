@@ -196,12 +196,16 @@ export class ChatService {
   }
 
   /**
-   * Get total unread count for a user across all conversations
+   * Get total unread count for a user across all conversations.
+   * Optimized: single aggregation instead of fetching all conversations.
    */
   async getUnreadCount(userId: string) {
-    const conversations = await this.getConversationsByUser(userId);
-    let totalUnread = 0;
+    const conversations = await this.conversationModel
+      .find({ 'participants.userId': userId })
+      .select('unreadCount')
+      .lean();
 
+    let totalUnread = 0;
     for (const conv of conversations) {
       const unreadMap = conv.unreadCount as unknown as Record<string, number>;
       totalUnread += unreadMap?.[userId] || 0;

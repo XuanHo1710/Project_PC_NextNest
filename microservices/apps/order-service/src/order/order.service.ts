@@ -263,7 +263,8 @@ export class OrderService {
         'payment.type': 'CARD',
         status: { $in: ['PENDING', 'EXPIRED'] },
       })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     return orders;
   }
 
@@ -312,7 +313,8 @@ export class OrderService {
       .find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     return {
       data: items,
@@ -336,15 +338,16 @@ export class OrderService {
       query.status = status;
     }
 
-    const totalItems = await this.orderModel.countDocuments(query);
+    const [items, totalItems] = await Promise.all([
+      this.orderModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      this.orderModel.countDocuments(query),
+    ]);
     const totalPages = Math.ceil(totalItems / limit);
-    const skip = (page - 1) * limit;
-
-    const items = await this.orderModel
-      .find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
 
     return {
       data: items,
@@ -547,15 +550,16 @@ export class OrderService {
       query['$and'].push({ $or: searchConditions });
     }
 
-    const totalItems = await this.orderModel.countDocuments(query);
+    const [items, totalItems] = await Promise.all([
+      this.orderModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      this.orderModel.countDocuments(query),
+    ]);
     const totalPages = Math.ceil(totalItems / limit);
-    const skip = (page - 1) * limit;
-
-    const items = await this.orderModel
-      .find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
 
     return {
       data: items,
@@ -602,15 +606,16 @@ export class OrderService {
       query.$or = searchConditions;
     }
 
-    const totalItems = await this.orderModel.countDocuments(query);
+    const [items, totalItems] = await Promise.all([
+      this.orderModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      this.orderModel.countDocuments(query),
+    ]);
     const totalPages = Math.ceil(totalItems / limit);
-    const skip = (page - 1) * limit;
-
-    const items = await this.orderModel
-      .find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
 
     return {
       data: items,
@@ -846,11 +851,14 @@ export class OrderService {
     try {
       const now = new Date();
 
-      // Find all PENDING orders with expired expireAt
-      const expiredOrders = await this.orderModel.find({
-        status: 'PENDING',
-        expireAt: { $ne: null, $lte: now },
-      });
+      // Find all PENDING orders with expired expireAt — only select needed fields
+      const expiredOrders = await this.orderModel
+        .find({
+          status: 'PENDING',
+          expireAt: { $ne: null, $lte: now },
+        })
+        .select('_id orderDetail')
+        .lean();
 
       if (expiredOrders.length === 0) return;
 

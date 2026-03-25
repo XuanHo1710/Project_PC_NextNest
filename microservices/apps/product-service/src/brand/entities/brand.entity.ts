@@ -47,6 +47,10 @@ export class Brand {
 
 export const BrandSchema = SchemaFactory.createForClass(Brand);
 
+// === INDEXES for query optimization ===
+BrandSchema.index({ isDeleted: 1, status: 1, createdAt: -1 });
+BrandSchema.index({ isDeleted: 1, feature: 1 });
+
 BrandSchema.pre('save', async function () {
   if (!this.isModified('name')) return;
 

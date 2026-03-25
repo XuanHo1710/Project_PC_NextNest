@@ -20,6 +20,7 @@ export const useProducts = (queryParams: string = "") => {
     queryKey: productKeys.list(queryParams),
     queryFn: () => productService.getAll(queryParams ? `?${queryParams}` : ""),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    placeholderData: (previousData: unknown) => previousData, // Keep old data while fetching new page
   });
 };
 

@@ -101,3 +101,18 @@ export class Order {
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
+
+// === INDEXES for query optimization ===
+// Cron job: find PENDING orders with expired expireAt (runs every 5 min)
+OrderSchema.index({ status: 1, expireAt: 1 });
+// Guest order listing: by guestId + status + sort by createdAt
+OrderSchema.index({ 'customerInfo.guestId': 1, status: 1, createdAt: -1 });
+// Admin order listing: status filter + sort by createdAt
+OrderSchema.index({ status: 1, createdAt: -1 });
+// Dashboard stats: paid orders aggregation
+OrderSchema.index({ 'payment.isCheckout': 1, status: 1, createdAt: -1 });
+// Seller orders: by variantId/productId in orderDetail
+OrderSchema.index({ 'orderDetail.variantId': 1, status: 1 });
+OrderSchema.index({ 'orderDetail.productId': 1, status: 1 });
+// Online payment queries
+OrderSchema.index({ 'payment.type': 1, status: 1 });
