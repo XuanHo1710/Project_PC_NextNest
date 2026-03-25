@@ -16,9 +16,10 @@ def get_mongo_db():
     if _mongo_client is None:
         _mongo_client = MongoClient(
             settings.MONGODB_URI,
-            serverSelectionTimeoutMS=10000,
-            connectTimeoutMS=10000,
-            socketTimeoutMS=30000,
+            serverSelectionTimeoutMS=15000,
+            connectTimeoutMS=15000,
+            socketTimeoutMS=120000,
+            maxPoolSize=10,
         )
     db_name = settings.MONGODB_URI.rsplit("/", 1)[-1].split("?")[0]
     return _mongo_client[db_name]

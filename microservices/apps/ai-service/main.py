@@ -7,11 +7,13 @@ Provides:
   - POST /api/v1/ai/reindex               → Reindex products to Qdrant
   - GET  /api/v1/ai/health                → Health check
 """
+import asyncio
 import logging
 import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from config import get_settings
@@ -45,10 +47,17 @@ async def lifespan(app: FastAPI):
         from product_index import ensure_collection, index_all_products
         from database import get_qdrant_client
         from config import get_settings
+        from recommendation import _ensure_user_collection
         import threading
 
         _settings = get_settings()
         ensure_collection()
+
+        # Also ensure user_preferences collection has correct dimension
+        try:
+            _ensure_user_collection()
+        except Exception as ue:
+            logger.warning(f"Failed to ensure user_preferences collection: {ue}")
 
         # Check if products collection has any points, if empty → auto-index in background
         client = get_qdrant_client()
@@ -160,6 +169,28 @@ async def chat_message(request: ChatMessageRequest):
         )
 
 
+@app.post("/api/v1/ai/chat/stream")
+async def chat_message_stream(request: ChatMessageRequest):
+    """Stream AI chat response via SSE (Server-Sent Events). Tokens arrive in real-time."""
+    if not request.message or not request.message.strip():
+        raise HTTPException(status_code=400, detail="Message is required")
+
+    from chat import chat_with_ollama_stream
+
+    return StreamingResponse(
+        chat_with_ollama_stream(
+            message=request.message.strip(),
+            conversation_history=request.history,
+        ),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @app.get("/api/v1/ai/chat/suggestions")
 async def chat_suggestions(query: str = Query("", description="Current query for context")):
     """Get quick suggestion chips for the chatbot."""
@@ -183,7 +214,8 @@ async def get_recommendations_endpoint(
     from recommendation import get_recommendations
 
     try:
-        results = get_recommendations(guest_id, limit=limit)
+        loop = asyncio.get_event_loop()
+        results = await loop.run_in_executor(None, lambda: get_recommendations(guest_id, limit=limit))
         return results
     except Exception as e:
         logger.error(f"Recommendation error: {e}")
@@ -199,7 +231,8 @@ async def get_popular_products_endpoint(
     from recommendation import get_popular_products
 
     try:
-        results = get_popular_products(limit=limit)
+        loop = asyncio.get_event_loop()
+        results = await loop.run_in_executor(None, lambda: get_popular_products(limit=limit))
         return results
     except Exception as e:
         logger.error(f"Popular products error: {e}")

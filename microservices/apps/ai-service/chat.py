@@ -7,6 +7,7 @@ import logging
 import httpx
 import json
 from datetime import datetime
+from typing import AsyncGenerator
 
 from config import get_settings
 from database import get_mongo_db, get_qdrant_client
@@ -308,6 +309,145 @@ async def chat_with_ollama(
             "suggestions": [],
             "products": [],
         }
+
+
+async def chat_with_ollama_stream(
+    message: str,
+    conversation_history: list[dict] | None = None,
+) -> AsyncGenerator[str, None]:
+    """
+    Stream chat response from Ollama token-by-token via SSE.
+    Yields SSE-formatted lines:
+      data: {"type":"token","content":"..."}
+      data: {"type":"done","suggestions":[...],"products":[...]}
+    """
+    catalog = get_catalog_context()
+    system_prompt = SYSTEM_PROMPT.format(catalog=catalog)
+
+    messages = [{"role": "system", "content": system_prompt}]
+    if conversation_history:
+        messages.extend(conversation_history[-10:])
+    messages.append({"role": "user", "content": message})
+
+    full_response = ""
+
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async with client.stream(
+                "POST",
+                f"{settings.OLLAMA_BASE_URL}/api/chat",
+                json={
+                    "model": settings.OLLAMA_MODEL,
+                    "messages": messages,
+                    "stream": True,
+                    "options": {
+                        "temperature": 0.7,
+                        "top_p": 0.9,
+                        "num_predict": 1024,
+                    },
+                },
+            ) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line.strip():
+                        continue
+                    try:
+                        chunk = json.loads(line)
+                        if chunk.get("done"):
+                            break
+                        token = chunk.get("message", {}).get("content", "")
+                        if token:
+                            full_response += token
+                            yield f"data: {json.dumps({'type': 'token', 'content': token}, ensure_ascii=False)}\n\n"
+                    except json.JSONDecodeError:
+                        continue
+
+        logger.info(f"STREAM OLLAMA RESPONSE: {full_response[:200]}")
+
+        # Post-processing: search products + generate suggestions
+        recommended_products = []
+
+        # Handle PREDICT_JSON if present
+        if "PREDICT_JSON:" in full_response:
+            try:
+                json_str = full_response.split("PREDICT_JSON:")[1].strip()
+                if json_str.startswith("```"):
+                    json_str = json_str.strip("`").replace("json", "").strip()
+                user_profile = json.loads(json_str)
+                prediction = predictor.predict(user_profile)
+                if prediction:
+                    products = predictor.find_products(prediction)
+                    if products:
+                        db = get_mongo_db()
+                        product_ids = []
+                        for p in products:
+                            doc = db["products"].find_one(
+                                {"name": p.get("name", ""), "isDeleted": {"$ne": True}, "status": "ACTIVE"},
+                                {"_id": 1},
+                            )
+                            if doc:
+                                product_ids.append(str(doc["_id"]))
+                        if product_ids:
+                            recommended_products = _fetch_product_cards(product_ids[:6])
+
+                    # Re-generate the displayed text
+                    new_text = (
+                        f"🔍 **Phân tích nhu cầu của bạn:**\n"
+                        f"- Nghề nghiệp: {user_profile.get('occupation')}\n"
+                        f"- Thu nhập: ~{user_profile.get('monthly_income')} triệu/tháng\n"
+                        f"- Nhu cầu: {prediction['recommended_category']} ({prediction['recommended_price_range']})\n\n"
+                        f"🤖 **AI Đề Xuất Cấu Hình:**\n"
+                        f"- Hãng: **{prediction['recommended_brand']}**\n"
+                        f"- RAM: {prediction['recommended_ram']} | ROM: {prediction['recommended_rom']}\n"
+                        f"- Tầm giá: {prediction['recommended_price_range']}\n\n"
+                        f"💻 **Sản phẩm phù hợp tại cửa hàng:**\n"
+                    )
+                    if products:
+                        for p in products:
+                            new_text += f"• {p['name']} - **{p['price']:,}đ**\n"
+                    else:
+                        new_text += "Hiện tại chưa tìm thấy sản phẩm khớp 100% tiêu chí."
+                    # Send replacement text event
+                    yield f"data: {json.dumps({'type': 'replace', 'content': new_text}, ensure_ascii=False)}\n\n"
+            except Exception as e:
+                logger.error(f"Stream prediction error: {e}")
+
+        # Search products if no prediction products found
+        if not recommended_products:
+            product_keywords = [
+                "sản phẩm", "laptop", "pc", "máy tính", "linh kiện", "phụ kiện",
+                "ram", "cpu", "gpu", "ssd", "card", "màn hình", "bàn phím",
+                "chuột", "tai nghe", "tư vấn", "giá", "mua", "so sánh",
+                "gaming", "văn phòng", "sinh viên", "thiết kế", "lập trình",
+                "đề xuất", "gợi ý", "khuyến mãi", "giảm giá", "rẻ", "tốt",
+                "cấu hình", "build", "workstation", "rtx", "geforce", "ryzen",
+                "intel", "amd", "asus", "msi", "gigabyte", "corsair",
+            ]
+            msg_lower = message.lower()
+            resp_lower = full_response.lower()
+            is_product_query = any(kw in msg_lower for kw in product_keywords) or any(kw in resp_lower for kw in product_keywords)
+
+            if is_product_query:
+                combined_query = f"{message} {full_response[:200]}"
+                recommended_products = search_products_for_chat(combined_query, limit=6)
+                if len(recommended_products) < 3:
+                    extra = _extract_products_from_response(full_response, limit=6 - len(recommended_products))
+                    existing_ids = {p["_id"] for p in recommended_products}
+                    for ep in extra:
+                        if ep["_id"] not in existing_ids:
+                            recommended_products.append(ep)
+
+        suggestions = _generate_suggestions(message, full_response)
+
+        # Final "done" event with metadata
+        yield f"data: {json.dumps({'type': 'done', 'suggestions': suggestions, 'products': recommended_products, 'timestamp': datetime.now().isoformat()}, ensure_ascii=False, default=str)}\n\n"
+
+    except httpx.ConnectError:
+        logger.error("Cannot connect to Ollama (stream). Is it running?")
+        yield f"data: {json.dumps({'type': 'error', 'content': 'Xin lỗi, hệ thống AI đang bảo trì. Vui lòng thử lại sau.'})}\n\n"
+    except Exception as e:
+        logger.error(f"Ollama stream error: {e}")
+        yield f"data: {json.dumps({'type': 'error', 'content': 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.'})}\n\n"
 
 
 def search_products_for_chat(query: str, limit: int = 6) -> list[dict]:

@@ -1861,19 +1861,42 @@ export class ProductService {
 
     const productIds = views.map((v) => v.product);
 
-    const products = await this.productModel
-      .find({
-        _id: { $in: productIds },
-        isDeleted: false,
-        status: 'ACTIVE',
-      })
-      .populate('brand', 'name slug logo')
-      .populate('category', 'name slug')
-      .populate('defaultProductVariantId')
-      .lean()
-      .exec();
+    // Batch fetch products + variants in parallel
+    const [products, variants] = await Promise.all([
+      this.productModel
+        .find({
+          _id: { $in: productIds },
+          isDeleted: false,
+          status: 'ACTIVE',
+        })
+        .select(
+          'name slug brand category minPrice maxPrice status defaultProductVariantId avgRating totalRatings',
+        )
+        .populate('brand', 'name slug logo')
+        .populate('category', 'name slug')
+        .lean()
+        .exec(),
+      this.productVariantModel
+        .find({
+          product: { $in: productIds },
+          isDeleted: false,
+        })
+        .select('product price discount images combination stock sku')
+        .lean()
+        .exec(),
+    ]);
 
-    // Map products by ID and merge with view metadata
+    // Build variant lookup by product
+    const variantsByProduct = new Map<string, any[]>();
+    for (const v of variants) {
+      const pid = v.product.toString();
+      if (!variantsByProduct.has(pid)) {
+        variantsByProduct.set(pid, []);
+      }
+      variantsByProduct.get(pid)!.push(v);
+    }
+
+    // Map products by ID
     const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
     // Maintain the order from views (sorted by lastViewedAt)
@@ -1881,9 +1904,40 @@ export class ProductService {
       .map((v) => {
         const product = productMap.get(v.product.toString());
         if (!product) return null;
+
+        // Resolve default variant from batch data
+        const productVariants =
+          variantsByProduct.get(v.product.toString()) || [];
+        const defaultVid = product.defaultProductVariantId?.toString();
+        let defaultVariant = defaultVid
+          ? productVariants.find((pv) => pv._id.toString() === defaultVid)
+          : null;
+        if (!defaultVariant && productVariants.length > 0) {
+          defaultVariant = productVariants[0];
+        }
+
         return {
-          ...product,
-          defaultVariant: product.defaultProductVariantId || null,
+          _id: product._id,
+          name: product.name,
+          slug: product.slug,
+          brand: product.brand,
+          category: product.category,
+          minPrice: product.minPrice,
+          maxPrice: product.maxPrice,
+          status: product.status,
+          avgRating: product.avgRating,
+          totalRatings: product.totalRatings,
+          defaultVariant: defaultVariant
+            ? {
+                _id: defaultVariant._id,
+                sku: defaultVariant.sku,
+                price: defaultVariant.price,
+                discount: defaultVariant.discount,
+                images: defaultVariant.images,
+                combination: defaultVariant.combination,
+                stock: defaultVariant.stock,
+              }
+            : null,
           lastViewedAt: v.lastViewedAt,
           viewCount: v.viewCount,
         };

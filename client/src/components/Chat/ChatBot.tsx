@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
-import { Input } from 'antd';
 import { FiSend, FiX, FiSmile, FiChevronDown } from 'react-icons/fi';
 import { RiRobot2Fill, RiRobot2Line, RiUser3Fill } from 'react-icons/ri';
 import { IoMdChatboxes } from 'react-icons/io';
@@ -43,9 +42,6 @@ const WELCOME_MESSAGE: ChatMessage = {
     suggestions: ['Tư vấn PC Gaming 20 triệu', 'Laptop cho sinh viên', 'So sánh RTX 4060 vs 4070'],
 };
 
-const CHARS_PER_TICK = 3;
-const TICK_INTERVAL = 20;
-
 const ChatBot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
@@ -58,9 +54,8 @@ const ChatBot = () => {
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const emojiPickerRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
     const isAtBottomRef = useRef(true);
-    const streamingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // ── Scroll helpers ──────────────────────────────────────────────
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
@@ -109,49 +104,14 @@ const ChatBot = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // ── Streaming typewriter effect ─────────────────────────────────
+    // ── Streaming: auto-scroll during SSE ─────────────────────────────────
+    // (No interval needed — SSE tokens update displayedChars directly)
     useEffect(() => {
         if (!streaming) return;
-
-        if (streaming.displayedChars >= streaming.fullText.length) {
-            setMessages(prev => [
-                ...prev,
-                {
-                    text: streaming.fullText,
-                    sender: 'bot',
-                    time: streaming.time,
-                    suggestions: streaming.suggestions,
-                    products: streaming.products,
-                },
-            ]);
-            setStreaming(null);
-            return;
+        if (isAtBottomRef.current) {
+            scrollToBottom();
         }
-
-        streamingRef.current = setInterval(() => {
-            setStreaming(prev => {
-                if (!prev) return null;
-                const next = prev.displayedChars + CHARS_PER_TICK;
-                if (next >= prev.fullText.length) {
-                    return { ...prev, displayedChars: prev.fullText.length };
-                }
-                return { ...prev, displayedChars: next };
-            });
-        }, TICK_INTERVAL);
-
-        return () => {
-            if (streamingRef.current) {
-                clearInterval(streamingRef.current);
-                streamingRef.current = null;
-            }
-        };
-    }, [streaming?.displayedChars, streaming?.fullText.length]);
-
-    useEffect(() => {
-        return () => {
-            if (streamingRef.current) clearInterval(streamingRef.current);
-        };
-    }, []);
+    }, [streaming?.displayedChars, scrollToBottom]);
 
     const addEmoji = (emojiData: any) => {
         setInputValue(prev => prev + emojiData.native);
@@ -173,6 +133,9 @@ const ChatBot = () => {
         const userMsg: ChatMessage = { text, sender: 'user', time };
         setMessages(prev => [...prev, userMsg]);
         setInputValue('');
+        // Reset textarea height
+        const textarea = document.getElementById('chat-input') as HTMLTextAreaElement;
+        if (textarea) textarea.style.height = 'auto';
         isAtBottomRef.current = true;
 
         setIsTyping(true);
@@ -184,25 +147,63 @@ const ChatBot = () => {
             localStorage.setItem('chat_user_id', userId);
 
             const history = buildHistory();
-            const response = await chatbotClientService.sendMessage(text, userId, history);
 
-            const responseTime = new Date(response.timestamp).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
+            // Use SSE streaming for real-time token display
+            let streamedText = '';
+            setIsTyping(false);
+            setStreaming({
+                fullText: '',
+                displayedChars: 0,
+                products: [],
+                suggestions: [],
+                time,
             });
 
-            setIsTyping(false);
-
-            // Start typewriter streaming
-            setStreaming({
-                fullText: response.text,
-                displayedChars: 0,
-                products: response.products || [],
-                suggestions: response.suggestions || [],
-                time: responseTime,
+            await chatbotClientService.sendMessageStream(text, userId, history, {
+                onToken: (token) => {
+                    streamedText += token;
+                    setStreaming(prev => prev ? {
+                        ...prev,
+                        fullText: streamedText,
+                        displayedChars: streamedText.length,
+                    } : null);
+                },
+                onReplace: (newText) => {
+                    streamedText = newText;
+                    setStreaming(prev => prev ? {
+                        ...prev,
+                        fullText: newText,
+                        displayedChars: newText.length,
+                    } : null);
+                },
+                onDone: (data) => {
+                    const responseTime = data.timestamp
+                        ? new Date(data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : time;
+                    // Finalize: add to messages and clear streaming state
+                    setMessages(prev => [
+                        ...prev,
+                        {
+                            text: streamedText,
+                            sender: 'bot',
+                            time: responseTime,
+                            suggestions: data.suggestions,
+                            products: data.products,
+                        },
+                    ]);
+                    setStreaming(null);
+                },
+                onError: (error) => {
+                    setMessages(prev => [
+                        ...prev,
+                        { text: error, sender: 'bot', time },
+                    ]);
+                    setStreaming(null);
+                },
             });
         } catch {
             setIsTyping(false);
+            setStreaming(null);
             setMessages(prev => [
                 ...prev,
                 {
@@ -425,10 +426,21 @@ const ChatBot = () => {
                                 </div>
                                 <div className="flex flex-col max-w-[90%] sm:max-w-[88%]">
                                     <div className="bg-white text-gray-800 border border-blue-100/60 rounded-2xl rounded-bl-md py-2.5 px-3.5 shadow-sm">
-                                        <p className="leading-relaxed text-[13px] whitespace-pre-wrap break-words">
-                                            {streaming.fullText.substring(0, streaming.displayedChars)}
-                                            <span className="inline-block w-[2px] h-[14px] bg-blue-500 ml-0.5 align-middle animate-pulse" />
-                                        </p>
+                                        {streaming.displayedChars === 0 ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex space-x-1">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                                                </div>
+                                                <span className="text-[12px] text-gray-400 italic">AI đang soạn tin...</span>
+                                            </div>
+                                        ) : (
+                                            <p className="leading-relaxed text-[13px] whitespace-pre-wrap break-words">
+                                                {streaming.fullText.substring(0, streaming.displayedChars)}
+                                                <span className="inline-block w-[2px] h-[14px] bg-blue-500 ml-0.5 align-middle animate-pulse" />
+                                            </p>
+                                        )}
                                     </div>
 
                                     {/* Show product cards once text streaming is complete */}
@@ -451,17 +463,20 @@ const ChatBot = () => {
                             </div>
                         )}
 
-                        {/* Typing indicator (waiting for API) */}
+                        {/* Typing indicator (waiting for stream connection) */}
                         {isTyping && (
                             <div className="mb-3 flex justify-start" style={{ animation: 'chatMsgIn 0.2s ease-out both' }}>
                                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-2 flex-shrink-0 mt-1">
                                     <RiRobot2Line className="text-white text-sm" />
                                 </div>
                                 <div className="bg-white rounded-2xl rounded-bl-md py-3 px-4 shadow-sm border border-blue-100/60">
-                                    <div className="flex space-x-1.5">
-                                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                                        <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex space-x-1.5">
+                                            <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                            <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                            <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                                        </div>
+                                        <span className="text-[12px] text-gray-400 italic">Đang kết nối AI...</span>
                                     </div>
                                 </div>
                             </div>
@@ -513,19 +528,31 @@ const ChatBot = () => {
                                 </div>
                             )}
 
-                            <div className="relative flex">
-                                <Input
-                                    ref={inputRef as any}
+                            <div className="relative">
+                                <textarea
+                                    ref={inputRef}
                                     id="chat-input"
                                     placeholder={isInputDisabled ? 'Đang xử lý...' : 'Nhập tin nhắn...'}
                                     value={inputValue}
-                                    onChange={e => setInputValue(e.target.value)}
-                                    onPressEnter={handleSend}
-                                    className="flex-grow rounded-full pr-24 sm:pr-28 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                                    size="large"
+                                    onChange={e => {
+                                        setInputValue(e.target.value);
+                                        // Auto-grow textarea
+                                        const el = e.target;
+                                        el.style.height = 'auto';
+                                        el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+                                    }}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSend();
+                                        }
+                                    }}
+                                    className="w-full resize-none rounded-2xl pr-24 sm:pr-28 pl-4 py-2.5 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                    rows={1}
+                                    style={{ maxHeight: '120px', overflowY: 'auto' }}
                                     disabled={isInputDisabled}
                                 />
-                                <div className="absolute right-1 top-1 bottom-1 flex items-center">
+                                <div className="absolute right-1 bottom-1 flex items-center">
                                     <button
                                         onClick={() => setShowEmoji(!showEmoji)}
                                         className="h-8 w-8 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 emoji-trigger mr-1 transition-colors"

@@ -105,6 +105,18 @@ def fetch_all_products() -> list[dict]:
     )
     products = list(products_cursor)
 
+    # Batch-fetch ALL variants at once (instead of N+1 per-product queries)
+    all_product_ids = [p["_id"] for p in products]
+    all_variants_cursor = db["productvariants"].find(
+        {"product": {"$in": all_product_ids}, "isDeleted": {"$ne": True}}
+    )
+    variants_by_product: dict[str, list[dict]] = {}
+    for v in all_variants_cursor:
+        key = v.get("product")
+        variants_by_product.setdefault(key, []).append(v)
+
+    logger.info(f"Batch-fetched variants for {len(products)} products")
+
     results = []
     for p in products:
         pid = p["_id"]
@@ -118,12 +130,8 @@ def fetch_all_products() -> list[dict]:
         p["_category_name"] = cat_info.get("name", "")
         p["_category_slug"] = cat_info.get("slug", "")
 
-        # Fetch variants for this product
-        variants = list(
-            db["productvariants"].find(
-                {"product": pid, "isDeleted": {"$ne": True}}
-            )
-        )
+        # Get variants from batch-fetched data (no per-product query!)
+        variants = variants_by_product.get(pid, [])
 
         # Build text for embedding
         text = build_product_text(p, variants, attr_map)

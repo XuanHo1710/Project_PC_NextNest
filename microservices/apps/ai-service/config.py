@@ -1,27 +1,31 @@
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+_ENV_FILE = Path(__file__).resolve().parent / ".env"
 
 
 class Settings(BaseSettings):
     # Qdrant
-    QDRANT_URL: str = "https://07837276-e6de-42b8-8c72-96680944c9b3.us-east4-0.gcp.cloud.qdrant.io:6333"
-    QDRANT_API_KEY: str = ""
-    COLLECTION_NAME: str = "products"
-    USER_COLLECTION_NAME: str = "user_preferences"
+    QDRANT_URL: str = os.getenv("QDRANT_URL", "http://localhost:6333")
+    QDRANT_API_KEY: str = os.getenv("QDRANT_API_KEY", "")
+    COLLECTION_NAME: str = os.getenv("COLLECTION_NAME", "products")
+    USER_COLLECTION_NAME: str = os.getenv("USER_COLLECTION_NAME", "user_preferences")
 
     # MongoDB
-    MONGODB_URI: str = "mongodb://localhost:27017/project-pc"
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017/catalog")
 
     # Ollama
-    OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3.2"
-    EMBEDDING_MODEL: str = "paraphrase-MiniLM-L3-v2"
+    OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3.2")
+    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "paraphrase-MiniLM-L3-v2")
 
     # Service
-    AI_SERVICE_PORT: int = 8000
+    AI_SERVICE_PORT: int = int(os.getenv("AI_SERVICE_PORT", 8000))
 
     class Config:
-        env_file = ".env"
+        env_file = str(_ENV_FILE)
         env_file_encoding = "utf-8"
 
 

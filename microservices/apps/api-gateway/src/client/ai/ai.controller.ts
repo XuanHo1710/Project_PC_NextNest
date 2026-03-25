@@ -6,10 +6,13 @@ import {
   Param,
   Query,
   Logger,
+  Res,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { Guest, Public } from '../../decorators/customize';
+import type { Response } from 'express';
+import axios from 'axios';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
@@ -17,7 +20,7 @@ const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 export class AiController {
   private readonly logger = new Logger(AiController.name);
 
-  constructor(private readonly httpService: HttpService) { }
+  constructor(private readonly httpService: HttpService) {}
 
   /**
    * POST /client/chatbot/message
@@ -48,6 +51,61 @@ export class AiController {
         timestamp: new Date().toISOString(),
         suggestions: [],
       };
+    }
+  }
+
+  /**
+   * POST /client/chatbot/stream
+   * Stream AI chat response via SSE (Server-Sent Events)
+   * Tokens arrive in real-time for instant UI feedback
+   */
+  @Post('stream')
+  @Public()
+  async chatMessageStream(
+    @Body() body: { message: string; userId?: string; history?: any[] },
+    @Res() res: Response,
+  ) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    try {
+      const response = await axios.post(
+        `${AI_SERVICE_URL}/api/v1/ai/chat/stream`,
+        {
+          message: body.message,
+          userId: body.userId,
+          history: body.history,
+        },
+        {
+          responseType: 'stream',
+          timeout: 120000,
+        },
+      );
+
+      response.data.on('data', (chunk: Buffer) => {
+        res.write(chunk);
+      });
+
+      response.data.on('end', () => {
+        res.end();
+      });
+
+      response.data.on('error', (err: Error) => {
+        this.logger.error(`Stream proxy error: ${err.message}`);
+        res.write(
+          `data: ${JSON.stringify({ type: 'error', content: 'Kết nối bị gián đoạn. Vui lòng thử lại.' })}\n\n`,
+        );
+        res.end();
+      });
+    } catch (error) {
+      this.logger.error(`AI stream error: ${error.message}`);
+      res.write(
+        `data: ${JSON.stringify({ type: 'error', content: 'Xin lỗi, hệ thống AI đang bảo trì. Vui lòng thử lại sau.' })}\n\n`,
+      );
+      res.end();
     }
   }
 

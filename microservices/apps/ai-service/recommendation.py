@@ -129,19 +129,36 @@ def _product_to_card(product: dict, brands: dict, categories: dict, attrs: dict,
 
 # ── user preference vector ────────────────────────────────────────
 
+_user_collection_ok = False  # Track if collection has correct dimension
+
+
 def _ensure_user_collection():
-    """Create the user_preferences Qdrant collection if missing."""
+    """Create the user_preferences Qdrant collection if missing or dimension-mismatched."""
+    global _user_collection_ok
+    if _user_collection_ok:
+        return
+
     client = get_qdrant_client()
     name = settings.USER_COLLECTION_NAME
     dim = get_embedding_dimension()
 
-    existing = [c.name for c in client.get_collections().collections]
-    if name not in existing:
-        logger.info(f"Creating Qdrant collection '{name}' (dim={dim}, cosine)")
-        client.create_collection(
-            collection_name=name,
-            vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
-        )
+    existing_names = [c.name for c in client.get_collections().collections]
+    if name in existing_names:
+        info = client.get_collection(name)
+        current_dim = info.config.params.vectors.size
+        if current_dim != dim:
+            logger.warning(f"Collection '{name}' has dim={current_dim}, expected {dim}. Recreating…")
+            client.delete_collection(name)
+        else:
+            _user_collection_ok = True
+            return
+
+    logger.info(f"Creating Qdrant collection '{name}' (dim={dim}, cosine)")
+    client.create_collection(
+        collection_name=name,
+        vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
+    )
+    _user_collection_ok = True
 
 
 def _guest_point_id(guest_id: str) -> int:
@@ -149,16 +166,17 @@ def _guest_point_id(guest_id: str) -> int:
     return int(guest_id[-12:], 16) & 0x7FFFFFFFFFFFFFFF
 
 
-def build_and_store_user_vector(guest_id: str) -> list[float] | None:
+def build_and_store_user_vector(guest_id: str) -> tuple[list[float] | None, set[str]]:
     """
     Build a preference vector for *guest_id* from their ProductView records
     (weighted by viewCount), then upsert it into the user_preferences collection.
-    Returns the final vector, or None if there's no viewing history.
+    Returns (vector, viewed_product_ids) — vector is None if no viewing history.
+    Skips recomputation if the view counts haven't changed since last build.
     """
     db = get_mongo_db()
 
     if not ObjectId.is_valid(guest_id):
-        return None
+        return None, set()
 
     views = list(
         db["productviews"]
@@ -167,7 +185,29 @@ def build_and_store_user_vector(guest_id: str) -> list[float] | None:
         .limit(20)
     )
     if not views:
-        return None
+        return None, set()
+
+    viewed_ids = {str(v["product"]) for v in views}
+
+    # Check if views haven't changed — reuse stored vector
+    current_summary = {str(v["product"]): v.get("viewCount", 1) for v in views}
+    current_total = sum(current_summary.values())
+    try:
+        _ensure_user_collection()
+        client = get_qdrant_client()
+        existing = client.retrieve(
+            collection_name=settings.USER_COLLECTION_NAME,
+            ids=[_guest_point_id(guest_id)],
+            with_vectors=True,
+            with_payload=True,
+        )
+        if existing:
+            stored = existing[0].payload or {}
+            if stored.get("total_views") == current_total and stored.get("viewed_products") == current_summary:
+                logger.info(f"Reusing cached vector for guest {guest_id} (views unchanged)")
+                return existing[0].vector, viewed_ids
+    except Exception as e:
+        logger.debug(f"Cache check failed (will rebuild): {e}")
 
     # Use cached lookup maps (avoids re-querying brands/categories/attrs every call)
     brands_full, cats_full, attrs = _lookup_maps(db)
@@ -219,7 +259,7 @@ def build_and_store_user_vector(guest_id: str) -> list[float] | None:
         weights.append(float(v.get("viewCount", 1)))
 
     if not texts:
-        return None
+        return None, viewed_ids
 
     embeddings = generate_embeddings(texts)
     emb_np = np.array(embeddings, dtype=np.float64)
@@ -236,7 +276,6 @@ def build_and_store_user_vector(guest_id: str) -> list[float] | None:
     _ensure_user_collection()
     client = get_qdrant_client()
 
-    view_summary = {str(v["product"]): v.get("viewCount", 1) for v in views}
     client.upsert(
         collection_name=settings.USER_COLLECTION_NAME,
         points=[
@@ -245,14 +284,14 @@ def build_and_store_user_vector(guest_id: str) -> list[float] | None:
                 vector=pref_list,
                 payload={
                     "guest_id": guest_id,
-                    "viewed_products": view_summary,
-                    "total_views": sum(view_summary.values()),
+                    "viewed_products": current_summary,
+                    "total_views": current_total,
                 },
             )
         ],
     )
     logger.info(f"Stored user vector for guest {guest_id} ({len(texts)} products, {sum(weights):.0f} views)")
-    return pref_list
+    return pref_list, viewed_ids
 
 
 # ── public API ────────────────────────────────────────────────────
@@ -265,8 +304,9 @@ def get_recommendations(guest_id: str, limit: int = 8) -> list[dict]:
     3. Exclude already-viewed products
     4. Fetch full product data from MongoDB (IProductCard shape)
     """
+    viewed_ids: set[str] = set()
     try:
-        preference_vector = build_and_store_user_vector(guest_id)
+        preference_vector, viewed_ids = build_and_store_user_vector(guest_id)
     except Exception as e:
         logger.error(f"Failed to build user vector: {e}")
         preference_vector = None
@@ -274,28 +314,19 @@ def get_recommendations(guest_id: str, limit: int = 8) -> list[dict]:
     if preference_vector is None:
         return get_popular_products(limit)
 
-    # IDs to exclude
-    viewed_ids: set[str] = set()
-    try:
-        db = get_mongo_db()
-        viewed = list(
-            db["productviews"]
-            .find({"guest": ObjectId(guest_id)}, {"product": 1})
-            .limit(50)
-        )
-        viewed_ids = {str(v["product"]) for v in viewed}
-    except Exception as e:
-        logger.warning(f"Cannot fetch viewed products from MongoDB: {e}")
-
     # Search Qdrant products collection (cosine similarity)
-    client = get_qdrant_client()
-    search_result = client.query_points(
-        collection_name=settings.COLLECTION_NAME,
-        query=preference_vector,
-        limit=limit + len(viewed_ids) + 5,
-        with_payload=True,
-    )
-    results = search_result.points
+    try:
+        client = get_qdrant_client()
+        search_result = client.query_points(
+            collection_name=settings.COLLECTION_NAME,
+            query=preference_vector,
+            limit=limit + len(viewed_ids) + 5,
+            with_payload=True,
+        )
+        results = search_result.points
+    except Exception as e:
+        logger.error(f"Qdrant search failed: {e}")
+        return get_popular_products(limit)
 
     # Collect mongo IDs (excluding viewed)
     candidate_ids: list[str] = []
@@ -309,7 +340,11 @@ def get_recommendations(guest_id: str, limit: int = 8) -> list[dict]:
     if not candidate_ids:
         return get_popular_products(limit)
 
-    return _fetch_product_cards(candidate_ids)
+    try:
+        return _fetch_product_cards(candidate_ids)
+    except Exception as e:
+        logger.error(f"Failed to fetch product cards: {e}")
+        return get_popular_products(limit)
 
 
 def get_popular_products(limit: int = 8) -> list[dict]:

@@ -63,6 +63,8 @@ export default function HomeClient() {
                 ? chatbotClientService.getRecommendations(user._id, 8)
                 : chatbotClientService.getPopularProducts(8),
         staleTime: 1000 * 60 * 5,
+        retry: 1,
+        retryDelay: 2000,
     });
 
     // Flash sale countdown timer (resets every 6 hours)
