@@ -73,14 +73,14 @@ const PaymentPage = () => {
                         <p className="text-gray-600 dark:text-gray-300">Vui lòng chọn phương thức thanh toán phù hợp</p>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                         {/* Payment Methods */}
-                        <div className="lg:col-span-2">
+                        <div className="md:col-span-2 lg:col-span-2">
                             <PaymentMethods orderData={orderData} />
                         </div>
 
                         {/* Order Summary */}
-                        <div className="lg:col-span-1">
+                        <div className="md:col-span-2 lg:col-span-1">
                             <Card className="shadow-xl border-0 sticky h-fit">
                                 <h3 className="text-xl font-bold text-gray-800 mb-6">Thông tin đơn hàng</h3>
 

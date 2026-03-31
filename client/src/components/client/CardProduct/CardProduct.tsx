@@ -53,13 +53,13 @@ const CardProduct = ({ product, css = '' }: CardProductProps) => {
     };
 
     return (
-        <div className={`card rounded-lg flex flex-col max-h-max bg-white dark:bg-gray-900 p-2 dark:text-white ${css}`}>
+        <div className={`card rounded-lg flex flex-col max-h-max bg-white dark:bg-gray-900 p-2 sm:p-3 dark:text-white ${css}`}>
             {/* Product Image */}
             <div className="card-img w-full hover:-translate-y-2 transition-all">
                 <Image
                     src={productImage}
                     width="100%"
-                    height={200}
+                    height={180}
                     alt={product.name}
                     className="img-thumbnail object-contain"
                     fallback="/placeholder-product.png"

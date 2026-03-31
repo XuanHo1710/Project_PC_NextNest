@@ -155,7 +155,7 @@ export default function HomeClient() {
                         className="row-span-3 hidden xl:block col-span-3 rounded-lg shadow-sm bg-white border border-gray-100 relative"
                         onMouseLeave={() => setHoveredCategoryId(null)}
                     >
-                        <ul style={{ scrollbarWidth: "none" }} className="m-0 pl-0 rounded-lg max-h-[700px] overflow-y-scroll dark:bg-slate-800">
+                        <ul style={{ scrollbarWidth: "none" }} className="m-0 pl-0 rounded-lg max-h-[400px] lg:max-h-[500px] xl:max-h-[700px] overflow-y-scroll dark:bg-slate-800">
                             {parentCategories.length > 0 && parentCategories.map((category, index) => (
                                 <li
                                     key={category._id}
@@ -174,7 +174,7 @@ export default function HomeClient() {
                         {hoveredCategoryId && hoveredChildren.length > 0 && (
                             <div
                                 style={{ scrollbarWidth: "none" }}
-                                className="absolute left-full top-0 ml-1 w-4xl h-full overflow-auto bg-white border border-gray-200 shadow-2xl rounded-lg p-5 z-25 grid grid-cols-3 gap-4"
+                                className="absolute left-full top-0 ml-1 w-[90vw] max-w-4xl h-full overflow-auto bg-white border border-gray-200 shadow-2xl rounded-lg p-4 sm:p-5 z-25 grid grid-cols-2 sm:grid-cols-3 gap-4"
                             >
                                 {hoveredChildren.map((child) => {
                                     const subChildren = childrenMap[child._id] || [];
@@ -210,7 +210,7 @@ export default function HomeClient() {
                     <div className="col-span-12 xl:col-span-9 row-span-3 rounded-lg shadow-sm overflow-hidden max-h-max">
                         <Carousel autoplay arrows autoplaySpeed={3000} dots={{ className: 'custom-dots' }} className="hero-banner-carousel">
                             <div>
-                                <div className="relative h-[300px] md:h-[420px]  flex items-center">
+                                <div className="relative h-[200px] sm:h-[300px] md:h-[380px] lg:h-[420px] flex items-center">
                                     <div className="absolute inset-0" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=1200&q=80")', backgroundSize: 'cover', backgroundPosition: 'center' }} />
                                     <div className="relative z-10 text-white p-8 md:p-12 max-w-xl">
                                         <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-3">PC Gaming</h2>
@@ -396,10 +396,10 @@ export default function HomeClient() {
                     <div id="top-discount" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
                         <div className="bg-red-600 rounded-lg shadow-lg overflow-hidden">
                             {/* Flash sale header */}
-                            <div className="flex flex-wrap items-center justify-between px-7 py-4 bg-red-700">
-                                <div className="flex items-center gap-3">
-                                    <FireFilled className="!text-yellow-300 text-2xl animate-pulse" />
-                                    <h1 className="text-xl md:text-3xl font-extrabold text-white tracking-wide uppercase">
+                            <div className="flex flex-wrap items-center justify-between px-4 sm:px-7 py-3 sm:py-4 bg-red-700 gap-3">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                    <FireFilled className="!text-yellow-300 text-xl sm:text-2xl animate-pulse" />
+                                    <h1 className="text-lg sm:text-xl md:text-3xl font-extrabold text-white tracking-wide uppercase">
                                         Flash Sale
                                     </h1>
                                     <span className="hidden sm:inline-block bg-yellow-400 text-red-700 text-xs font-bold px-3 py-1 rounded-full animate-bounce">

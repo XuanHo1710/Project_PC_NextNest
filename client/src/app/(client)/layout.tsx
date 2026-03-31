@@ -26,7 +26,7 @@ export default function ClientLayout({
                     <CartProvider>
                         <ScrollToTop />
                         <HeaderClient />
-                        <div className="mt-28">
+                        <div className="mt-20 sm:mt-24 md:mt-28">
                             {children}
                         </div>
                         <FooterClient />

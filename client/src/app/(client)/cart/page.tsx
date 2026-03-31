@@ -341,7 +341,7 @@ export default function CartClient() {
                                     </div>
 
                                     {/* Cart Items */}
-                                    <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[600px] overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+                                    <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[350px] sm:max-h-[450px] md:max-h-[600px] overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
                                         {cart.cartItems.map((cartItem) => (
                                             <CartProduct
                                                 key={cartItem.variant._id}
@@ -380,7 +380,7 @@ export default function CartClient() {
                                 </div>
 
                                 {/* Trust badges */}
-                                <div className="grid grid-cols-3 gap-3 mt-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
                                     <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700">
                                         <SafetyCertificateOutlined className="text-green-500 text-lg" />
                                         <span className="text-xs text-gray-600 dark:text-gray-300">Bảo hành chính hãng</span>
@@ -675,8 +675,8 @@ export default function CartClient() {
                         </div>
                     ) : (
                         /* Empty Cart State */
-                        <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                            <div className="w-32 h-32 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
+                        <div className="flex flex-col items-center justify-center py-12 sm:py-16 md:py-20 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
                                 <ShoppingCartOutlined className="text-6xl text-blue-300 dark:text-blue-500" />
                             </div>
                             <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">Giỏ hàng trống</h2>

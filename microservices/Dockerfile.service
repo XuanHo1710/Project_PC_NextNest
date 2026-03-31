@@ -1,0 +1,59 @@
+# ============================================
+# Dockerfile for NestJS microservices
+# Build context: microservices/ directory
+# Usage: docker build --build-arg SERVICE=api-gateway -f Dockerfile.service .
+# ============================================
+
+# --- Stage 1: Install deps & build ---
+FROM node:20-alpine AS builder
+
+ARG SERVICE
+
+WORKDIR /app
+
+# Copy workspace root files
+COPY package.json package-lock.json turbo.json ./
+
+# Copy shared package
+COPY packages/common/ ./packages/common/
+
+# Copy the target service
+COPY apps/${SERVICE}/ ./apps/${SERVICE}/
+
+# Install all dependencies (workspace-aware)
+RUN npm ci --ignore-scripts && \
+    npm run --prefix packages/common build
+
+# Build the target service
+RUN cd apps/${SERVICE} && npx nest build
+
+# --- Stage 2: Production image ---
+FROM node:20-alpine AS production
+
+ARG SERVICE
+
+WORKDIR /app
+
+# Copy workspace root package files
+COPY package.json package-lock.json ./
+
+# Copy built common package
+COPY --from=builder /app/packages/common/package.json ./packages/common/package.json
+COPY --from=builder /app/packages/common/dist/ ./packages/common/dist/
+
+# Copy target service package.json + built dist
+COPY --from=builder /app/apps/${SERVICE}/package.json ./apps/${SERVICE}/package.json
+COPY --from=builder /app/apps/${SERVICE}/dist/ ./apps/${SERVICE}/dist/
+
+# Install production deps only
+RUN npm ci --omit=dev --ignore-scripts 2>/dev/null || npm install --omit=dev --ignore-scripts
+
+# Set working directory to the service
+WORKDIR /app/apps/${SERVICE}
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:${PORT:-8080}/api/docs', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" || exit 0
+
+# Run the service
+CMD ["node", "dist/main.js"]
