@@ -29,4 +29,8 @@ export class SearchProductDto {
   @IsOptional()
   @IsString()
   sort?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
 }

@@ -71,41 +71,59 @@ export class AiController {
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
 
-    try {
-      const response = await axios.post(
-        `${AI_SERVICE_URL}/api/v1/ai/chat/stream`,
-        {
-          message: body.message,
-          userId: body.userId,
-          history: body.history,
-        },
-        {
-          responseType: 'stream',
-          timeout: 120000,
-        },
-      );
+    const MAX_RETRIES = 2;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response = await axios.post(
+          `${AI_SERVICE_URL}/api/v1/ai/chat/stream`,
+          {
+            message: body.message,
+            userId: body.userId,
+            history: body.history,
+          },
+          {
+            responseType: 'stream',
+            timeout: 120000,
+          },
+        );
 
-      response.data.on('data', (chunk: Buffer) => {
-        res.write(chunk);
-      });
+        await new Promise<void>((resolve, reject) => {
+          response.data.on('data', (chunk: Buffer) => {
+            res.write(chunk);
+          });
 
-      response.data.on('end', () => {
+          response.data.on('end', () => {
+            resolve();
+          });
+
+          response.data.on('error', (err: Error) => {
+            reject(err);
+          });
+        });
+
         res.end();
-      });
+        return;
+      } catch (error) {
+        const isRetryable =
+          error.code === 'ECONNRESET' ||
+          error.code === 'ECONNREFUSED' ||
+          error.message?.includes('ECONNRESET');
 
-      response.data.on('error', (err: Error) => {
-        this.logger.error(`Stream proxy error: ${err.message}`);
+        if (isRetryable && attempt < MAX_RETRIES) {
+          this.logger.warn(
+            `AI stream attempt ${attempt} failed (${error.code || error.message}), retrying in 1s...`,
+          );
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
+
+        this.logger.error(`AI stream error: ${error.message}`);
         res.write(
-          `data: ${JSON.stringify({ type: 'error', content: 'Kết nối bị gián đoạn. Vui lòng thử lại.' })}\n\n`,
+          `data: ${JSON.stringify({ type: 'error', content: 'Xin lỗi, hệ thống AI đang bảo trì. Vui lòng thử lại sau.' })}\n\n`,
         );
         res.end();
-      });
-    } catch (error) {
-      this.logger.error(`AI stream error: ${error.message}`);
-      res.write(
-        `data: ${JSON.stringify({ type: 'error', content: 'Xin lỗi, hệ thống AI đang bảo trì. Vui lòng thử lại sau.' })}\n\n`,
-      );
-      res.end();
+        return;
+      }
     }
   }
 

@@ -355,7 +355,7 @@ export class ProductService {
   }
 
   async findAllProducts(searchDto?: SearchProductDto) {
-    const { keyword, q, status, page = 1, limit = 10, sort } = searchDto || {};
+    const { keyword, q, status, page = 1, limit = 10, sort, category } = searchDto || {};
     const searchTerm = keyword || q;
     const query: any = { isDeleted: false };
 
@@ -368,6 +368,10 @@ export class ProductService {
 
     if (status) {
       query.status = status;
+    }
+
+    if (category && Types.ObjectId.isValid(category)) {
+      query.category = new Types.ObjectId(category);
     }
 
     const skip = (page - 1) * limit;

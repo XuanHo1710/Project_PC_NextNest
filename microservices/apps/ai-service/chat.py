@@ -2,7 +2,13 @@
 AI Chat service: uses Ollama (llama3.2) for conversational AI.
 Loads product catalog context to answer questions about products.
 No chat history persistence (in-memory only per session).
+
+Architecture: RAG + LLM + ML (3-in-1)
+  1. RAG: Embed user query → Qdrant vector search → retrieve similar products
+  2. LLM: Ollama with enriched prompt (catalog + RAG context)
+  3. ML:  Price prediction from Colab-trained models when triggered
 """
+import asyncio
 import logging
 import httpx
 import json
@@ -11,7 +17,7 @@ from typing import AsyncGenerator
 
 from config import get_settings
 from database import get_mongo_db, get_qdrant_client
-from hybrid_prediction import predictor
+from price_predictor import tech_price_predictor
 from embedding import generate_embedding
 from recommendation import _fetch_product_cards
 
@@ -115,10 +121,11 @@ def refresh_catalog_context():
     logger.info("Product catalog context cache cleared")
 
 
-SYSTEM_PROMPT = """Bạn là trợ lý AI của cửa hàng Arisu Store — chuyên bán PC Gaming, Laptop, Linh kiện máy tính và phụ kiện công nghệ.
+SYSTEM_PROMPT = """Bạn là trợ lý AI của cửa hàng Arisu Store — chuyên bán PC Gaming, Laptop, Linh kiện máy tính, Điện thoại và phụ kiện công nghệ.
 
 Nhiệm vụ của bạn:
 - Tư vấn sản phẩm phù hợp với nhu cầu khách hàng
+- DỰ ĐOÁN GIÁ sản phẩm dựa trên thông số kỹ thuật (Laptop, Smartphone)
 - Trả lời câu hỏi về thông số kỹ thuật, giá cả, tồn kho
 - So sánh sản phẩm khi được yêu cầu
 - Hỗ trợ chính sách bảo hành, đổi trả, giao hàng
@@ -142,18 +149,114 @@ Dưới đây là danh sách sản phẩm hiện có:
 
 {catalog}
 
-NẾU người dùng cung cấp thông tin (nghề nghiệp, thu nhập,...) để nhờ tư vấn cấu hình mua Laptop/PC, hãy thử phân tích và TRẢ LỜI DUY NHẤT chuỗi JSON sau (bắt đầu bằng PREDICT_JSON:):
+═══ SẢN PHẨM LIÊN QUAN (RAG Context) - Kết quả tìm kiếm từ câu hỏi người dùng ═══
 
-PREDICT_JSON: {{"occupation": "...", "monthly_income": 0.0, "age": 20, "preferred_brand": "...", "usage_type": "...", "preferred_ram": "..."}}
+{rag_context}
 
-Quy tắc điền JSON:
-- occupation: sinh_vien, vp_ke_toan, giao_vien, lap_trinh_vien, ky_su, designer, gamer_streamer, quan_ly_doanh_nhan
-- usage_type: van_phong_hoc_tap, gaming, do_hoa_ky_thuat, doanh_nhan_di_dong
-- monthly_income: số triệu đồng (VD: 15.5). Nếu thiếu hãy để 10.
-- preferred_brand: Dell, HP, Asus, Acer, Lenovo, MSI, Apple, Samsung (nếu user không nói thì để null)
+═══ TÍNH NĂNG DỰ ĐOÁN GIÁ (AI PRICE PREDICTION — ML Models trained on Kaggle) ═══
 
-Nếu KHÔNG PHẢI câu hỏi tư vấn cấu hình chi tiết (chỉ hỏi chung chung), hãy trả lời bình thường như nhân viên tư vấn.
+NẾU người dùng hỏi DỰ ĐOÁN GIÁ / ƯỚC TÍNH GIÁ một sản phẩm dựa trên thông số kỹ thuật, hãy trích xuất thông số và TRẢ LỜI DUY NHẤT chuỗi JSON sau:
+
+PRICE_PREDICT_JSON: {{"category": "...", "specs": {{...}} }}
+
+Danh mục hỗ trợ dự đoán giá (category):
+- "laptop": Laptop / Notebook — model XGBoost R²=0.846 (dữ liệu 1,657 laptops từ Kaggle)
+- "smartphone": Điện thoại — model Random Forest R²=0.848 (dữ liệu 3,114 smartphones từ Kaggle)
+
+Specs CỤ THỂ theo category (CHỈ điền các trường mà user cung cấp):
+
+LAPTOP specs:
+- brand: Tên hãng (Acer/Apple/Asus/Dell/HP/Lenovo/MSI/Toshiba/Samsung/...)
+- type_name: Loại (Notebook/Ultrabook/Gaming/Workstation/2 in 1 Convertible/Netbook)
+- cpu_brand: Hãng CPU (Intel/AMD)
+- gpu_brand: Hãng GPU (Intel/AMD/Nvidia)
+- os: Hệ điều hành (Windows/Mac/Linux/Other)
+- inches: Kích thước màn hình (13.3, 14, 15.6, 17.3...)
+- ram_gb: Dung lượng RAM (4/8/16/32/64)
+- cpu_freq_ghz: Xung nhịp CPU GHz (2.0-5.0)
+- ssd_gb: Dung lượng SSD (0/128/256/512/1024/2048)
+- hdd_gb: Dung lượng HDD (0/500/1000/2000)
+- touchscreen: Màn hình cảm ứng (0 hoặc 1)
+- ips: Tấm nền IPS (0 hoặc 1)
+- ppi: Mật độ điểm ảnh (100-300, ví dụ FHD 15.6"=141, 4K 15.6"=282)
+
+SMARTPHONE specs:
+- brand: Hãng (SAMSUNG/Apple/Xiaomi/Nokia/OPPO/Realme/vivo/OnePlus/Motorola/Google Pixel/...)
+- ram_gb: RAM (2/3/4/6/8/12/16)
+- storage_gb: Bộ nhớ trong (16/32/64/128/256/512)
+- rating: Đánh giá trung bình (1.0-5.0)
+- has_camera: Có camera (0 hoặc 1)
+- discount_pct: Phần trăm giảm giá (0-50)
+
+VÍ DỤ:
+- User: "Laptop Dell i7 16GB RAM RTX giá bao nhiêu?" →
+  PRICE_PREDICT_JSON: {{"category": "laptop", "specs": {{"brand": "Dell", "cpu_brand": "Intel", "gpu_brand": "Nvidia", "ram_gb": 16}} }}
+
+- User: "Samsung 8GB 128GB giá khoảng bao nhiêu?" →
+  PRICE_PREDICT_JSON: {{"category": "smartphone", "specs": {{"brand": "SAMSUNG", "ram_gb": 8, "storage_gb": 128}} }}
+
+LƯU Ý: Với các sản phẩm khác (CPU, RAM, GPU, SSD) mà chưa có model dự đoán, hãy tư vấn dựa trên kiến thức và danh sách sản phẩm cửa hàng bên trên, KHÔNG dùng PRICE_PREDICT_JSON.
+
+Nếu KHÔNG PHẢI câu hỏi dự đoán giá, hãy trả lời bình thường như nhân viên tư vấn.
+Hãy sử dụng thông tin từ RAG Context ở trên để đề xuất sản phẩm chính xác nhất.
 Hãy trả lời ngắn gọn, chính xác và hữu ích. Sử dụng markdown nếu cần format. Trả lời bằng tiếng Việt."""
+
+
+def _build_rag_context(user_message: str) -> str:
+    """
+    RAG: Embed user query → search Qdrant → return relevant product context.
+    This enriches the LLM prompt with semantically similar products.
+    All data comes directly from Qdrant payload (no extra MongoDB calls).
+    """
+    try:
+        vector = generate_embedding(user_message)
+        client = get_qdrant_client()
+
+        search_result = client.query_points(
+            collection_name=settings.COLLECTION_NAME,
+            query=vector,
+            limit=8,
+            with_payload=True,
+        )
+
+        if not search_result.points:
+            return "Không tìm thấy sản phẩm liên quan trong cơ sở dữ liệu."
+
+        lines = []
+        for point in search_result.points:
+            if point.score < 0.25:
+                continue
+            payload = point.payload or {}
+            name = payload.get("name", "")
+            brand = payload.get("brand_name", "")
+            category = payload.get("category_name", "")
+            min_price = payload.get("min_price", 0)
+            max_price = payload.get("max_price", 0)
+            desc = payload.get("description", "")
+            score = point.score
+
+            line = f"• [{score:.0%}] {name}"
+            if brand:
+                line += f" [{brand}]"
+            if category:
+                line += f" ({category})"
+            if min_price:
+                line += f" — {min_price:,.0f}đ"
+                if max_price and max_price != min_price:
+                    line += f" ~ {max_price:,.0f}đ"
+            if desc:
+                line += f"\n  {desc[:150]}"
+
+            lines.append(line)
+
+        if not lines:
+            return "Không tìm thấy sản phẩm có độ tương đồng cao."
+
+        return "\n".join(lines)
+
+    except Exception as e:
+        logger.warning(f"RAG context retrieval failed: {e}")
+        return "Chưa thể tìm kiếm sản phẩm liên quan. Vui lòng tham khảo danh sách sản phẩm ở trên."
 
 
 async def chat_with_ollama(
@@ -161,11 +264,20 @@ async def chat_with_ollama(
     conversation_history: list[dict] | None = None,
 ) -> dict:
     """
-    Send a message to Ollama and get a response.
+    3-in-1 AI Chat: RAG + LLM + ML
+    1. RAG: Embed user query → Qdrant vector search → retrieve relevant products
+    2. LLM: Send enriched prompt (catalog + RAG context) to Ollama
+    3. ML: If LLM detects price prediction intent → run ML model → format response
+
     conversation_history: list of { role: 'user'|'assistant', content: str }
     """
     catalog = get_catalog_context()
-    system_prompt = SYSTEM_PROMPT.format(catalog=catalog)
+
+    # ── Step 1: RAG — Embed user message and retrieve relevant products ──
+    # Run in thread to avoid blocking the async event loop
+    rag_context = await asyncio.to_thread(_build_rag_context, message)
+
+    system_prompt = SYSTEM_PROMPT.format(catalog=catalog, rag_context=rag_context)
 
     messages = [{"role": "system", "content": system_prompt}]
 
@@ -196,61 +308,89 @@ async def chat_with_ollama(
             assistant_message = data.get("message", {}).get("content", "")
             logger.info(f"RAW OLLAMA RESPONSE: {assistant_message}")
 
-            # --- HYBRID AI PREDICTION INTEGRATION ---
+            # --- PRICE PREDICTION INTEGRATION ---
             recommended_products = []
-            if "PREDICT_JSON:" in assistant_message:
+            if "PRICE_PREDICT_JSON:" in assistant_message:
                 try:
-                    json_str = assistant_message.split("PREDICT_JSON:")[1].strip()
+                    json_str = assistant_message.split("PRICE_PREDICT_JSON:")[1].strip()
                     # Clean up markdown code blocks if present
                     if json_str.startswith("```"):
                         json_str = json_str.strip("`").replace("json", "").strip()
-                    
-                    user_profile = json.loads(json_str)
-                    
-                    # 1. Run prediction
-                    prediction = predictor.predict(user_profile)
-                    
-                    if prediction:
-                        # 2. Find real products
-                        products = predictor.find_products(prediction)
-                        
-                        # 3. Build IProductCard-compatible results
-                        if products:
-                            product_ids = []
-                            db = get_mongo_db()
-                            for p in products:
-                                name = p.get("name", "")
-                                doc = db["products"].find_one(
-                                    {"name": name, "isDeleted": {"$ne": True}, "status": "ACTIVE"},
-                                    {"_id": 1}
-                                )
-                                if doc:
-                                    product_ids.append(str(doc["_id"]))
-                            if product_ids:
-                                recommended_products = _fetch_product_cards(product_ids[:6])
-                        
-                        # 4. Re-generate response
-                        assistant_message = (
-                            f"🔍 **Phân tích nhu cầu của bạn:**\n"
-                            f"- Nghề nghiệp: {user_profile.get('occupation')}\n"
-                            f"- Thu nhập: ~{user_profile.get('monthly_income')} triệu/tháng\n"
-                            f"- Nhu cầu: {prediction['recommended_category']} ({prediction['recommended_price_range']})\n\n"
-                            f"🤖 **AI Đề Xuất Cấu Hình:**\n"
-                            f"- Hãng: **{prediction['recommended_brand']}**\n"
-                            f"- RAM: {prediction['recommended_ram']} | ROM: {prediction['recommended_rom']}\n"
-                            f"- Tầm giá: {prediction['recommended_price_range']}\n\n"
-                            f"💻 **Sản phẩm phù hợp tại cửa hàng:**\n"
+                    # Handle trailing text after JSON
+                    brace_count = 0
+                    end_idx = 0
+                    for i, ch in enumerate(json_str):
+                        if ch == '{':
+                            brace_count += 1
+                        elif ch == '}':
+                            brace_count -= 1
+                            if brace_count == 0:
+                                end_idx = i + 1
+                                break
+                    if end_idx > 0:
+                        json_str = json_str[:end_idx]
+
+                    price_data = json.loads(json_str)
+                    category = price_data.get("category", "laptop")
+                    specs = price_data.get("specs", {})
+
+                    # 1. Run price prediction
+                    result = tech_price_predictor.predict_price(category, specs)
+
+                    if result:
+                        predicted = result["predicted_price"]
+                        low = result["price_range"]["low"]
+                        high = result["price_range"]["high"]
+                        confidence = result["confidence"]
+
+                        # 2. Build specs display
+                        specs_display = ", ".join(
+                            f"{k}: {v}" for k, v in specs.items() if v is not None
                         )
-                        
-                        if products:
-                            for p in products:
-                                assistant_message += f"• {p['name']} - **{p['price']:,}đ**\n"
-                        else:
-                            assistant_message += "Hiện tại chưa tìm thấy sản phẩm khớp 100% tiêu chí, nhưng bạn có thể tham khảo các dòng tương đương tại cửa hàng."
-                            
+
+                        # 3. Build price factors display
+                        factors_str = ""
+                        for i, f in enumerate(result.get("price_factors", [])[:4], 1):
+                            factors_str += f"{i}. {f['feature']} ({f['impact']*100:.0f}%)\n"
+
+                        # 4. Re-generate response
+                        cat_names = {
+                            "laptop": "Laptop", "cpu": "CPU", "ram": "RAM",
+                            "gpu": "Card đồ họa", "smartphone": "Điện thoại", "ssd": "Ổ cứng SSD",
+                        }
+                        assistant_message = (
+                            f"🔍 **Dự đoán giá {cat_names.get(category, category)}:**\n"
+                            f"- Thông số: {specs_display}\n\n"
+                            f"💰 **Giá dự đoán: {predicted:,}₫**\n"
+                            f"📊 Khoảng giá: {low:,}₫ ~ {high:,}₫\n"
+                            f"📈 Độ tin cậy: {confidence*100:.0f}%\n\n"
+                            f"🔑 **Yếu tố ảnh hưởng giá:**\n{factors_str}\n"
+                            f"💻 **Sản phẩm tương tự tại cửa hàng:**\n"
+                        )
+
+                        # 5. Find similar products near predicted price
+                        try:
+                            db = get_mongo_db()
+                            products = list(
+                                db["products"].find({
+                                    "isDeleted": {"$ne": True}, "status": "ACTIVE",
+                                    "minPrice": {"$gte": int(predicted * 0.7), "$lte": int(predicted * 1.3)},
+                                }).sort("createdAt", -1).limit(6)
+                            )
+                            if products:
+                                product_ids = [str(p["_id"]) for p in products]
+                                recommended_products = _fetch_product_cards(product_ids)
+                                for p in products:
+                                    price = p.get("minPrice", 0)
+                                    assistant_message += f"• {p.get('name', '')} - **{price:,}₫**\n"
+                            else:
+                                assistant_message += "Hiện tại chưa tìm thấy sản phẩm tương tự trong cửa hàng."
+                        except Exception as e:
+                            logger.warning(f"Failed to search similar products: {e}")
+                            assistant_message += "Đang cập nhật danh sách sản phẩm..."
+
                 except Exception as e:
-                    logger.error(f"Failed to process prediction JSON: {e}")
-                    # Fallback: Just return original text or generic msg
+                    logger.error(f"Failed to process price prediction JSON: {e}")
                     pass
             # ----------------------------------------
 
@@ -316,13 +456,22 @@ async def chat_with_ollama_stream(
     conversation_history: list[dict] | None = None,
 ) -> AsyncGenerator[str, None]:
     """
-    Stream chat response from Ollama token-by-token via SSE.
+    Stream 3-in-1 AI Chat: RAG + LLM + ML via SSE.
+    1. RAG: Embed user query → Qdrant vector search → context
+    2. LLM: Stream tokens from Ollama with enriched prompt
+    3. ML: Post-process price prediction if triggered
+
     Yields SSE-formatted lines:
       data: {"type":"token","content":"..."}
       data: {"type":"done","suggestions":[...],"products":[...]}
     """
     catalog = get_catalog_context()
-    system_prompt = SYSTEM_PROMPT.format(catalog=catalog)
+
+    # ── Step 1: RAG — Embed user message and retrieve relevant products ──
+    # Run in thread to avoid blocking the async event loop
+    rag_context = await asyncio.to_thread(_build_rag_context, message)
+
+    system_prompt = SYSTEM_PROMPT.format(catalog=catalog, rag_context=rag_context)
 
     messages = [{"role": "system", "content": system_prompt}]
     if conversation_history:
@@ -367,50 +516,78 @@ async def chat_with_ollama_stream(
         # Post-processing: search products + generate suggestions
         recommended_products = []
 
-        # Handle PREDICT_JSON if present
-        if "PREDICT_JSON:" in full_response:
+        # Handle PRICE_PREDICT_JSON if present
+        if "PRICE_PREDICT_JSON:" in full_response:
             try:
-                json_str = full_response.split("PREDICT_JSON:")[1].strip()
+                json_str = full_response.split("PRICE_PREDICT_JSON:")[1].strip()
                 if json_str.startswith("```"):
                     json_str = json_str.strip("`").replace("json", "").strip()
-                user_profile = json.loads(json_str)
-                prediction = predictor.predict(user_profile)
-                if prediction:
-                    products = predictor.find_products(prediction)
-                    if products:
-                        db = get_mongo_db()
-                        product_ids = []
-                        for p in products:
-                            doc = db["products"].find_one(
-                                {"name": p.get("name", ""), "isDeleted": {"$ne": True}, "status": "ACTIVE"},
-                                {"_id": 1},
-                            )
-                            if doc:
-                                product_ids.append(str(doc["_id"]))
-                        if product_ids:
-                            recommended_products = _fetch_product_cards(product_ids[:6])
+                # Parse only the JSON object
+                brace_count = 0
+                end_idx = 0
+                for i, ch in enumerate(json_str):
+                    if ch == '{':
+                        brace_count += 1
+                    elif ch == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            end_idx = i + 1
+                            break
+                if end_idx > 0:
+                    json_str = json_str[:end_idx]
 
-                    # Re-generate the displayed text
+                price_data = json.loads(json_str)
+                category = price_data.get("category", "laptop")
+                specs = price_data.get("specs", {})
+
+                result = tech_price_predictor.predict_price(category, specs)
+                if result:
+                    predicted = result["predicted_price"]
+                    low = result["price_range"]["low"]
+                    high = result["price_range"]["high"]
+                    confidence = result["confidence"]
+
+                    specs_display = ", ".join(f"{k}: {v}" for k, v in specs.items() if v is not None)
+                    factors_str = ""
+                    for i, f in enumerate(result.get("price_factors", [])[:4], 1):
+                        factors_str += f"{i}. {f['feature']} ({f['impact']*100:.0f}%)\n"
+
+                    cat_names = {
+                        "laptop": "Laptop", "cpu": "CPU", "ram": "RAM",
+                        "gpu": "Card đồ họa", "smartphone": "Điện thoại", "ssd": "Ổ cứng SSD",
+                    }
                     new_text = (
-                        f"🔍 **Phân tích nhu cầu của bạn:**\n"
-                        f"- Nghề nghiệp: {user_profile.get('occupation')}\n"
-                        f"- Thu nhập: ~{user_profile.get('monthly_income')} triệu/tháng\n"
-                        f"- Nhu cầu: {prediction['recommended_category']} ({prediction['recommended_price_range']})\n\n"
-                        f"🤖 **AI Đề Xuất Cấu Hình:**\n"
-                        f"- Hãng: **{prediction['recommended_brand']}**\n"
-                        f"- RAM: {prediction['recommended_ram']} | ROM: {prediction['recommended_rom']}\n"
-                        f"- Tầm giá: {prediction['recommended_price_range']}\n\n"
-                        f"💻 **Sản phẩm phù hợp tại cửa hàng:**\n"
+                        f"🔍 **Dự đoán giá {cat_names.get(category, category)}:**\n"
+                        f"- Thông số: {specs_display}\n\n"
+                        f"💰 **Giá dự đoán: {predicted:,}₫**\n"
+                        f"📊 Khoảng giá: {low:,}₫ ~ {high:,}₫\n"
+                        f"📈 Độ tin cậy: {confidence*100:.0f}%\n\n"
+                        f"🔑 **Yếu tố ảnh hưởng giá:**\n{factors_str}\n"
+                        f"💻 **Sản phẩm tương tự tại cửa hàng:**\n"
                     )
-                    if products:
-                        for p in products:
-                            new_text += f"• {p['name']} - **{p['price']:,}đ**\n"
-                    else:
-                        new_text += "Hiện tại chưa tìm thấy sản phẩm khớp 100% tiêu chí."
-                    # Send replacement text event
+
+                    try:
+                        db = get_mongo_db()
+                        products = list(
+                            db["products"].find({
+                                "isDeleted": {"$ne": True}, "status": "ACTIVE",
+                                "minPrice": {"$gte": int(predicted * 0.7), "$lte": int(predicted * 1.3)},
+                            }).sort("createdAt", -1).limit(6)
+                        )
+                        if products:
+                            product_ids = [str(p["_id"]) for p in products]
+                            recommended_products = _fetch_product_cards(product_ids)
+                            for p in products:
+                                price = p.get("minPrice", 0)
+                                new_text += f"• {p.get('name', '')} - **{price:,}₫**\n"
+                        else:
+                            new_text += "Hiện tại chưa tìm thấy sản phẩm tương tự trong cửa hàng."
+                    except Exception as e:
+                        logger.warning(f"Failed to search similar products: {e}")
+
                     yield f"data: {json.dumps({'type': 'replace', 'content': new_text}, ensure_ascii=False)}\n\n"
             except Exception as e:
-                logger.error(f"Stream prediction error: {e}")
+                logger.error(f"Stream price prediction error: {e}")
 
         # Search products if no prediction products found
         if not recommended_products:

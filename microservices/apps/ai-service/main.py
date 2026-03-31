@@ -136,6 +136,21 @@ class IndexProductResponse(BaseModel):
     indexed: bool = False
 
 
+class PricePredictRequest(BaseModel):
+    category: str  # laptop, smartphone
+    specs: dict    # Product specifications matching Colab training features
+
+
+class PricePredictResponse(BaseModel):
+    predicted_price: int
+    price_range: dict
+    confidence: float
+    currency: str = "VND"
+    category: str
+    price_factors: list[dict] = []
+    similar_products: list[dict] = []
+
+
 # ============= Endpoints =============
 
 @app.get("/api/v1/ai/health")
@@ -282,6 +297,82 @@ async def reindex_products():
     except Exception as e:
         logger.error(f"Reindex error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= Price Prediction Endpoints =============
+
+@app.post("/api/v1/ai/predict-price", response_model=PricePredictResponse)
+async def predict_price_endpoint(request: PricePredictRequest):
+    """Predict price for a tech product based on its specifications.
+    Supported categories: laptop, cpu, ram, gpu, smartphone, ssd."""
+    from price_predictor import tech_price_predictor
+
+    if request.category not in tech_price_predictor.supported_categories:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported category: {request.category}. "
+                   f"Supported: {tech_price_predictor.supported_categories}",
+        )
+
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None, lambda: tech_price_predictor.predict_price(request.category, request.specs)
+        )
+        if result is None:
+            raise HTTPException(status_code=500, detail="Price prediction failed. Models may not be trained yet.")
+
+        # Find similar products near predicted price
+        similar = []
+        try:
+            from recommendation import _fetch_product_cards
+            from database import get_mongo_db
+            db = get_mongo_db()
+            price = result["predicted_price"]
+            products = list(
+                db["products"].find({
+                    "isDeleted": {"$ne": True}, "status": "ACTIVE",
+                    "minPrice": {"$gte": int(price * 0.7), "$lte": int(price * 1.3)},
+                }).sort("createdAt", -1).limit(6)
+            )
+            if products:
+                similar = _fetch_product_cards([str(p["_id"]) for p in products])
+        except Exception as e:
+            logger.warning(f"Failed to fetch similar products: {e}")
+
+        result["similar_products"] = similar
+        return PricePredictResponse(**result)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Price prediction error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/ai/supported-categories")
+async def get_supported_categories():
+    """List all supported product categories for price prediction."""
+    from price_predictor import tech_price_predictor
+    categories = []
+    for cat in tech_price_predictor.supported_categories:
+        info = tech_price_predictor.get_category_info(cat)
+        categories.append({
+            "category": cat,
+            "features": info["features"] if info else {},
+            "metrics": info.get("metrics", {}) if info else {},
+        })
+    return categories
+
+
+@app.get("/api/v1/ai/price-factors/{category}")
+async def get_price_factors(category: str):
+    """Get feature importance and available options for a category."""
+    from price_predictor import tech_price_predictor
+    info = tech_price_predictor.get_category_info(category)
+    if info is None:
+        raise HTTPException(status_code=404, detail=f"Category not found: {category}")
+    return info
 
 
 # ============= Main =============

@@ -501,58 +501,54 @@ export default function ProductDetailClient() {
                     </div>
 
                     {/* Tabs: Description + Comments */}
-                    <div className="max-w-7xl mx-auto mb-6 px-4 sm:px-6 lg:px-8">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
-                            <Tabs
-                                defaultActiveKey="1"
-                                type="card"
-                                className="product-detail-tabs"
-                                size="large"
-                                items={[
-                                    {
-                                        key: '1',
-                                        label: 'Mô tả sản phẩm',
-                                        children: <DescriptionProduct product={product} />,
-                                    },
-                                    {
-                                        key: '2',
-                                        label: (
-                                            <span className="flex items-center gap-1.5">
-                                                <CommentOutlined /> Đánh giá & bình luận
-                                            </span>
-                                        ),
-                                        children: <ProductInteractionSection productId={product._id} />,
-                                    }
-                                ]}
-                            />
-                        </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mt-6">
+                        <Tabs
+                            defaultActiveKey="1"
+                            type="card"
+                            className="product-detail-tabs"
+                            size="large"
+                            items={[
+                                {
+                                    key: '1',
+                                    label: 'Mô tả sản phẩm',
+                                    children: <DescriptionProduct product={product} />,
+                                },
+                                {
+                                    key: '2',
+                                    label: (
+                                        <span className="flex items-center gap-1.5">
+                                            <CommentOutlined /> Đánh giá & bình luận
+                                        </span>
+                                    ),
+                                    children: <ProductInteractionSection productId={product._id} />,
+                                }
+                            ]}
+                        />
                     </div>
 
                     {/* Related Products */}
                     {dataProduct && dataProduct.data?.length > 0 && (
-                        <div className="max-w-7xl mx-auto mb-10 px-4 sm:px-6 lg:px-8">
-                            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5">
-                                <h2 className="font-bold text-blue-600 dark:text-white text-xl lg:text-2xl pb-4 border-b border-gray-100 flex items-center gap-2">
-                                    <RocketFilled className="text-blue-500" /> Sản phẩm tương tự
-                                </h2>
-                                <Carousel
-                                    slidesToShow={5}
-                                    slidesToScroll={1}
-                                    draggable
-                                    className="mt-6 cursor-grab"
-                                    dots={false}
-                                    autoplay
-                                    arrows
-                                    autoplaySpeed={3000}
-                                    responsive={responsiveSettings}
-                                >
-                                    {dataProduct.data.map(item => (
-                                        <div key={item._id} className="px-1.5">
-                                            <CardProduct css="hover:shadow-lg transition-all" product={item} />
-                                        </div>
-                                    ))}
-                                </Carousel>
-                            </div>
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mt-6">
+                            <h2 className="font-bold text-blue-600 dark:text-white text-xl lg:text-2xl pb-4 border-b border-gray-100 flex items-center gap-2">
+                                <RocketFilled className="text-blue-500" /> Sản phẩm tương tự
+                            </h2>
+                            <Carousel
+                                slidesToShow={5}
+                                slidesToScroll={1}
+                                draggable
+                                className="mt-6 cursor-grab"
+                                dots={false}
+                                autoplay
+                                arrows
+                                autoplaySpeed={3000}
+                                responsive={responsiveSettings}
+                            >
+                                {dataProduct.data.map(item => (
+                                    <div key={item._id} className="px-1.5">
+                                        <CardProduct css="hover:shadow-lg transition-all" product={item} />
+                                    </div>
+                                ))}
+                            </Carousel>
                         </div>
                     )}
                 </div>
