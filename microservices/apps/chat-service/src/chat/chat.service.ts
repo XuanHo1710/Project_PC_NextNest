@@ -19,7 +19,8 @@ export class ChatService {
   ) {}
 
   /**
-   * Find or create a DIRECT conversation between two users
+   * Find or create a DIRECT conversation between two users.
+   * Uses findOneAndUpdate with upsert for atomicity (prevents race-condition duplicates).
    */
   async findOrCreateConversation(data: {
     userId: string;
@@ -31,37 +32,36 @@ export class ChatService {
     otherUserAvatar?: string;
     otherUserRole: 'buyer' | 'seller';
   }) {
-    const existing = await this.conversationModel.findOne({
-      'participants.userId': { $all: [data.userId, data.otherUserId] },
-      type: 'DIRECT',
-    });
+    // Sort user IDs to create a deterministic query regardless of who initiates
+    const sortedIds = [data.userId, data.otherUserId].sort();
 
-    if (existing) {
-      return existing;
-    }
-
-    const conversation = await this.conversationModel.create({
-      participants: [
-        {
-          userId: data.userId,
-          name: data.userName,
-          avatar: data.userAvatar || '',
-          role: data.userRole,
+    const conversation = await this.conversationModel.findOneAndUpdate(
+      {
+        'participants.userId': { $all: sortedIds },
+        type: 'DIRECT',
+      },
+      {
+        $setOnInsert: {
+          participants: [
+            {
+              userId: data.userId,
+              name: data.userName,
+              avatar: data.userAvatar || '',
+              role: data.userRole,
+            },
+            {
+              userId: data.otherUserId,
+              name: data.otherUserName,
+              avatar: data.otherUserAvatar || '',
+              role: data.otherUserRole,
+            },
+          ],
+          type: 'DIRECT',
+          lastMessage: null,
+          unreadCount: {},
         },
-        {
-          userId: data.otherUserId,
-          name: data.otherUserName,
-          avatar: data.otherUserAvatar || '',
-          role: data.otherUserRole,
-        },
-      ],
-      type: 'DIRECT',
-      lastMessage: null,
-      unreadCount: {},
-    });
-
-    this.logger.log(
-      `Created conversation ${conversation._id} between ${data.userId} and ${data.otherUserId}`,
+      },
+      { upsert: true, new: true },
     );
 
     return conversation;

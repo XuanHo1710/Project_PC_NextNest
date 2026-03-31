@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Spin } from 'antd';
 import useAuthUser from '@/hooks/useAuthUser';
@@ -18,6 +18,18 @@ import ChatContent from '@/components/client/Chat/ChatContent';
  * Otherwise it renders the chat UI without a pre-selected conversation.
  */
 export default function ChatPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
+                <Spin size="large" tip="Đang tải..." />
+            </div>
+        }>
+            <ChatPageContent />
+        </Suspense>
+    );
+}
+
+function ChatPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { user } = useAuthUser();
@@ -33,10 +45,11 @@ export default function ChatPage() {
     const { data: conversations = [], isLoading: loadingConvs } = useConversations(userId);
     const findOrCreate = useFindOrCreateConversation();
     const didRedirect = useRef(false);
+    const mutatingRef = useRef(false);
 
     // ==================== Auto-redirect when sellerId is present ====================
     useEffect(() => {
-        if (!sellerId || !userId || didRedirect.current) return;
+        if (!sellerId || !userId || didRedirect.current || mutatingRef.current) return;
 
         // Wait until conversations are loaded before deciding
         if (loadingConvs) return;
@@ -52,27 +65,29 @@ export default function ChatPage() {
             return;
         }
 
-        // No existing conversation — create one
-        if (!findOrCreate.isPending && !findOrCreate.isSuccess) {
-            findOrCreate.mutate(
-                {
-                    userId,
-                    userName,
-                    userAvatar,
-                    userRole: 'buyer',
-                    otherUserId: sellerId,
-                    otherUserName: sellerName,
-                    otherUserAvatar: sellerAvatar,
-                    otherUserRole: 'seller',
+        // No existing conversation — create one (guarded against double-fire)
+        mutatingRef.current = true;
+        findOrCreate.mutate(
+            {
+                userId,
+                userName,
+                userAvatar,
+                userRole: 'buyer',
+                otherUserId: sellerId,
+                otherUserName: sellerName,
+                otherUserAvatar: sellerAvatar,
+                otherUserRole: 'seller',
+            },
+            {
+                onSuccess: (conv) => {
+                    didRedirect.current = true;
+                    router.replace(`/chat/${conv._id}`);
                 },
-                {
-                    onSuccess: (conv) => {
-                        didRedirect.current = true;
-                        router.replace(`/chat/${conv._id}`);
-                    },
+                onSettled: () => {
+                    mutatingRef.current = false;
                 },
-            );
-        }
+            },
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sellerId, userId, loadingConvs, conversations]);
 
