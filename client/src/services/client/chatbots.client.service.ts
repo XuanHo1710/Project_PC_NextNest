@@ -149,28 +149,32 @@ export const chatbotClientService = {
 
   async getRecommendations(
     guestId: string,
-    limit: number = 8,
+    limit: number = 16,
   ): Promise<IProductCard[]> {
     try {
       const response = await axiosInstance.get(
         `/chatbot/recommendations/${guestId}`,
         { params: { limit }, timeout: 60000 },
       );
-      // AI service now returns IProductCard-compatible JSON directly (real _id, sku, etc.)
-      return Array.isArray(response.data) ? response.data : [];
+      // axiosClient interceptor already unwraps envelope → response IS the data
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray((response as any).data)) return (response as any).data;
+      return [];
     } catch (error) {
       console.error("Error getting AI recommendations:", error);
       return [];
     }
   },
 
-  async getPopularProducts(limit: number = 8): Promise<IProductCard[]> {
+  async getPopularProducts(limit: number = 16): Promise<IProductCard[]> {
     try {
       const response = await axiosInstance.get(`/chatbot/popular`, {
         params: { limit },
         timeout: 60000,
       });
-      return Array.isArray(response.data) ? response.data : [];
+      if (Array.isArray(response)) return response;
+      if (response && Array.isArray((response as any).data)) return (response as any).data;
+      return [];
     } catch (error) {
       console.error("Error getting popular products:", error);
       return [];

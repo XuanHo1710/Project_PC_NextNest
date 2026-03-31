@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
 import { productClientService } from "@/services/client";
-import { IProductCard, IProductWithPagination, IProductVariant, ICreatorInfo } from "@/types/product";
+import { IProductCard, IProductVariant, ICreatorInfo } from "@/types/product";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Carousel, Rate, Tag, Tabs, message, Divider, Badge, Image } from "antd";
 import Link from "next/link";
@@ -41,6 +41,7 @@ import BreadcrumbNav from '@/components/client/Breadcrumb/Breadcrumb';
 import { useChatSocket } from '@/hooks/client/useChatSocket';
 import useOnlineUsersStore from '@/hooks/useOnlineUsers';
 import { timeAgo } from '@/utils/formatDateTime';
+import { chatbotClientService } from '@/services/client';
 
 // Extended product type from findBySlug (includes variants + allowValues)
 interface ProductDetail extends IProductCard {
@@ -104,10 +105,23 @@ export default function ProductDetailClient() {
         enabled: !!product?._id && !!user?.id,
     });
 
-    const { data: dataProduct, isLoading: isLoadingDataProduct } = useQuery<IProductWithPagination | null>({
-        queryKey: ['product-by-category', product?.category?._id || ""],
-        queryFn: () => productClientService.getProductsByCategoryId(product?.category?._id || "" as string),
-        enabled: !!product?.category?._id,
+    const { data: relatedProducts } = useQuery<IProductCard[]>({
+        queryKey: ['product-recommendations', user?._id || 'guest', product?._id],
+        queryFn: async () => {
+            // If user is logged in, use AI recommendations
+            if (user?._id) {
+                const recs = await chatbotClientService.getRecommendations(user._id, 16);
+                if (recs.length > 0) return recs;
+            }
+            // Fallback: products from same category
+            const res = await productClientService.getProductsByCategoryId(product?.category?._id || '');
+            // Handle both PaginatedResponse and raw array (axios interceptor unwraps envelope)
+            if (Array.isArray(res)) return res;
+            if (res && Array.isArray((res as any).data)) return (res as any).data;
+            return [];
+        },
+        enabled: !!product?._id,
+        staleTime: 2 * 60 * 1000,
     });
 
 
@@ -526,11 +540,11 @@ export default function ProductDetailClient() {
                         />
                     </div>
 
-                    {/* Related Products */}
-                    {dataProduct && dataProduct.data?.length > 0 && (
+                    {/* Related Products / AI Recommendations */}
+                    {relatedProducts && relatedProducts.length > 0 && (
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mt-6">
                             <h2 className="font-bold text-blue-600 dark:text-white text-xl lg:text-2xl pb-4 border-b border-gray-100 flex items-center gap-2">
-                                <RocketFilled className="text-blue-500" /> Sản phẩm tương tự
+                                <RocketFilled className="text-blue-500" /> Sản phẩm gợi ý cho bạn
                             </h2>
                             <Carousel
                                 slidesToShow={5}
@@ -543,7 +557,7 @@ export default function ProductDetailClient() {
                                 autoplaySpeed={3000}
                                 responsive={responsiveSettings}
                             >
-                                {dataProduct.data.map(item => (
+                                {relatedProducts.map(item => (
                                     <div key={item._id} className="px-1.5">
                                         <CardProduct css="hover:shadow-lg transition-all" product={item} />
                                     </div>

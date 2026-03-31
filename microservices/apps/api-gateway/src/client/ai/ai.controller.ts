@@ -167,7 +167,7 @@ export class AiController {
         this.httpService.get(
           `${AI_SERVICE_URL}/api/v1/ai/recommendations/${guestId}`,
           {
-            params: { limit: limit ? parseInt(limit, 10) : 20 },
+            params: { limit: limit ? parseInt(limit, 10) : 16 },
             timeout: 60000, // 60s - embedding + qdrant search
           },
         ),
