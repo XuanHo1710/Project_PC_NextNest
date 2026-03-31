@@ -1,10 +1,19 @@
 """
-Recommendation engine:
-- Maintains a per-user preference vector in Qdrant (user_preferences collection)
-  built from ProductView.viewCount-weighted product embeddings.
-- Queries the products collection with that preference vector to find similar items.
-- Returns full IProductCard-compatible dicts fetched straight from MongoDB
-  (real _id, sku, combination, brand._id, category._id …).
+Recommendation engine — v2 (fast & interaction-aware)
+
+Speed:  Build IProductCard directly from Qdrant payload (NO MongoDB round-trip
+        for result cards).  Only MongoDB calls are for building the user vector
+        (views + interactions) — and those are cached in Qdrant.
+
+Signals:
+  1. ProductView.viewCount   — how many times user viewed a product
+  2. ProductComment.rating   — user's star rating (1-5) on products
+  3. Category affinity       — derived from views + ratings concentration
+
+Architecture:
+  preference_vector = weighted_average(product_embeddings)
+    where weight = viewCount + (rating * RATING_BOOST)
+  recommendation  = Qdrant.search(preference_vector) → IProductCard from payload
 """
 import logging
 import time
@@ -18,6 +27,11 @@ from embedding import generate_embeddings, get_embedding_dimension
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+# ── Weight constants ──────────────────────────────────────────────
+VIEW_WEIGHT = 1.0       # Per viewCount unit
+RATING_WEIGHT = 3.0     # Per star (a 5-star review = 15.0 extra weight)
+CATEGORY_BOOST = 1.3    # Multiplier for products matching user's top categories
 
 
 # ── helpers: shared lookups with TTL cache ────────────────────────
@@ -60,6 +74,447 @@ def invalidate_lookup_cache():
     _lookup_cache["data"] = None
     _lookup_cache["expires"] = 0
 
+
+# ── Qdrant payload → IProductCard (NO MongoDB) ───────────────────
+
+def _qdrant_payload_to_card(payload: dict) -> dict:
+    """Build an IProductCard-compatible dict directly from Qdrant payload.
+    Eliminates the MongoDB round-trip that was the main bottleneck."""
+    mongo_id = payload.get("_mongo_id", payload.get("product_id", ""))
+
+    card: dict = {
+        "_id": mongo_id,
+        "name": payload.get("name", ""),
+        "slug": payload.get("slug", ""),
+        "minPrice": payload.get("min_price", 0),
+        "maxPrice": payload.get("max_price", 0),
+        "status": payload.get("status", "ACTIVE"),
+    }
+
+    # defaultVariant from Qdrant payload
+    variant_image = payload.get("default_variant_image")
+    card["defaultVariant"] = {
+        "price": payload.get("default_variant_price", 0),
+        "discount": payload.get("default_variant_discount", 0),
+        "images": [variant_image] if variant_image else [],
+        "stock": payload.get("default_variant_stock", 0),
+        "combination": {},
+    }
+
+    # Brand
+    brand_name = payload.get("brand_name", "")
+    brand_id = payload.get("brand_id", "")
+    if brand_name:
+        card["brand"] = {"_id": brand_id, "name": brand_name}
+
+    # Category
+    cat_name = payload.get("category_name", "")
+    cat_slug = payload.get("category_slug", "")
+    cat_id = payload.get("category_id", "")
+    if cat_name:
+        card["category"] = {"_id": cat_id, "name": cat_name, "slug": cat_slug}
+
+    return card
+
+
+# ── user preference vector (views + interactions) ─────────────────
+
+_user_collection_ok = False
+
+
+def _ensure_user_collection():
+    """Create the user_preferences Qdrant collection if missing or dimension-mismatched."""
+    global _user_collection_ok
+    if _user_collection_ok:
+        return
+
+    client = get_qdrant_client()
+    name = settings.USER_COLLECTION_NAME
+    dim = get_embedding_dimension()
+
+    existing_names = [c.name for c in client.get_collections().collections]
+    if name in existing_names:
+        info = client.get_collection(name)
+        current_dim = info.config.params.vectors.size
+        if current_dim != dim:
+            logger.warning(f"Collection '{name}' has dim={current_dim}, expected {dim}. Recreating…")
+            client.delete_collection(name)
+        else:
+            _user_collection_ok = True
+            return
+
+    logger.info(f"Creating Qdrant collection '{name}' (dim={dim}, cosine)")
+    client.create_collection(
+        collection_name=name,
+        vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
+    )
+    _user_collection_ok = True
+
+
+def _guest_point_id(guest_id: str) -> int:
+    """Deterministic int64 point-id from a MongoDB ObjectId hex string."""
+    return int(guest_id[-12:], 16) & 0x7FFFFFFFFFFFFFFF
+
+
+def _build_interaction_fingerprint(guest_id: str, db) -> tuple[dict[str, float], dict[str, float]]:
+    """
+    Gather all interaction signals for a guest:
+      1. ProductView.viewCount  (how many times they viewed each product)
+      2. ProductComment.rating  (their star rating on products, depth=0 only)
+
+    Returns:
+      product_weights: { product_id_str: combined_weight }
+      category_affinity: { category_id_str: total_weight }  (for re-ranking)
+    """
+    oid = ObjectId(guest_id)
+
+    # ── Views ──
+    views = list(
+        db["productviews"]
+        .find({"guest": oid}, {"product": 1, "viewCount": 1})
+        .sort("viewCount", -1)
+        .limit(30)
+    )
+
+    # ── Ratings (user's own root comments with rating) ──
+    ratings = list(
+        db["productcomments"].find(
+            {"guest": oid, "depth": 0, "rating": {"$exists": True, "$gt": 0}, "isDeleted": {"$ne": True}},
+            {"product": 1, "rating": 1},
+        )
+    )
+    rating_map = {}  # product_id_str -> highest rating
+    for r in ratings:
+        pid = str(r["product"])
+        rating_map[pid] = max(rating_map.get(pid, 0), r.get("rating", 0))
+
+    # ── Combine weights ──
+    product_weights: dict[str, float] = {}
+    for v in views:
+        pid = str(v["product"])
+        view_w = float(v.get("viewCount", 1)) * VIEW_WEIGHT
+        rate_w = float(rating_map.get(pid, 0)) * RATING_WEIGHT
+        product_weights[pid] = view_w + rate_w
+
+    # Add rated products that weren't in views (user rated but didn't track view)
+    for pid, rating in rating_map.items():
+        if pid not in product_weights:
+            product_weights[pid] = float(rating) * RATING_WEIGHT
+
+    if not product_weights:
+        return {}, {}
+
+    # ── Category affinity (which categories does user prefer?) ──
+    product_oids = [ObjectId(pid) for pid in product_weights if ObjectId.is_valid(pid)]
+    category_affinity: dict[str, float] = {}
+    if product_oids:
+        products = db["products"].find(
+            {"_id": {"$in": product_oids}, "isDeleted": {"$ne": True}},
+            {"category": 1},
+        )
+        for p in products:
+            cat_id = str(p.get("category", ""))
+            pid = str(p["_id"])
+            if cat_id:
+                category_affinity[cat_id] = category_affinity.get(cat_id, 0) + product_weights.get(pid, 0)
+
+    return product_weights, category_affinity
+
+
+def build_and_store_user_vector(guest_id: str) -> tuple[list[float] | None, set[str], dict[str, float]]:
+    """
+    Build a preference vector from views + interactions, store in Qdrant.
+    Returns (vector, viewed_product_ids, category_affinity).
+    Skips recomputation if interaction fingerprint hasn't changed.
+    """
+    db = get_mongo_db()
+
+    if not ObjectId.is_valid(guest_id):
+        return None, set(), {}
+
+    product_weights, category_affinity = _build_interaction_fingerprint(guest_id, db)
+    if not product_weights:
+        return None, set(), {}
+
+    viewed_ids = set(product_weights.keys())
+    fingerprint_hash = sum(int(float(w) * 100) for w in product_weights.values())
+
+    # ── Fast path: check if stored vector is still valid ──
+    try:
+        _ensure_user_collection()
+        client = get_qdrant_client()
+        existing = client.retrieve(
+            collection_name=settings.USER_COLLECTION_NAME,
+            ids=[_guest_point_id(guest_id)],
+            with_vectors=True,
+            with_payload=True,
+        )
+        if existing:
+            stored = existing[0].payload or {}
+            if stored.get("fingerprint_hash") == fingerprint_hash:
+                logger.info(f"Reusing cached vector for guest {guest_id} (views unchanged)")
+                return existing[0].vector, viewed_ids, category_affinity
+    except Exception as e:
+        logger.debug(f"Cache check failed (will rebuild): {e}")
+
+    # ── Build new preference vector ──
+    brands_full, cats_full, attrs = _lookup_maps(db)
+    brands_simple = {k: v.get("name", "") for k, v in brands_full.items()}
+    cats_simple = {k: v.get("name", "") for k, v in cats_full.items()}
+
+    from product_index import build_product_text
+
+    # Batch-fetch all interaction products at once
+    product_oids = [ObjectId(pid) for pid in product_weights if ObjectId.is_valid(pid)]
+    products_docs = {
+        str(p["_id"]): p
+        for p in db["products"].find({
+            "_id": {"$in": product_oids},
+            "isDeleted": {"$ne": True},
+            "status": "ACTIVE",
+        })
+    }
+
+    # Batch-fetch variants
+    all_variants = list(
+        db["productvariants"].find({
+            "product": {"$in": product_oids},
+            "isDeleted": {"$ne": True},
+        })
+    )
+    variants_by_product = {}
+    for v in all_variants:
+        variants_by_product.setdefault(v["product"], []).append(v)
+
+    texts: list[str] = []
+    weights: list[float] = []
+
+    for pid_str, weight in product_weights.items():
+        product = products_docs.get(pid_str)
+        if not product:
+            continue
+
+        brand_id = product.get("brand")
+        cat_id = product.get("category")
+        product["_brand_name"] = brands_simple.get(str(brand_id), "") if brand_id else ""
+        product["_category_name"] = cats_simple.get(str(cat_id), "") if cat_id else ""
+
+        variants = variants_by_product.get(product["_id"], [])
+        text = build_product_text(product, variants, attrs)
+        texts.append(text)
+        weights.append(weight)
+
+    if not texts:
+        return None, viewed_ids, category_affinity
+
+    embeddings = generate_embeddings(texts)
+    emb_np = np.array(embeddings, dtype=np.float64)
+    w_np = np.array(weights, dtype=np.float64)
+    w_np /= w_np.sum()
+
+    pref = np.average(emb_np, axis=0, weights=w_np)
+    norm = np.linalg.norm(pref)
+    if norm > 0:
+        pref = pref / norm
+    pref_list = pref.tolist()
+
+    # Upsert into user_preferences collection
+    _ensure_user_collection()
+    client = get_qdrant_client()
+    client.upsert(
+        collection_name=settings.USER_COLLECTION_NAME,
+        points=[
+            PointStruct(
+                id=_guest_point_id(guest_id),
+                vector=pref_list,
+                payload={
+                    "guest_id": guest_id,
+                    "fingerprint_hash": fingerprint_hash,
+                    "category_affinity": category_affinity,
+                },
+            )
+        ],
+    )
+    logger.info(f"Stored user vector for guest {guest_id} ({len(texts)} products, interaction-weighted)")
+    return pref_list, viewed_ids, category_affinity
+
+
+# ── public API ────────────────────────────────────────────────────
+
+def get_recommendations(guest_id: str, limit: int = 8) -> list[dict]:
+    """
+    Fast personalised recommendations.
+    1. Build/reuse user preference vector (views + ratings)
+    2. Search Qdrant products collection (cosine similarity)
+    3. Re-rank with category affinity boost
+    4. Build IProductCard from Qdrant payload (NO MongoDB round-trip!)
+    """
+    viewed_ids: set[str] = set()
+    category_affinity: dict[str, float] = {}
+    try:
+        preference_vector, viewed_ids, category_affinity = build_and_store_user_vector(guest_id)
+    except Exception as e:
+        logger.error(f"Failed to build user vector: {e}")
+        preference_vector = None
+
+    if preference_vector is None:
+        return get_popular_products(limit)
+
+    # Search Qdrant products collection
+    try:
+        client = get_qdrant_client()
+        search_result = client.query_points(
+            collection_name=settings.COLLECTION_NAME,
+            query=preference_vector,
+            limit=limit + len(viewed_ids) + 10,
+            with_payload=True,
+        )
+        results = search_result.points
+    except Exception as e:
+        logger.error(f"Qdrant search failed: {e}")
+        return get_popular_products(limit)
+
+    if not results:
+        return get_popular_products(limit)
+
+    # ── Re-rank with category affinity boost ──
+    max_affinity = max(category_affinity.values()) if category_affinity else 1.0
+
+    scored_cards = []
+    for r in results:
+        mongo_id = r.payload.get("_mongo_id", r.payload.get("product_id", ""))
+        if mongo_id in viewed_ids:
+            continue
+
+        base_score = r.score  # cosine similarity [0, 1]
+
+        # Boost products whose category the user has strong affinity for
+        cat_id = r.payload.get("category_id", "")
+        if cat_id and cat_id in category_affinity and max_affinity > 0:
+            affinity_ratio = category_affinity[cat_id] / max_affinity  # 0..1
+            boosted_score = base_score * (1.0 + (CATEGORY_BOOST - 1.0) * affinity_ratio)
+        else:
+            boosted_score = base_score
+
+        scored_cards.append((boosted_score, r.payload))
+
+    # Sort by boosted score descending
+    scored_cards.sort(key=lambda x: x[0], reverse=True)
+
+    # Build IProductCard from Qdrant payload (NO MongoDB!)
+    cards = [_qdrant_payload_to_card(payload) for _, payload in scored_cards[:limit]]
+
+    return cards if cards else get_popular_products(limit)
+
+
+# ── Popular products (cached) ─────────────────────────────────────
+
+_popular_cache: dict = {"data": None, "expires": 0}
+_POPULAR_TTL = 300  # 5 minutes
+
+
+def get_popular_products(limit: int = 8) -> list[dict]:
+    """
+    Fallback: most-viewed products globally.
+    Cached for 5 minutes. Builds cards from Qdrant payload when possible.
+    """
+    now = time.time()
+    cached = _popular_cache["data"]
+    if cached and now < _popular_cache["expires"] and len(cached) >= limit:
+        return cached[:limit]
+
+    try:
+        db = get_mongo_db()
+        pipeline = [
+            {"$group": {"_id": "$product", "totalViews": {"$sum": "$viewCount"}}},
+            {"$sort": {"totalViews": -1}},
+            {"$limit": limit * 2},
+        ]
+        top_viewed = list(db["productviews"].aggregate(pipeline))
+
+        if not top_viewed:
+            # No views at all → newest active products from Qdrant
+            return _popular_from_qdrant(limit)
+
+        # Get the product IDs in popularity order
+        popular_ids = [str(t["_id"]) for t in top_viewed]
+
+        # Try to get cards from Qdrant payload (fast)
+        cards = _fetch_cards_from_qdrant(popular_ids, limit)
+
+        if not cards:
+            cards = _fetch_product_cards(popular_ids[:limit])
+
+        _popular_cache["data"] = cards
+        _popular_cache["expires"] = now + _POPULAR_TTL
+        return cards[:limit]
+
+    except Exception as e:
+        logger.error(f"get_popular_products failed: {e}")
+        return []
+
+
+def _popular_from_qdrant(limit: int) -> list[dict]:
+    """Get newest products directly from Qdrant (no MongoDB)."""
+    try:
+        client = get_qdrant_client()
+        results = client.scroll(
+            collection_name=settings.COLLECTION_NAME,
+            limit=limit,
+            with_payload=True,
+        )
+        points = results[0] if results else []
+        return [_qdrant_payload_to_card(p.payload) for p in points]
+    except Exception:
+        return []
+
+
+def _fetch_cards_from_qdrant(product_ids: list[str], limit: int) -> list[dict]:
+    """
+    Fetch product cards from Qdrant by _mongo_id payload.
+    Scrolls through the collection and matches by ID.
+    Falls back gracefully if not all IDs found.
+    """
+    if not product_ids:
+        return []
+
+    try:
+        client = get_qdrant_client()
+        target_set = set(product_ids)
+        found: dict[str, dict] = {}
+
+        # Scroll through products collection (typically <2000 points)
+        offset = None
+        while len(found) < len(target_set):
+            results, next_offset = client.scroll(
+                collection_name=settings.COLLECTION_NAME,
+                limit=200,
+                offset=offset,
+                with_payload=True,
+            )
+            for p in results:
+                mid = p.payload.get("_mongo_id", p.payload.get("product_id", ""))
+                if mid in target_set:
+                    found[mid] = p.payload
+            if next_offset is None or not results:
+                break
+            offset = next_offset
+
+        # Preserve original order
+        cards = []
+        for pid in product_ids:
+            if pid in found:
+                cards.append(_qdrant_payload_to_card(found[pid]))
+                if len(cards) >= limit:
+                    break
+
+        return cards
+    except Exception as e:
+        logger.warning(f"Qdrant card fetch failed: {e}")
+        return []
+
+
+# ── Legacy: MongoDB-based card fetching (kept for chat.py compat) ─
 
 def _resolve_default_variant(db, product: dict) -> dict | None:
     """Return the defaultProductVariant doc (or first variant) for a product."""
@@ -125,274 +580,6 @@ def _product_to_card(product: dict, brands: dict, categories: dict, attrs: dict,
         card["category"] = categories[str(cat_id)]
 
     return card
-
-
-# ── user preference vector ────────────────────────────────────────
-
-_user_collection_ok = False  # Track if collection has correct dimension
-
-
-def _ensure_user_collection():
-    """Create the user_preferences Qdrant collection if missing or dimension-mismatched."""
-    global _user_collection_ok
-    if _user_collection_ok:
-        return
-
-    client = get_qdrant_client()
-    name = settings.USER_COLLECTION_NAME
-    dim = get_embedding_dimension()
-
-    existing_names = [c.name for c in client.get_collections().collections]
-    if name in existing_names:
-        info = client.get_collection(name)
-        current_dim = info.config.params.vectors.size
-        if current_dim != dim:
-            logger.warning(f"Collection '{name}' has dim={current_dim}, expected {dim}. Recreating…")
-            client.delete_collection(name)
-        else:
-            _user_collection_ok = True
-            return
-
-    logger.info(f"Creating Qdrant collection '{name}' (dim={dim}, cosine)")
-    client.create_collection(
-        collection_name=name,
-        vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
-    )
-    _user_collection_ok = True
-
-
-def _guest_point_id(guest_id: str) -> int:
-    """Deterministic int64 point-id from a MongoDB ObjectId hex string."""
-    return int(guest_id[-12:], 16) & 0x7FFFFFFFFFFFFFFF
-
-
-def build_and_store_user_vector(guest_id: str) -> tuple[list[float] | None, set[str]]:
-    """
-    Build a preference vector for *guest_id* from their ProductView records
-    (weighted by viewCount), then upsert it into the user_preferences collection.
-    Returns (vector, viewed_product_ids) — vector is None if no viewing history.
-    Skips recomputation if the view counts haven't changed since last build.
-    """
-    db = get_mongo_db()
-
-    if not ObjectId.is_valid(guest_id):
-        return None, set()
-
-    views = list(
-        db["productviews"]
-        .find({"guest": ObjectId(guest_id)})
-        .sort("viewCount", -1)
-        .limit(20)
-    )
-    if not views:
-        return None, set()
-
-    viewed_ids = {str(v["product"]) for v in views}
-
-    # Check if views haven't changed — reuse stored vector
-    current_summary = {str(v["product"]): v.get("viewCount", 1) for v in views}
-    current_total = sum(current_summary.values())
-    try:
-        _ensure_user_collection()
-        client = get_qdrant_client()
-        existing = client.retrieve(
-            collection_name=settings.USER_COLLECTION_NAME,
-            ids=[_guest_point_id(guest_id)],
-            with_vectors=True,
-            with_payload=True,
-        )
-        if existing:
-            stored = existing[0].payload or {}
-            if stored.get("total_views") == current_total and stored.get("viewed_products") == current_summary:
-                logger.info(f"Reusing cached vector for guest {guest_id} (views unchanged)")
-                return existing[0].vector, viewed_ids
-    except Exception as e:
-        logger.debug(f"Cache check failed (will rebuild): {e}")
-
-    # Use cached lookup maps (avoids re-querying brands/categories/attrs every call)
-    brands_full, cats_full, attrs = _lookup_maps(db)
-    brands_simple = {k: v.get("name", "") for k, v in brands_full.items()}
-    cats_simple = {k: v.get("name", "") for k, v in cats_full.items()}
-
-    from product_index import build_product_text
-
-    # Batch-fetch all viewed products at once (instead of N queries)
-    product_ids = [v["product"] for v in views]
-    products_docs = {
-        p["_id"]: p
-        for p in db["products"].find({
-            "_id": {"$in": product_ids},
-            "isDeleted": {"$ne": True},
-            "status": "ACTIVE",
-        })
-    }
-
-    # Batch-fetch all variants for those products at once
-    all_variants = list(
-        db["productvariants"].find({
-            "product": {"$in": list(products_docs.keys())},
-            "isDeleted": {"$ne": True},
-        })
-    )
-    variants_by_product = {}
-    for v in all_variants:
-        pid = v["product"]
-        variants_by_product.setdefault(pid, []).append(v)
-
-    texts: list[str] = []
-    weights: list[float] = []
-
-    for v in views:
-        pid = v["product"]
-        product = products_docs.get(pid)
-        if not product:
-            continue
-
-        brand_id = product.get("brand")
-        cat_id = product.get("category")
-        product["_brand_name"] = brands_simple.get(str(brand_id), "") if brand_id else ""
-        product["_category_name"] = cats_simple.get(str(cat_id), "") if cat_id else ""
-
-        variants = variants_by_product.get(pid, [])
-        text = build_product_text(product, variants, attrs)
-        texts.append(text)
-        weights.append(float(v.get("viewCount", 1)))
-
-    if not texts:
-        return None, viewed_ids
-
-    embeddings = generate_embeddings(texts)
-    emb_np = np.array(embeddings, dtype=np.float64)
-    w_np = np.array(weights, dtype=np.float64)
-    w_np /= w_np.sum()
-
-    pref = np.average(emb_np, axis=0, weights=w_np)
-    norm = np.linalg.norm(pref)
-    if norm > 0:
-        pref = pref / norm
-    pref_list = pref.tolist()
-
-    # Upsert into user_preferences collection
-    _ensure_user_collection()
-    client = get_qdrant_client()
-
-    client.upsert(
-        collection_name=settings.USER_COLLECTION_NAME,
-        points=[
-            PointStruct(
-                id=_guest_point_id(guest_id),
-                vector=pref_list,
-                payload={
-                    "guest_id": guest_id,
-                    "viewed_products": current_summary,
-                    "total_views": current_total,
-                },
-            )
-        ],
-    )
-    logger.info(f"Stored user vector for guest {guest_id} ({len(texts)} products, {sum(weights):.0f} views)")
-    return pref_list, viewed_ids
-
-
-# ── public API ────────────────────────────────────────────────────
-
-def get_recommendations(guest_id: str, limit: int = 8) -> list[dict]:
-    """
-    Personalised recommendations for *guest_id*.
-    1. Build/update the user's preference vector from ProductView
-    2. Search the products collection for nearest neighbours
-    3. Exclude already-viewed products
-    4. Fetch full product data from MongoDB (IProductCard shape)
-    """
-    viewed_ids: set[str] = set()
-    try:
-        preference_vector, viewed_ids = build_and_store_user_vector(guest_id)
-    except Exception as e:
-        logger.error(f"Failed to build user vector: {e}")
-        preference_vector = None
-
-    if preference_vector is None:
-        return get_popular_products(limit)
-
-    # Search Qdrant products collection (cosine similarity)
-    try:
-        client = get_qdrant_client()
-        search_result = client.query_points(
-            collection_name=settings.COLLECTION_NAME,
-            query=preference_vector,
-            limit=limit + len(viewed_ids) + 5,
-            with_payload=True,
-        )
-        results = search_result.points
-    except Exception as e:
-        logger.error(f"Qdrant search failed: {e}")
-        return get_popular_products(limit)
-
-    # Collect mongo IDs (excluding viewed)
-    candidate_ids: list[str] = []
-    for r in results:
-        mongo_id = r.payload.get("_mongo_id", "")
-        if mongo_id and mongo_id not in viewed_ids:
-            candidate_ids.append(mongo_id)
-        if len(candidate_ids) >= limit:
-            break
-
-    if not candidate_ids:
-        return get_popular_products(limit)
-
-    try:
-        return _fetch_product_cards(candidate_ids)
-    except Exception as e:
-        logger.error(f"Failed to fetch product cards: {e}")
-        return get_popular_products(limit)
-
-
-def get_popular_products(limit: int = 8) -> list[dict]:
-    """
-    Fallback: most-viewed products globally.
-    Returns full IProductCard dicts from MongoDB.
-    """
-    try:
-        db = get_mongo_db()
-
-        pipeline = [
-            {"$group": {"_id": "$product", "totalViews": {"$sum": "$viewCount"}}},
-            {"$sort": {"totalViews": -1}},
-            {"$limit": limit * 2},
-        ]
-        top_viewed = list(db["productviews"].aggregate(pipeline))
-
-        if top_viewed:
-            product_ids = [t["_id"] for t in top_viewed]
-            # Keep order
-            ordered_ids = []
-            products = {
-                str(p["_id"]): p
-                for p in db["products"].find(
-                    {"_id": {"$in": product_ids}, "isDeleted": {"$ne": True}, "status": "ACTIVE"}
-                )
-            }
-            for t in top_viewed:
-                pid_str = str(t["_id"])
-                if pid_str in products:
-                    ordered_ids.append(pid_str)
-                if len(ordered_ids) >= limit:
-                    break
-
-            if ordered_ids:
-                return _fetch_product_cards(ordered_ids)
-
-        # Nothing in views at all → newest active products
-        products = list(
-            db["products"]
-            .find({"isDeleted": {"$ne": True}, "status": "ACTIVE"})
-            .sort("createdAt", -1)
-            .limit(limit)
-        )
-        return _fetch_product_cards([str(p["_id"]) for p in products])
-    except Exception as e:
-        logger.error(f"get_popular_products failed (MongoDB may be down): {e}")
-        return []
 
 
 def _fetch_product_cards(product_ids: list[str]) -> list[dict]:
