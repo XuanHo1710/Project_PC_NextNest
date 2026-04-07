@@ -1,9 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  CreateNotificationDto,
-  UpdateNotificationDto,
-} from '@project-pc/common';
 
 interface SendEmailOptions {
   to: string;
@@ -93,9 +89,12 @@ export class NotificationService {
       if (response.ok) {
         return true;
       } else {
+        this.logger.error(
+          `Error sending email: ${data.message || 'Unknown error'}`,
+        );
         return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error sending email: ${error.message}`);
       return false;
     }
