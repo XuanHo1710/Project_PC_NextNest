@@ -1,6 +1,11 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { productService } from "@/services/admin";
 import { IProduct } from "@/types/product";
 import { toast } from "react-toastify";

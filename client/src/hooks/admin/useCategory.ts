@@ -1,6 +1,11 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { categoryService } from "@/services/admin";
 import { ICategory } from "@/types/category";
 import { toast } from "react-toastify";
