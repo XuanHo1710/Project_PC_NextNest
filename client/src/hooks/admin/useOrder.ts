@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { orderService } from "@/services/admin/order.service";
 import { toast } from "react-toastify";
 
@@ -27,7 +27,7 @@ export const useAdminOrders = (params?: {
     queryKey: orderKeys.list(key),
     queryFn: () => orderService.getAll(params),
     staleTime: 30 * 1000, // 30 seconds
-    placeholderData: (previousData: unknown) => previousData, // Keep old data while fetching new page
+    placeholderData: keepPreviousData, // Keep old data while fetching new page
   });
 };
 

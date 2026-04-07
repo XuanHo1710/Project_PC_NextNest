@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { categoryService } from "@/services/admin";
 import { ICategory } from "@/types/category";
 import { toast } from "react-toastify";
@@ -20,7 +20,7 @@ export const useCategories = (queryParams: string = "") => {
     queryKey: categoryKeys.list(queryParams),
     queryFn: () => categoryService.getAll(queryParams ? `?${queryParams}` : ""),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    placeholderData: (previousData: unknown) => previousData,
+    placeholderData: keepPreviousData,
   });
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { accountEmployeeService } from "@/services/admin";
 import { IAccountEmployee } from "@/types/account-employee";
 import { toast } from "react-toastify";
@@ -21,7 +21,7 @@ export const useAccountEmployees = (queryParams: string = "") => {
     queryFn: () =>
       accountEmployeeService.getAll(queryParams ? `?${queryParams}` : ""),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    placeholderData: (previousData: unknown) => previousData,
+    placeholderData: keepPreviousData,
   });
 };
 

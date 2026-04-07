@@ -5,6 +5,7 @@ import {
   useQueries,
   useMutation,
   useQueryClient,
+  keepPreviousData,
 } from "@tanstack/react-query";
 import { productManageClientService } from "@/services/client/product-manage.client.service";
 import type {
@@ -136,7 +137,7 @@ export const useMyProducts = (page = 1, limit = 10, search?: string) => {
         ...(search ? { search } : {}),
       }),
     staleTime: 2 * 60 * 1000,
-    placeholderData: (previousData: unknown) => previousData, // Keep old data while fetching new page
+    placeholderData: keepPreviousData, // Keep old data while fetching new page
   });
 };
 

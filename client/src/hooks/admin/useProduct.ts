@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { productService } from "@/services/admin";
 import { IProduct } from "@/types/product";
 import { toast } from "react-toastify";
@@ -20,7 +20,7 @@ export const useProducts = (queryParams: string = "") => {
     queryKey: productKeys.list(queryParams),
     queryFn: () => productService.getAll(queryParams ? `?${queryParams}` : ""),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    placeholderData: (previousData: unknown) => previousData, // Keep old data while fetching new page
+    placeholderData: keepPreviousData, // Keep old data while fetching new page
   });
 };
 
