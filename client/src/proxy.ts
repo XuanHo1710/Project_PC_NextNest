@@ -21,7 +21,7 @@ const protectedClientPaths = ["/profile", "/orders", "/wishlist", "/checkout"];
 
 const authPaths = [pathAdminRoutes.login];
 
-export function proxy(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const clientAccessToken = request.cookies.get("client_access_token")?.value;
   const adminAccessToken = request.cookies.get("admin_access_token")?.value;
   const adminSessionId = request.cookies.get("admin_sessionId")?.value;
