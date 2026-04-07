@@ -1,0 +1,138 @@
+{
+  "laptop": {
+    "Linear Regression": {
+      "R2": 0.7301,
+      "MAE": 259.7616,
+      "RMSE": 363.7904,
+      "MAPE": 19.5284,
+      "time": 0.0591
+    },
+    "Ridge (\u03b1=10)": {
+      "R2": 0.7166,
+      "MAE": 263.8274,
+      "RMSE": 366.4127,
+      "MAPE": 20.06,
+      "time": 0.0239
+    },
+    "Lasso (\u03b1=0.001)": {
+      "R2": 0.7184,
+      "MAE": 264.3535,
+      "RMSE": 365.3423,
+      "MAPE": 20.0109,
+      "time": 0.0546
+    },
+    "KNN (k=5)": {
+      "R2": 0.656,
+      "MAE": 286.8455,
+      "RMSE": 438.7872,
+      "MAPE": 21.6375,
+      "time": 0.1073
+    },
+    "Decision Tree": {
+      "R2": 0.6922,
+      "MAE": 288.9417,
+      "RMSE": 412.3264,
+      "MAPE": 22.2213,
+      "time": 0.0249
+    },
+    "Random Forest": {
+      "R2": 0.8172,
+      "MAE": 218.5862,
+      "RMSE": 324.4741,
+      "MAPE": 16.0291,
+      "time": 1.4024
+    },
+    "Gradient Boosting": {
+      "R2": 0.8323,
+      "MAE": 205.9545,
+      "RMSE": 288.3035,
+      "MAPE": 15.5268,
+      "time": 1.7635
+    },
+    "AdaBoost": {
+      "R2": 0.7191,
+      "MAE": 285.555,
+      "RMSE": 406.9994,
+      "MAPE": 21.8491,
+      "time": 0.2991
+    },
+    "Extra Trees": {
+      "R2": 0.777,
+      "MAE": 235.8662,
+      "RMSE": 339.0291,
+      "MAPE": 17.6964,
+      "time": 1.8227
+    },
+    "XGBoost": {
+      "R2": 0.8464,
+      "MAE": 205.0778,
+      "RMSE": 283.2485,
+      "MAPE": 15.0342,
+      "time": 0.3278
+    },
+    "LightGBM": {
+      "R2": 0.8105,
+      "MAE": 225.5204,
+      "RMSE": 345.7449,
+      "MAPE": 16.3335,
+      "time": 0.171
+    },
+    "Stacking Ensemble": {
+      "R2": 0.8317,
+      "MAE": 212.8464,
+      "RMSE": 315.5932,
+      "MAPE": 15.2552,
+      "time": 12.5646
+    }
+  },
+  "smartphone": {
+    "Linear Regression": {
+      "R2": 0.6771,
+      "MAE": 7674.91,
+      "RMSE": 14946.1096,
+      "MAPE": 46.3673
+    },
+    "Ridge": {
+      "R2": 0.6757,
+      "MAE": 7779.3753,
+      "RMSE": 15391.372,
+      "MAPE": 46.605
+    },
+    "Random Forest": {
+      "R2": 0.8485,
+      "MAE": 4552.574,
+      "RMSE": 8442.2246,
+      "MAPE": 26.4438
+    },
+    "Gradient Boosting": {
+      "R2": 0.8479,
+      "MAE": 4934.7159,
+      "RMSE": 8763.1883,
+      "MAPE": 26.6597
+    },
+    "XGBoost": {
+      "R2": 0.8455,
+      "MAE": 5096.7452,
+      "RMSE": 8895.4469,
+      "MAPE": 27.1577
+    },
+    "LightGBM": {
+      "R2": 0.8255,
+      "MAE": 5529.3475,
+      "RMSE": 9826.3904,
+      "MAPE": 29.8693
+    },
+    "Stacking Ensemble": {
+      "R2": 0.8457,
+      "MAE": 4777.9651,
+      "RMSE": 8509.673,
+      "MAPE": 26.9968
+    }
+  },
+  "best_laptop_model": "XGBoost",
+  "best_phone_model": "Random Forest",
+  "datasets": {
+    "laptop_total_samples": 1657,
+    "smartphone_total_samples": 3114
+  }
+}
