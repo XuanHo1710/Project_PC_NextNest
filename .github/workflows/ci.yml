@@ -1,0 +1,61 @@
+name: Build & Push to ECR
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECR_REGISTRY: 347765733290.dkr.ecr.ap-southeast-1.amazonaws.com
+
+jobs:
+  build-services:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [auth-service, product-service, cart-service, order-service, payment-service, notification-service, saga-orchestration-service, chat-service, history-log, elasticsearch-service, api-gateway]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push
+        run: |
+          docker build -t projectpc/${{ matrix.service }} \
+            --build-arg SERVICE=${{ matrix.service }} \
+            -f microservices/Dockerfile.service ./microservices
+          docker tag projectpc/${{ matrix.service }} $ECR_REGISTRY/projectpc/${{ matrix.service }}:latest
+          docker push $ECR_REGISTRY/projectpc/${{ matrix.service }}:latest
+
+  build-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Client
+        run: |
+          docker build -t projectpc/client \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_SOCKET_URL=${{ secrets.NEXT_PUBLIC_SOCKET_URL }} \
+            -f client/Dockerfile ./client
+          docker tag projectpc/client $ECR_REGISTRY/projectpc/client:latest
+          docker push $ECR_REGISTRY/projectpc/client:latest
