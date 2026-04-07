@@ -19,8 +19,8 @@ yarn-error.log*
 # Next.js
 client/.next/
 
-# Bỏ qua lock file nếu không muốn commit
-package-lock.json
+# Bỏ qua lock file root (giữ lock file trong microservices/ và client/)
+/package-lock.json
 
 # VSCode
 .vscode/
@@ -44,7 +44,9 @@ Thumbs.db
 .gitmodules
 
 
-# Ignore các file json và python
-*.json
+# Ignore specific files
 *.ipynb
 *.requirements.txt
+pc_gvn_categories_complete_final.json
+products_progress_229.json
+scraper/*.json

@@ -1,0 +1,59 @@
+{
+  "name": "microservices",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "start:dev": "turbo run start:dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types"
+  },
+  "devDependencies": {
+    "@types/multer": "^2.0.0",
+    "@types/passport-local": "^1.0.38",
+    "prettier": "^3.7.4",
+    "turbo": "^2.8.3",
+    "typescript": "5.9.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@11.7.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "@elastic/elasticsearch": "^9.3.1",
+    "@nestjs/axios": "^4.0.1",
+    "@nestjs/config": "^4.0.3",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/microservices": "^11.1.13",
+    "@nestjs/mongoose": "^11.0.4",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/swagger": "^11.2.6",
+    "@payos/node": "^2.0.4",
+    "@types/amqplib": "^0.10.8",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "amqp-connection-manager": "^5.0.0",
+    "amqplib": "^0.10.9",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "cookie-parser": "^1.4.7",
+    "ioredis": "^5.9.2",
+    "moment": "^2.30.1",
+    "mongoose": "^9.1.5",
+    "mongoose-autopopulate": "^1.2.1",
+    "ms": "^2.1.3",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "slugify": "^1.6.6",
+    "vnpay": "^2.4.4"
+  }
+}
