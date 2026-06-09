@@ -1,0 +1,178 @@
+name: CI + CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build & Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          push: true
+          tags: xuanho17102004/project-chat-social-frontend:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_SOCKET_URL=${{ secrets.NEXT_PUBLIC_SOCKET_URL }}
+            NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}
+
+      - name: Build & Push API Gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-api-gateway:latest
+          build-args: |
+            SERVICE=api-gateway
+
+      - name: Build & Push Auth Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-auth-service:latest
+          build-args: |
+            SERVICE=auth-service
+
+      - name: Build & Push Product Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-product-service:latest
+          build-args: |
+            SERVICE=product-service
+
+      - name: Build & Push Cart Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-cart-service:latest
+          build-args: |
+            SERVICE=cart-service
+
+      - name: Build & Push Order Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-order-service:latest
+          build-args: |
+            SERVICE=order-service
+
+      - name: Build & Push Payment Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-payment-service:latest
+          build-args: |
+            SERVICE=payment-service
+
+      - name: Build & Push Notification Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-notification-service:latest
+          build-args: |
+            SERVICE=notification-service
+
+      - name: Build & Push Chat Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-chat-service:latest
+          build-args: |
+            SERVICE=chat-service
+
+      - name: Build & Push History Log
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-history-log:latest
+          build-args: |
+            SERVICE=history-log
+
+      - name: Build & Push Saga Orchestration Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-saga-orchestration-service:latest
+          build-args: |
+            SERVICE=saga-orchestration-service
+
+      - name: Build & Push Elasticsearch Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices
+          file: ./microservices/Dockerfile.service
+          push: true
+          tags: xuanho17102004/project-chat-social-elasticsearch-service:latest
+          build-args: |
+            SERVICE=elasticsearch-service
+
+      - name: Build & Push AI Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./microservices/apps/ai-service
+          push: true
+          tags: xuanho17102004/project-chat-social-ai-service:latest
+
+  deploy:
+    needs: docker
+    runs-on: self-hosted
+
+    steps:
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Write root .env
+        env:
+          ROOT_ENV: ${{ secrets.ROOT_ENV }}
+        run: |
+          if [ -z "$ROOT_ENV" ]; then
+            echo "ROOT_ENV secret is missing" >&2
+            exit 1
+          fi
+          printf '%s' "$ROOT_ENV" > .env
+
+      - name: Pull images
+        run: docker compose pull
+
+      - name: Deploy stack
+        run: docker compose up -d --remove-orphans

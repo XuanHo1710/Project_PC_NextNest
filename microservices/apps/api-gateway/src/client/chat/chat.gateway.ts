@@ -15,10 +15,12 @@ import { firstValueFrom } from 'rxjs';
 
 // userId -> Set<socketId> (multiple devices/tabs)
 const userSockets = new Map<string, Set<string>>();
+const chatClientOrigin =
+  process.env.CLIENT_URL || 'http://localhost:3000';
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: [chatClientOrigin, 'http://localhost:3000'],
     credentials: true,
   },
   namespace: '/chat',

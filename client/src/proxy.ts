@@ -21,7 +21,7 @@ const protectedClientPaths = ["/profile", "/orders", "/wishlist", "/checkout"];
 
 const authPaths = [pathAdminRoutes.login];
 
-export default function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const clientAccessToken = request.cookies.get("client_access_token")?.value;
   const adminAccessToken = request.cookies.get("admin_access_token")?.value;
   const adminSessionId = request.cookies.get("admin_sessionId")?.value;
@@ -39,14 +39,15 @@ export default function proxy(request: NextRequest) {
     return NextResponse.redirect(fixedUrl);
   }
 
-  console.log(adminSessionId)
+  console.log(adminSessionId);
 
   // Admin routes protection - check admin_access_token
   if (
     protectedAdminPaths.some((path) =>
       request.nextUrl.pathname.startsWith(path),
     ) &&
-    !adminAccessToken && !adminSessionId
+    !adminAccessToken &&
+    !adminSessionId
   ) {
     return NextResponse.redirect(new URL(pathAdminRoutes.login, request.url));
   }

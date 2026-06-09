@@ -1,7 +1,7 @@
 """
 AI Service — FastAPI application
 Provides:
-  - POST /api/v1/ai/chat/message         → AI chat (Ollama llama3.2)
+  - POST /api/v1/ai/chat/message         → AI chat (Groq llama-3.1-8b-instant)
   - GET  /api/v1/ai/chat/suggestions      → Quick suggestions
   - GET  /api/v1/ai/recommendations/{guestId} → Personalized product recommendations
   - POST /api/v1/ai/reindex               → Reindex products to Qdrant
@@ -165,9 +165,9 @@ async def chat_message(request: ChatMessageRequest):
         raise HTTPException(status_code=400, detail="Message is required")
 
     try:
-        from chat import chat_with_ollama
+        from chat import chat_with_groq
 
-        result = await chat_with_ollama(
+        result = await chat_with_groq(
             message=request.message.strip(),
             conversation_history=request.history,
         )
@@ -190,10 +190,10 @@ async def chat_message_stream(request: ChatMessageRequest):
     if not request.message or not request.message.strip():
         raise HTTPException(status_code=400, detail="Message is required")
 
-    from chat import chat_with_ollama_stream
+    from chat import chat_with_groq_stream
 
     return StreamingResponse(
-        chat_with_ollama_stream(
+        chat_with_groq_stream(
             message=request.message.strip(),
             conversation_history=request.history,
         ),

@@ -573,7 +573,7 @@ const ChatBot = () => {
                             </div>
                         </div>
                         <div className="text-[10px] text-gray-400 text-center mt-1.5 flex items-center justify-center">
-                            <BiSupport className="mr-1" /> Powered by Arisu AI · Ollama LLM
+                            <BiSupport className="mr-1" /> Powered by Arisu AI · Groq LLM
                         </div>
                     </div>
                 </div>

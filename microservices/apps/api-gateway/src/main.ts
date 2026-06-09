@@ -21,10 +21,12 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const reflector = app.get(Reflector);
+  const clientOrigin =
+    configService.get<string>('CLIENT_URL') || 'http://localhost:3000';
 
   // Config CORS
   app.enableCors({
-    origin: ['http://localhost:3000'],
+    origin: [clientOrigin, 'http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     credentials: true,

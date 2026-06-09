@@ -1,11 +1,11 @@
 """
-AI Chat service: uses Ollama (llama3.2) for conversational AI.
+AI Chat service: uses Groq (llama-3.1-8b-instant) for conversational AI.
 Loads product catalog context to answer questions about products.
 No chat history persistence (in-memory only per session).
 
 Architecture: RAG + LLM + ML (3-in-1)
   1. RAG: Embed user query → Qdrant vector search → retrieve similar products
-  2. LLM: Ollama with enriched prompt (catalog + RAG context)
+  2. LLM: Groq with enriched prompt (catalog + RAG context)
   3. ML:  Price prediction from Colab-trained models when triggered
 """
 import asyncio
@@ -23,6 +23,16 @@ from recommendation import _fetch_product_cards
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+GROQ_CHAT_COMPLETIONS_URL = f"{settings.GROQ_API_BASE_URL.rstrip('/')}/chat/completions"
+
+
+def _groq_headers() -> dict[str, str]:
+    if not settings.GROQ_API_KEY:
+        raise RuntimeError("GROQ_API_KEY is not configured")
+    return {
+        "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+        "Content-Type": "application/json",
+    }
 
 
 def _build_product_catalog_context() -> str:
@@ -259,14 +269,14 @@ def _build_rag_context(user_message: str) -> str:
         return "Chưa thể tìm kiếm sản phẩm liên quan. Vui lòng tham khảo danh sách sản phẩm ở trên."
 
 
-async def chat_with_ollama(
+async def chat_with_groq(
     message: str,
     conversation_history: list[dict] | None = None,
 ) -> dict:
     """
     3-in-1 AI Chat: RAG + LLM + ML
     1. RAG: Embed user query → Qdrant vector search → retrieve relevant products
-    2. LLM: Send enriched prompt (catalog + RAG context) to Ollama
+    2. LLM: Send enriched prompt (catalog + RAG context) to Groq
     3. ML: If LLM detects price prediction intent → run ML model → format response
 
     conversation_history: list of { role: 'user'|'assistant', content: str }
@@ -290,23 +300,22 @@ async def chat_with_ollama(
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
-                f"{settings.OLLAMA_BASE_URL}/api/chat",
+                GROQ_CHAT_COMPLETIONS_URL,
+                headers=_groq_headers(),
                 json={
-                    "model": settings.OLLAMA_MODEL,
+                    "model": settings.GROQ_MODEL,
                     "messages": messages,
                     "stream": False,
-                    "options": {
-                        "temperature": 0.7,
-                        "top_p": 0.9,
-                        "num_predict": 1024,
-                    },
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "max_completion_tokens": 1024,
                 },
             )
             response.raise_for_status()
             data = response.json()
 
-            assistant_message = data.get("message", {}).get("content", "")
-            logger.info(f"RAW OLLAMA RESPONSE: {assistant_message}")
+            assistant_message = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            logger.info(f"RAW GROQ RESPONSE: {assistant_message}")
 
             # --- PRICE PREDICTION INTEGRATION ---
             recommended_products = []
@@ -434,7 +443,7 @@ async def chat_with_ollama(
             }
 
     except httpx.ConnectError:
-        logger.error("Cannot connect to Ollama. Is it running?")
+        logger.error("Cannot connect to Groq. Is the API key valid and the service reachable?")
         return {
             "text": "Xin lỗi, hệ thống AI đang bảo trì. Vui lòng thử lại sau hoặc liên hệ hotline 1800 2097 để được hỗ trợ.",
             "timestamp": datetime.now().isoformat(),
@@ -442,7 +451,7 @@ async def chat_with_ollama(
             "products": [],
         }
     except Exception as e:
-        logger.error(f"Ollama chat error: {e}")
+        logger.error(f"Groq chat error: {e}")
         return {
             "text": "Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.",
             "timestamp": datetime.now().isoformat(),
@@ -451,14 +460,14 @@ async def chat_with_ollama(
         }
 
 
-async def chat_with_ollama_stream(
+async def chat_with_groq_stream(
     message: str,
     conversation_history: list[dict] | None = None,
 ) -> AsyncGenerator[str, None]:
     """
     Stream 3-in-1 AI Chat: RAG + LLM + ML via SSE.
     1. RAG: Embed user query → Qdrant vector search → context
-    2. LLM: Stream tokens from Ollama with enriched prompt
+    2. LLM: Stream tokens from Groq with enriched prompt
     3. ML: Post-process price prediction if triggered
 
     Yields SSE-formatted lines:
@@ -484,16 +493,15 @@ async def chat_with_ollama_stream(
         async with httpx.AsyncClient(timeout=120.0) as client:
             async with client.stream(
                 "POST",
-                f"{settings.OLLAMA_BASE_URL}/api/chat",
+                GROQ_CHAT_COMPLETIONS_URL,
+                headers=_groq_headers(),
                 json={
-                    "model": settings.OLLAMA_MODEL,
+                    "model": settings.GROQ_MODEL,
                     "messages": messages,
                     "stream": True,
-                    "options": {
-                        "temperature": 0.7,
-                        "top_p": 0.9,
-                        "num_predict": 1024,
-                    },
+                    "temperature": 0.7,
+                    "top_p": 0.9,
+                    "max_completion_tokens": 1024,
                 },
             ) as response:
                 response.raise_for_status()
@@ -501,17 +509,19 @@ async def chat_with_ollama_stream(
                     if not line.strip():
                         continue
                     try:
-                        chunk = json.loads(line)
-                        if chunk.get("done"):
+                        if line.startswith("data: "):
+                            line = line[6:].strip()
+                        if line == "[DONE]":
                             break
-                        token = chunk.get("message", {}).get("content", "")
+                        chunk = json.loads(line)
+                        token = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
                         if token:
                             full_response += token
                             yield f"data: {json.dumps({'type': 'token', 'content': token}, ensure_ascii=False)}\n\n"
                     except json.JSONDecodeError:
                         continue
 
-        logger.info(f"STREAM OLLAMA RESPONSE: {full_response[:200]}")
+        logger.info(f"STREAM GROQ RESPONSE: {full_response[:200]}")
 
         # Post-processing: search products + generate suggestions
         recommended_products = []
@@ -620,10 +630,10 @@ async def chat_with_ollama_stream(
         yield f"data: {json.dumps({'type': 'done', 'suggestions': suggestions, 'products': recommended_products, 'timestamp': datetime.now().isoformat()}, ensure_ascii=False, default=str)}\n\n"
 
     except httpx.ConnectError:
-        logger.error("Cannot connect to Ollama (stream). Is it running?")
+        logger.error("Cannot connect to Groq (stream). Is the API key valid and the service reachable?")
         yield f"data: {json.dumps({'type': 'error', 'content': 'Xin lỗi, hệ thống AI đang bảo trì. Vui lòng thử lại sau.'})}\n\n"
     except Exception as e:
-        logger.error(f"Ollama stream error: {e}")
+        logger.error(f"Groq stream error: {e}")
         yield f"data: {json.dumps({'type': 'error', 'content': 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.'})}\n\n"
 
 

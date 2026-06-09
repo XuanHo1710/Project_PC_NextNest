@@ -1,0 +1,445 @@
+﻿# ============================================
+# Docker Compose - Unified Stack
+# Project PC - Full stack deployment
+# ============================================
+# Usage:
+#   docker compose pull && docker compose up -d
+#   docker compose down
+# ============================================
+
+services:
+  # ==========================================
+  # INFRASTRUCTURE SERVICES
+  # ==========================================
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis-pc
+    command: redis-server --requirepass ${REDIS_PASSWORD:-123} --databases 16 --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-123}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  rabbitmq:
+    image: rabbitmq:4.2.3-management
+    container_name: rabbitmq-pc
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-admin}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+    container_name: elasticsearch-pc
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.name=project-pc
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
+  client:
+    image: xuanho17102004/project-chat-social-frontend:latest
+    container_name: client-1
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.social-chat-xuanho.io.vn/api/v1}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://api.social-chat-xuanho.io.vn}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://pc.social-chat-xuanho.io.vn}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - frontend
+  api-gateway:
+    image: xuanho17102004/project-chat-social-api-gateway:latest
+    container_name: api-gateway-1
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - JWT_ACCESS_TOKEN_SECRET=${JWT_ACCESS_TOKEN_SECRET}
+      - JWT_ACCESS_EXPIRE=${JWT_ACCESS_EXPIRE:-2d}
+      - JWT_REFRESH_TOKEN_SECRET=${JWT_REFRESH_TOKEN_SECRET}
+      - JWT_REFRESH_EXPIRE=${JWT_REFRESH_EXPIRE:-30d}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-https://api.social-chat-xuanho.io.vn/api/v1/client/auth/google/callback}
+      - CLIENT_URL=${CLIENT_URL:-https://pc.social-chat-xuanho.io.vn}
+      - AI_SERVICE_URL=http://ai-service:8000
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=3001
+      - PRODUCT_SERVICE_HOST=product-service
+      - PRODUCT_SERVICE_PORT=3002
+      - HISTORY_LOG_HOST=history-log
+      - HISTORY_LOG_PORT=3003
+      - CART_SERVICE_HOST=cart-service
+      - CART_SERVICE_PORT=3004
+      - PAYMENT_SERVICE_HOST=payment-service
+      - PAYMENT_SERVICE_PORT=3005
+      - ORDER_SERVICE_HOST=order-service
+      - ORDER_SERVICE_PORT=3006
+      - NOTIFICATION_SERVICE_HOST=notification-service
+      - NOTIFICATION_SERVICE_PORT=3007
+      - SAGA_SERVICE_HOST=saga-orchestration-service
+      - SAGA_SERVICE_PORT=3008
+      - CHAT_SERVICE_HOST=chat-service
+      - CHAT_SERVICE_PORT=3009
+      - ELASTICSEARCH_SERVICE_HOST=elasticsearch-service
+      - ELASTICSEARCH_SERVICE_PORT=3010
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-123}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/docs || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend
+      - frontend
+
+  auth-service:
+    image: xuanho17102004/project-chat-social-auth-service:latest
+    container_name: auth-service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_ACCESS_TOKEN_SECRET=${JWT_ACCESS_TOKEN_SECRET}
+      - JWT_ACCESS_EXPIRE=${JWT_ACCESS_EXPIRE:-2d}
+      - JWT_REFRESH_TOKEN_SECRET=${JWT_REFRESH_TOKEN_SECRET}
+      - JWT_REFRESH_EXPIRE=${JWT_REFRESH_EXPIRE:-30d}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-123}
+      - REDIS_DB=0
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3001,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  product-service:
+    image: xuanho17102004/project-chat-social-product-service:latest
+    container_name: product-service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-123}
+      - REDIS_DB=0
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3002,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  cart-service:
+    image: xuanho17102004/project-chat-social-cart-service:latest
+    container_name: cart-service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3004,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  order-service:
+    image: xuanho17102004/project-chat-social-order-service:latest
+    container_name: order-service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3006,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  payment-service:
+    image: xuanho17102004/project-chat-social-payment-service:latest
+    container_name: payment-service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+      - PAYOS_CLIENTID=${PAYOS_CLIENTID}
+      - PAYOS_APIKEY=${PAYOS_APIKEY}
+      - PAYOS_CHECKSUM=${PAYOS_CHECKSUM}
+      - RETURN_URL=${RETURN_URL:-https://pc.social-chat-xuanho.io.vn/payment/info}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3005,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  notification-service:
+    image: xuanho17102004/project-chat-social-notification-service:latest
+    container_name: notification-service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+      - BREVO_API_KEY=${BREVO_API_KEY}
+      - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL}
+      - BREVO_SENDER_NAME=${BREVO_SENDER_NAME:-Project PC}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3007,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  chat-service:
+    image: xuanho17102004/project-chat-social-chat-service:latest
+    container_name: chat-service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3009,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  history-log:
+    image: xuanho17102004/project-chat-social-history-log:latest
+    container_name: history-log
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3003,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  saga-orchestration-service:
+    image: xuanho17102004/project-chat-social-saga-orchestration-service:latest
+    container_name: saga-orchestration-service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3008,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  elasticsearch-service:
+    image: xuanho17102004/project-chat-social-elasticsearch-service:latest
+    container_name: elasticsearch-service
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').createConnection(3010,''localhost'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  ai-service:
+    image: xuanho17102004/project-chat-social-ai-service:latest
+    container_name: ai-service
+    environment:
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+      - QDRANT_URL=${QDRANT_URL}
+      - MONGODB_URI=${MONGODB_URI}
+      - GROQ_API_BASE_URL=${GROQ_API_BASE_URL:-https://api.groq.com/openai/v1}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.1-8b-instant}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-paraphrase-MiniLM-L3-v2}
+      - AI_SERVICE_PORT=8000
+      - COLLECTION_NAME=${COLLECTION_NAME:-products}
+      - USER_COLLECTION_NAME=${USER_COLLECTION_NAME:-user_preferences}
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8000/docs'')" || exit 1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - backend
+
+# ==========================================
+# NETWORKS
+# ==========================================
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+
+# ==========================================
+# VOLUMES
+# ==========================================
+
+volumes:
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+
+
+

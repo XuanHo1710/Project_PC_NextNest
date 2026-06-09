@@ -40,7 +40,7 @@ export class AiController {
             userId: body.userId,
             history: body.history,
           },
-          { timeout: 120000 }, // 120s - Ollama on CPU is slow
+          { timeout: 120000 }, // 120s - Groq API + post-processing can still take time
         ),
       );
       return response.data;
