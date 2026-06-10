@@ -10,6 +10,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         name: MICROSERVICE.CART_SERVICE,
         transport: Transport.TCP,
         options: {
+          host: process.env.CART_SERVICE_HOST ?? 'cart-service',
           port: MICROSERVICE_PORT.CART_SERVICE,
         },
       },

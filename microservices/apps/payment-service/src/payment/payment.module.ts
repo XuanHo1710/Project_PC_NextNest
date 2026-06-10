@@ -14,7 +14,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.NOTIFICATION_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'notification.main',
           queueOptions: {
             durable: true,
@@ -29,7 +29,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.PRODUCT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'product.main',
           queueOptions: {
             durable: true,
@@ -44,7 +44,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.ORDER_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'order.main',
           queueOptions: {
             durable: true,
@@ -59,6 +59,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.CART_SERVICE,
         transport: Transport.TCP,
         options: {
+          host: process.env.CART_SERVICE_HOST ?? 'cart-service',
           port: MICROSERVICE_PORT.CART_SERVICE,
         },
       },

@@ -14,6 +14,7 @@ import { LocalStrategy } from 'guards/local.strategy';
         name: MICROSERVICE.AUTH_SERVICE,
         transport: Transport.TCP,
         options: {
+          host: process.env.AUTH_SERVICE_HOST ?? 'auth-service',
           port: MICROSERVICE_PORT.AUTH_SERVICE,
         },
       },

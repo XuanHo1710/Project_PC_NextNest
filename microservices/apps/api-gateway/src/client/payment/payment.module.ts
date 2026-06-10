@@ -10,7 +10,7 @@ import { PaymentController } from 'client/payment/payment.controller';
         name: MICROSERVICE.PAYMENT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'payment.main',
           queueOptions: {
             durable: true,

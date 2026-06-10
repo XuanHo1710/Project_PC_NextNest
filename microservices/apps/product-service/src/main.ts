@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from 'src/app.module';
 import { setupProductRabbitMQ } from 'src/rabbitmq.product.setup';
+import { MICROSERVICE_PORT } from '@project-pc/common';
 
 async function bootstrap() {
   await setupProductRabbitMQ();
@@ -12,7 +13,7 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
-      urls: ['amqp://admin:admin@localhost:5673'],
+      urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
       queue: 'product.main',
       noAck: false,
       prefetchCount: 10,
@@ -23,6 +24,14 @@ async function bootstrap() {
           'x-dead-letter-routing-key': 'product.retry',
         },
       },
+    },
+  });
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.TCP,
+    options: {
+      host: '0.0.0.0',
+      port: MICROSERVICE_PORT.PRODUCT_SERVICE,
     },
   });
 

@@ -47,7 +47,7 @@ import { MICROSERVICE } from '@project-pc/common';
         name: MICROSERVICE.ELASTICSEARCH_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'elasticsearch.main',
           queueOptions: {
             durable: true,

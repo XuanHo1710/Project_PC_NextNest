@@ -10,7 +10,7 @@ import { OrderController } from 'client/order/order.controller';
         name: MICROSERVICE.ORDER_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'order.main',
           queueOptions: {
             durable: true,
@@ -25,6 +25,7 @@ import { OrderController } from 'client/order/order.controller';
         name: MICROSERVICE.SAGA_ORCHESTRATOR_SERVICE,
         transport: Transport.TCP,
         options: {
+          host: process.env.SAGA_SERVICE_HOST ?? 'saga-orchestration-service',
           port: MICROSERVICE_PORT.SAGA_ORCHESTRATOR_SERVICE,
         },
       },
@@ -32,7 +33,7 @@ import { OrderController } from 'client/order/order.controller';
         name: MICROSERVICE.PRODUCT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'product.main',
           queueOptions: {
             durable: true,

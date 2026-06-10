@@ -10,6 +10,7 @@ import { SearchController } from 'client/search/search.controller';
         name: MICROSERVICE.ELASTICSEARCH_SERVICE,
         transport: Transport.TCP,
         options: {
+          host: process.env.ELASTICSEARCH_SERVICE_HOST ?? 'elasticsearch-service',
           port: MICROSERVICE_PORT.ELASTICSEARCH_SERVICE,
         },
       },

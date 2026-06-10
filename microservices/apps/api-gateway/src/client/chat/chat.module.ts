@@ -11,6 +11,7 @@ import { ChatGateway } from './chat.gateway';
         name: MICROSERVICE.CHAT_SERVICE,
         transport: Transport.TCP,
         options: {
+          host: process.env.CHAT_SERVICE_HOST ?? 'chat-service',
           port: MICROSERVICE_PORT.CHAT_SERVICE,
         },
       },

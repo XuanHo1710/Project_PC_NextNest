@@ -10,6 +10,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.HISTORY_LOG_SERVICE,
         transport: Transport.TCP,
         options: {
+          host: process.env.HISTORY_LOG_HOST ?? 'history-log',
           port: MICROSERVICE_PORT.HISTORY_LOG_SERVICE,
         },
       },

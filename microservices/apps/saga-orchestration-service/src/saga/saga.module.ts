@@ -11,7 +11,7 @@ import { SagaService } from 'src/saga/saga.service';
         name: MICROSERVICE.ORDER_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'order.main',
           queueOptions: {
             durable: true,
@@ -26,7 +26,7 @@ import { SagaService } from 'src/saga/saga.service';
         name: MICROSERVICE.PAYMENT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'payment.main',
           queueOptions: {
             durable: true,
@@ -41,7 +41,7 @@ import { SagaService } from 'src/saga/saga.service';
         name: MICROSERVICE.PRODUCT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'product.main',
           queueOptions: {
             durable: true,
@@ -56,7 +56,7 @@ import { SagaService } from 'src/saga/saga.service';
         name: MICROSERVICE.NOTIFICATION_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://admin:admin@localhost:5673'],
+          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
           queue: 'notification.main',
           queueOptions: {
             durable: true,
@@ -71,6 +71,7 @@ import { SagaService } from 'src/saga/saga.service';
         name: MICROSERVICE.CART_SERVICE,
         transport: Transport.TCP,
         options: {
+          host: process.env.CART_SERVICE_HOST ?? 'cart-service',
           port: MICROSERVICE_PORT.CART_SERVICE,
         },
       },
