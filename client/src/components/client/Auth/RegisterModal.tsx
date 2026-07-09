@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Divider, Form, Image, Input, Modal, Result } from 'antd';
+import { Button, Divider, Form, Input, Modal, Result } from 'antd';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { IRegisterDto } from '@/types/auth';
 import useAuthUser from '@/hooks/useAuthUser';
@@ -240,12 +240,10 @@ export default function RegisterModal({ isOpen, onClose, switchToLogin }: Regist
                 onClick={handleGoogleRegister}
                 className="bg-blue-500 hover:bg-blue-700 flex items-center justify-center gap-3 text-white py-3 w-full font-semibold rounded-md text-base transition-all"
             >
-                <Image
-                    preview={false}
-                    width={24}
+                <img
                     alt="Google Logo"
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png"
-                    className="bg-white p-0.5 rounded-full"
+                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                    className="w-6 h-6 bg-white p-1 rounded-full object-contain"
                 />
                 Đăng ký với Google
             </button>

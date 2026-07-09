@@ -52,7 +52,7 @@ def _build_product_catalog_context() -> str:
         db["products"]
         .find({"isDeleted": {"$ne": True}, "status": "ACTIVE"})
         .sort("createdAt", -1)
-        .limit(100)
+        .limit(10)
     )
 
     if not products:

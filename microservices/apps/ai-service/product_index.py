@@ -198,39 +198,23 @@ def ensure_collection():
         collection_name = settings.COLLECTION_NAME
         dim = get_embedding_dimension()
 
-        collections = [c.name for c in client.get_collections().collections]
-        if collection_name in collections:
-            # Check if dimension matches
-            info = client.get_collection(collection_name)
-            existing_dim = info.config.params.vectors.size
-            if existing_dim != dim:
-                logger.warning(
-                    f"Collection dimension mismatch: {existing_dim} vs {dim}. Recreating..."
-                )
-                client.delete_collection(collection_name)
-                collections.remove(collection_name)
-
-        if collection_name not in collections:
-            logger.info(
-                f"Creating Qdrant collection '{collection_name}' with dim={dim}"
-            )
+        # Try to create the collection directly. If it already exists, that is fine.
+        try:
             client.create_collection(
                 collection_name=collection_name,
                 vectors_config=VectorParams(size=dim, distance=Distance.COSINE),
             )
-            logger.info(f"Collection '{collection_name}' created")
-        else:
-            logger.info(f"Collection '{collection_name}' already exists (dim={dim})")
+            logger.info(f"Collection '{collection_name}' created successfully")
+        except Exception as create_err:
+            # Check if it was because it already exists
+            err_msg = str(create_err).lower()
+            if "already exists" in err_msg or "conflict" in err_msg or "exists" in err_msg:
+                logger.info(f"Collection '{collection_name}' already exists. Skipping creation.")
+            else:
+                # If there's some other error, log it but don't crash
+                logger.info(f"Collection creation returned: {create_err}")
     except Exception as e:
-        error_msg = str(e)
-        logger.warning(f"Failed to ensure Qdrant collection: {error_msg}")
-        if "404" in error_msg or "Not Found" in error_msg:
-            logger.warning(
-                "Qdrant Cloud cluster may be expired or URL is invalid. "
-                f"Current URL: {settings.QDRANT_URL} — "
-                "Please create a new cluster at https://cloud.qdrant.io or run Qdrant locally: "
-                "docker run -p 6333:6333 qdrant/qdrant"
-            )
+        logger.warning(f"Failed to ensure Qdrant collection: {e}")
         logger.warning("Product vector search will be unavailable until Qdrant is fixed.")
 
 
@@ -245,39 +229,48 @@ def index_all_products() -> dict:
     if not products:
         return {"message": "No products to index", "count": 0}
 
-    # Generate embeddings in batch
-    texts = [p["text"] for p in products]
-    embeddings = generate_embeddings(texts)
-
-    # Build Qdrant points
-    points = []
-    for i, product in enumerate(products):
-        # Use a deterministic integer ID from the MongoDB ObjectId hex
-        point_id = int(product["id"][-12:], 16) & 0x7FFFFFFFFFFFFFFF
-        points.append(
-            PointStruct(
-                id=point_id,
-                vector=embeddings[i],
-                payload={
-                    **product["payload"],
-                    "_mongo_id": product["id"],
-                },
-            )
-        )
-
-    # Upsert in batches of 100
-    batch_size = 100
     client = get_qdrant_client()
-    for i in range(0, len(points), batch_size):
-        batch = points[i : i + batch_size]
+    total_count = len(products)
+    logger.info(f"Starting Qdrant indexing for {total_count} products in batches...")
+
+    # Process in batches of 500 to save memory and log real-time progress
+    batch_size = 500
+    indexed_count = 0
+
+    for i in range(0, total_count, batch_size):
+        batch_products = products[i : i + batch_size]
+        
+        # Generate embeddings for the current batch
+        batch_texts = [p["text"] for p in batch_products]
+        batch_embeddings = generate_embeddings(batch_texts)
+
+        # Build points for the current batch
+        batch_points = []
+        for j, product in enumerate(batch_products):
+            # Use a deterministic integer ID from the MongoDB ObjectId hex
+            point_id = int(product["id"][-12:], 16) & 0x7FFFFFFFFFFFFFFF
+            batch_points.append(
+                PointStruct(
+                    id=point_id,
+                    vector=batch_embeddings[j],
+                    payload={
+                        **product["payload"],
+                        "_mongo_id": product["id"],
+                    },
+                )
+            )
+
+        # Upsert batch to Qdrant
         client.upsert(
             collection_name=settings.COLLECTION_NAME,
-            points=batch,
+            points=batch_points,
         )
-        logger.info(f"Upserted batch {i // batch_size + 1}: {len(batch)} points")
+        indexed_count += len(batch_points)
+        pct = (indexed_count / total_count) * 100
+        logger.info(f"[Qdrant Reindex] Progress: {indexed_count}/{total_count} ({pct:.1f}%) products indexed.")
 
-    logger.info(f"Indexed {len(points)} products to Qdrant")
-    return {"message": "Indexing complete", "count": len(points)}
+    logger.info(f"Successfully indexed all {indexed_count} products to Qdrant.")
+    return {"message": "Indexing complete", "count": indexed_count}
 
 
 def search_similar_products(

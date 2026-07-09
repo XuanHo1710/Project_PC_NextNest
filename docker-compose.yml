@@ -1,4 +1,4 @@
-﻿# ============================================
+# ============================================
 # Docker Compose - Unified Stack
 # Project PC - Full stack deployment
 # ============================================
@@ -75,6 +75,13 @@ services:
   client:
     image: xuanho17102004/project-chat-social-frontend:latest
     container_name: client-1
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.social-chat-xuanho.io.vn/api/v1}
+        - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://api.social-chat-xuanho.io.vn}
+        - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://pc.social-chat-xuanho.io.vn}
     ports:
       - "3000:3000"
     environment:
@@ -394,6 +401,9 @@ services:
   ai-service:
     image: xuanho17102004/project-chat-social-ai-service:latest
     container_name: ai-service
+    build:
+      context: ./microservices/apps/ai-service
+      dockerfile: Dockerfile
     environment:
       - QDRANT_API_KEY=${QDRANT_API_KEY}
       - QDRANT_URL=${QDRANT_URL}

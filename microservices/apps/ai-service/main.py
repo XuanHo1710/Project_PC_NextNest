@@ -61,9 +61,13 @@ async def lifespan(app: FastAPI):
 
         # Check if products collection has any points, if empty → auto-index in background
         client = get_qdrant_client()
-        collection_info = client.get_collection(collection_name=_settings.COLLECTION_NAME)
-        point_count = collection_info.points_count or 0
-        logger.info(f"Qdrant '{_settings.COLLECTION_NAME}' has {point_count} points")
+        point_count = 0
+        try:
+            collection_info = client.get_collection(collection_name=_settings.COLLECTION_NAME)
+            point_count = collection_info.points_count or 0
+            logger.info(f"Qdrant '{_settings.COLLECTION_NAME}' has {point_count} points")
+        except Exception as get_coll_err:
+            logger.warning(f"Failed to check Qdrant points count: {get_coll_err}. Proceeding with point_count=0 to ensure indexing.")
 
         if point_count == 0:
             def _background_index():
