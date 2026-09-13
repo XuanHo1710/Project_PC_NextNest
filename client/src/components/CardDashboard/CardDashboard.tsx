@@ -73,8 +73,8 @@ export const HeaderDashboard = () => {
             <div className="grid grid-flow-row grid-cols-12 gap-6">
                 <CardDashBoard className="col-span-3" title="Tổng đơn hàng" value={formatNumber(totalOrders)} type="up" percent={0} totalMade={`${totalOrders} đơn`} />
                 <CardDashBoard className="col-span-3" title="Đơn đã thanh toán" value={formatNumber(paidOrders)} type="up" percent={totalOrders > 0 ? Math.round(paidOrders / totalOrders * 100) : 0} totalMade={`${paidOrders} đơn đã TT`} />
-                <CardDashBoard className="col-span-3" title="Tổng doanh thu" value={formatCurrency(totalIncome) + 'đ'} type="up" percent={0} totalMade={formatCurrency(totalIncome) + 'đ'} />
-                <CardDashBoard className="col-span-3" title="Phí nền tảng (5%)" value={formatCurrency(platformRevenue) + 'đ'} type="up" percent={5} totalMade={formatCurrency(platformRevenue) + 'đ'} />
+                <CardDashBoard className="col-span-3" title="Tổng doanh thu" value={formatCurrency(totalIncome)} type="up" percent={0} totalMade={formatCurrency(totalIncome)} />
+                <CardDashBoard className="col-span-3" title="Phí nền tảng (5%)" value={formatCurrency(platformRevenue)} type="up" percent={5} totalMade={formatCurrency(platformRevenue)} />
             </div>
         </>
     )

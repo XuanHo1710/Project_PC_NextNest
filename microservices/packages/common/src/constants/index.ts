@@ -39,3 +39,39 @@ export const MICROSERVICE_PORT = {
 
 export type MicroservicePort =
   (typeof MICROSERVICE_PORT)[keyof typeof MICROSERVICE_PORT];
+
+const DOCKER_SERVICE_HOSTS = {
+  AUTH_SERVICE: "auth-service",
+  PRODUCT_SERVICE: "product-service",
+  REDIS_SERVICE: "redis",
+  HISTORY_LOG_SERVICE: "history-log",
+  CART_SERVICE: "cart-service",
+  PAYMENT_SERVICE: "payment-service",
+  ORDER_SERVICE: "order-service",
+  NOTIFICATION_SERVICE: "notification-service",
+  SAGA_ORCHESTRATOR_SERVICE: "saga-orchestration-service",
+  CHAT_SERVICE: "chat-service",
+  ELASTICSEARCH_SERVICE: "elasticsearch-service",
+} as const;
+
+export const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+export function getServiceHost(name: keyof typeof MICROSERVICE): string {
+  return (
+    process.env[`${name}_HOST`] ??
+    (IS_PRODUCTION ? DOCKER_SERVICE_HOSTS[name] : "localhost")
+  );
+}
+
+export function getServicePort(name: keyof typeof MICROSERVICE_PORT): number {
+  return Number(process.env[`${name}_PORT`] ?? MICROSERVICE_PORT[name]);
+}
+
+export function getRabbitMqUrl(): string {
+  return (
+    process.env.RABBITMQ_URL ??
+    (IS_PRODUCTION
+      ? "amqp://admin:admin@rabbitmq:5672"
+      : "amqp://admin:admin@localhost:5672")
+  );
+}

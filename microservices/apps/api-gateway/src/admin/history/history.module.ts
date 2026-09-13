@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { HistoryController } from './history.controller';
 import { EmployeeHistoryController } from './employee-history.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MICROSERVICE, getServiceHost, getServicePort } from '@project-pc/common';
 import { HistoryService } from 'admin/history/history.service';
 
 @Module({
@@ -12,8 +12,8 @@ import { HistoryService } from 'admin/history/history.service';
                 name: MICROSERVICE.HISTORY_LOG_SERVICE,
                 transport: Transport.TCP,
                 options: {
-                    host: process.env.HISTORY_LOG_HOST ?? 'history-log',
-                    port: MICROSERVICE_PORT.HISTORY_LOG_SERVICE,
+                    host: getServiceHost(MICROSERVICE.HISTORY_LOG_SERVICE),
+                    port: getServicePort(MICROSERVICE.HISTORY_LOG_SERVICE),
                 },
             },
         ]),

@@ -6,7 +6,37 @@ on:
   workflow_dispatch:
 
 jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: microservices
+        run: npm install --no-audit --no-fund
+
+      # Compiles @project-pc/common and every NestJS app (tsc) -> fails on type/syntax errors
+      - name: Build all services
+        working-directory: microservices
+        run: npm run build
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm install --no-audit --no-fund --legacy-peer-deps
+
+      # Catches FE type errors before images ship
+      - name: Typecheck client
+        working-directory: client
+        run: npx tsc --noEmit
+
   docker:
+    needs: quality
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +54,9 @@ jobs:
         with:
           context: ./client
           push: true
-          tags: xuanho17102004/project-chat-social-frontend:latest
+          tags: |
+            xuanho17102004/project-chat-social-frontend:latest
+            xuanho17102004/project-chat-social-frontend:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_SOCKET_URL=${{ secrets.NEXT_PUBLIC_SOCKET_URL }}
@@ -36,7 +68,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-api-gateway:latest
+          tags: |
+            xuanho17102004/project-chat-social-api-gateway:latest
+            xuanho17102004/project-chat-social-api-gateway:${{ github.sha }}
           build-args: |
             SERVICE=api-gateway
 
@@ -46,7 +80,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-auth-service:latest
+          tags: |
+            xuanho17102004/project-chat-social-auth-service:latest
+            xuanho17102004/project-chat-social-auth-service:${{ github.sha }}
           build-args: |
             SERVICE=auth-service
 
@@ -56,7 +92,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-product-service:latest
+          tags: |
+            xuanho17102004/project-chat-social-product-service:latest
+            xuanho17102004/project-chat-social-product-service:${{ github.sha }}
           build-args: |
             SERVICE=product-service
 
@@ -66,7 +104,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-cart-service:latest
+          tags: |
+            xuanho17102004/project-chat-social-cart-service:latest
+            xuanho17102004/project-chat-social-cart-service:${{ github.sha }}
           build-args: |
             SERVICE=cart-service
 
@@ -76,7 +116,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-order-service:latest
+          tags: |
+            xuanho17102004/project-chat-social-order-service:latest
+            xuanho17102004/project-chat-social-order-service:${{ github.sha }}
           build-args: |
             SERVICE=order-service
 
@@ -86,7 +128,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-payment-service:latest
+          tags: |
+            xuanho17102004/project-chat-social-payment-service:latest
+            xuanho17102004/project-chat-social-payment-service:${{ github.sha }}
           build-args: |
             SERVICE=payment-service
 
@@ -96,7 +140,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-notification-service:latest
+          tags: |
+            xuanho17102004/project-chat-social-notification-service:latest
+            xuanho17102004/project-chat-social-notification-service:${{ github.sha }}
           build-args: |
             SERVICE=notification-service
 
@@ -106,7 +152,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-chat-service:latest
+          tags: |
+            xuanho17102004/project-chat-social-chat-service:latest
+            xuanho17102004/project-chat-social-chat-service:${{ github.sha }}
           build-args: |
             SERVICE=chat-service
 
@@ -116,7 +164,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-history-log:latest
+          tags: |
+            xuanho17102004/project-chat-social-history-log:latest
+            xuanho17102004/project-chat-social-history-log:${{ github.sha }}
           build-args: |
             SERVICE=history-log
 
@@ -126,7 +176,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-saga-orchestration-service:latest
+          tags: |
+            xuanho17102004/project-chat-social-saga-orchestration-service:latest
+            xuanho17102004/project-chat-social-saga-orchestration-service:${{ github.sha }}
           build-args: |
             SERVICE=saga-orchestration-service
 
@@ -136,7 +188,9 @@ jobs:
           context: ./microservices
           file: ./microservices/Dockerfile.service
           push: true
-          tags: xuanho17102004/project-chat-social-elasticsearch-service:latest
+          tags: |
+            xuanho17102004/project-chat-social-elasticsearch-service:latest
+            xuanho17102004/project-chat-social-elasticsearch-service:${{ github.sha }}
           build-args: |
             SERVICE=elasticsearch-service
 
@@ -145,8 +199,9 @@ jobs:
         with:
           context: ./microservices/apps/ai-service
           push: true
-          tags: xuanho17102004/project-chat-social-ai-service:latest
-
+          tags: |
+            xuanho17102004/project-chat-social-ai-service:latest
+            xuanho17102004/project-chat-social-ai-service:${{ github.sha }}
   deploy:
     needs: docker
     runs-on: self-hosted

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Description cleanup script for Project PC products.
  * Cleans scraped HTML descriptions by:
  * 1. Removing <script>, <style>, <iframe>, <noscript> tags
@@ -10,7 +10,7 @@
 
 const { MongoClient } = require('mongodb');
 
-const MONGO_URI = 'mongodb+srv://xuanhodcbas:0984232310ho.@cluster0.f7sbfkn.mongodb.net/project-pc-hoang-ha';
+const MONGO_URI = process.env.MONGODB_URI || '';
 
 // Patterns to completely remove (tag + content)
 const STRIP_TAGS_WITH_CONTENT = [
@@ -25,18 +25,18 @@ const STRIP_TAGS_WITH_CONTENT = [
 // CellphoneS-specific junk patterns
 const CELLPHONES_JUNK_PATTERNS = [
     // Payment method sections
-    /Phương thức thanh toán[\s\S]*?(?=<(?:h[1-6]|div class="product)|$)/gi,
+    /PhÆ°Æ¡ng thá»©c thanh toÃ¡n[\s\S]*?(?=<(?:h[1-6]|div class="product)|$)/gi,
     // Newsletter/voucher signup  
-    /ĐĂNG KÝ NHẬN TIN KHUYẾN MÃI[\s\S]*?(?=<(?:h[1-6]|div class="product)|$)/gi,
-    /Nhận ngay Voucher[\s\S]*?(?=<(?:h[1-6])|$)/gi,
+    /ÄÄ‚NG KÃ NHáº¬N TIN KHUYáº¾N MÃƒI[\s\S]*?(?=<(?:h[1-6]|div class="product)|$)/gi,
+    /Nháº­n ngay Voucher[\s\S]*?(?=<(?:h[1-6])|$)/gi,
     // Site footer content
-    /Nhập số điện thoại của bạ[\s\S]*$/gi,
+    /Nháº­p sá»‘ Ä‘iá»‡n thoáº¡i cá»§a báº¡[\s\S]*$/gi,
     // CellphoneS branding/links
     /<a[^>]*href="https?:\/\/cellphones\.com\.vn[^"]*"[^>]*>.*?<\/a>/gi,
     // Social media widgets  
     /class="social-share[\s\S]*?<\/div>/gi,
     // Related articles sections
-    /Tin tức liên quan[\s\S]*$/gi,
+    /Tin tá»©c liÃªn quan[\s\S]*$/gi,
     // Breadcrumb
     /<nav[^>]*class="[^"]*breadcrumb[^"]*"[^>]*>[\s\S]*?<\/nav>/gi,
     // Header elements
@@ -140,7 +140,7 @@ function cleanDescription(description, productName) {
     cleaned = cleaned.replace(/\s{2,}/g, ' ');
     cleaned = cleaned.trim();
 
-    // If cleaned is too short (< 50 chars), it was probably all junk — return empty
+    // If cleaned is too short (< 50 chars), it was probably all junk â€” return empty
     if (cleaned.length < 50) {
         return '';
     }

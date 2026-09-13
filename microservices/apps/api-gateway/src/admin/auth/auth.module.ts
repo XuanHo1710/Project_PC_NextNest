@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PassportModule } from '@nestjs/passport';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MICROSERVICE, getServiceHost, getServicePort } from '@project-pc/common';
 import { AuthController } from 'admin/auth/auth.controller';
 import { LocalStrategy } from 'guards/local.strategy';
 
@@ -14,8 +14,8 @@ import { LocalStrategy } from 'guards/local.strategy';
         name: MICROSERVICE.AUTH_SERVICE,
         transport: Transport.TCP,
         options: {
-          host: process.env.AUTH_SERVICE_HOST ?? 'auth-service',
-          port: MICROSERVICE_PORT.AUTH_SERVICE,
+          host: getServiceHost(MICROSERVICE.AUTH_SERVICE),
+          port: getServicePort(MICROSERVICE.AUTH_SERVICE),
         },
       },
     ]),

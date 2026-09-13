@@ -1,5 +1,5 @@
-import { Controller } from '@nestjs/common';
-import { VnpayService } from './payment.service';
+import { Body, Controller, Post } from '@nestjs/common';
+import { PayosService } from './payment.service';
 import {
   Ctx,
   MessagePattern,
@@ -8,10 +8,17 @@ import {
 } from '@nestjs/microservices';
 import { CreatePaymentDto } from '@project-pc/common';
 import { Channel, ConsumeMessage } from 'amqplib';
+import { Public } from 'src/common/decorators/public.decorator';
 
-@Controller()
+@Controller('payment')
 export class PaymentController {
-  constructor(private readonly vnpayService: VnpayService) {}
+  constructor(private readonly payosService: PayosService) {}
+
+  @Public()
+  @Post('payos-webhook')
+  async payosWebhook(@Body() body: any) {
+    return await this.payosService.handlePayosWebhook(body);
+  }
 
   @MessagePattern('payment.create')
   async createVnpayPaymentUrl(
@@ -21,7 +28,7 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const result = await this.vnpayService.createPaymentUrl(
+      const result = await this.payosService.createPaymentUrl(
         data.createPaymentDto,
         data.ip,
       );
@@ -59,7 +66,7 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const result = await this.vnpayService.verifyPayment(
+      const result = await this.payosService.verifyPayment(
         data.orderCode,
         data.status,
         data.guestId,
@@ -97,7 +104,7 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const result = await this.vnpayService.createPaymentForCashOnDelivery(
+      const result = await this.payosService.createPaymentForCashOnDelivery(
         data.orderId,
         data.amount,
       );
@@ -134,14 +141,14 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const result = await this.vnpayService.updatePaymentStatus(
+      const result = await this.payosService.updatePaymentStatus(
         data.orderId,
         data.status,
       );
       channel.ack(msg);
       return result;
     } catch (error) {
-      channel.nack(msg, false, false);
+      this.deadLetterOrRetry(channel, msg, data);
       throw error;
     }
   }
@@ -157,13 +164,35 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const result = await this.vnpayService.expirePaymentsByOrderId(
+      const result = await this.payosService.expirePaymentsByOrderId(
         data.orderId,
       );
       channel.ack(msg);
       return result;
     } catch (error) {
-      channel.nack(msg, false, false);
+      this.deadLetterOrRetry(channel, msg, data);
+      throw error;
+    }
+  }
+
+  @MessagePattern('payment.expireByOrderIds')
+  async expirePaymentsByOrderIds(
+    @Payload()
+    data: {
+      orderIds: string[];
+    },
+    @Ctx() context: RmqContext,
+  ) {
+    const channel = context.getChannelRef() as Channel;
+    const msg = context.getMessage() as ConsumeMessage;
+    try {
+      const result = await this.payosService.expirePaymentsByOrderIds(
+        data.orderIds,
+      );
+      channel.ack(msg);
+      return result;
+    } catch (error) {
+      this.deadLetterOrRetry(channel, msg, data);
       throw error;
     }
   }
@@ -179,11 +208,11 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const result = await this.vnpayService.getPaymentsByOrderId(data.orderId);
+      const result = await this.payosService.getPaymentsByOrderId(data.orderId);
       channel.ack(msg);
       return result;
     } catch (error) {
-      channel.nack(msg, false, false);
+      this.deadLetterOrRetry(channel, msg, data);
       throw error;
     }
   }
@@ -199,12 +228,39 @@ export class PaymentController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
-      const result = await this.vnpayService.refundPayment(data.orderId);
+      const result = await this.payosService.refundPayment(data.orderId);
       channel.ack(msg);
       return result;
     } catch (error) {
-      channel.nack(msg, false, false);
+      this.deadLetterOrRetry(channel, msg, data);
       throw error;
+    }
+  }
+
+  /**
+   * Mirrors the payment.create x-death counting convention:
+   * each failure dead-letters into payment.retry (5s TTL) and returns to
+   * payment.main; after 3 retries the message is published to the DLQ.
+   */
+  private deadLetterOrRetry(
+    channel: Channel,
+    msg: ConsumeMessage,
+    data: unknown,
+  ) {
+    const xDeath = msg.properties.headers?.['x-death'];
+    const retryCount =
+      xDeath?.find((d) => d.queue === 'payment.retry')?.count || 0;
+
+    if (retryCount >= 3) {
+      channel.publish(
+        'payment.dlx.exchange',
+        'payment.dlq',
+        Buffer.from(JSON.stringify(data)),
+        { persistent: true },
+      );
+      channel.ack(msg);
+    } else {
+      channel.nack(msg, false, false);
     }
   }
 }

@@ -1,9 +1,17 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
   CreateOrderDto,
   MICROSERVICE,
+  ProductVariant,
   UpdateOrderDto,
 } from '@project-pc/common';
 import { Order } from 'src/order/entities/order.entity';
@@ -11,11 +19,24 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, timeout, catchError, of } from 'rxjs';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
+const ORDER_STATUS_TRANSITIONS: Record<string, string[]> = {
+  PENDING: ['COMPLETED', 'CANCELLED'],
+  SHIPPING: ['DELIVERED', 'CANCELLED'],
+  DELIVERED: ['COMPLETED', 'PENDING_REJECTION'],
+  COMPLETED: ['SHIPPING', 'CANCELLED'],
+  PENDING_REJECTION: ['COMPLETED', 'CANCELLED', 'REFUNDED'],
+  CANCELLED: [],
+  REFUNDED: [],
+  EXPIRED: [],
+};
+
 @Injectable()
 export class OrderService {
   private readonly logger = new Logger(OrderService.name);
   constructor(
     @InjectModel(Order.name) private orderModel: Model<Order>,
+    @InjectModel(ProductVariant.name)
+    private readonly productVariantModel: Model<ProductVariant>,
     @Inject(MICROSERVICE.PAYMENT_SERVICE)
     private readonly paymentService: ClientProxy,
     @Inject(MICROSERVICE.NOTIFICATION_SERVICE)
@@ -24,9 +45,80 @@ export class OrderService {
     private readonly productService: ClientProxy,
   ) {}
 
+  /**
+   * Server-side re-pricing: never trust client-sent price/subtotal.
+   * Validates quantities and resolves every ProductVariant from the DB,
+   * then builds the trusted order snapshot + totalAmount from DB values.
+   */
+  private async buildValidatedOrderData(createOrderDto: CreateOrderDto) {
+    const items = (createOrderDto.orderDetail || []) as any[];
+
+    if (!items.length) {
+      throw new BadRequestException('Đơn hàng phải có ít nhất một sản phẩm');
+    }
+
+    for (const item of items) {
+      const quantity = Number(item.quantity);
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        throw new BadRequestException(
+          'Số lượng sản phẩm không hợp lệ (phải là số nguyên >= 1)',
+        );
+      }
+    }
+
+    const variantIds = [
+      ...new Set(items.map((item) => String(item.productVariant?._id || ''))),
+    ];
+    const variants = await this.productVariantModel
+      .find({
+        _id: {
+          $in: variantIds
+            .filter((id) => Types.ObjectId.isValid(id))
+            .map((id) => new Types.ObjectId(id)),
+        },
+      })
+      .lean();
+    const variantMap = new Map(variants.map((v) => [String(v._id), v]));
+
+    let totalAmount = 0;
+    const orderDetail = items.map((item) => {
+      const variantId = String(item.productVariant?._id || '');
+      const variant = variantMap.get(variantId);
+      if (!variant) {
+        throw new BadRequestException(`Sản phẩm không tồn tại: ${variantId}`);
+      }
+      const price = Number(variant.price ?? 0);
+      const quantity = Number(item.quantity);
+      const subtotal = price * quantity;
+      totalAmount += subtotal;
+
+      return {
+        // Snapshot variant info (lưu trực tiếp)
+        variantId,
+        productId: item.product?._id || '',
+        sku: variant.sku || '',
+        variantPrice: price,
+        discount: Number(variant.discount ?? 0),
+        images: variant.images || [],
+        combination: item.productVariant?.combination || {},
+        // Product info
+        productName: item.product?.name || '',
+        // Order item info — computed server-side
+        quantity,
+        price,
+        subtotal,
+      };
+    });
+
+    return { orderDetail, totalAmount };
+  }
+
   async createOrder(createOrderDto: CreateOrderDto, ip: string) {
     try {
       const isOnlinePayment = createOrderDto.payment.type === 'CARD';
+
+      const { orderDetail, totalAmount } =
+        await this.buildValidatedOrderData(createOrderDto);
 
       const dataCreate: any = {
         customerInfo: {
@@ -37,26 +129,8 @@ export class OrderService {
           phone: createOrderDto.customerInfo.phone,
           note: createOrderDto.customerInfo.note,
         },
-        orderDetail: createOrderDto.orderDetail.map((item: any) => ({
-          // Snapshot variant info (lưu trực tiếp)
-          variantId: item.productVariant._id || '',
-          productId: item.product?._id || '',
-          sku: item.productVariant?.sku || '',
-          variantPrice: item.productVariant?.price || 0,
-          discount: item.productVariant?.discount || 0,
-          images: item.productVariant?.images || [],
-          combination: item.productVariant?.combination || {},
-          // Product info
-          productName: item.product?.name || '',
-          // Order item info
-          quantity: item.quantity,
-          price: item.price,
-          subtotal: item.subtotal,
-        })),
-        totalAmount: createOrderDto.orderDetail.reduce(
-          (sum, item) => sum + item.subtotal,
-          0,
-        ),
+        orderDetail,
+        totalAmount,
         payment: {
           isCheckout: createOrderDto.payment.isCheckout,
           type: createOrderDto.payment.type,
@@ -97,22 +171,31 @@ export class OrderService {
         // COD payment: NO payment record created yet
         // Payment record for COD is created when seller confirms money received
 
-        // Update stock for COD orders immediately
-        for (const item of createOrderDto.orderDetail) {
-          try {
-            await firstValueFrom(
-              this.productService.send('product.variant.decrementStock', {
-                variantId: item.productVariant._id,
-                quantity: item.quantity,
-              }),
-            );
-          } catch (err) {
-            console.error(
-              'Stock update error for variant:',
-              item.productVariant._id,
-              err,
-            );
-          }
+        // Update stock for COD orders immediately (single bulk call).
+        // All-or-nothing contract: on failure NOTHING was decremented, so we
+        // remove the freshly created order and surface the real reason.
+        const stockItems = createOrderDto.orderDetail.map((item) => ({
+          variantId: String(item.productVariant._id),
+          quantity: item.quantity,
+        }));
+        let stockResult: any;
+        try {
+          stockResult = await firstValueFrom(
+            this.productService.send('product.variant.decrementStockBulk', {
+              items: stockItems,
+            }),
+          );
+        } catch (err) {
+          await this.orderModel.findByIdAndDelete(order._id);
+          throw new Error(`Không cập nhật được tồn kho cho đơn hàng: ${err?.message || err}`);
+        }
+
+        if (!stockResult?.success) {
+          await this.orderModel.findByIdAndDelete(order._id);
+          throw new Error(
+            stockResult?.message ||
+              `Sản phẩm không đủ hàng: ${(stockResult?.failedVariantIds || []).join(', ')}`,
+          );
         }
 
         // Send COD order confirmation email (fire and forget)
@@ -120,10 +203,10 @@ export class OrderService {
           email: createOrderDto.customerInfo.email,
           orderId: order._id.toString(),
           amount: order.totalAmount,
-          orderItems: createOrderDto.orderDetail.map((item: any) => ({
-            productVariant: item.productVariant._id,
-            productName: item.product?.name || '',
-            combination: item.productVariant?.combination || {},
+          orderItems: order.orderDetail.map((item) => ({
+            productVariant: item.variantId,
+            productName: item.productName,
+            combination: item.combination || {},
             quantity: item.quantity,
             price: item.price,
             subtotal: item.subtotal,
@@ -153,6 +236,9 @@ export class OrderService {
   async createRecord(createOrderDto: CreateOrderDto) {
     const isOnlinePayment = createOrderDto.payment.type === 'CARD';
 
+    const { orderDetail, totalAmount } =
+      await this.buildValidatedOrderData(createOrderDto);
+
     const dataCreate: any = {
       customerInfo: {
         guestId: new Types.ObjectId(createOrderDto.customerInfo.guestId),
@@ -162,23 +248,8 @@ export class OrderService {
         phone: createOrderDto.customerInfo.phone,
         note: createOrderDto.customerInfo.note,
       },
-      orderDetail: createOrderDto.orderDetail.map((item: any) => ({
-        variantId: item.productVariant._id || '',
-        productId: item.product?._id || '',
-        sku: item.productVariant?.sku || '',
-        variantPrice: item.productVariant?.price || 0,
-        discount: item.productVariant?.discount || 0,
-        images: item.productVariant?.images || [],
-        combination: item.productVariant?.combination || {},
-        productName: item.product?.name || '',
-        quantity: item.quantity,
-        price: item.price,
-        subtotal: item.subtotal,
-      })),
-      totalAmount: createOrderDto.orderDetail.reduce(
-        (sum, item) => sum + item.subtotal,
-        0,
-      ),
+      orderDetail,
+      totalAmount,
       payment: {
         isCheckout: createOrderDto.payment.isCheckout,
         type: createOrderDto.payment.type,
@@ -227,6 +298,27 @@ export class OrderService {
       throw new Error('Đơn hàng không ở trạng thái cho phép thanh toán lại');
     }
 
+    // EXPIRED orders had their stock restored by the expiry cron — re-decrement
+    // before allowing a new payment attempt, otherwise payment succeeds with
+    // stock never deducted (overselling).
+    if (order.status === 'EXPIRED') {
+      const stockItems = order.orderDetail.map((item: any) => ({
+        variantId: String(item.variantId ?? item.productVariant?._id),
+        quantity: item.quantity,
+      }));
+      const stockResult: any = await firstValueFrom(
+        this.productService.send('product.variant.decrementStockBulk', {
+          items: stockItems,
+        }),
+      );
+      if (!stockResult?.success) {
+        throw new Error(
+          stockResult?.message ||
+            `Sản phẩm không đủ hàng để thanh toán lại: ${(stockResult?.failedVariantIds || []).join(', ')}`,
+        );
+      }
+    }
+
     // Reset order status back to PENDING + extend expireAt
     order.status = 'PENDING';
     order.expireAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -271,6 +363,20 @@ export class OrderService {
   async getOrderById(orderId: string) {
     const order = await this.orderModel.findById(orderId);
     return order;
+  }
+
+  /**
+   * Ownership guard: khi cả requesterId và guestId được cung cấp thì phải khớp nhau.
+   */
+  assertOrderOwnership(
+    requesterId?: string | null,
+    targetGuestId?: string | null,
+  ) {
+    const requester = requesterId ? String(requesterId) : '';
+    const target = targetGuestId ? String(targetGuestId) : '';
+    if (requester && target && requester !== target) {
+      throw new UnauthorizedException('Không có quyền truy cập đơn hàng');
+    }
   }
 
   /**
@@ -360,15 +466,38 @@ export class OrderService {
     };
   }
 
-  async updateOrderStatus(id: string, updateOrderDto: UpdateOrderDto) {
-    const updateData: any = { status: updateOrderDto.status };
-    if (updateOrderDto.reason !== undefined) {
-      updateData.reason = updateOrderDto.reason;
+  async updateOrderStatus(
+    id: string,
+    updateOrderDto: UpdateOrderDto,
+    isAdmin = false,
+  ) {
+    const nextStatus = updateOrderDto.status;
+
+    if (!nextStatus || !ORDER_STATUS_TRANSITIONS.hasOwnProperty(nextStatus)) {
+      throw new BadRequestException(`Trạng thái không hợp lệ: ${nextStatus}`);
     }
 
     const order = await this.orderModel.findById(new Types.ObjectId(id));
     if (!order) {
       throw new Error('Đơn hàng không tồn tại');
+    }
+
+    if (!isAdmin && nextStatus !== 'CANCELLED') {
+      throw new ForbiddenException(
+        'Chỉ admin được phép thực hiện chuyển trạng thái này',
+      );
+    }
+
+    const allowed = ORDER_STATUS_TRANSITIONS[order.status] || [];
+    if (order.status !== nextStatus && !allowed.includes(nextStatus)) {
+      throw new BadRequestException(
+        `Không thể chuyển trạng thái từ ${order.status} sang ${nextStatus}`,
+      );
+    }
+
+    const updateData: any = { status: nextStatus };
+    if (updateOrderDto.reason !== undefined) {
+      updateData.reason = updateOrderDto.reason;
     }
 
     // Seller rejects CARD order → PENDING_REJECTION (needs admin approval)
@@ -383,24 +512,26 @@ export class OrderService {
         );
       }
 
-      // Restore stock for cancelled orders (only if still PENDING or COMPLETED with COD)
-      if (['PENDING', 'COMPLETED'].includes(order.status)) {
-        for (const item of order.orderDetail) {
-          if (item.variantId && item.quantity > 0) {
-            try {
-              await firstValueFrom(
-                this.productService.send('product.variant.incrementStock', {
-                  variantId: item.variantId,
-                  quantity: item.quantity,
-                }),
-              );
-            } catch (err) {
-              console.error(
-                `Failed to restore stock for variant ${item.variantId} on cancel:`,
-                err,
-              );
-            }
+      // Restore stock for cancelled orders. PENDING (never paid) and
+      // COMPLETED-COD both hold reserved stock; SHIPPING was already picked &
+      // decremented, so cancelling it must return the items to inventory too.
+      if (['PENDING', 'COMPLETED', 'SHIPPING'].includes(order.status)) {
+        try {
+          const restoreItems = order.orderDetail
+            .filter((item) => item.variantId && item.quantity > 0)
+            .map((item) => ({
+              variantId: String(item.variantId),
+              quantity: item.quantity,
+            }));
+          if (restoreItems.length > 0) {
+            await firstValueFrom(
+              this.productService.send('product.variant.incrementStockBulk', {
+                items: restoreItems,
+              }),
+            );
           }
+        } catch (err) {
+          console.error('Failed to restore stock on cancel:', err);
         }
       }
     }
@@ -470,22 +601,25 @@ export class OrderService {
       }
 
       // Restore stock for all items in the approved cancellation/refund
-      for (const item of order.orderDetail) {
-        if (item.variantId && item.quantity > 0) {
-          try {
-            await firstValueFrom(
-              this.productService.send('product.variant.incrementStock', {
-                variantId: item.variantId,
-                quantity: item.quantity,
-              }),
-            );
-          } catch (err) {
-            console.error(
-              `Failed to restore stock for variant ${item.variantId} on rejection approval:`,
-              err,
-            );
-          }
+      try {
+        const restoreItems = order.orderDetail
+          .filter((item) => item.variantId && item.quantity > 0)
+          .map((item) => ({
+            variantId: String(item.variantId),
+            quantity: item.quantity,
+          }));
+        if (restoreItems.length > 0) {
+          await firstValueFrom(
+            this.productService.send('product.variant.incrementStockBulk', {
+              items: restoreItems,
+            }),
+          );
         }
+      } catch (err) {
+        console.error(
+          'Failed to restore stock on rejection approval:',
+          err,
+        );
       }
 
       return await this.orderModel.findByIdAndUpdate(
@@ -864,57 +998,57 @@ export class OrderService {
 
       const orderIds = expiredOrders.map((o) => new Types.ObjectId(o._id));
 
-      // Update all expired orders to EXPIRED status
+      // Update all expired orders to EXPIRED status.
+      // status:'PENDING' guard prevents clobbering an order that was just paid
+      // (webhook COMPLETED) between the find and this write.
       await this.orderModel.updateMany(
-        { _id: { $in: orderIds } },
+        { _id: { $in: orderIds }, status: 'PENDING' },
         { status: 'EXPIRED' },
       );
 
-      // Update all PENDING payments of these orders to EXPIRED
-      for (const orderId of orderIds) {
-        try {
-          await firstValueFrom(
-            this.paymentService.send('payment.expireByOrderId', {
-              orderId: orderId.toString(),
-            }),
-          );
-        } catch (err) {
-          console.error(
-            'Failed to expire payments for order:',
-            orderId.toString(),
-            err,
-          );
-        }
+      // Update all PENDING payments of these orders to EXPIRED (single call)
+      try {
+        await firstValueFrom(
+          this.paymentService.send('payment.expireByOrderIds', {
+            orderIds: orderIds.map((id) => id.toString()),
+          }),
+        );
+      } catch (err) {
+        console.error('Failed to expire payments for expired orders:', err);
       }
 
-      // Restore stock for all items in expired orders
-      for (const order of expiredOrders) {
-        for (const item of order.orderDetail) {
-          if (item.variantId && item.quantity > 0) {
-            try {
-              await firstValueFrom(
-                this.productService
-                  .send('product.variant.incrementStock', {
-                    variantId: item.variantId,
-                    quantity: item.quantity,
-                  })
-                  .pipe(
-                    timeout(15000),
-                    catchError((err) => {
-                      this.logger.error(
-                        `Failed to restore stock for variant ${item.variantId} in expired order ${order._id}: ${err.message}`,
-                      );
-                      return of(null);
-                    }),
-                  ),
-              );
-            } catch (err) {
-              this.logger.error(
-                `Failed to restore stock for variant ${item.variantId} in expired order ${order._id}:`,
-                err,
-              );
-            }
-          }
+      // Restore stock for all items across expired orders (single bulk call)
+      const restoreItems = expiredOrders.flatMap((order) =>
+        order.orderDetail
+          .filter((item) => item.variantId && item.quantity > 0)
+          .map((item) => ({
+            variantId: String(item.variantId),
+            quantity: item.quantity,
+          })),
+      );
+
+      if (restoreItems.length > 0) {
+        try {
+          await firstValueFrom(
+            this.productService
+              .send('product.variant.incrementStockBulk', {
+                items: restoreItems,
+              })
+              .pipe(
+                timeout(15000),
+                catchError((err) => {
+                  this.logger.error(
+                    `Failed to restore stock for expired orders: ${err.message}`,
+                  );
+                  return of(null);
+                }),
+              ),
+          );
+        } catch (err) {
+          this.logger.error(
+            'Failed to restore stock for expired orders:',
+            err,
+          );
         }
       }
 

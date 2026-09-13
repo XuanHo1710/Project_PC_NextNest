@@ -1,7 +1,7 @@
 'use client'
 
 import { useSelectedRowsCategory } from "@/components/Content/ContentCategory";
-import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import { useHasPermission } from "@/hooks/admin/useHasPermission";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { Button, Form, Select } from "antd";
 import { useUpdateManyCategories } from "@/hooks/admin";
@@ -10,7 +10,7 @@ const EditSortCategory = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsCategory();
     const updateManyCategory = useUpdateManyCategories();
-    const { accountLogin } = useAuthEmployee();
+    const hasPermission = useHasPermission();
 
 
     const handleSortChange = (value: string) => {
@@ -66,9 +66,7 @@ const EditSortCategory = () => {
                         />
                     </div>
                     <div className="flex items-center justify-center w-2/5">
-                        {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                            (p) => p.method === "PATCH" && p.path === "/api/v1/admin/category/updateMany"
-                        ) &&
+                        {hasPermission("PATCH", "/api/v1/admin/category/updateMany") &&
                             <Form onFinish={handleEditMulti} className='flex items-center justify-center'>
                                 <Form.Item name="typeChange" className='!m-0' label="Thay đổi: ">
                                     <Select style={{ width: 300 }} placeholder={"Chọn tiêu chí thay đổi"}>

@@ -9,7 +9,7 @@ import { JwtStrategy } from 'guards/jwt.strategy';
 import { AuthModule } from 'admin/auth/auth.module';
 import { RoleModule } from 'admin/role/role.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MICROSERVICE, getServiceHost, getServicePort } from '@project-pc/common';
 import { CategoryModule } from 'admin/category/category.module';
 import { BrandModule } from 'admin/brand/brand.module';
 import { ProductModule } from 'admin/product/product.module';
@@ -37,8 +37,8 @@ import { SettingsModule } from 'admin/settings/settings.module';
         name: MICROSERVICE.AUTH_SERVICE,
         transport: Transport.TCP,
         options: {
-          host: process.env.AUTH_SERVICE_HOST ?? 'auth-service',
-          port: MICROSERVICE_PORT.AUTH_SERVICE,
+          host: getServiceHost(MICROSERVICE.AUTH_SERVICE),
+          port: getServicePort(MICROSERVICE.AUTH_SERVICE),
         },
       },
     ]),

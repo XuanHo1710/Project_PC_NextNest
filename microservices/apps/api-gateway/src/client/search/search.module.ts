@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MICROSERVICE, getServiceHost, getServicePort } from '@project-pc/common';
 import { SearchController } from 'client/search/search.controller';
 
 @Module({
@@ -10,8 +10,8 @@ import { SearchController } from 'client/search/search.controller';
         name: MICROSERVICE.ELASTICSEARCH_SERVICE,
         transport: Transport.TCP,
         options: {
-          host: process.env.ELASTICSEARCH_SERVICE_HOST ?? 'elasticsearch-service',
-          port: MICROSERVICE_PORT.ELASTICSEARCH_SERVICE,
+          host: getServiceHost(MICROSERVICE.ELASTICSEARCH_SERVICE),
+          port: getServicePort(MICROSERVICE.ELASTICSEARCH_SERVICE),
         },
       },
     ]),

@@ -57,7 +57,7 @@ export class AccountGuestController {
 
   @MessagePattern('account_guest.activate')
   activate(@Payload() data: { id: string }) {
-    return this.accountGuestService.update(data.id, {
+    return this.accountGuestService.updateAuthState(data.id, {
       accountStatus: 'ACTIVE',
       isActive: true,
     });
@@ -65,16 +65,11 @@ export class AccountGuestController {
 
   @MessagePattern('account_guest.suspend')
   suspend(@Payload() data: { id: string; reason?: string }) {
-    const updateData: UpdateAccountGuestDto = {
+    return this.accountGuestService.updateAuthState(data.id, {
       accountStatus: 'SUSPENDED',
       isActive: false,
-    };
-
-    if (data.reason) {
-      updateData.adminNotes = data.reason;
-    }
-
-    return this.accountGuestService.update(data.id, updateData);
+      ...(data.reason ? { adminNotes: data.reason } : {}),
+    });
   }
 
   // ============== ADDRESS MANAGEMENT ==============

@@ -4,10 +4,13 @@ import { toast } from "react-toastify";
 import { message } from "antd";
 import useCartStore from "@/hooks/useCart";
 import axios from "axios";
+import { clearSession, markSession } from "@/utils/sessionFlag";
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
 interface AuthUserState {
   user: IClientUser | null;
-  accessToken: string | null;
   loading: boolean;
   isAuthenticated: boolean;
 
@@ -15,19 +18,14 @@ interface AuthUserState {
   register: (registerData: IClientRegisterDto) => Promise<boolean>;
   logout: () => Promise<void>;
   loginWithGoogle: () => void;
-  handleGoogleCallback: (data: {
-    access_token: string;
-    payload: Record<string, unknown>;
-  }) => Promise<boolean>;
+  handleGoogleCallback: (payload: Record<string, unknown>) => Promise<boolean>;
 
   setUser: (user: IClientUser | null) => void;
-  setAccessToken: (token: string | null) => void;
   resetAuth: () => void;
 }
 
 const useAuthUser = create<AuthUserState>((set) => ({
   user: null,
-  accessToken: null,
   loading: false,
   isAuthenticated: false,
 
@@ -35,24 +33,27 @@ const useAuthUser = create<AuthUserState>((set) => ({
     try {
       set({ loading: true });
 
-      // Call Next.js API route → sets httpOnly cookies (client_access_token + client_refresh_token)
-      const response = await axios.post("/api/client/auth/login", {
-        email,
-        password,
-      });
+      // Backend sets httpOnly cookies (client_access_token + client_refresh_token).
+      // Every later request carries them automatically (withCredentials).
+      const response = await axios.post(
+        `${API_BASE}/client/auth/login`,
+        { email, password },
+        { withCredentials: true },
+      );
 
-      if (response.data.success && response.data.data) {
-        const { user, access_token } = response.data.data;
+      const user = response.data?.data?.user;
+
+      if (user?._id) {
         set({
-          user: user ? { ...user, id: user._id } : null,
-          accessToken: access_token,
+          user: { ...user, id: user._id } as IClientUser,
           isAuthenticated: true,
         });
+        markSession();
         toast.success("Đăng nhập thành công!");
         return true;
       }
 
-      message.error(response.data.message || "Đăng nhập thất bại");
+      message.error(response.data?.message || "Đăng nhập thất bại");
       return false;
     } catch (error: unknown) {
       const errorMessage =
@@ -70,11 +71,12 @@ const useAuthUser = create<AuthUserState>((set) => ({
       set({ loading: true });
 
       const response = await axios.post(
-        "/api/client/auth/register",
+        `${API_BASE}/client/auth/register`,
         registerData,
+        { withCredentials: true },
       );
 
-      if (response.data.success) {
+      if (response.status === 200 || response.status === 201) {
         toast.success(
           "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.",
           { autoClose: 6000 },
@@ -82,7 +84,7 @@ const useAuthUser = create<AuthUserState>((set) => ({
         return true;
       }
 
-      message.error(response.data.message || "Đăng ký thất bại");
+      message.error(response.data?.message || "Đăng ký thất bại");
       return false;
     } catch (error: unknown) {
       const errorMessage =
@@ -97,8 +99,11 @@ const useAuthUser = create<AuthUserState>((set) => ({
 
   logout: async () => {
     try {
-      await axios.post("/api/client/auth/logout");
-      set({ user: null, accessToken: null, isAuthenticated: false });
+      await axios.post(`${API_BASE}/client/auth/logout`, {}, {
+        withCredentials: true,
+      });
+      set({ user: null, isAuthenticated: false });
+      clearSession();
       toast.success("Đăng xuất thành công!");
 
       useCartStore.getState().setCart({
@@ -109,7 +114,8 @@ const useAuthUser = create<AuthUserState>((set) => ({
       });
     } catch (error) {
       console.error("Logout error:", error);
-      set({ user: null, accessToken: null, isAuthenticated: false });
+      set({ user: null, isAuthenticated: false });
+      clearSession();
     }
   },
 
@@ -125,34 +131,25 @@ const useAuthUser = create<AuthUserState>((set) => ({
     );
   },
 
-  handleGoogleCallback: async (data) => {
+  handleGoogleCallback: async (payload) => {
+    // The popup only receives the public profile; cookies were already
+    // set on the API domain by the gateway callback endpoint.
     try {
       set({ loading: true });
 
-      const response = await axios.post("/api/client/auth/google-callback", {
-        access_token: data.access_token,
-        payload: data.payload,
-      });
-
-      if (response.data.success && response.data.data) {
-        const { user, access_token } = response.data.data;
-        set({
-          user: user ? { ...user, id: user._id } : null,
-          accessToken: access_token,
-          isAuthenticated: true,
-        });
-        toast.success("Đăng nhập Google thành công!");
-        return true;
+      if (!payload?._id && !payload?.id) {
+        message.error("Đăng nhập Google thất bại");
+        return false;
       }
 
-      message.error(response.data.message || "Đăng nhập Google thất bại");
-      return false;
-    } catch (error: unknown) {
-      const errorMessage =
-        (error as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message || "Đăng nhập Google thất bại";
-      message.error(errorMessage);
-      return false;
+      const user = payload as unknown as IClientUser;
+      set({
+        user: { ...user, id: (user._id || user.id) as string },
+        isAuthenticated: true,
+      });
+      markSession();
+      toast.success("Đăng nhập Google thành công!");
+      return true;
     } finally {
       set({ loading: false });
     }
@@ -164,10 +161,10 @@ const useAuthUser = create<AuthUserState>((set) => ({
       isAuthenticated: !!user,
     }),
 
-  setAccessToken: (token) => set({ accessToken: token }),
-
-  resetAuth: () =>
-    set({ user: null, accessToken: null, isAuthenticated: false }),
+  resetAuth: () => {
+    clearSession();
+    set({ user: null, isAuthenticated: false });
+  },
 }));
 
 export default useAuthUser;

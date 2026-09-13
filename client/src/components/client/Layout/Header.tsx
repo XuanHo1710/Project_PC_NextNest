@@ -19,10 +19,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ICategory } from "@/types/category";
-import { categoryClientService, productClientService } from "@/services/client";
+import { productClientService } from "@/services/client";
 import { IProductVariantSearchResult } from "@/types/product";
 import useCartStore from "@/hooks/useCart";
 import { useUnreadCount } from "@/hooks/client/useChat";
+import { useCategories } from "@/hooks/client/useCategories";
 import { getProductImage } from "@/utils/productHelpers";
 import { LoginModal, RegisterModal } from "@/components/client/Auth";
 import { Dropdown, Avatar } from "antd";
@@ -39,19 +40,13 @@ export default function HeaderClient() {
     const [isOpenSearch, setOpenSearch] = useState<boolean>(false);
     const [isOpenModalLogin, setOpenModalLogin] = useState<boolean>(false);
     const [isOpenModalRegister, setOpenModalRegister] = useState<boolean>(false);
-    const [categories, setCategories] = useState<ICategory[] | []>([]);
     const [childrenCategories, setChildrenCategories] = useState<ICategory[] | []>([]);
-
     const [search, setSearch] = useState("");
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const { cart, updateQuantity, removeFromCart, calculateTotal } = useCartStore();
 
-    const { data, isLoading } = useQuery<ICategory[] | []>({
-        queryKey: ['categories'], // key để cache
-        queryFn: () => categoryClientService.getAllCategories(),
-        staleTime: 1000 * 60 * 5, // 5 phút cache không gọi lại
-    });
+    const { categories, isLoading } = useCategories();
 
 
     const { data: products, isLoading: loadingSearch } = useQuery<IProductVariantSearchResult[] | []>({
@@ -59,13 +54,6 @@ export default function HeaderClient() {
         queryFn: () => productClientService.esQuickSearch(search, 8),
         enabled: !!search
     });
-
-
-    useEffect(() => {
-        if (data && !isLoading) {
-            setCategories(data);
-        }
-    }, [data, isLoading]);
 
     // Compute parent categories (no parentId) and children map from flat list
     const parentCategories = useMemo(() => {

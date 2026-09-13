@@ -1,4 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -17,6 +22,29 @@ export class ChatService {
     @InjectModel(Message.name)
     private messageModel: Model<MessageDocument>,
   ) {}
+
+  /**
+   * Verify that the requester is a participant of the conversation.
+   * Throws UnauthorizedException when the conversation does not exist or
+   * the requester is not a member (avoids leaking conversation existence).
+   */
+  private async assertConversationMembership(
+    conversationId: string,
+    requesterId: string,
+  ) {
+    const conversation = await this.conversationModel
+      .findById(conversationId)
+      .select('participants')
+      .lean();
+
+    if (!conversation || !conversation.participants?.some(
+      (p) => p.userId === requesterId,
+    )) {
+      throw new UnauthorizedException('Bạn không phải thành viên hội thoại này');
+    }
+
+    return conversation;
+  }
 
   /**
    * Find or create a DIRECT conversation between two users.
@@ -68,12 +96,14 @@ export class ChatService {
   }
 
   /**
-   * Get all conversations for a user, sorted by last activity
+   * Get conversations for a user, sorted by last activity.
+   * Capped at the 50 most recent to keep payloads and query cost bounded.
    */
   async getConversationsByUser(userId: string) {
     return this.conversationModel
       .find({ 'participants.userId': userId })
       .sort({ updatedAt: -1 })
+      .limit(50)
       .lean();
   }
 
@@ -86,14 +116,36 @@ export class ChatService {
     senderName: string;
     content: string;
     type?: string;
+    requesterId?: string;
   }) {
+    if (data.content && data.content.length > 4000) {
+      throw new BadRequestException('Tin nhắn quá dài (tối đa 4000 ký tự)');
+    }
+
+    let senderId = data.senderId;
+    let senderName = data.senderName;
+
+    if (data.requesterId) {
+      const conversation = await this.assertConversationMembership(
+        data.conversationId,
+        data.requesterId,
+      );
+
+      // Server-side identity: ignore client-sent sender identity
+      senderId = data.requesterId;
+      const participant = conversation.participants.find(
+        (p) => p.userId === data.requesterId,
+      );
+      senderName = participant?.name || senderName;
+    }
+
     const message = await this.messageModel.create({
       conversationId: new Types.ObjectId(data.conversationId),
-      senderId: data.senderId,
-      senderName: data.senderName,
+      senderId,
+      senderName,
       content: data.content,
       type: data.type || 'TEXT',
-      readBy: [data.senderId],
+      readBy: [senderId],
     });
 
     // Update conversation's lastMessage + increment unread for other participants
@@ -109,14 +161,14 @@ export class ChatService {
               : data.type === 'VIDEO'
                 ? '[Video]'
                 : data.content,
-          senderId: data.senderId,
+          senderId,
           timestamp: new Date(),
         },
       };
 
       // Increment unread count for all participants except sender
       for (const p of conversation.participants) {
-        if (p.userId !== data.senderId) {
+        if (p.userId !== senderId) {
           updateFields[`unreadCount.${p.userId}`] =
             ((conversation.unreadCount?.get(p.userId) as number) || 0) + 1;
         }
@@ -139,7 +191,15 @@ export class ChatService {
     conversationId: string,
     limit: number = 30,
     cursor?: string,
+    requesterId?: string,
   ) {
+    if (requesterId) {
+      await this.assertConversationMembership(conversationId, requesterId);
+    }
+
+    // Clamp limit to a safe range (1..100, default 20)
+    const safeLimit = Math.min(Math.max(parseInt(String(limit)) || 20, 1), 100);
+
     const query: Record<string, unknown> = {
       conversationId: new Types.ObjectId(conversationId),
     };
@@ -152,10 +212,10 @@ export class ChatService {
     const messages = await this.messageModel
       .find(query)
       .sort({ createdAt: -1 })
-      .limit(limit + 1) // Fetch one extra to check if there are more
+      .limit(safeLimit + 1) // Fetch one extra to check if there are more
       .lean();
 
-    const hasMore = messages.length > limit;
+    const hasMore = messages.length > safeLimit;
     if (hasMore) {
       messages.pop(); // Remove the extra one
     }
@@ -171,18 +231,29 @@ export class ChatService {
   /**
    * Mark messages as read by user in a conversation
    */
-  async markAsRead(conversationId: string, userId: string) {
+  async markAsRead(
+    conversationId: string,
+    userId: string,
+    requesterId?: string,
+  ) {
+    if (requesterId) {
+      await this.assertConversationMembership(conversationId, requesterId);
+    }
+
+    // Server-side identity when the gateway provides an authenticated requester
+    const effectiveUserId = requesterId || userId;
+
     await this.messageModel.updateMany(
       {
         conversationId: new Types.ObjectId(conversationId),
-        readBy: { $ne: userId },
+        readBy: { $ne: effectiveUserId },
       },
-      { $addToSet: { readBy: userId } },
+      { $addToSet: { readBy: effectiveUserId } },
     );
 
     // Reset unread count for this user
     await this.conversationModel.findByIdAndUpdate(conversationId, {
-      $set: { [`unreadCount.${userId}`]: 0 },
+      $set: { [`unreadCount.${effectiveUserId}`]: 0 },
     });
 
     return { success: true };
@@ -191,26 +262,48 @@ export class ChatService {
   /**
    * Get a single conversation by ID
    */
-  async getConversationById(conversationId: string) {
+  async getConversationById(conversationId: string, requesterId?: string) {
+    if (requesterId) {
+      await this.assertConversationMembership(conversationId, requesterId);
+    }
+
     return this.conversationModel.findById(conversationId).lean();
   }
 
   /**
    * Get total unread count for a user across all conversations.
-   * Optimized: single aggregation instead of fetching all conversations.
+   * unreadCount is a map keyed by participant userId; a single aggregation
+   * unwinds participants and sums only the requesting user's counter.
    */
   async getUnreadCount(userId: string) {
-    const conversations = await this.conversationModel
-      .find({ 'participants.userId': userId })
-      .select('unreadCount')
-      .lean();
+    const result = await this.conversationModel
+      .aggregate<{ _id: null; totalUnread?: number }>([
+        { $match: { 'participants.userId': userId } },
+        { $unwind: '$participants' },
+        { $match: { 'participants.userId': userId } },
+        {
+          $group: {
+            _id: null,
+            totalUnread: {
+              $sum: {
+                $map: {
+                  input: { $objectToArray: { $ifNull: ['$unreadCount', {}] } },
+                  as: 'entry',
+                  in: {
+                    $cond: [
+                      { $eq: ['$$entry.k', '$participants.userId'] },
+                      '$$entry.v',
+                      0,
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      ])
+      .exec();
 
-    let totalUnread = 0;
-    for (const conv of conversations) {
-      const unreadMap = conv.unreadCount as unknown as Record<string, number>;
-      totalUnread += unreadMap?.[userId] || 0;
-    }
-
-    return { unreadCount: totalUnread };
+    return { unreadCount: result[0]?.totalUnread || 0 };
   }
 }

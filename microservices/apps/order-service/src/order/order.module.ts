@@ -7,7 +7,7 @@ import { OrderController } from 'src/order/order.controller';
 import { OrderService } from 'src/order/order.service';
 import {
   MICROSERVICE,
-  MICROSERVICE_PORT,
+  getRabbitMqUrl,
   ProductVariant,
   ProductVariantSchema,
 } from '@project-pc/common';
@@ -24,7 +24,7 @@ import {
         name: MICROSERVICE.PAYMENT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'payment.main',
           queueOptions: {
             durable: true,
@@ -39,7 +39,7 @@ import {
         name: MICROSERVICE.NOTIFICATION_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'notification.main',
           queueOptions: {
             durable: true,
@@ -54,7 +54,7 @@ import {
         name: MICROSERVICE.PRODUCT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'product.main',
           queueOptions: {
             durable: true,

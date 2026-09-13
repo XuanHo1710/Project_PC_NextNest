@@ -37,6 +37,7 @@ export class ChatController {
       senderName: string;
       content: string;
       type?: string;
+      requesterId?: string;
     },
   ) {
     return await this.chatService.sendMessage(data);
@@ -49,25 +50,36 @@ export class ChatController {
       conversationId: string;
       limit?: number;
       cursor?: string;
+      requesterId?: string;
     },
   ) {
     return await this.chatService.getMessages(
       data.conversationId,
       data.limit,
       data.cursor,
+      data.requesterId,
     );
   }
 
   @MessagePattern('chat.markAsRead')
   async markAsRead(
-    @Payload() data: { conversationId: string; userId: string },
+    @Payload() data: { conversationId: string; userId: string; requesterId?: string },
   ) {
-    return await this.chatService.markAsRead(data.conversationId, data.userId);
+    return await this.chatService.markAsRead(
+      data.conversationId,
+      data.userId,
+      data.requesterId,
+    );
   }
 
   @MessagePattern('chat.getConversationById')
-  async getConversationById(@Payload() data: { conversationId: string }) {
-    return await this.chatService.getConversationById(data.conversationId);
+  async getConversationById(
+    @Payload() data: { conversationId: string; requesterId?: string },
+  ) {
+    return await this.chatService.getConversationById(
+      data.conversationId,
+      data.requesterId,
+    );
   }
 
   @MessagePattern('chat.getUnreadCount')

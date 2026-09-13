@@ -1,17 +1,17 @@
-/**
+﻿/**
  * PCMarket.vn Category Scraper (Node.js)
  * =======================================
- * Cào danh mục sản phẩm từ https://pcmarket.vn/
- * Output JSON chuẩn theo Category entity schema (NestJS + MongoDB)
- * Với _id, parentId dùng new ObjectId() — KHÔNG phải chuỗi string.
+ * CÃ o danh má»¥c sáº£n pháº©m tá»« https://pcmarket.vn/
+ * Output JSON chuáº©n theo Category entity schema (NestJS + MongoDB)
+ * Vá»›i _id, parentId dÃ¹ng new ObjectId() â€” KHÃ”NG pháº£i chuá»—i string.
  *
  * Usage:
  *   npm install mongodb axios cheerio slugify
  *   node scrape_categories.js
  *
  * Output:
- *   - categories_output.json (Extended JSON với $oid)
- *   - Insert trực tiếp vào MongoDB (nếu bật INSERT_TO_DB = true)
+ *   - categories_output.json (Extended JSON vá»›i $oid)
+ *   - Insert trá»±c tiáº¿p vÃ o MongoDB (náº¿u báº­t INSERT_TO_DB = true)
  */
 
 const axios = require('axios');
@@ -21,15 +21,15 @@ const slugify = require('slugify');
 const fs = require('fs');
 const path = require('path');
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFIG
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const BASE_URL = 'https://pcmarket.vn/';
-const MONGODB_URI = 'mongodb+srv://xuanhodcbas:0984232310ho.@cluster0.f7sbfkn.mongodb.net/project-pc-hoang-ha';
+const MONGODB_URI = process.env.MONGODB_URI || '';
 const DB_NAME = 'project-pc-hoang-ha';
 const OUTPUT_FILE = path.join(__dirname, 'categories_output.json');
-const INSERT_TO_DB = true;       // true = insert vào MongoDB
-const CLEAR_OLD_CATEGORIES = true; // true = xóa hết categories cũ trước khi import
+const INSERT_TO_DB = true;       // true = insert vÃ o MongoDB
+const CLEAR_OLD_CATEGORIES = true; // true = xÃ³a háº¿t categories cÅ© trÆ°á»›c khi import
 
 const HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -37,9 +37,9 @@ const HEADERS = {
     'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
 };
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HELPERS
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const slugMap = new Map();
 
 function makeSlug(name) {
@@ -80,36 +80,36 @@ async function fetchPage(url) {
     return cheerio.load(resp.data);
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MEGA-MENU SCRAPER
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 /**
- * Parse mega-menu từ homepage pcmarket.vn
- * Cấu trúc HTML:
- *   - Sidebar trái: parent categories (links trong .Mega hoặc danh sách sidebar)
- *   - Mỗi parent mở ra submenu với subcategories
- *   - Từ homepage: PC GAMING STREAMING, PC WORKSTATION, ...
- *   - Từ subcategory pages: MÁY TÍNH CHƠI GAME PCM -> PC ĐẸP, PC GAMING GIÁ RẺ, ...
+ * Parse mega-menu tá»« homepage pcmarket.vn
+ * Cáº¥u trÃºc HTML:
+ *   - Sidebar trÃ¡i: parent categories (links trong .Mega hoáº·c danh sÃ¡ch sidebar)
+ *   - Má»—i parent má»Ÿ ra submenu vá»›i subcategories
+ *   - Tá»« homepage: PC GAMING STREAMING, PC WORKSTATION, ...
+ *   - Tá»« subcategory pages: MÃY TÃNH CHÆ I GAME PCM -> PC Äáº¸P, PC GAMING GIÃ Ráºº, ...
  */
 async function scrapeCategories() {
     const $ = await fetchPage(BASE_URL);
     const categories = [];
 
-    // ── Parse mega-menu từ homepage ──
-    // pcmarket.vn homepage hiển thị các parent categories trong mega-menu
-    // Mỗi section có heading + subcategory links
+    // â”€â”€ Parse mega-menu tá»« homepage â”€â”€
+    // pcmarket.vn homepage hiá»ƒn thá»‹ cÃ¡c parent categories trong mega-menu
+    // Má»—i section cÃ³ heading + subcategory links
 
-    // Dữ liệu mega-menu đã biết từ cấu trúc HTML:
+    // Dá»¯ liá»‡u mega-menu Ä‘Ã£ biáº¿t tá»« cáº¥u trÃºc HTML:
     const megaMenuData = [
         {
             name: 'PC Gaming, Streaming',
             url: 'https://pcmarket.vn/bo-pc-gaming-livestream.html',
             subs: [
                 {
-                    name: 'MÁY TÍNH CHƠI GAME PCM',
+                    name: 'MÃY TÃNH CHÆ I GAME PCM',
                     url: 'https://pcmarket.vn/may-tinh-choi-game-pcm.html',
-                    subs: ['PC ĐẸP', 'PC GAMING GIÁ RẺ', 'PC GAMING TRUNG CẤP', 'PC GAMING CAO CẤP']
+                    subs: ['PC Äáº¸P', 'PC GAMING GIÃ Ráºº', 'PC GAMING TRUNG Cáº¤P', 'PC GAMING CAO Cáº¤P']
                 },
                 {
                     name: 'PC Core Ultra',
@@ -127,12 +127,12 @@ async function scrapeCategories() {
                     subs: []
                 },
                 {
-                    name: 'Theo Khoảng Giá',
+                    name: 'Theo Khoáº£ng GiÃ¡',
                     url: 'https://pcmarket.vn/pc-gaming-streaming-theo-khoang-gia.html',
                     subs: [
-                        'PC Gaming Dưới 10 Triệu', 'PC Gaming 10 - 15 Triệu',
-                        'PC Gaming 15 - 20 Triệu', 'PC Gaming 20 - 30 Triệu',
-                        'PC Gaming 30 - 50 Triệu', 'PC Gaming Trên 50 Triệu'
+                        'PC Gaming DÆ°á»›i 10 Triá»‡u', 'PC Gaming 10 - 15 Triá»‡u',
+                        'PC Gaming 15 - 20 Triá»‡u', 'PC Gaming 20 - 30 Triá»‡u',
+                        'PC Gaming 30 - 50 Triá»‡u', 'PC Gaming TrÃªn 50 Triá»‡u'
                     ]
                 }
             ]
@@ -143,7 +143,7 @@ async function scrapeCategories() {
             subs: [
                 { name: 'PC WORKSTATION 2D', url: '', subs: [] },
                 { name: 'PC WORKSTATION 3D', url: '', subs: [] },
-                { name: 'PC Dựng Phim - Edit Video', url: '', subs: [] },
+                { name: 'PC Dá»±ng Phim - Edit Video', url: '', subs: [] },
             ]
         },
         {
@@ -156,33 +156,33 @@ async function scrapeCategories() {
             ]
         },
         {
-            name: 'PC Văn Phòng',
+            name: 'PC VÄƒn PhÃ²ng',
             url: 'https://pcmarket.vn/pc-van-phong.html',
             subs: [
-                { name: 'PC Văn Phòng Theo Nhu Cầu', url: '', subs: [] },
-                { name: 'PC Văn Phòng Theo Khoảng Giá', url: '', subs: [] },
-                { name: 'PC Văn Phòng Chọn Theo CPU', url: '', subs: [] },
-                { name: 'PC Trọn Bộ M OFFICE (PC + Màn Hình)', url: '', subs: [] },
+                { name: 'PC VÄƒn PhÃ²ng Theo Nhu Cáº§u', url: '', subs: [] },
+                { name: 'PC VÄƒn PhÃ²ng Theo Khoáº£ng GiÃ¡', url: '', subs: [] },
+                { name: 'PC VÄƒn PhÃ²ng Chá»n Theo CPU', url: '', subs: [] },
+                { name: 'PC Trá»n Bá»™ M OFFICE (PC + MÃ n HÃ¬nh)', url: '', subs: [] },
             ]
         },
         {
-            name: 'PC Giả Lập Ảo Hóa',
+            name: 'PC Giáº£ Láº­p áº¢o HÃ³a',
             url: 'https://pcmarket.vn/pc-gia-lap-ao-hoa.html',
             subs: []
         },
         {
-            name: 'Linh Kiện Máy Tính',
+            name: 'Linh Kiá»‡n MÃ¡y TÃ­nh',
             url: 'https://pcmarket.vn/linh-kien-may-tinh.html',
             subs: [
-                { name: 'CPU - Bộ vi xử lý', url: '', subs: ['CPU Intel', 'CPU AMD'] },
-                { name: 'Mainboard - Bo mạch chủ', url: '', subs: ['Mainboard Intel', 'Mainboard AMD'] },
-                { name: 'VGA - Card màn hình', url: '', subs: ['VGA NVIDIA', 'VGA AMD'] },
-                { name: 'RAM - Bộ nhớ trong', url: '', subs: ['RAM DDR4', 'RAM DDR5'] },
-                { name: 'Case - Vỏ máy tính', url: '', subs: [] },
-                { name: 'Nguồn máy tính (PSU)', url: '', subs: [] },
-                { name: 'Ổ cứng SSD', url: '', subs: ['SSD SATA', 'SSD NVMe'] },
-                { name: 'Ổ cứng HDD', url: '', subs: [] },
-                { name: 'Tản nhiệt CPU', url: '', subs: ['Tản nhiệt khí', 'Tản nhiệt nước AIO'] },
+                { name: 'CPU - Bá»™ vi xá»­ lÃ½', url: '', subs: ['CPU Intel', 'CPU AMD'] },
+                { name: 'Mainboard - Bo máº¡ch chá»§', url: '', subs: ['Mainboard Intel', 'Mainboard AMD'] },
+                { name: 'VGA - Card mÃ n hÃ¬nh', url: '', subs: ['VGA NVIDIA', 'VGA AMD'] },
+                { name: 'RAM - Bá»™ nhá»› trong', url: '', subs: ['RAM DDR4', 'RAM DDR5'] },
+                { name: 'Case - Vá» mÃ¡y tÃ­nh', url: '', subs: [] },
+                { name: 'Nguá»“n mÃ¡y tÃ­nh (PSU)', url: '', subs: [] },
+                { name: 'á»” cá»©ng SSD', url: '', subs: ['SSD SATA', 'SSD NVMe'] },
+                { name: 'á»” cá»©ng HDD', url: '', subs: [] },
+                { name: 'Táº£n nhiá»‡t CPU', url: '', subs: ['Táº£n nhiá»‡t khÃ­', 'Táº£n nhiá»‡t nÆ°á»›c AIO'] },
             ]
         },
         {
@@ -191,48 +191,48 @@ async function scrapeCategories() {
             subs: []
         },
         {
-            name: 'Màn Hình Máy Tính',
+            name: 'MÃ n HÃ¬nh MÃ¡y TÃ­nh',
             url: 'https://pcmarket.vn/monitor-man-hinh.html',
             subs: [
-                { name: 'Màn Hình Theo Hãng', url: '', subs: ['Màn hình ASUS', 'Màn hình MSI', 'Màn hình LG', 'Màn hình Dell', 'Màn hình Samsung'] },
-                { name: 'Theo Kích Thước Màn Hình', url: '', subs: ['Màn hình 24 inch', 'Màn hình 27 inch', 'Màn hình 32 inch', 'Màn hình 34 inch trở lên'] },
-                { name: 'Theo Tần Số Quét', url: '', subs: ['144Hz', '165Hz', '240Hz', '360Hz'] },
-                { name: 'Độ Phân Giải Màn Hình', url: '', subs: ['Full HD 1080p', '2K QHD', '4K UHD'] },
-                { name: 'Theo Nhu Cầu Sử Dụng', url: '', subs: ['Màn hình Gaming', 'Màn hình Đồ họa', 'Màn hình Văn phòng'] },
+                { name: 'MÃ n HÃ¬nh Theo HÃ£ng', url: '', subs: ['MÃ n hÃ¬nh ASUS', 'MÃ n hÃ¬nh MSI', 'MÃ n hÃ¬nh LG', 'MÃ n hÃ¬nh Dell', 'MÃ n hÃ¬nh Samsung'] },
+                { name: 'Theo KÃ­ch ThÆ°á»›c MÃ n HÃ¬nh', url: '', subs: ['MÃ n hÃ¬nh 24 inch', 'MÃ n hÃ¬nh 27 inch', 'MÃ n hÃ¬nh 32 inch', 'MÃ n hÃ¬nh 34 inch trá»Ÿ lÃªn'] },
+                { name: 'Theo Táº§n Sá»‘ QuÃ©t', url: '', subs: ['144Hz', '165Hz', '240Hz', '360Hz'] },
+                { name: 'Äá»™ PhÃ¢n Giáº£i MÃ n HÃ¬nh', url: '', subs: ['Full HD 1080p', '2K QHD', '4K UHD'] },
+                { name: 'Theo Nhu Cáº§u Sá»­ Dá»¥ng', url: '', subs: ['MÃ n hÃ¬nh Gaming', 'MÃ n hÃ¬nh Äá»“ há»a', 'MÃ n hÃ¬nh VÄƒn phÃ²ng'] },
             ]
         },
         {
             name: 'Gaming Gear',
             url: 'https://pcmarket.vn/gaming-gear.html',
             subs: [
-                { name: 'Bàn phím chơi game', url: '', subs: ['Bàn phím cơ', 'Bàn phím không dây'] },
-                { name: 'Chuột chơi game', url: '', subs: ['Chuột có dây', 'Chuột không dây'] },
-                { name: 'Tai nghe chơi game', url: '', subs: ['Tai nghe Over-ear', 'Tai nghe In-ear'] },
-                { name: 'Ghế chơi game', url: '', subs: [] },
-                { name: 'Bàn chơi game', url: '', subs: [] },
-                { name: 'Lót chuột', url: '', subs: [] },
+                { name: 'BÃ n phÃ­m chÆ¡i game', url: '', subs: ['BÃ n phÃ­m cÆ¡', 'BÃ n phÃ­m khÃ´ng dÃ¢y'] },
+                { name: 'Chuá»™t chÆ¡i game', url: '', subs: ['Chuá»™t cÃ³ dÃ¢y', 'Chuá»™t khÃ´ng dÃ¢y'] },
+                { name: 'Tai nghe chÆ¡i game', url: '', subs: ['Tai nghe Over-ear', 'Tai nghe In-ear'] },
+                { name: 'Gháº¿ chÆ¡i game', url: '', subs: [] },
+                { name: 'BÃ n chÆ¡i game', url: '', subs: [] },
+                { name: 'LÃ³t chuá»™t', url: '', subs: [] },
             ]
         },
         {
             name: 'Loa, Mic, Webcam',
             url: 'https://pcmarket.vn/loa-mic-webcam.html',
             subs: [
-                { name: 'Loa máy tính', url: '', subs: [] },
-                { name: 'Micro - Mic thu âm', url: '', subs: [] },
+                { name: 'Loa mÃ¡y tÃ­nh', url: '', subs: [] },
+                { name: 'Micro - Mic thu Ã¢m', url: '', subs: [] },
                 { name: 'Webcam', url: '', subs: [] },
             ]
         },
     ];
 
-    // ── Cũng thử scrape dynamic từ homepage đã fetch ──
-    // Tìm thêm subcategories nếu có thể
+    // â”€â”€ CÅ©ng thá»­ scrape dynamic tá»« homepage Ä‘Ã£ fetch â”€â”€
+    // TÃ¬m thÃªm subcategories náº¿u cÃ³ thá»ƒ
     try {
         await enrichFromHomepage($, megaMenuData);
     } catch (e) {
         console.log('[!] Enrichment from homepage skipped:', e.message);
     }
 
-    // ── Build categories with ObjectId ──
+    // â”€â”€ Build categories with ObjectId â”€â”€
     for (const parent of megaMenuData) {
         const parentCat = buildCategory(parent.name);
         categories.push(parentCat);
@@ -261,29 +261,29 @@ async function scrapeCategories() {
 }
 
 /**
- * Thử enrich data từ actual mega-menu HTML trên homepage
+ * Thá»­ enrich data tá»« actual mega-menu HTML trÃªn homepage
  */
 async function enrichFromHomepage($, megaMenuData) {
-    // Tìm mega-menu trong HTML
+    // TÃ¬m mega-menu trong HTML
     const megaDiv = $('div.Mega, div.mega-menu, #mega-menu, nav.mega');
     if (!megaDiv.length) {
-        // Thử tìm danh mục sidebar
+        // Thá»­ tÃ¬m danh má»¥c sidebar
         const sidebar = $('[class*="cate"][class*="menu"], [class*="sidebar"]');
         if (sidebar.length) {
-            console.log(`[+] Tìm thấy sidebar danh mục: ${sidebar.attr('class')}`);
+            console.log(`[+] TÃ¬m tháº¥y sidebar danh má»¥c: ${sidebar.attr('class')}`);
         }
     } else {
-        console.log('[+] Tìm thấy mega-menu container');
+        console.log('[+] TÃ¬m tháº¥y mega-menu container');
     }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // EXTENDED JSON OUTPUT
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 /**
- * Chuyển đổi categories sang Extended JSON format (với $oid, $date)
- * Dùng cho mongoimport hoặc manual inspect
+ * Chuyá»ƒn Ä‘á»•i categories sang Extended JSON format (vá»›i $oid, $date)
+ * DÃ¹ng cho mongoimport hoáº·c manual inspect
  */
 function toExtendedJSON(categories) {
     return categories.map(cat => ({
@@ -297,12 +297,12 @@ function toExtendedJSON(categories) {
     }));
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MONGODB INSERT
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 async function insertToMongoDB(categories) {
-    console.log('\n[*] Kết nối MongoDB Atlas...');
+    console.log('\n[*] Káº¿t ná»‘i MongoDB Atlas...');
     const client = new MongoClient(MONGODB_URI);
     try {
         await client.connect();
@@ -311,10 +311,10 @@ async function insertToMongoDB(categories) {
 
         if (CLEAR_OLD_CATEGORIES) {
             const deleted = await col.deleteMany({});
-            console.log(`[!] Đã xóa ${deleted.deletedCount} categories cũ`);
+            console.log(`[!] ÄÃ£ xÃ³a ${deleted.deletedCount} categories cÅ©`);
         }
 
-        // Insert từng batch 100
+        // Insert tá»«ng batch 100
         const batchSize = 100;
         let inserted = 0;
         for (let i = 0; i < categories.length; i += batchSize) {
@@ -324,7 +324,7 @@ async function insertToMongoDB(categories) {
             console.log(`[+] Inserted ${inserted}/${categories.length}`);
         }
 
-        console.log(`[✓] Đã insert ${categories.length} categories vào MongoDB!`);
+        console.log(`[âœ“] ÄÃ£ insert ${categories.length} categories vÃ o MongoDB!`);
 
         // Verify
         const parentCount = await col.countDocuments({ parentId: null });
@@ -335,15 +335,15 @@ async function insertToMongoDB(categories) {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MAIN
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 async function main() {
-    console.log('═'.repeat(60));
+    console.log('â•'.repeat(60));
     console.log('  PCMarket.vn Category Scraper (Node.js + ObjectId)');
-    console.log('  Output chuẩn theo category.entity.ts');
-    console.log('═'.repeat(60));
+    console.log('  Output chuáº©n theo category.entity.ts');
+    console.log('â•'.repeat(60));
 
     // 1. Scrape categories
     const categories = await scrapeCategories();
@@ -352,26 +352,26 @@ async function main() {
     const parents = categories.filter(c => c.parentId === null);
     const children = categories.filter(c => c.parentId !== null);
 
-    console.log(`\n${'═'.repeat(60)}`);
-    console.log(`  Kết quả scraping:`);
-    console.log(`  - Tổng categories: ${categories.length}`);
+    console.log(`\n${'â•'.repeat(60)}`);
+    console.log(`  Káº¿t quáº£ scraping:`);
+    console.log(`  - Tá»•ng categories: ${categories.length}`);
     console.log(`  - Parent categories (level 1): ${parents.length}`);
     console.log(`  - Sub-categories (level 2+): ${children.length}`);
-    console.log(`${'═'.repeat(60)}`);
+    console.log(`${'â•'.repeat(60)}`);
 
     // 3. Print tree
-    console.log('\n📂 Category Tree:');
+    console.log('\nðŸ“‚ Category Tree:');
     for (const parent of parents) {
-        console.log(`  ├── ${parent.name}  (slug: ${parent.slug}, _id: ${parent._id})`);
+        console.log(`  â”œâ”€â”€ ${parent.name}  (slug: ${parent.slug}, _id: ${parent._id})`);
         const level2 = categories.filter(c => c.parentId && c.parentId.equals(parent._id));
         for (let i = 0; i < level2.length; i++) {
             const child = level2[i];
-            const prefix = i === level2.length - 1 ? '  │   └──' : '  │   ├──';
+            const prefix = i === level2.length - 1 ? '  â”‚   â””â”€â”€' : '  â”‚   â”œâ”€â”€';
             console.log(`${prefix} ${child.name}  (slug: ${child.slug})`);
             const level3 = categories.filter(c => c.parentId && c.parentId.equals(child._id));
             for (let j = 0; j < level3.length; j++) {
                 const grandchild = level3[j];
-                const p3 = j === level3.length - 1 ? '  │       └──' : '  │       ├──';
+                const p3 = j === level3.length - 1 ? '  â”‚       â””â”€â”€' : '  â”‚       â”œâ”€â”€';
                 console.log(`${p3} ${grandchild.name}`);
             }
         }
@@ -388,7 +388,7 @@ async function main() {
     }
 
     // 6. Sample output
-    console.log(`\n📋 Sample document (first category):`);
+    console.log(`\nðŸ“‹ Sample document (first category):`);
     console.log(JSON.stringify(extJSON[0], null, 2));
 }
 

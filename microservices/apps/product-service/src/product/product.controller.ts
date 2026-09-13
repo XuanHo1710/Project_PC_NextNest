@@ -443,6 +443,28 @@ export class ProductController {
     }
   }
 
+  @MessagePattern('product.variant.decrementStockBulk')
+  async decrementVariantStockBulk(
+    @Payload()
+    data: { items: Array<{ variantId: string; quantity: number }> },
+    @Ctx() context: RmqContext,
+  ) {
+    return this.handleRmq(context, () =>
+      this.productService.decrementVariantsStockBulk(data.items),
+    );
+  }
+
+  @MessagePattern('product.variant.incrementStockBulk')
+  async incrementVariantStockBulk(
+    @Payload()
+    data: { items: Array<{ variantId: string; quantity: number }> },
+    @Ctx() context: RmqContext,
+  ) {
+    return this.handleRmq(context, () =>
+      this.productService.incrementVariantsStockBulk(data.items),
+    );
+  }
+
   // ============= PRODUCT ATTRIBUTE ENDPOINTS =============
   @MessagePattern('product.attribute.create')
   async createProductAttribute(

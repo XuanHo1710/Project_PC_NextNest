@@ -15,14 +15,17 @@ services:
   redis:
     image: redis:7.2-alpine
     container_name: redis-pc
-    command: redis-server --requirepass ${REDIS_PASSWORD:-123} --databases 16 --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required} --databases 16 --maxmemory 256mb --maxmemory-policy allkeys-lru
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     ports:
-      - "6379:6379"
+      # Bind to loopback only: local dev can reach it, LAN/internet cannot.
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-123}", "ping"]
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,11 +36,11 @@ services:
     image: rabbitmq:4.2.3-management
     container_name: rabbitmq-pc
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-admin}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?RABBITMQ_USER is required}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:?RABBITMQ_PASS is required}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     restart: unless-stopped
@@ -59,10 +62,14 @@ services:
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
       - cluster.name=project-pc
     ports:
-      - "9200:9200"
+      - "127.0.0.1:9200:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1g
     healthcheck:
       test:
         ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
@@ -104,6 +111,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - NODE_ENV=production
       - PORT=8080
       - JWT_ACCESS_TOKEN_SECRET=${JWT_ACCESS_TOKEN_SECRET}
       - JWT_ACCESS_EXPIRE=${JWT_ACCESS_EXPIRE:-2d}
@@ -118,8 +126,8 @@ services:
       - AUTH_SERVICE_PORT=3001
       - PRODUCT_SERVICE_HOST=product-service
       - PRODUCT_SERVICE_PORT=3002
-      - HISTORY_LOG_HOST=history-log
-      - HISTORY_LOG_PORT=3003
+      - HISTORY_LOG_SERVICE_HOST=history-log
+      - HISTORY_LOG_SERVICE_PORT=3003
       - CART_SERVICE_HOST=cart-service
       - CART_SERVICE_PORT=3004
       - PAYMENT_SERVICE_HOST=payment-service
@@ -128,16 +136,16 @@ services:
       - ORDER_SERVICE_PORT=3006
       - NOTIFICATION_SERVICE_HOST=notification-service
       - NOTIFICATION_SERVICE_PORT=3007
-      - SAGA_SERVICE_HOST=saga-orchestration-service
-      - SAGA_SERVICE_PORT=3008
+      - SAGA_ORCHESTRATOR_SERVICE_HOST=saga-orchestration-service
+      - SAGA_ORCHESTRATOR_SERVICE_PORT=3008
       - CHAT_SERVICE_HOST=chat-service
       - CHAT_SERVICE_PORT=3009
       - ELASTICSEARCH_SERVICE_HOST=elasticsearch-service
       - ELASTICSEARCH_SERVICE_PORT=3010
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-123}
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:?RABBITMQ_USER is required}:${RABBITMQ_PASS:?RABBITMQ_PASS is required}@rabbitmq:5672
     depends_on:
       redis:
         condition: service_healthy
@@ -149,7 +157,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/docs || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -162,6 +170,7 @@ services:
     image: xuanho17102004/project-chat-social-auth-service:latest
     container_name: auth-service
     environment:
+      - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
       - JWT_ACCESS_TOKEN_SECRET=${JWT_ACCESS_TOKEN_SECRET}
       - JWT_ACCESS_EXPIRE=${JWT_ACCESS_EXPIRE:-2d}
@@ -169,7 +178,7 @@ services:
       - JWT_REFRESH_EXPIRE=${JWT_REFRESH_EXPIRE:-30d}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-123}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
       - REDIS_DB=0
     depends_on:
       redis:
@@ -192,12 +201,13 @@ services:
     image: xuanho17102004/project-chat-social-product-service:latest
     container_name: product-service
     environment:
+      - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-123}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required}
       - REDIS_DB=0
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:?RABBITMQ_USER is required}:${RABBITMQ_PASS:?RABBITMQ_PASS is required}@rabbitmq:5672
     depends_on:
       redis:
         condition: service_healthy
@@ -221,6 +231,7 @@ services:
     image: xuanho17102004/project-chat-social-cart-service:latest
     container_name: cart-service
     environment:
+      - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
     restart: unless-stopped
     healthcheck:
@@ -240,8 +251,9 @@ services:
     image: xuanho17102004/project-chat-social-order-service:latest
     container_name: order-service
     environment:
+      - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:?RABBITMQ_USER is required}:${RABBITMQ_PASS:?RABBITMQ_PASS is required}@rabbitmq:5672
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -262,9 +274,17 @@ services:
   payment-service:
     image: xuanho17102004/project-chat-social-payment-service:latest
     container_name: payment-service
+    ports:
+      # PayOS webhook endpoint (POST /payment/payos-webhook).
+      # Reverse-proxy a public HTTPS path to this port in production.
+      - "3011:3011"
     environment:
+      - NODE_ENV=production
+      - PAYMENT_HTTP_PORT=3011
       - MONGODB_URI=${MONGODB_URI}
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+      - CART_SERVICE_HOST=cart-service
+      - CART_SERVICE_PORT=3004
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:?RABBITMQ_USER is required}:${RABBITMQ_PASS:?RABBITMQ_PASS is required}@rabbitmq:5672
       - PAYOS_CLIENTID=${PAYOS_CLIENTID}
       - PAYOS_APIKEY=${PAYOS_APIKEY}
       - PAYOS_CHECKSUM=${PAYOS_CHECKSUM}
@@ -290,8 +310,9 @@ services:
     image: xuanho17102004/project-chat-social-notification-service:latest
     container_name: notification-service
     environment:
+      - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:?RABBITMQ_USER is required}:${RABBITMQ_PASS:?RABBITMQ_PASS is required}@rabbitmq:5672
       - BREVO_API_KEY=${BREVO_API_KEY}
       - BREVO_SENDER_EMAIL=${BREVO_SENDER_EMAIL}
       - BREVO_SENDER_NAME=${BREVO_SENDER_NAME:-Project PC}
@@ -316,6 +337,7 @@ services:
     image: xuanho17102004/project-chat-social-chat-service:latest
     container_name: chat-service
     environment:
+      - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
     restart: unless-stopped
     healthcheck:
@@ -332,9 +354,10 @@ services:
       - backend
 
   history-log:
-    image: xuanho17102004/project-chat-social-history-log:latest
+    image: xuanho17102004/project-chat-social-history_log:latest
     container_name: history-log
     environment:
+      - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
     restart: unless-stopped
     healthcheck:
@@ -354,8 +377,11 @@ services:
     image: xuanho17102004/project-chat-social-saga-orchestration-service:latest
     container_name: saga-orchestration-service
     environment:
+      - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:?RABBITMQ_USER is required}:${RABBITMQ_PASS:?RABBITMQ_PASS is required}@rabbitmq:5672
+      - CART_SERVICE_HOST=cart-service
+      - CART_SERVICE_PORT=3004
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -377,8 +403,9 @@ services:
     image: xuanho17102004/project-chat-social-elasticsearch-service:latest
     container_name: elasticsearch-service
     environment:
+      - NODE_ENV=production
       - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-admin}:${RABBITMQ_PASS:-admin}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:?RABBITMQ_USER is required}:${RABBITMQ_PASS:?RABBITMQ_PASS is required}@rabbitmq:5672
     depends_on:
       elasticsearch:
         condition: service_healthy

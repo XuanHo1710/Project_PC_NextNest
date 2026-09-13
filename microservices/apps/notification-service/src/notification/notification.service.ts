@@ -73,8 +73,10 @@ export class NotificationService {
       textContent: options.textContent || this.stripHtml(options.htmlContent),
     };
 
+    let response: Response;
+    let data: BrevoResponse;
     try {
-      const response = await fetch(this.brevoApiUrl, {
+      response = await fetch(this.brevoApiUrl, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -84,20 +86,23 @@ export class NotificationService {
         body: JSON.stringify(payload),
       });
 
-      const data: BrevoResponse = await response.json();
+      data = await response.json();
 
       if (response.ok) {
         return true;
-      } else {
-        this.logger.error(
-          `Error sending email: ${data.message || 'Unknown error'}`,
-        );
-        return false;
       }
     } catch (error: any) {
       this.logger.error(`Error sending email: ${error.message}`);
-      return false;
+      throw new Error(`Gửi email thất bại: ${error.message}`);
     }
+
+    // Non-OK response → throw so the RMQ consumer nack/retry/DLQ path engages
+    this.logger.error(
+      `Error sending email: ${response.status} ${data.message || 'Unknown error'}`,
+    );
+    throw new Error(
+      `Gửi email thất bại: HTTP ${response.status} ${data.message || 'Unknown error'}`,
+    );
   }
 
   /**
@@ -124,11 +129,19 @@ export class NotificationService {
 
     const htmlContent = this.generateOtpEmailTemplate(otp, expiresInMinutes);
 
-    const success = await this.sendEmail({
-      to: email,
-      subject: `[${otp}] Mã xác minh đặt lại mật khẩu - Social Chat`,
-      htmlContent,
-    });
+    // sendEmail throws on failure; OTP flow intentionally tolerates failures
+    // in non-production so auth flows are not blocked during dev testing.
+    let success = false;
+    try {
+      success = await this.sendEmail({
+        to: email,
+        subject: `[${otp}] Mã xác minh đặt lại mật khẩu - Social Chat`,
+        htmlContent,
+      });
+    } catch (error: any) {
+      this.logger.warn(`OTP email delivery failed: ${error.message}`);
+      success = false;
+    }
 
     // If email fails, still log OTP for dev testing
     if (!success) {

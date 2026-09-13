@@ -27,6 +27,11 @@ export class Payment {
 
   @Prop({ type: Number, default: 1 })
   paymentAttempt: number; // Số lần thanh toán (đánh số thứ tự)
+
+  @Prop({ type: String, default: '' })
+  note: string; // Ghi chú hệ thống (vd: webhook đáng ngờ AMOUNT_MISMATCH)
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);
+
+PaymentSchema.index({ paymentCode: 1 }, { unique: true });

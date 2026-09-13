@@ -279,7 +279,12 @@ export class ProductSearchService implements OnModuleInit {
         `Indexed variant ${doc.variantId} for product "${doc.productName}"`,
       );
     } catch (error) {
-      this.logger.error(`Failed to index variant: ${error.message}`);
+      // Rethrow so the RMQ consumer's bounded-retry/DLQ path can engage
+      // instead of acking silently (which causes index drift)
+      this.logger.error(
+        `Failed to index variant ${data?.variant?._id}: ${error.message}`,
+      );
+      throw error;
     }
   }
 
@@ -364,11 +369,17 @@ export class ProductSearchService implements OnModuleInit {
           `Bulk index had ${errorItems.length} errors`,
           JSON.stringify(errorItems.slice(0, 3)),
         );
+        // Partial failure = silent index drift; surface to retry/DLQ path
+        throw new Error(
+          `Bulk index partial failure: ${errorItems.length}/${variants.length} items failed`,
+        );
       } else {
         this.logger.log(`Bulk indexed ${variants.length} variants`);
       }
     } catch (error) {
+      // Rethrow so the RMQ consumer's bounded-retry/DLQ path can engage
       this.logger.error(`Bulk index failed: ${error.message}`);
+      throw error;
     }
   }
 
@@ -385,9 +396,12 @@ export class ProductSearchService implements OnModuleInit {
       this.logger.log(`Removed variant ${variantId} from index`);
     } catch (error) {
       if (error.meta?.statusCode === 404) {
+        // Already absent — deletion is idempotent, treat as success
         this.logger.warn(`Variant ${variantId} not found in index`);
       } else {
+        // Rethrow so the RMQ consumer's bounded-retry/DLQ path can engage
         this.logger.error(`Failed to remove variant: ${error.message}`);
+        throw error;
       }
     }
   }
@@ -406,9 +420,11 @@ export class ProductSearchService implements OnModuleInit {
         `Removed ${result.deleted} variants for product ${productId}`,
       );
     } catch (error) {
+      // Rethrow so the RMQ consumer's bounded-retry/DLQ path can engage
       this.logger.error(
         `Failed to remove variants for product ${productId}: ${error.message}`,
       );
+      throw error;
     }
   }
 
@@ -456,7 +472,9 @@ export class ProductSearchService implements OnModuleInit {
 
       this.logger.log(`Updated product info for product ${productId}`);
     } catch (error) {
+      // Rethrow so the RMQ consumer's bounded-retry/DLQ path can engage
       this.logger.error(`Failed to update product info: ${error.message}`);
+      throw error;
     }
   }
 
@@ -590,7 +608,9 @@ export class ProductSearchService implements OnModuleInit {
         },
       };
     } catch (error) {
-      this.logger.error(`Search failed: ${error.message}`);
+      this.logger.error(
+        `Search failed for q="${q}" page=${page} limit=${limit}: ${error.message}`,
+      );
       return {
         data: [],
         pagination: {
@@ -646,7 +666,7 @@ export class ProductSearchService implements OnModuleInit {
         ...hit._source,
       }));
     } catch (error) {
-      this.logger.error(`Quick search failed: ${error.message}`);
+      this.logger.error(`Quick search failed for q="${q}": ${error.message}`);
       return [];
     }
   }

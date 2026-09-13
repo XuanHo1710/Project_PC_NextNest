@@ -14,7 +14,12 @@ import Redis from 'ioredis';
 import { AccountEmployee } from 'src/account-employee/entities/account-employee.entity';
 import { AccountEmployeeService } from 'src/account-employee/account-employee.service';
 import { ClientProxy } from '@nestjs/microservices';
+import * as crypto from 'crypto';
 const ms = require('ms');
+
+const BCRYPT_DUMMY_HASH =
+  '$2a$10$C6UzMDM.H6dfI/f/IKcEeO7VTgxjrpU8k95Lxvtqk1PGCvXnLBDF6';
+
 @Injectable()
 export class ClientAuthService {
   constructor(
@@ -30,16 +35,22 @@ export class ClientAuthService {
   ) {}
 
   async signIn(email: string, password: string) {
+    email = String(email || '').trim().toLowerCase();
+
     const guest = await this.accountGuestModel
       .findOne({
         email,
         deletedAt: { $exists: false },
         accountStatus: { $in: ['ACTIVE', 'PENDING'] },
       })
+      .select('+password')
       .lean()
       .exec();
 
-    if (!guest) return null;
+    if (!guest) {
+      compareSync(password || 'x', BCRYPT_DUMMY_HASH);
+      return null;
+    }
 
     const isCorrect = compareSync(password, guest.password || '');
     if (!isCorrect) return null;
@@ -69,11 +80,13 @@ export class ClientAuthService {
 
   async googleLogin(googleUser: any): Promise<any> {
     const { email, firstName, lastName, picture, googleId } = googleUser;
+    const emailVerified = (googleUser as any)?.email_verified === true;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
 
     // Tìm user trong database
     let guest = await this.accountGuestModel
       .findOne({
-        $or: [{ email: email }, { googleId: googleId }],
+        $or: [{ email: normalizedEmail }, { googleId: googleId }],
         deletedAt: { $exists: false },
       })
       .lean()
@@ -81,43 +94,52 @@ export class ClientAuthService {
 
     if (!guest) {
       // Tạo user mới nếu chưa tồn tại
+      const tempPassword = crypto.randomBytes(24).toString('hex');
       const result = await this.accountGuestService.create({
         fullname: `${firstName} ${lastName}`,
-        email: email,
+        email: normalizedEmail,
         avatar: picture,
-        password: googleId + '@..sGH', // Sử dụng googleId làm mật khẩu tạm thời
+        password: tempPassword,
         authProvider: 'google',
         googleId: googleId,
       });
       // Google accounts are already verified — activate immediately
-      await this.accountGuestService.update((result as any)._id.toString(), {
-        isEmailVerified: true,
-        accountStatus: 'ACTIVE',
-      });
+      await this.accountGuestService.updateAuthState(
+        (result as any)._id.toString(),
+        {
+          isEmailVerified: true,
+          accountStatus: 'ACTIVE',
+        },
+      );
       return this.accountGuestService.getGuestById(
         (result as any)._id.toString(),
       );
     } else {
-      // Update thông tin nếu user đã tồn tại
-      await this.accountGuestService.update(guest._id.toString(), {
+      // Link Google identity to the existing account.
+      // Only auto-activate/verify when we can trust the email:
+      // Google reports it verified, or the account was already verified.
+      const canAutoVerify = emailVerified || guest.isEmailVerified === true;
+      await this.accountGuestService.updateAuthState(guest._id.toString(), {
         googleId: googleId,
         authProvider: 'google',
-        isEmailVerified: true,
-        accountStatus: 'ACTIVE',
+        ...(canAutoVerify
+          ? { isEmailVerified: true, accountStatus: 'ACTIVE' }
+          : {}),
       });
 
       // Update guest profile - QUAN TRỌNG: Cập nhật authProvider trong Guest collection
       if (guest.email) {
         const loginDate = new Date();
         loginDate.setHours(0, 0, 0, 0);
+        // mongoose v9 mis-types positional-array filters/updates; runtime is valid
         const result = await this.accountGuestModel.updateOne(
           {
             email: guest.email,
             'loginInformation.loginAt': loginDate,
-          },
+          } as any,
           {
             $inc: { 'loginInformation.$.loginCount': 1 },
-          },
+          } as any,
         );
 
         if (result.matchedCount === 0) {
@@ -209,6 +231,7 @@ export class ClientAuthService {
     phone: string,
   ) {
     // Create Guest and AccountGuest together
+    email = String(email || '').trim().toLowerCase();
     const result = await this.accountGuestService.create({
       fullname,
       email,
@@ -238,28 +261,41 @@ export class ClientAuthService {
     return await this.accountGuestService.verifyEmail(token);
   }
 
-  async processNewToken(sessionId: string) {
+  async processNewToken(refreshToken: string) {
     try {
-      //  Check refresh token in redis
-      const storedRefreshToken = await this.redisClient.get(
-        `guest_refresh_token:${sessionId}`,
-      );
-
-      const payload = this.jwtService.verify(storedRefreshToken!, {
+      // Verify the PRESENTED refresh token
+      const payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
       });
+
+      const userId = payload?._id?.toString?.() ?? String(payload?._id);
+      if (!userId) {
+        throw new BadRequestException('Refresh token không hợp lệ');
+      }
+
+      // Proof-of-possession: the presented token must match the stored one
+      const stored = await this.redisClient.get(`guest_refresh_token:${userId}`);
+      if (!stored || stored !== refreshToken) {
+        throw new BadRequestException('Phiên đăng nhập không hợp lệ');
+      }
 
       const accountGuest = await this.accountGuestService.findByEmail(
         payload.email,
       );
 
-      if (!payload || !accountGuest) {
+      if (!accountGuest) {
         throw new BadRequestException('Tài khoản không tồn tại');
       }
 
+      // Suspended/banned accounts must not mint new tokens
+      if (accountGuest.accountStatus && accountGuest.accountStatus !== 'ACTIVE') {
+        await this.redisClient.del(`guest_refresh_token:${userId}`);
+        throw new BadRequestException('Tài khoản đã bị khóa hoặc chưa kích hoạt');
+      }
+
       const payloadFinal = {
-        _id: accountGuest._id,
-        guestId: accountGuest._id,
+        _id: accountGuest._id.toString(),
+        guestId: accountGuest._id.toString(),
         email: accountGuest.email,
         avatar: accountGuest?.avatar || '',
         accountStatus: accountGuest.accountStatus,
@@ -271,8 +307,23 @@ export class ClientAuthService {
 
       const access_token = this.createAccessToken(payloadFinal);
 
-      return { access_token, payload: payloadFinal };
+      // Rotate: issue a NEW refresh token and overwrite the stored one
+      const refresh_token = this.jwtService.sign(payloadFinal as any, {
+        secret:
+          this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')! || '',
+        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRE'),
+      } as SignOptions);
+
+      await this.redisClient.set(
+        `guest_refresh_token:${userId}`,
+        refresh_token,
+        'EX',
+        ms(this.configService.get<string>('JWT_REFRESH_EXPIRE')!) / 1000,
+      );
+
+      return { access_token, refresh_token, payload: payloadFinal };
     } catch (err) {
+      if (err instanceof BadRequestException) throw err;
       throw new BadRequestException(
         'Refresh token không hợp lệ hoặc đã hết hạn',
       );
@@ -291,7 +342,6 @@ export class ClientAuthService {
     // Remove refresh token from redis
     const redisKey = `guest_refresh_token:${id}`;
     await this.redisClient.del(redisKey);
-    console.log(`Refresh token deleted from Redis for guest ${id}`);
     return { message: 'Đăng xuất thành công' };
   }
 
@@ -334,27 +384,38 @@ export class ClientAuthService {
     };
   }
 
-  async processNewTokenAdmin(sessionId: string) {
+  async processNewTokenAdmin(refreshToken: string) {
     try {
-      //  Check refresh token in redis
-      const storedRefreshToken = await this.redisClient.get(
-        `admin_refresh_token:${sessionId}`,
-      );
-
-      if (!storedRefreshToken) {
-        console.log('[RefreshAdmin] No refresh token found in Redis');
-        throw new BadRequestException('Refresh token không tồn tại');
-      }
-
-      const payload = this.jwtService.verify(storedRefreshToken!, {
+      // Verify the PRESENTED refresh token
+      const payload = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
       });
+
+      const userId = payload?._id?.toString?.() ?? String(payload?._id);
+      if (!userId) {
+        throw new BadRequestException('Refresh token không hợp lệ');
+      }
+
+      // Proof-of-possession: the presented token must match the stored one
+      const stored = await this.redisClient.get(`admin_refresh_token:${userId}`);
+      if (!stored || stored !== refreshToken) {
+        throw new BadRequestException('Phiên đăng nhập không hợp lệ');
+      }
 
       const accountEmployee =
         await this.accountEmployeeService.findAccountByIDEmp(payload.IDEmp);
 
-      if (!payload || !accountEmployee) {
+      if (!accountEmployee) {
         throw new BadRequestException('Tài khoản không tồn tại');
+      }
+
+      // Suspended employees must not mint new tokens
+      if (
+        (accountEmployee as any).accountStatus &&
+        (accountEmployee as any).accountStatus !== 'ACTIVE'
+      ) {
+        await this.redisClient.del(`admin_refresh_token:${userId}`);
+        throw new BadRequestException('Tài khoản đã bị khóa');
       }
 
       const payloadFinal = {
@@ -367,11 +428,24 @@ export class ClientAuthService {
       };
 
       const access_token = this.createAccessToken(payloadFinal);
-      console.log('[RefreshAdmin] New access token created successfully');
 
-      return { access_token, payload: payloadFinal };
-    } catch (err: any) {
-      console.error('[RefreshAdmin] Error:', err?.message);
+      // Rotate: issue a NEW refresh token and overwrite the stored one
+      const refresh_token = this.jwtService.sign(payloadFinal as any, {
+        secret:
+          this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET')! || '',
+        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRE'),
+      } as SignOptions);
+
+      await this.redisClient.set(
+        `admin_refresh_token:${userId}`,
+        refresh_token,
+        'EX',
+        ms(this.configService.get<string>('JWT_REFRESH_EXPIRE')!) / 1000,
+      );
+
+      return { access_token, refresh_token, payload: payloadFinal };
+    } catch (err) {
+      if (err instanceof BadRequestException) throw err;
       throw new BadRequestException(
         'Refresh token không hợp lệ hoặc đã hết hạn',
       );
@@ -382,13 +456,16 @@ export class ClientAuthService {
     // Remove refresh token from redis
     const redisKey = `admin_refresh_token:${id}`;
     await this.redisClient.del(redisKey);
-    console.log(`Refresh token deleted from Redis for admin ${id}`);
     return { message: 'Đăng xuất thành công' };
   }
 
   async signInAdmin(IDEmp: string, password: string) {
-    const account = await this.accountEmployeeService.findAccountByIDEmp(IDEmp);
-    if (!account) return null;
+    const account =
+      await this.accountEmployeeService.findAccountByIDEmpWithPassword(IDEmp);
+    if (!account) {
+      compareSync(password || 'x', BCRYPT_DUMMY_HASH);
+      return null;
+    }
     const isCorrect = compareSync(password, account.password || '');
     if (account && isCorrect) {
       return account;
@@ -399,12 +476,15 @@ export class ClientAuthService {
 
   async changePasswordAdmin(id: string, body: any) {
     const { currentPassword, newPassword } = body;
-    const account = await this.accountEmployeeService.findOne(id);
+    const account =
+      await this.accountEmployeeService.findByIdWithPassword(id);
     if (!account) throw new BadRequestException('Tài khoản không tồn tại');
 
     const isMatch = compareSync(currentPassword, account.password);
     if (!isMatch) throw new BadRequestException('Mật khẩu hiện tại không đúng');
 
+    // accountEmployeeService.update() hashes the password itself
+    // (bcrypt.hashSync, saltRounds=10) — pass plaintext, never pre-hash.
     return await this.accountEmployeeService.update(
       new mongoose.Types.ObjectId(id),
       { password: newPassword } as any,

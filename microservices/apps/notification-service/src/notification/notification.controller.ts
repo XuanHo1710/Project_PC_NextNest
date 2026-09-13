@@ -58,7 +58,7 @@ export class NotificationController {
     } catch (error) {
       this.logger.error(`sendMail failed: ${error}`);
       this.handleDlqOrRetry(channel, msg, data);
-      throw error;
+      // message already acked/DLQ'd — rethrowing would double-handle
     }
   }
 
@@ -100,7 +100,7 @@ export class NotificationController {
     } catch (error) {
       this.logger.error(`sendOrderConfirmation failed: ${error}`);
       this.handleDlqOrRetry(channel, msg, data);
-      throw error;
+      // message already acked/DLQ'd — rethrowing would double-handle
     }
   }
 
@@ -192,7 +192,7 @@ export class NotificationController {
     } catch (error) {
       this.logger.error(`sendVerificationEmail failed: ${error}`);
       this.handleDlqOrRetry(channel, msg, data);
-      throw error;
+      // message already acked/DLQ'd — rethrowing would double-handle
     }
   }
 }

@@ -10,30 +10,32 @@ import { roleService } from "@/services/admin/role.service";
 
 export default function AuthLogin() {
   const router = useRouter();
-  const { setAccountLogin, setAccessToken } = useAuthEmployee();
+  const { setAccountLogin } = useAuthEmployee();
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+
   const handleSubmit = async (payload: { IDEmp: string, password: string }) => {
     try {
-      // Call Next.js API route which sets admin_access_token httpOnly cookie
-      const response = await axios.post("/api/admin/auth/login", payload);
+      // Backend sets admin_access_token / admin_refresh_token httpOnly cookies.
+      const response = await axios.post(`${API_BASE}/admin/auth/login`, payload, {
+        withCredentials: true,
+      });
 
-      const { data } = response?.data;
+      const data = response?.data?.data;
+      const user = data?.user;
 
-      // Store access_token in Zustand so admin axios can attach it as Bearer token
-      if (data.access_token) {
-        setAccessToken(data.access_token);
+      if (!user?._id) {
+        toast.error("Đăng nhập thất bại");
+        return;
       }
 
-      console.log(data)
-
-      const role = await roleService.getById(data.user.roleId);
-
-      console.log(role)
+      const role = await roleService.getById(user.roleId);
 
       setAccountLogin(
         {
-          IDEmp: data.user.IDEmp,
-          username: data.user.username,
-          roleId: data.user.roleId,
+          IDEmp: user.IDEmp,
+          username: user.username,
+          roleId: user.roleId,
           role,
         } as IAccountLogin
       );

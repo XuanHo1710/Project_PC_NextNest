@@ -24,7 +24,7 @@ const authPaths = [pathAdminRoutes.login];
 export function proxy(request: NextRequest) {
   const clientAccessToken = request.cookies.get("client_access_token")?.value;
   const adminAccessToken = request.cookies.get("admin_access_token")?.value;
-  const adminSessionId = request.cookies.get("admin_sessionId")?.value;
+  const adminRefreshToken = request.cookies.get("admin_refresh_token")?.value;
 
   // Fix VNPay return URL format - thay & đầu tiên thành ?
   if (
@@ -39,15 +39,13 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(fixedUrl);
   }
 
-  console.log(adminSessionId);
-
-  // Admin routes protection - check admin_access_token
+  // Admin routes protection - admin_access_token or a renewable session
   if (
     protectedAdminPaths.some((path) =>
       request.nextUrl.pathname.startsWith(path),
     ) &&
     !adminAccessToken &&
-    !adminSessionId
+    !adminRefreshToken
   ) {
     return NextResponse.redirect(new URL(pathAdminRoutes.login, request.url));
   }

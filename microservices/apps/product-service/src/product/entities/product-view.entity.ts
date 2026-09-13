@@ -11,7 +11,6 @@ export class ProductView {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
     required: true,
-    index: true,
   })
   product: Types.ObjectId;
 
@@ -19,7 +18,6 @@ export class ProductView {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'AccountGuest',
     required: true,
-    index: true,
   })
   guest: Types.ObjectId;
 

@@ -1,12 +1,12 @@
 'use client'
 import { GroupCollapse } from "@/components/GroupCollapse/GroupCollapse";
-import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import { useHasPermission } from "@/hooks/admin/useHasPermission";
 import { Select } from "antd";
 import { useState } from "react";
 import { useRoles, useRole } from "@/hooks/admin";
 
 export default function SelectRole() {
-    const { accountLogin } = useAuthEmployee();
+    const hasPermission = useHasPermission();
     const { data: rolesData } = useRoles();
     const roles = rolesData?.data ?? [];
     const [selectedRoleId, setSelectedRoleId] = useState<string>("");
@@ -17,9 +17,7 @@ export default function SelectRole() {
     }
     return (
         <>
-            {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                (p) => p.method === "PATCH" && p.path === "/api/v1/admin/role/:id"
-            ) ?
+            {hasPermission("PATCH", "/api/v1/admin/role/:id") ?
                 <>
                     <div className="my-4 flex items-center">
                         <h2 className="mx-2 font-semibold text-md">Vai trò: </h2>

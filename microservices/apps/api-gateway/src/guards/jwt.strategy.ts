@@ -3,8 +3,8 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientProxy } from '@nestjs/microservices';
-// import { RoleService } from 'src/admin/role/role.service';
 import { MICROSERVICE } from '@project-pc/common';
+import { extractJwtFromCookie } from '../core/auth-cookies';
 import { firstValueFrom } from 'rxjs';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -20,7 +20,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       );
     }
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        extractJwtFromCookie('admin_access_token'),
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: secret,
     });

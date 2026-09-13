@@ -44,7 +44,7 @@ export const BarChartStatisticWeek = () => {
                         axisLine={false}
                     />
                     <Tooltip
-                        formatter={(value: number) => [formatCurrency(value) + 'đ', 'Doanh thu']}
+                        formatter={(value: number) => [formatCurrency(value), 'Doanh thu']}
                         cursor={false}
                     />
                     <Bar dataKey="revenue" fill="rgb(26, 142, 255)" radius={8} />

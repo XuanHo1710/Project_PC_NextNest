@@ -6,7 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ClientLocalStrategy } from 'guards/client-local-jwt.strategy';
 import { GoogleStrategy } from 'guards/google.strategy';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MICROSERVICE, getServiceHost, getServicePort } from '@project-pc/common';
 
 @Module({
   imports: [
@@ -27,8 +27,8 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.AUTH_SERVICE,
         transport: Transport.TCP,
         options: {
-          host: process.env.AUTH_SERVICE_HOST ?? 'auth-service',
-          port: MICROSERVICE_PORT.AUTH_SERVICE,
+          host: getServiceHost(MICROSERVICE.AUTH_SERVICE),
+          port: getServicePort(MICROSERVICE.AUTH_SERVICE),
         },
       },
     ]),

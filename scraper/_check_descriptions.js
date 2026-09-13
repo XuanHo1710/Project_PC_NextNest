@@ -1,7 +1,7 @@
-const { MongoClient } = require('mongodb');
+﻿const { MongoClient } = require('mongodb');
 
 (async () => {
-    const client = new MongoClient('mongodb+srv://xuanhodcbas:0984232310ho.@cluster0.f7sbfkn.mongodb.net/project-pc-hoang-ha');
+    const client = new MongoClient(process.env.MONGODB_URI || '');
     await client.connect();
     const db = client.db();
 
@@ -62,7 +62,7 @@ const { MongoClient } = require('mongodb');
                 hasGTM: { $regexMatch: { input: '$description', regex: /googletagmanager/i } },
                 hasScript: { $regexMatch: { input: '$description', regex: /<script/i } },
                 hasNuxt: { $regexMatch: { input: '$description', regex: /__nuxt|__layout/i } },
-                hasPayment: { $regexMatch: { input: '$description', regex: /Phương thức thanh toán|VNPAY|momo|ZaloPay/i } },
+                hasPayment: { $regexMatch: { input: '$description', regex: /PhÆ°Æ¡ng thá»©c thanh toÃ¡n|VNPAY|momo|ZaloPay/i } },
                 hasIframe: { $regexMatch: { input: '$description', regex: /<iframe/i } },
             }
         },

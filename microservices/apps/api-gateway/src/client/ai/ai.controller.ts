@@ -202,10 +202,9 @@ export class AiController {
 
   /**
    * POST /client/chatbot/reindex
-   * Trigger product reindex in Qdrant
+   * Trigger product reindex in Qdrant (authenticated users only)
    */
   @Post('reindex')
-  @Public()
   async reindexProducts() {
     try {
       const response = await firstValueFrom(

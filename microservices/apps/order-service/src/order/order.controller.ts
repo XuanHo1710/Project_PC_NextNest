@@ -12,7 +12,6 @@ import { ConsumeMessage, Channel } from 'amqplib';
 @Controller()
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
-
   /**
    * Legacy: creates order + handles payment/stock/notification (tightly coupled).
    * Kept for backward compatibility. New flow uses saga.order.create via Saga Orchestrator.
@@ -110,13 +109,19 @@ export class OrderController {
 
   @MessagePattern('order.getById')
   async getOrderById(
-    @Payload() data: { orderId: string },
+    @Payload() data: { orderId: string; guestId?: string },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
       const result = await this.orderService.getOrderById(data.orderId);
+      if (result && data.guestId) {
+        this.orderService.assertOrderOwnership(
+          data.guestId,
+          (result.customerInfo as any)?.guestId?.toString(),
+        );
+      }
       channel.ack(msg);
       return result;
     } catch (error) {
@@ -157,6 +162,7 @@ export class OrderController {
     @Payload()
     data: {
       guestId: string;
+      requesterId?: string;
       page?: number;
       limit?: number;
       status?: string;
@@ -166,6 +172,7 @@ export class OrderController {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
+      this.orderService.assertOrderOwnership(data.requesterId, data.guestId);
       const result = await this.orderService.getAllOrdersByGuestId(
         data.guestId,
         data.page,
@@ -182,12 +189,13 @@ export class OrderController {
 
   @MessagePattern('order.getPendingOnline')
   async getPendingOnlineOrders(
-    @Payload() data: { guestId: string },
+    @Payload() data: { guestId: string; requesterId?: string },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
+      this.orderService.assertOrderOwnership(data.requesterId, data.guestId);
       const result = await this.orderService.getPendingOnlineOrders(
         data.guestId,
       );
@@ -201,12 +209,21 @@ export class OrderController {
 
   @MessagePattern('order.retryPayment')
   async retryPayment(
-    @Payload() data: { orderId: string; ip: string },
+    @Payload() data: { orderId: string; ip: string; guestId?: string },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
     const msg = context.getMessage() as ConsumeMessage;
     try {
+      if (data.guestId) {
+        const order = await this.orderService.getOrderById(data.orderId);
+        if (order) {
+          this.orderService.assertOrderOwnership(
+            data.guestId,
+            (order.customerInfo as any)?.guestId?.toString(),
+          );
+        }
+      }
       const result = await this.orderService.retryPayment(
         data.orderId,
         data.ip,
@@ -221,7 +238,12 @@ export class OrderController {
 
   @MessagePattern('order.updateStatus')
   async updateOrderStatus(
-    @Payload() data: { id: string; updateOrderDto: UpdateOrderDto },
+    @Payload()
+    data: {
+      id: string;
+      updateOrderDto: UpdateOrderDto & { status?: string };
+      isAdmin?: boolean;
+    },
     @Ctx() context: RmqContext,
   ) {
     const channel = context.getChannelRef() as Channel;
@@ -230,6 +252,7 @@ export class OrderController {
       const result = await this.orderService.updateOrderStatus(
         data.id,
         data.updateOrderDto,
+        data.isAdmin ?? false,
       );
       channel.ack(msg);
       return result;

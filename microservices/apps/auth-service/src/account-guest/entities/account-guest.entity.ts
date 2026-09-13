@@ -13,7 +13,7 @@ export class AccountGuest {
   @Prop({ default: '' })
   avatar?: string;
 
-  @Prop()
+  @Prop({ select: false })
   password?: string;
 
   // Google OAuth fields
@@ -26,7 +26,7 @@ export class AccountGuest {
   @Prop({ default: false })
   isEmailVerified: boolean;
 
-  @Prop()
+  @Prop({ select: false })
   resetPasswordExpires?: Date;
 
   // Account status and security
@@ -42,10 +42,10 @@ export class AccountGuest {
   @Prop()
   emailVerificationExpires?: Date;
 
-  @Prop({ default: null })
+  @Prop({ default: null, select: false })
   otpCodeForEmail?: number;
 
-  @Prop({ default: null })
+  @Prop({ default: null, select: false })
   emailVerificationToken?: string;
 
   @Prop({ type: Array, default: [] })

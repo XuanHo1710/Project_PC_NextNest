@@ -24,7 +24,7 @@ import { ProductView, ProductViewSchema } from './entities/product-view.entity';
 import { Category, CategorySchema } from '../category/entities/category.entity';
 import { Brand, BrandSchema } from '../brand/entities/brand.entity';
 import { AccountGuest, AccountGuestSchema } from '@project-pc/common';
-import { MICROSERVICE } from '@project-pc/common';
+import { MICROSERVICE, getRabbitMqUrl } from '@project-pc/common';
 
 @Module({
   imports: [
@@ -47,7 +47,7 @@ import { MICROSERVICE } from '@project-pc/common';
         name: MICROSERVICE.ELASTICSEARCH_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'elasticsearch.main',
           queueOptions: {
             durable: true,

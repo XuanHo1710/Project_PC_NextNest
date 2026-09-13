@@ -48,8 +48,9 @@ export class AccountEmployeeService {
   }
 
   async findAll(filter: any) {
-    const page = Number(filter.page) || 1;
-    const limit = Number(filter.limit) || 10;
+    // Clamp pagination to sane bounds
+    const page = Math.min(Math.max(parseInt(filter.page, 10) || 1, 1), 10000);
+    const limit = Math.min(Math.max(parseInt(filter.limit, 10) || 10, 1), 100);
     const skip = (page - 1) * limit;
 
     const sortAccount = {};
@@ -110,10 +111,31 @@ export class AccountEmployeeService {
   }
 
   async findAccountByIDEmp(IDEmp: string): Promise<AccountEmployee | null> {
-    return await this.accountEmployeeModel.findOne({ IDEmp: IDEmp });
+    return await this.accountEmployeeModel
+      .findOne({ IDEmp: IDEmp })
+      .select('-password')
+      .exec();
+  }
+
+  /**
+   * Internal use only (password compare in auth flows).
+   * Never expose the result of this method to clients.
+   */
+  async findAccountByIDEmpWithPassword(
+    IDEmp: string,
+  ): Promise<AccountEmployee | null> {
+    return await this.accountEmployeeModel.findOne({ IDEmp: IDEmp }).exec();
   }
 
   async findOne(id: string) {
+    return await this.accountEmployeeModel.findById(id).select('-password');
+  }
+
+  /**
+   * Internal use only (current-password verification in auth flows).
+   * Never expose the result of this method to clients.
+   */
+  async findByIdWithPassword(id: string) {
     return await this.accountEmployeeModel.findById(id);
   }
 
@@ -154,10 +176,16 @@ export class AccountEmployeeService {
       updateAccountEmployeeDto.password = hashPassword;
     }
 
-    const payload = {
-      ...updateAccountEmployeeDto,
-      roleId: new Types.ObjectId(updateAccountEmployeeDto.roleId),
-    };
+    const payload: any = { ...updateAccountEmployeeDto };
+
+    // Only touch roleId when explicitly provided; constructing an ObjectId
+    // from undefined would silently assign a random role on partial updates
+    // (e.g. password change).
+    if (updateAccountEmployeeDto.roleId) {
+      payload.roleId = new Types.ObjectId(updateAccountEmployeeDto.roleId);
+    } else {
+      delete payload.roleId;
+    }
 
     return await this.accountEmployeeModel.updateOne({ _id: id }, payload);
   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Modal, Popconfirm, Spin } from "antd";
+import { Modal, Spin } from "antd";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
 import { createContext, useContext, useState, useEffect } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
@@ -11,10 +11,11 @@ import ActionRole from "@/components/ActionFilter/role/ActionRole";
 import FilterRole from "@/components/ActionFilter/role/FilterRole";
 import EditSortRole from "@/components/EditSort/role/EditSortRole";
 import ContentModalRole from "@/components/ContentModal/role/ContentModalRole";
-import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import ConfirmDeletePopconfirm from "@/components/common/ConfirmDeletePopconfirm";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { IRole } from "@/types/role";
 import { useRoles, useDeleteRole } from "@/hooks/admin";
+import { useHasPermission } from "@/hooks/admin/useHasPermission";
 
 
 const SelectedContextRole = createContext<SelectedContextType | undefined>(undefined);
@@ -46,8 +47,9 @@ export default function ContentRole() {
     const pagination = (result as any)?.pagination || { currentPage: 1, totalItems: 0, itemsPerPage: 10 };
 
     const deleteRole = useDeleteRole();
-    const { accountLogin } = useAuthEmployee();
+    const hasPermission = useHasPermission();
 
+    // Hard delete: role is removed via service.delete().
     const handleDelete = async (id: string) => {
         try {
             await deleteRole.mutateAsync(id);
@@ -83,9 +85,7 @@ export default function ContentRole() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/role/:id"
-                    ) &&
+                    {hasPermission("PATCH", "/api/v1/admin/role/:id") &&
                         <FaPen
                             onClick={() => {
                                 setOpen(true);
@@ -94,18 +94,13 @@ export default function ContentRole() {
                             className='hover:text-blue-500 cursor-pointer'
                         />
                     }
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/role/:id"
-                    ) &&
-                        <Popconfirm
-                            title="Xóa dòng của bạn"
-                            description="Bạn có chắc chắn muốn xóa dòng này ?"
+                    {hasPermission("DELETE", "/api/v1/admin/role/:id") &&
+                        <ConfirmDeletePopconfirm
                             onConfirm={() => handleDelete(record._id as string)}
-                            okText="Xóa"
-                            cancelText="Không"
+                            loading={deleteRole.isPending}
                         >
                             <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                        </Popconfirm>
+                        </ConfirmDeletePopconfirm>
                     }
                 </div>
             ),
@@ -113,9 +108,7 @@ export default function ContentRole() {
     ];
 
     let dataTable: DataType<IRole>[] = [];
-    if (!loading && roles.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
-        (p) => p.method === "GET" && p.path === "/api/v1/admin/role"
-    )) {
+    if (!loading && roles.length > 0 && hasPermission("GET", "/api/v1/admin/role")) {
         dataTable = roles.map((item: IRole, index: number) => {
             const row: DataType<IRole> = {
                 key: index.toString(),
@@ -130,9 +123,7 @@ export default function ContentRole() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "PATCH" && p.path === "/api/v1/admin/role/:id"
-                ) &&
+                {hasPermission("PATCH", "/api/v1/admin/role/:id") &&
                     <UpdateModalRole setOpen={setOpen} dataRole={dataClick} />
                 }
             </Modal>

@@ -140,10 +140,14 @@ export class CategoryService {
     const type = dataUpdate.typeUpdate.split(':')[0];
     switch (type) {
       case 'delete': {
-        const result = dataUpdate.ids.forEach(async (id: string) => {
-          await this.remove(id);
+        // remove() performs a hard delete (deleteOne), so the bulk path uses
+        // deleteMany to keep the same hard-delete semantics.
+        const objectIds = (dataUpdate.ids || [])
+          .filter((id: string) => Types.ObjectId.isValid(id))
+          .map((id: string) => new Types.ObjectId(id));
+        return await this.categoryModel.deleteMany({
+          _id: { $in: objectIds },
         });
-        return result;
       }
     }
     return null;

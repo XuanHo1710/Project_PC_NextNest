@@ -1,5 +1,5 @@
-const { MongoClient } = require('mongodb');
-const URI = 'mongodb+srv://xuanhodcbas:0984232310ho.@cluster0.f7sbfkn.mongodb.net/project-pc-hoang-ha';
+﻿const { MongoClient } = require('mongodb');
+const URI = process.env.MONGODB_URI || '';
 
 async function main() {
     console.log('Connecting...');
@@ -35,12 +35,12 @@ async function main() {
 
         let needsClean = false;
         // Check for site chrome
-        if (desc.includes('DANH MỤC SẢN PHẨM') || desc.includes('PC Gaming, Streaming') ||
-            desc.includes('Giỏ hàng') || desc.includes('data-server-rendered') ||
-            desc.includes('__nuxt') || desc.includes('Phương thức thanh toán') ||
+        if (desc.includes('DANH Má»¤C Sáº¢N PHáº¨M') || desc.includes('PC Gaming, Streaming') ||
+            desc.includes('Giá» hÃ ng') || desc.includes('data-server-rendered') ||
+            desc.includes('__nuxt') || desc.includes('PhÆ°Æ¡ng thá»©c thanh toÃ¡n') ||
             desc.includes('ZaloPay') || desc.includes('VNPAY') ||
-            desc.includes('ĐĂNG KÝ NHẬN TIN') || desc.includes('Nhận ngay Voucher') ||
-            desc.includes('Hotline mua hàng') || desc.includes('Khiếu nại') ||
+            desc.includes('ÄÄ‚NG KÃ NHáº¬N TIN') || desc.includes('Nháº­n ngay Voucher') ||
+            desc.includes('Hotline mua hÃ ng') || desc.includes('Khiáº¿u náº¡i') ||
             desc.includes('googletagmanager') || desc.includes('facebook.com/tr') ||
             desc.length > 50000) {
             needsClean = true;
@@ -61,15 +61,15 @@ async function main() {
         // Remove nav/header/footer
         s = s.replace(/<(nav|header|footer)[\s\S]*?<\/\1>/gi, '');
         // Remove payment method sections
-        s = s.replace(/<div[^>]*>[\s\S]{0,500}?Phương thức thanh toán[\s\S]*?<\/div>/gi, '');
+        s = s.replace(/<div[^>]*>[\s\S]{0,500}?PhÆ°Æ¡ng thá»©c thanh toÃ¡n[\s\S]*?<\/div>/gi, '');
         // Remove site navigation sections  
-        s = s.replace(/<div[^>]*>[\s\S]{0,200}?DANH MỤC SẢN PHẨM[\s\S]*?<\/div>/gi, '');
+        s = s.replace(/<div[^>]*>[\s\S]{0,200}?DANH Má»¤C Sáº¢N PHáº¨M[\s\S]*?<\/div>/gi, '');
         // Remove newsletter/promo sections
-        s = s.replace(/<div[^>]*>[\s\S]{0,200}?ĐĂNG KÝ NHẬN TIN[\s\S]*?<\/div>/gi, '');
-        s = s.replace(/<div[^>]*>[\s\S]{0,200}?Nhận ngay Voucher[\s\S]*?<\/div>/gi, '');
+        s = s.replace(/<div[^>]*>[\s\S]{0,200}?ÄÄ‚NG KÃ NHáº¬N TIN[\s\S]*?<\/div>/gi, '');
+        s = s.replace(/<div[^>]*>[\s\S]{0,200}?Nháº­n ngay Voucher[\s\S]*?<\/div>/gi, '');
         // Remove hotline/complaint sections
-        s = s.replace(/<div[^>]*>[\s\S]{0,200}?Hotline mua hàng[\s\S]*?<\/div>/gi, '');
-        s = s.replace(/<div[^>]*>[\s\S]{0,200}?Khiếu nại[\s\S]*?<\/div>/gi, '');
+        s = s.replace(/<div[^>]*>[\s\S]{0,200}?Hotline mua hÃ ng[\s\S]*?<\/div>/gi, '');
+        s = s.replace(/<div[^>]*>[\s\S]{0,200}?Khiáº¿u náº¡i[\s\S]*?<\/div>/gi, '');
         // Remove tracking imgs
         s = s.replace(/<img[^>]*(?:tracking|pixel|facebook\.com\/tr|google-analytics|1x1|spacer)[^>]*\/?>/gi, '');
         // Remove inline event handlers

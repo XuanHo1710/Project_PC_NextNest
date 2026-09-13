@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MICROSERVICE, getRabbitMqUrl } from '@project-pc/common';
 import { PaymentController } from 'client/payment/payment.controller';
 
 @Module({
@@ -10,7 +10,7 @@ import { PaymentController } from 'client/payment/payment.controller';
         name: MICROSERVICE.PAYMENT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'payment.main',
           queueOptions: {
             durable: true,

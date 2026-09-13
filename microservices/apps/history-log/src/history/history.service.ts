@@ -16,8 +16,8 @@ export class HistoryService {
   }
 
   async findAll(filter: any = {}, userId: string) {
-    const page = Number(filter.page) || 1;
-    const limit = Number(filter.limit) || 20;
+    const page = Math.min(Math.max(parseInt(filter.page, 10) || 1, 1), 10000);
+    const limit = Math.min(Math.max(parseInt(filter.limit, 10) || 20, 1), 100);
     const skip = (page - 1) * limit;
 
     const query: any = { adminId: userId };

@@ -26,7 +26,10 @@ export default function Header({
   const { accountLogin, resetAuth } = useAuthEmployee();
   const router = useRouter();
   const handleLogout = async () => {
-    await axios.post(`/api/admin/auth/logout`, {})
+    const API_BASE =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+    await axios
+      .post(`${API_BASE}/admin/auth/logout`, {}, { withCredentials: true })
       .then(() => {
         resetAuth();
       }).catch(error => {

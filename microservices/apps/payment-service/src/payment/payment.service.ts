@@ -1,16 +1,27 @@
-import { Injectable, Inject } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotImplementedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreatePaymentDto, MICROSERVICE } from '@project-pc/common';
-import { PayOS } from '@payos/node';
 
-import { Payment } from 'src/payment/entity/payment.entity';
+import { Payment, PaymentDocument } from 'src/payment/entity/payment.entity';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import * as crypto from 'crypto';
+import {
+  PayOSClient,
+  PayOSConstructorStatic,
+} from 'src/payment/types/payos.types';
 
 @Injectable()
-export class VnpayService {
+export class PayosService {
+  private readonly logger = new Logger(PayosService.name);
   private clientID: string;
   private apiKey: string;
   private checkSum: string;
@@ -34,8 +45,9 @@ export class VnpayService {
     this.returnUrl = this.configService.get<string>('RETURN_URL') || '';
   }
 
-  private createPayOS() {
-    return new PayOS({
+  private createPayOS(): PayOSClient {
+    const mod = require('@payos/node') as { PayOS: PayOSConstructorStatic };
+    return new mod.PayOS({
       clientId: this.clientID,
       apiKey: this.apiKey,
       checksumKey: this.checkSum,
@@ -43,16 +55,229 @@ export class VnpayService {
   }
 
   /**
+   * Collision-resistant paymentCode (PayOS orderCode): <= 9 digits numeric.
+   */
+  private generatePaymentCode(): number {
+    return parseInt(
+      `${Date.now()}${Math.floor(100 + Math.random() * 900)}`.slice(-9),
+      10,
+    );
+  }
+
+  // ================================================================
+  //  PayOS webhook signature (official v2 algorithm)
+  //  signature = HMAC_SHA256(checksumKey, convertObjToQueryStr(sortObjDataByKey(data)))
+  // ================================================================
+
+  private sortObjDataByKey(obj: Record<string, unknown>): Record<string, unknown> {
+    return Object.keys(obj)
+      .sort()
+      .reduce<Record<string, unknown>>((result, key) => {
+        result[key] = obj[key];
+        return result;
+      }, {});
+  }
+
+  private convertObjToQueryStr(object: Record<string, unknown>): string {
+    return Object.keys(object)
+      .filter((key) => object[key] !== undefined)
+      .map((key) => {
+        let value = object[key];
+        if (value && Array.isArray(value)) {
+          value = JSON.stringify(
+            value.map((val) => this.sortObjDataByKey(val as Record<string, unknown>)),
+          );
+        }
+        if ([null, undefined, 'undefined', 'null'].includes(value as never)) {
+          value = '';
+        }
+        return `${key}=${value}`;
+      })
+      .join('&');
+  }
+
+  private computeWebhookSignature(data: Record<string, unknown>): string {
+    return crypto
+      .createHmac('sha256', this.checkSum)
+      .update(this.convertObjToQueryStr(this.sortObjDataByKey(data)))
+      .digest('hex');
+  }
+
+  /**
+   * PayOS webhook handler.
+   * - Verifies HMAC-SHA256 signature over the canonicalized webhook `data`.
+   * - Idempotent: repeated/out-of-order webhooks never double-process.
+   * - Amount mismatch is logged + flagged but NEVER marks the payment paid.
+   */
+  async handlePayosWebhook(payload: any): Promise<{ received: boolean }> {
+    const code = payload?.code;
+    const success = payload?.success;
+    const signature = payload?.signature;
+    const rawData = payload?.data;
+
+    if (!rawData || !signature) {
+      throw new BadRequestException('Dữ liệu webhook không hợp lệ');
+    }
+
+    if (!this.checkSum) {
+      throw new BadRequestException('PAYOS_CHECKSUM chưa được cấu hình');
+    }
+
+    let dataObj: Record<string, unknown>;
+    try {
+      dataObj =
+        typeof rawData === 'string'
+          ? JSON.parse(rawData)
+          : JSON.parse(JSON.stringify(rawData));
+    } catch {
+      throw new BadRequestException('Không thể parse dữ liệu webhook');
+    }
+
+    const expectedSignature = this.computeWebhookSignature(dataObj);
+    const receivedSignature = String(signature);
+    const a = Buffer.from(expectedSignature);
+    const b = Buffer.from(receivedSignature);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      throw new BadRequestException('Chữ ký webhook không hợp lệ');
+    }
+
+    const orderCode = Number(dataObj.orderCode);
+    const amount = Number(dataObj.amount);
+    if (!Number.isInteger(orderCode) || orderCode <= 0) {
+      throw new BadRequestException('orderCode không hợp lệ trong webhook');
+    }
+
+    const incomingStatus =
+      code === '00' && success !== false ? 'PAID' : 'UNPAID';
+
+    const payment = await this.paymentModel.findOne({ paymentCode: orderCode });
+    if (!payment) {
+      this.logger.warn(
+        `PayOS webhook cho mã thanh toán không tồn tại: ${orderCode}`,
+      );
+      return { received: true };
+    }
+
+    // Idempotency: same status → skip processing silently
+    if (payment.status === incomingStatus) {
+      return { received: true };
+    }
+
+    // Never regress a PAID payment due to out-of-order webhooks
+    if (payment.status === 'PAID' && incomingStatus === 'UNPAID') {
+      return { received: true };
+    }
+
+    if (incomingStatus === 'PAID') {
+      // Amount tampering check — do NOT mark paid on mismatch
+      if (Number(payment.amount) !== amount) {
+        this.logger.error(
+          `SUSPICIOUS PayOS webhook: amount mismatch cho payment ${orderCode} — expected ${payment.amount}, received ${amount}. Không đánh dấu đã thanh toán.`,
+        );
+        await this.paymentModel.updateOne(
+          { _id: payment._id },
+          { $set: { note: `AMOUNT_MISMATCH:expected=${payment.amount};received=${amount}` } },
+        );
+        return { received: true };
+      }
+
+      payment.status = 'PAID';
+      payment.transactionId =
+        String(dataObj.reference ?? '') ||
+        String(dataObj.paymentLinkId ?? '') ||
+        payment.transactionId;
+      await payment.save();
+
+      const order = await this.fetchOrderById(payment.order.toString());
+      await this.applyPaidEffects(payment, order);
+
+      return { received: true };
+    }
+
+    // Failure webhooks only downgrade a still-PENDING payment
+    if (payment.status === 'PENDING') {
+      payment.status = 'UNPAID';
+      await payment.save();
+    }
+    return { received: true };
+  }
+
+  private async fetchOrderById(orderId: string): Promise<any> {
+    try {
+      return await firstValueFrom(
+        this.orderService.send('order.getById', { orderId }),
+      );
+    } catch (err) {
+      console.error('Failed to fetch order:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Shared post-payment effects: mark order COMPLETED (trusted internal call),
+   * clear the guest cart and send the confirmation email.
+   */
+  private async applyPaidEffects(payment: PaymentDocument, order: any) {
+    const orderId = payment.order.toString();
+
+    try {
+      await firstValueFrom(
+        this.orderService.send('order.updateStatus', {
+          id: orderId,
+          updateOrderDto: {
+            status: 'COMPLETED',
+            payment: { isCheckout: true, type: 'CARD' },
+          },
+          isAdmin: true,
+        }),
+      );
+    } catch (err) {
+      console.error('Failed to update order status:', err);
+    }
+
+    const guestId = order?.customerInfo?.guestId
+      ? String(order.customerInfo.guestId)
+      : '';
+    if (guestId) {
+      this.cartService
+        .send('cart.update', {
+          id: guestId,
+          updateCartDto: { guestId, cartItems: [], total: 0 },
+        })
+        .subscribe({
+          error: (err) => console.error('Cart clear error:', err),
+        });
+    }
+
+    const orderItems = (order?.orderDetail || []).map((item: any) => ({
+      productVariant: item.variantId || '',
+      productName: item.productName || '',
+      combination: item.combination || {},
+      quantity: item.quantity || 0,
+      price: item.price || 0,
+      subtotal: item.subtotal || 0,
+    }));
+    const customerEmail: string = order?.customerInfo?.email || '';
+
+    this.sendOrderEmailNotification(
+      customerEmail,
+      orderId,
+      payment.amount,
+      orderItems,
+      payment.transactionId,
+    ).catch((err) => console.error('Email notification error:', err));
+  }
+
+  /**
    * COD: Create payment record when seller confirms money received
    */
   async createPaymentForCashOnDelivery(orderId: string, amount: number) {
-    // Count existing payment records for this order
     const existingCount = await this.paymentModel.countDocuments({
       order: new Types.ObjectId(orderId),
     });
 
     const paymentPayload = {
-      paymentCode: Date.now(),
+      paymentCode: this.generatePaymentCode(),
       order: new Types.ObjectId(orderId),
       amount: amount,
       status: 'PAID',
@@ -64,18 +289,15 @@ export class VnpayService {
   }
 
   /**
-   * Refund payment: update the latest PAID payment for an order to REFUND status
+   * Refund payment via PayOS.
+   * SDK v2 (@payos/node) does not expose any refund API (only
+   * create/get/cancel on payment-requests), so refunding through
+   * PayOS is not possible yet. No local state is changed.
    */
   async refundPayment(orderId: string) {
-    const payment = await this.paymentModel.findOneAndUpdate(
-      {
-        order: new Types.ObjectId(orderId),
-        status: 'PAID',
-      },
-      { status: 'REFUND' },
-      { new: true, sort: { createdAt: -1 } },
+    throw new NotImplementedException(
+      'Refund qua PayOS chưa được hỗ trợ bởi SDK',
     );
-    return payment;
   }
 
   async updatePaymentStatus(
@@ -107,6 +329,28 @@ export class VnpayService {
   }
 
   /**
+   * Expire all PENDING payments for multiple orders in one update.
+   * Mirrors expirePaymentsByOrderId field logic exactly (order $in + PENDING → EXPIRED).
+   */
+  async expirePaymentsByOrderIds(orderIds: string[]) {
+    const objectIds = (orderIds || [])
+      .filter((id) => Types.ObjectId.isValid(id))
+      .map((id) => new Types.ObjectId(id));
+
+    if (objectIds.length === 0) {
+      return { acknowledged: true, modifiedCount: 0 };
+    }
+
+    return await this.paymentModel.updateMany(
+      {
+        order: { $in: objectIds },
+        status: 'PENDING',
+      },
+      { status: 'EXPIRED' },
+    );
+  }
+
+  /**
    * Create payment link (online payment)
    * Each call creates a NEW payment record (new attempt)
    */
@@ -118,7 +362,7 @@ export class VnpayService {
       order: new Types.ObjectId(createPaymentDto.order),
     });
 
-    const paymentCode: number = Date.now();
+    const paymentCode = this.generatePaymentCode();
     const paymentLink = await payos.paymentRequests.create(
       {
         orderCode: paymentCode,
@@ -187,80 +431,32 @@ export class VnpayService {
       }
 
       // Fetch order details from order-service
-      let order: any = null;
-      try {
-        order = await firstValueFrom(
-          this.orderService.send('order.getById', {
-            orderId: payment.order.toString(),
-          }),
-        );
-      } catch (err) {
-        console.error('Failed to fetch order:', err);
-      }
-
-      // Build orderItems and customerEmail from the order record
-      const orderItems: Array<{
-        productVariant: string;
-        productName?: string;
-        combination?: Record<string, string>;
-        quantity: number;
-        price: number;
-        subtotal: number;
-      }> = (order?.orderDetail || []).map((item: any) => ({
-        productVariant: item.variantId || '',
-        productName: item.productName || '',
-        combination: item.combination || {},
-        quantity: item.quantity || 0,
-        price: item.price || 0,
-        subtotal: item.subtotal || 0,
-      }));
-      const customerEmail: string = order?.customerInfo?.email || '';
+      const order = await this.fetchOrderById(payment.order.toString());
 
       if (paymentLinkInfo.status === 'PAID') {
-        // Update payment status to PAID
+        // Idempotency: already PAID → skip downstream effects silently
+        if (payment.status === 'PAID') {
+          return {
+            success: true,
+            message: 'Thanh toán thành công',
+            data: {
+              paymentCode: payment.paymentCode,
+              amount: payment.amount,
+              status: payment.status,
+              transactionId: payment.transactionId,
+              paidAt:
+                paymentLinkInfo.transactions?.[0]?.transactionDateTime || null,
+              orderId: payment.order.toString(),
+            },
+          };
+        }
+
         payment.status = 'PAID';
         payment.transactionId =
           paymentLinkInfo.transactions?.[0]?.reference || payment.transactionId;
         await payment.save();
 
-        // // Update stock for each product variant
-        // await this.updateProductStock(orderItems);
-
-        // Update order status to COMPLETED (paid successfully)
-        try {
-          await firstValueFrom(
-            this.orderService.send('order.updateStatus', {
-              id: payment.order.toString(),
-              updateOrderDto: {
-                status: 'COMPLETED',
-                payment: { isCheckout: true, type: 'CARD' },
-              },
-            }),
-          );
-        } catch (err) {
-          console.error('Failed to update order status:', err);
-        }
-
-        // Clear the guest's cart after successful payment
-        if (guestId) {
-          this.cartService
-            .send('cart.update', {
-              id: guestId,
-              updateCartDto: { guestId, cartItems: [], total: 0 },
-            })
-            .subscribe({
-              error: (err) => console.error('Cart clear error:', err),
-            });
-        }
-
-        // Send email notification (fire and forget, don't block the response)
-        this.sendOrderEmailNotification(
-          customerEmail,
-          payment.order.toString(),
-          payment.amount,
-          orderItems,
-          payment.transactionId,
-        ).catch((err) => console.error('Email notification error:', err));
+        await this.applyPaidEffects(payment, order);
 
         return {
           success: true,
@@ -335,27 +531,6 @@ export class VnpayService {
       };
     }
   }
-
-  // Update stock for product variants after successful payment
-  // private async updateProductStock(
-  //   orderItems: Array<{
-  //     productVariant: string;
-  //     quantity: number;
-  //   }>,
-  // ) {
-  //   try {
-  //     for (const item of orderItems) {
-  //       await firstValueFrom(
-  //         this.productService.send('product.variant.decrementStock', {
-  //           variantId: item.productVariant,
-  //           quantity: item.quantity,
-  //         }),
-  //       );
-  //     }
-  //   } catch (error) {
-  //     console.error('Stock update error:', error);
-  //   }
-  // }
 
   // Send order confirmation email
   private async sendOrderEmailNotification(

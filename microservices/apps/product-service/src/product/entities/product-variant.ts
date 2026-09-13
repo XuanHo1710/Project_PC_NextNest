@@ -49,3 +49,4 @@ export const ProductVariantSchema =
 ProductVariantSchema.index({ product: 1, isDeleted: 1 });
 ProductVariantSchema.index({ isDeleted: 1, discount: -1, stock: 1 });
 ProductVariantSchema.index({ product: 1, createdAt: 1 });
+ProductVariantSchema.index({ sku: 1 }, { unique: true, sparse: true });

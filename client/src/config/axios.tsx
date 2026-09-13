@@ -1,4 +1,5 @@
 // axios.tsx - Admin-side axios instance for calling backend directly
+// Auth = httpOnly cookies sent automatically via withCredentials.
 import { pathAdminRoutes } from '@/config/route';
 import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import axios, {
@@ -9,23 +10,37 @@ import axios, {
 } from 'axios';
 import { toast } from 'react-toastify';
 
-const baseURL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1') + '/admin/';
+const baseURL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1') + '/admin';
 
 // Track refresh state to prevent multiple refresh calls
 let isRefreshing = false;
-let refreshSubscribers: (() => void)[] = [];
+let refreshSubscribers: Array<{
+  resolve: (v: unknown) => void;
+  reject: (e: unknown) => void;
+  originalRequest: AxiosRequestConfig & { _retry?: boolean };
+}> = [];
 
-function subscribeTokenRefresh(cb: () => void) {
-  refreshSubscribers.push(cb);
+function subscribeTokenRefresh(
+  resolve: (v: unknown) => void,
+  reject: (e: unknown) => void,
+  originalRequest: AxiosRequestConfig & { _retry?: boolean },
+) {
+  refreshSubscribers.push({ resolve, reject, originalRequest });
 }
 
 function onRefreshed() {
-  refreshSubscribers.forEach((cb) => cb());
+  refreshSubscribers.forEach((s) => s.resolve(instance(s.originalRequest)));
+  refreshSubscribers = [];
+}
+
+function onRefreshFailed(error: unknown) {
+  refreshSubscribers.forEach((s) => s.reject(error));
   refreshSubscribers = [];
 }
 
 // Create admin axios instance
 const instance = axios.create({
+  // No trailing slash — avoids '//auth' double-slash joins downstream
   baseURL,
   timeout: 10000,
   withCredentials: true,
@@ -33,18 +48,6 @@ const instance = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
-// Request interceptor: attach access_token from Zustand store as Bearer token
-instance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const { accessToken } = useAuthEmployee.getState();
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Response interceptor: Handle errors and token refresh
 instance.interceptors.response.use(
@@ -61,19 +64,19 @@ instance.interceptors.response.use(
         statusCode: number;
       };
 
-      // Handle 401 - Unauthorized (token expired)
+      // Handle 401 - access token expired -> rotate via backend refresh endpoint.
+      // The gateway reads admin_refresh_token cookie, checks the Redis session
+      // and sets new cookies on the response.
       if (status === 401 && !originalRequest._retry) {
-        // Don't retry refresh/login endpoints
+        // Don't retry auth endpoints themselves
         if (originalRequest.url?.includes('/auth/refresh') ||
           originalRequest.url?.includes('/auth/login')) {
           return Promise.reject(error);
         }
 
         if (isRefreshing) {
-          return new Promise((resolve) => {
-            subscribeTokenRefresh(() => {
-              resolve(instance(originalRequest));
-            });
+          return new Promise((resolve, reject) => {
+            subscribeTokenRefresh(resolve, reject, originalRequest);
           });
         }
 
@@ -81,34 +84,34 @@ instance.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          // Call Next.js API refresh route — it reads admin_refresh_token cookie,
-          // calls backend, and sets new admin_access_token cookie
           const refreshResponse = await axios.post(
-            '/api/admin/auth/refresh',
+            `${baseURL}/auth/refresh`,
             {},
+            { withCredentials: true },
           );
 
-          if (refreshResponse.data.success && refreshResponse.data.data?.access_token) {
-            // Update Zustand store with new access_token
-            const { setAccessToken, setAccountLogin } = useAuthEmployee.getState();
-            setAccessToken(refreshResponse.data.data.access_token);
-            setAccountLogin({
-              _id: refreshResponse.data.data.payload._id,
-              username: refreshResponse.data.data.payload.username,
-              IDEmp: refreshResponse.data.data.payload.IDEmp,
-              roleId: refreshResponse.data.data.payload.roleId,
-              avatar: refreshResponse.data.data.payload.avatar || '',
-              role: refreshResponse.data.data.payload.role,
-            })
+          const user = refreshResponse.data?.data?.user;
+          if (user?._id) {
+            useAuthEmployee.getState().setAccountLogin({
+              _id: user._id,
+              username: user.username,
+              IDEmp: user.IDEmp,
+              roleId: user.roleId,
+              avatar: user.avatar || '',
+              role: user.role,
+            });
           }
 
           // Refresh succeeded — notify queued requests
           onRefreshed();
 
-          // Retry original request with new token (interceptor will read from Zustand)
+          // Retry original request; browser now has fresh cookies
           return instance(originalRequest);
         } catch {
-          // Refresh failed — clear auth state and redirect to login
+          // Refresh failed — release queued requests with the failure,
+          // clear auth state and redirect to login
+          onRefreshFailed(error);
+
           useAuthEmployee.getState().resetAuth();
           toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
 

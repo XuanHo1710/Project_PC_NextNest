@@ -36,7 +36,6 @@ import {
 } from '@/utils/productHelpers';
 import Swal from "sweetalert2";
 import useAuthUser from '@/hooks/useAuthUser';
-import { DynamicMetadata } from "@/components/common/DynamicMetadata";
 import BreadcrumbNav from '@/components/client/Breadcrumb/Breadcrumb';
 import { useChatSocket } from '@/hooks/client/useChatSocket';
 import useOnlineUsersStore from '@/hooks/useOnlineUsers';
@@ -260,15 +259,6 @@ export default function ProductDetailClient() {
 
     return (
         <>
-            <DynamicMetadata
-                title={`${product.name} - Giá ${displayFinalPrice.toLocaleString()}đ | PC Store`}
-                description={`Mua ${product.name} chính hãng giá ${displayFinalPrice.toLocaleString()}đ. ${product.description || 'Bảo hành chính hãng, giao hàng nhanh.'}`}
-                keywords={`${product.name}, mua ${product.name}, ${product.category?.name || 'pc gaming'}, linh kiện máy tính`}
-                ogTitle={`${product.name} - ${displayFinalPrice.toLocaleString()}đ`}
-                ogDescription={`${product.description || 'Bảo hành chính hãng, giao hàng nhanh'}`}
-                ogImage={getProductImage(product) || '/laptop.png'}
-            />
-
             <div className="pt-3 bg-slate-50 dark:bg-gray-900 dark:text-white min-h-screen">
                 {/* Breadcrumb */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">

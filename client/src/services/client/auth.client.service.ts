@@ -32,8 +32,8 @@ class ClientAuthService {
   }
 
   async getProfile(): Promise<IClientUser> {
-    const response = await axiosClient.get("/client/account-guest/profile");
-    return response.data;
+    const response = await axiosClient.get("/client/account-guest/profile-detail");
+    return (response as any)?.data ?? response;
   }
 
   googleLogin(): void {

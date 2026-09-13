@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MICROSERVICE, getRabbitMqUrl } from '@project-pc/common';
 import { NotificationController } from 'client/notification/notification.controller';
 
 @Module({
@@ -10,7 +10,7 @@ import { NotificationController } from 'client/notification/notification.control
         name: MICROSERVICE.NOTIFICATION_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'notification.main',
           queueOptions: {
             durable: true,

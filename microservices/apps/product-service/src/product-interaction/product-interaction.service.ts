@@ -226,17 +226,21 @@ export class ProductInteractionService {
       this.commentModel.countDocuments(query).exec(),
     ]);
 
-    // Lấy replies cho mỗi comment gốc
+    // Lấy replies cho mỗi comment gốc (bounded để tránh OOM trên bài viết hot;
+    // lấy mới nhất trước rồi đảo lại để vẫn hiển thị cũ -> mới)
     const commentIds = comments.map((c) => c._id);
-    const replies = await this.commentModel
+    const MAX_REPLIES_PER_PAGE = 300;
+    const repliesDesc = await this.commentModel
       .find({
         parentComment: { $in: commentIds },
         isDeleted: false,
       })
       .populate('guest', 'fullname email avatar')
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
+      .limit(MAX_REPLIES_PER_PAGE)
       .lean()
       .exec();
+    const replies = repliesDesc.reverse();
 
     // Nếu guestId được cung cấp, kiểm tra reaction của guest này
     let myReactions: Record<string, boolean> = {};

@@ -1,12 +1,12 @@
-/**
- * PC Product Scraper v3 — Comprehensive 6-Website Multi-Source Scraper
+﻿/**
+ * PC Product Scraper v3 â€” Comprehensive 6-Website Multi-Source Scraper
  * ====================================================================
  * Targets:
  *   1. GearVN (gearvn.com)
  *   2. CellphoneS (cellphones.com.vn)
- *   3. Phong Vũ (phongvu.vn)
+ *   3. Phong VÅ© (phongvu.vn)
  *   4. HACOM (hacom.vn)
- *   5. An Phát Computer (anphatpc.com.vn)
+ *   5. An PhÃ¡t Computer (anphatpc.com.vn)
  *   6. ThinkPro (thinkpro.vn)
  *
  * Key features:
@@ -26,10 +26,10 @@ const cheerio = require('cheerio');
 const { MongoClient, ObjectId } = require('mongodb');
 const slugify = require('slugify');
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFIG
-// ═══════════════════════════════════════════════════════════════
-const MONGODB_URI = 'mongodb+srv://xuanhodcbas:0984232310ho.@cluster0.f7sbfkn.mongodb.net/project-pc-hoang-ha';
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const MONGODB_URI = process.env.MONGODB_URI || '';
 const DB_NAME = 'project-pc-hoang-ha';
 const ES_URL = 'http://localhost:9200';
 const ES_INDEX = 'product_variants';
@@ -37,9 +37,9 @@ const ES_INDEX = 'product_variants';
 const WEBSITES = [
     'GearVN',
     'CellphoneS',
-    'Phong Vũ',
+    'Phong VÅ©',
     'HACOM',
-    'An Phát Computer',
+    'An PhÃ¡t Computer',
     'ThinkPro'
 ];
 
@@ -70,16 +70,16 @@ function parsePrice(text) {
     return parseInt(cleaned, 10) || 0;
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 8 ROOT CATEGORIES TREE STRUCTURE (EXACTLY 8 ROOTS)
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const CATEGORY_TREE = [
     {
-        name: "Linh kiện máy tính",
+        name: "Linh kiá»‡n mÃ¡y tÃ­nh",
         slug: "linh-kien-may-tinh",
         children: [
             {
-                name: "Bộ vi xử lý (CPU)",
+                name: "Bá»™ vi xá»­ lÃ½ (CPU)",
                 slug: "cpu-bo-vi-xu-ly",
                 children: [
                     { name: "CPU Intel Core i3", slug: "cpu-intel-core-i3" },
@@ -92,7 +92,7 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Card màn hình (VGA)",
+                name: "Card mÃ n hÃ¬nh (VGA)",
                 slug: "vga-card-man-hinh",
                 children: [
                     { name: "VGA NVIDIA RTX 4060 / 4060 Ti", slug: "vga-nvidia-rtx-4060" },
@@ -103,7 +103,7 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Bộ nhớ trong (RAM)",
+                name: "Bá»™ nhá»› trong (RAM)",
                 slug: "ram-bo-nho-trong",
                 children: [
                     { name: "RAM DDR4 8GB", slug: "ram-ddr4-8gb" },
@@ -115,7 +115,7 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Ổ cứng SSD & HDD",
+                name: "á»” cá»©ng SSD & HDD",
                 slug: "o-cung-ssd-hdd",
                 children: [
                     { name: "SSD NVMe 500GB", slug: "ssd-nvme-500gb" },
@@ -126,7 +126,7 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Bo mạch chủ (Mainboard)",
+                name: "Bo máº¡ch chá»§ (Mainboard)",
                 slug: "mainboard-bo-mach-chu",
                 children: [
                     { name: "Mainboard Intel LGA1700", slug: "mainboard-intel-lga1700" },
@@ -135,16 +135,16 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Nguồn máy tính (PSU)",
+                name: "Nguá»“n mÃ¡y tÃ­nh (PSU)",
                 slug: "psu-nguon-may-tinh",
                 children: [
-                    { name: "Nguồn dưới 650W", slug: "psu-duoi-650w" },
-                    { name: "Nguồn 650W - 750W", slug: "psu-650w-750w" },
-                    { name: "Nguồn trên 750W", slug: "psu-tren-750w" }
+                    { name: "Nguá»“n dÆ°á»›i 650W", slug: "psu-duoi-650w" },
+                    { name: "Nguá»“n 650W - 750W", slug: "psu-650w-750w" },
+                    { name: "Nguá»“n trÃªn 750W", slug: "psu-tren-750w" }
                 ]
             },
             {
-                name: "Vỏ máy tính (Case)",
+                name: "Vá» mÃ¡y tÃ­nh (Case)",
                 slug: "case-vo-may-tinh",
                 children: [
                     { name: "Case Mini Tower", slug: "case-mini-tower" },
@@ -153,19 +153,19 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Tản nhiệt máy tính",
+                name: "Táº£n nhiá»‡t mÃ¡y tÃ­nh",
                 slug: "cooling-tan-nhiet",
                 children: [
-                    { name: "Tản nhiệt khí CPU", slug: "tan-nhiet-khi-cpu" },
-                    { name: "Tản nhiệt nước AIO 240/280", slug: "tan-nhiet-aio-240-280" },
-                    { name: "Tản nhiệt nước AIO 360", slug: "tan-nhiet-aio-360" },
-                    { name: "Quạt Case (Fan Case)", slug: "quat-tan-nhiet-case" }
+                    { name: "Táº£n nhiá»‡t khÃ­ CPU", slug: "tan-nhiet-khi-cpu" },
+                    { name: "Táº£n nhiá»‡t nÆ°á»›c AIO 240/280", slug: "tan-nhiet-aio-240-280" },
+                    { name: "Táº£n nhiá»‡t nÆ°á»›c AIO 360", slug: "tan-nhiet-aio-360" },
+                    { name: "Quáº¡t Case (Fan Case)", slug: "quat-tan-nhiet-case" }
                 ]
             }
         ]
     },
     {
-        name: "Laptop & Thiết bị di động",
+        name: "Laptop & Thiáº¿t bá»‹ di Ä‘á»™ng",
         slug: "laptop-di-dong",
         children: [
             {
@@ -180,7 +180,7 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Laptop Văn phòng",
+                name: "Laptop VÄƒn phÃ²ng",
                 slug: "laptop-van-phong",
                 children: [
                     { name: "Apple MacBook Air", slug: "macbook-air" },
@@ -192,7 +192,7 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Điện thoại thông minh",
+                name: "Äiá»‡n thoáº¡i thÃ´ng minh",
                 slug: "dien-thoai-thong-minh",
                 children: [
                     { name: "Apple iPhone", slug: "iphone-apple" },
@@ -201,7 +201,7 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Máy tính bảng (Tablet)",
+                name: "MÃ¡y tÃ­nh báº£ng (Tablet)",
                 slug: "may-tinh-bang",
                 children: [
                     { name: "Apple iPad", slug: "ipad-apple" },
@@ -211,57 +211,57 @@ const CATEGORY_TREE = [
         ]
     },
     {
-        name: "PC & Máy tính đồng bộ",
+        name: "PC & MÃ¡y tÃ­nh Ä‘á»“ng bá»™",
         slug: "pc-dong-bo",
         children: [
             {
-                name: "PC Gaming lắp sẵn",
+                name: "PC Gaming láº¯p sáºµn",
                 slug: "pc-gaming-lap-san",
                 children: [
-                    { name: "PC Gaming giá rẻ", slug: "pc-gaming-gia-re" },
-                    { name: "PC Gaming tầm trung", slug: "pc-gaming-tam-trung" },
-                    { name: "PC Gaming cao cấp", slug: "pc-gaming-cao-cap" }
+                    { name: "PC Gaming giÃ¡ ráº»", slug: "pc-gaming-gia-re" },
+                    { name: "PC Gaming táº§m trung", slug: "pc-gaming-tam-trung" },
+                    { name: "PC Gaming cao cáº¥p", slug: "pc-gaming-cao-cap" }
                 ]
             },
             {
-                name: "PC Văn phòng đồng bộ",
+                name: "PC VÄƒn phÃ²ng Ä‘á»“ng bá»™",
                 slug: "pc-van-phong-dong-bo",
                 children: [
-                    { name: "PC đồng bộ Dell Vostro", slug: "pc-dell-vostro" },
-                    { name: "PC đồng bộ HP ProDesk", slug: "pc-hp-prodesk" },
-                    { name: "PC đồng bộ Lenovo ThinkCentre", slug: "pc-lenovo-thinkcentre" }
+                    { name: "PC Ä‘á»“ng bá»™ Dell Vostro", slug: "pc-dell-vostro" },
+                    { name: "PC Ä‘á»“ng bá»™ HP ProDesk", slug: "pc-hp-prodesk" },
+                    { name: "PC Ä‘á»“ng bá»™ Lenovo ThinkCentre", slug: "pc-lenovo-thinkcentre" }
                 ]
             },
             {
-                name: "PC Đồ họa Workstation",
+                name: "PC Äá»“ há»a Workstation",
                 slug: "pc-do-hoa-workstation",
                 children: [
                     { name: "PC Workstation Dual Xeon", slug: "pc-workstation-dual-xeon" },
-                    { name: "PC Creator chuyên nghiệp", slug: "pc-creator-chuyen-nghiep" }
+                    { name: "PC Creator chuyÃªn nghiá»‡p", slug: "pc-creator-chuyen-nghiep" }
                 ]
             }
         ]
     },
     {
-        name: "Màn hình máy tính",
+        name: "MÃ n hÃ¬nh mÃ¡y tÃ­nh",
         slug: "man-hinh-may-tinh",
         children: [
             {
-                name: "Màn hình Gaming",
+                name: "MÃ n hÃ¬nh Gaming",
                 slug: "man-hinh-gaming",
                 children: [
-                    { name: "Màn hình Gaming 144Hz - 240Hz", slug: "man-hinh-gaming-hz-cao" },
-                    { name: "Màn hình Gaming Cong", slug: "man-hinh-gaming-cong" },
-                    { name: "Màn hình Gaming 4K", slug: "man-hinh-gaming-4k" }
+                    { name: "MÃ n hÃ¬nh Gaming 144Hz - 240Hz", slug: "man-hinh-gaming-hz-cao" },
+                    { name: "MÃ n hÃ¬nh Gaming Cong", slug: "man-hinh-gaming-cong" },
+                    { name: "MÃ n hÃ¬nh Gaming 4K", slug: "man-hinh-gaming-4k" }
                 ]
             },
             {
-                name: "Màn hình Văn phòng & Đồ họa",
+                name: "MÃ n hÃ¬nh VÄƒn phÃ²ng & Äá»“ há»a",
                 slug: "man-hinh-van-phong-do-hoa",
                 children: [
-                    { name: "Màn hình Văn phòng 24 inch", slug: "man-hinh-van-phong-24-inch" },
-                    { name: "Màn hình Đồ họa chuyên nghiệp", slug: "man-hinh-do-hoa-chuyen-nghiep" },
-                    { name: "Màn hình Cong Ultrawide", slug: "man-hinh-cong-ultrawide" }
+                    { name: "MÃ n hÃ¬nh VÄƒn phÃ²ng 24 inch", slug: "man-hinh-van-phong-24-inch" },
+                    { name: "MÃ n hÃ¬nh Äá»“ há»a chuyÃªn nghiá»‡p", slug: "man-hinh-do-hoa-chuyen-nghiep" },
+                    { name: "MÃ n hÃ¬nh Cong Ultrawide", slug: "man-hinh-cong-ultrawide" }
                 ]
             }
         ]
@@ -271,22 +271,22 @@ const CATEGORY_TREE = [
         slug: "gaming-gear",
         children: [
             {
-                name: "Bàn phím cơ",
+                name: "BÃ n phÃ­m cÆ¡",
                 slug: "ban-phim-co-gaming",
                 children: [
-                    { name: "Bàn phím cơ AKKO", slug: "ban-phim-co-akko" },
-                    { name: "Bàn phím cơ Corsair", slug: "ban-phim-co-corsair" },
-                    { name: "Bàn phím cơ Logitech", slug: "ban-phim-co-logitech" },
-                    { name: "Bàn phím cơ Razer", slug: "ban-phim-co-razer" }
+                    { name: "BÃ n phÃ­m cÆ¡ AKKO", slug: "ban-phim-co-akko" },
+                    { name: "BÃ n phÃ­m cÆ¡ Corsair", slug: "ban-phim-co-corsair" },
+                    { name: "BÃ n phÃ­m cÆ¡ Logitech", slug: "ban-phim-co-logitech" },
+                    { name: "BÃ n phÃ­m cÆ¡ Razer", slug: "ban-phim-co-razer" }
                 ]
             },
             {
-                name: "Chuột chơi game",
+                name: "Chuá»™t chÆ¡i game",
                 slug: "chuot-choi-game-gaming",
                 children: [
-                    { name: "Chuột Gaming không dây", slug: "chuot-gaming-wireless" },
-                    { name: "Chuột Gaming có dây", slug: "chuot-gaming-wired" },
-                    { name: "Chuột Gaming siêu nhẹ", slug: "chuot-gaming-ultra-light" }
+                    { name: "Chuá»™t Gaming khÃ´ng dÃ¢y", slug: "chuot-gaming-wireless" },
+                    { name: "Chuá»™t Gaming cÃ³ dÃ¢y", slug: "chuot-gaming-wired" },
+                    { name: "Chuá»™t Gaming siÃªu nháº¹", slug: "chuot-gaming-ultra-light" }
                 ]
             },
             {
@@ -298,161 +298,161 @@ const CATEGORY_TREE = [
                 ]
             },
             {
-                name: "Ghế & Bàn Gaming",
+                name: "Gháº¿ & BÃ n Gaming",
                 slug: "ghe-ban-gaming",
                 children: [
-                    { name: "Ghế chơi game gaming", slug: "ghe-choi-game-gaming" },
-                    { name: "Bàn chơi game chữ Z/K", slug: "ban-choi-game-chu-z-k" }
+                    { name: "Gháº¿ chÆ¡i game gaming", slug: "ghe-choi-game-gaming" },
+                    { name: "BÃ n chÆ¡i game chá»¯ Z/K", slug: "ban-choi-game-chu-z-k" }
                 ]
             }
         ]
     },
     {
-        name: "Thiết bị văn phòng",
+        name: "Thiáº¿t bá»‹ vÄƒn phÃ²ng",
         slug: "thiet-bi-van-phong",
         children: [
             {
-                name: "Phím & Chuột văn phòng",
+                name: "PhÃ­m & Chuá»™t vÄƒn phÃ²ng",
                 slug: "phim-chuot-van-phong",
                 children: [
-                    { name: "Bàn phím văn phòng giá rẻ", slug: "ban-phim-van-phong-gia-re" },
-                    { name: "Chuột văn phòng silent", slug: "chuot-van-phong-silent" },
-                    { name: "Chuột văn phòng công thái học", slug: "chuot-van-phong-ergonomic" }
+                    { name: "BÃ n phÃ­m vÄƒn phÃ²ng giÃ¡ ráº»", slug: "ban-phim-van-phong-gia-re" },
+                    { name: "Chuá»™t vÄƒn phÃ²ng silent", slug: "chuot-van-phong-silent" },
+                    { name: "Chuá»™t vÄƒn phÃ²ng cÃ´ng thÃ¡i há»c", slug: "chuot-van-phong-ergonomic" }
                 ]
             },
             {
-                name: "Máy in & Scan",
+                name: "MÃ¡y in & Scan",
                 slug: "may-in-scan",
                 children: [
-                    { name: "Máy in Laser đen trắng", slug: "may-in-laser-mono" },
-                    { name: "Máy in phun màu đa năng", slug: "may-in-phun-color" },
-                    { name: "Máy quét ảnh tài liệu Scan", slug: "may-quet-scan-tai-lieu" }
+                    { name: "MÃ¡y in Laser Ä‘en tráº¯ng", slug: "may-in-laser-mono" },
+                    { name: "MÃ¡y in phun mÃ u Ä‘a nÄƒng", slug: "may-in-phun-color" },
+                    { name: "MÃ¡y quÃ©t áº£nh tÃ i liá»‡u Scan", slug: "may-quet-scan-tai-lieu" }
                 ]
             },
             {
-                name: "Máy chiếu",
+                name: "MÃ¡y chiáº¿u",
                 slug: "may-chieu-van-phong",
                 children: [
-                    { name: "Máy chiếu văn phòng Epson", slug: "may-chieu-van-phong-epson" },
-                    { name: "Máy chiếu gia đình 4K", slug: "may-chieu-gia-dinh-4k" }
+                    { name: "MÃ¡y chiáº¿u vÄƒn phÃ²ng Epson", slug: "may-chieu-van-phong-epson" },
+                    { name: "MÃ¡y chiáº¿u gia Ä‘Ã¬nh 4K", slug: "may-chieu-gia-dinh-4k" }
                 ]
             }
         ]
     },
     {
-        name: "Thiết bị âm thanh",
+        name: "Thiáº¿t bá»‹ Ã¢m thanh",
         slug: "thiet-bi-am-thanh",
         children: [
             {
-                name: "Loa nghe nhạc",
+                name: "Loa nghe nháº¡c",
                 slug: "loa-nghe-nhac",
                 children: [
-                    { name: "Loa máy tính 2.0 / 2.1", slug: "loa-may-tinh-2-0-2-1" },
-                    { name: "Loa Bluetooth di động", slug: "loa-bluetooth-di-dong" },
+                    { name: "Loa mÃ¡y tÃ­nh 2.0 / 2.1", slug: "loa-may-tinh-2-0-2-1" },
+                    { name: "Loa Bluetooth di Ä‘á»™ng", slug: "loa-bluetooth-di-dong" },
                     { name: "Loa Soundbar tivi", slug: "loa-soundbar-tivi" }
                 ]
             },
             {
-                name: "Microphone & Thu âm",
+                name: "Microphone & Thu Ã¢m",
                 slug: "microphone-thu-am",
                 children: [
-                    { name: "Microphone thu âm livestream", slug: "microphone-thu-am-livestream" },
-                    { name: "Microphone cài áo không dây", slug: "microphone-cai-ao" }
+                    { name: "Microphone thu Ã¢m livestream", slug: "microphone-thu-am-livestream" },
+                    { name: "Microphone cÃ i Ã¡o khÃ´ng dÃ¢y", slug: "microphone-cai-ao" }
                 ]
             },
             {
-                name: "Tai nghe không dây",
+                name: "Tai nghe khÃ´ng dÃ¢y",
                 slug: "tai-nghe-khong-day-music",
                 children: [
                     { name: "Tai nghe True Wireless (TWS)", slug: "tai-nghe-true-wireless" },
-                    { name: "Tai nghe Chụp tai (Over-ear)", slug: "tai-nghe-chup-tai-over-ear" }
+                    { name: "Tai nghe Chá»¥p tai (Over-ear)", slug: "tai-nghe-chup-tai-over-ear" }
                 ]
             }
         ]
     },
     {
-        name: "Phụ kiện & Thiết bị mạng",
+        name: "Phá»¥ kiá»‡n & Thiáº¿t bá»‹ máº¡ng",
         slug: "phu-kien-mang",
         children: [
             {
-                name: "Thiết bị mạng (Wi-Fi)",
+                name: "Thiáº¿t bá»‹ máº¡ng (Wi-Fi)",
                 slug: "thiet-bi-mang-wifi",
                 children: [
-                    { name: "Bộ phát Wi-Fi Router", slug: "bo-phat-wifi-router" },
-                    { name: "Bộ kích sóng Wi-Fi Repeater", slug: "bo-kich-song-wifi" },
-                    { name: "Hệ thống Wi-Fi Mesh", slug: "he-thong-wifi-mesh" }
+                    { name: "Bá»™ phÃ¡t Wi-Fi Router", slug: "bo-phat-wifi-router" },
+                    { name: "Bá»™ kÃ­ch sÃ³ng Wi-Fi Repeater", slug: "bo-kich-song-wifi" },
+                    { name: "Há»‡ thá»‘ng Wi-Fi Mesh", slug: "he-thong-wifi-mesh" }
                 ]
             },
             {
-                name: "Cáp kết nối & Hub chuyển",
+                name: "CÃ¡p káº¿t ná»‘i & Hub chuyá»ƒn",
                 slug: "cap-ket-noi-hub-chuyen",
                 children: [
-                    { name: "Dây cáp HDMI / DisplayPort", slug: "day-cap-hdmi-displayport" },
-                    { name: "Cổng Hub chuyển đổi USB-C", slug: "hub-chuyen-doi-usb-c" },
-                    { name: "Cáp mạng LAN RJ45", slug: "cap-mang-lan-rj45" }
+                    { name: "DÃ¢y cÃ¡p HDMI / DisplayPort", slug: "day-cap-hdmi-displayport" },
+                    { name: "Cá»•ng Hub chuyá»ƒn Ä‘á»•i USB-C", slug: "hub-chuyen-doi-usb-c" },
+                    { name: "CÃ¡p máº¡ng LAN RJ45", slug: "cap-mang-lan-rj45" }
                 ]
             },
             {
-                name: "Thẻ nhớ & USB lưu trữ",
+                name: "Tháº» nhá»› & USB lÆ°u trá»¯",
                 slug: "the-nho-usb-luu-tru",
                 children: [
-                    { name: "Thẻ nhớ MicroSD lưu trữ", slug: "the-nho-microsd" },
-                    { name: "USB 3.0 / USB-C lưu trữ nhanh", slug: "usb-luu-tru-nhanh" }
+                    { name: "Tháº» nhá»› MicroSD lÆ°u trá»¯", slug: "the-nho-microsd" },
+                    { name: "USB 3.0 / USB-C lÆ°u trá»¯ nhanh", slug: "usb-luu-tru-nhanh" }
                 ]
             }
         ]
     }
 ];
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // BRANDS DATA
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const BRANDS_DATA = [
-    { name: 'Intel', description: 'Nhà sản xuất CPU hàng đầu thế giới', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/200px-Intel_logo_%282006-2020%29.svg.png' },
+    { name: 'Intel', description: 'NhÃ  sáº£n xuáº¥t CPU hÃ ng Ä‘áº§u tháº¿ giá»›i', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/200px-Intel_logo_%282006-2020%29.svg.png' },
     { name: 'AMD', description: 'Advanced Micro Devices - CPU & GPU', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/AMD_Logo.svg/200px-AMD_Logo.svg.png' },
-    { name: 'NVIDIA', description: 'Nhà sản xuất GPU, AI computing', logo: 'https://upload.wikimedia.org/wikipedia/sco/thumb/2/21/Nvidia_logo.svg/200px-Nvidia_logo.svg.png' },
+    { name: 'NVIDIA', description: 'NhÃ  sáº£n xuáº¥t GPU, AI computing', logo: 'https://upload.wikimedia.org/wikipedia/sco/thumb/2/21/Nvidia_logo.svg/200px-Nvidia_logo.svg.png' },
     { name: 'ASUS', description: 'Mainboard, VGA, Laptop, Gaming Gear', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/ASUS_Logo.svg/200px-ASUS_Logo.svg.png' },
     { name: 'MSI', description: 'Micro-Star International - Gaming Hardware', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/MSI_Logo.svg/200px-MSI_Logo.svg.png' },
     { name: 'GIGABYTE', description: 'Mainboard, VGA, Laptop, PC Components', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Gigabyte_Technology_logo_20080107.svg/200px-Gigabyte_Technology_logo_20080107.svg.png' },
     { name: 'Corsair', description: 'RAM, PSU, Case, Gaming Peripherals', logo: '' },
     { name: 'NZXT', description: 'Case, Cooling, PC Components', logo: '' },
-    { name: 'Cooler Master', description: 'Case, PSU, Tản nhiệt, Gaming Gear', logo: '' },
+    { name: 'Cooler Master', description: 'Case, PSU, Táº£n nhiá»‡t, Gaming Gear', logo: '' },
     { name: 'Kingston', description: 'RAM, SSD, USB Flash Drive', logo: '' },
-    { name: 'Samsung', description: 'SSD, RAM, Màn hình, Storage', logo: '' },
+    { name: 'Samsung', description: 'SSD, RAM, MÃ n hÃ¬nh, Storage', logo: '' },
     { name: 'Western Digital', description: 'SSD, HDD, Storage Solutions', logo: '' },
-    { name: 'Logitech', description: 'Chuột, Bàn phím, Tai nghe, Webcam', logo: '' },
+    { name: 'Logitech', description: 'Chuá»™t, BÃ n phÃ­m, Tai nghe, Webcam', logo: '' },
     { name: 'Razer', description: 'Gaming Peripherals, Laptop Gaming', logo: '' },
     { name: 'SteelSeries', description: 'Gaming Headset, Mouse, Keyboard', logo: '' },
-    { name: 'ZOTAC', description: 'Card màn hình NVIDIA GeForce', logo: '' },
+    { name: 'ZOTAC', description: 'Card mÃ n hÃ¬nh NVIDIA GeForce', logo: '' },
     { name: 'ASRock', description: 'Mainboard, VGA', logo: '' },
-    { name: 'Dell', description: 'Laptop, Màn hình, PC, Server', logo: '' },
-    { name: 'HP', description: 'Laptop, Màn hình, Máy in', logo: '' },
-    { name: 'Lenovo', description: 'Laptop, Màn hình, PC', logo: '' },
-    { name: 'Acer', description: 'Laptop, Màn hình, Gaming Gear', logo: '' },
-    { name: 'LG', description: 'Màn hình, TV, Thiết bị điện tử', logo: '' },
-    { name: 'ViewSonic', description: 'Màn hình máy tính', logo: '' },
-    { name: 'BenQ', description: 'Màn hình, Máy chiếu', logo: '' },
+    { name: 'Dell', description: 'Laptop, MÃ n hÃ¬nh, PC, Server', logo: '' },
+    { name: 'HP', description: 'Laptop, MÃ n hÃ¬nh, MÃ¡y in', logo: '' },
+    { name: 'Lenovo', description: 'Laptop, MÃ n hÃ¬nh, PC', logo: '' },
+    { name: 'Acer', description: 'Laptop, MÃ n hÃ¬nh, Gaming Gear', logo: '' },
+    { name: 'LG', description: 'MÃ n hÃ¬nh, TV, Thiáº¿t bá»‹ Ä‘iá»‡n tá»­', logo: '' },
+    { name: 'ViewSonic', description: 'MÃ n hÃ¬nh mÃ¡y tÃ­nh', logo: '' },
+    { name: 'BenQ', description: 'MÃ n hÃ¬nh, MÃ¡y chiáº¿u', logo: '' },
     { name: 'HyperX', description: 'Gaming Headset, Keyboard, Mouse', logo: '' },
     { name: 'Galax', description: 'VGA NVIDIA GeForce', logo: '' },
     { name: 'Inno3D', description: 'VGA NVIDIA GeForce', logo: '' },
     { name: 'Palit', description: 'VGA NVIDIA GeForce', logo: '' },
     { name: 'PNY', description: 'VGA, SSD, USB', logo: '' },
     { name: 'Crucial', description: 'RAM, SSD Micron', logo: '' },
-    { name: 'G.Skill', description: 'RAM Gaming cao cấp', logo: '' },
+    { name: 'G.Skill', description: 'RAM Gaming cao cáº¥p', logo: '' },
     { name: 'DAREU', description: 'Gaming Keyboard, Mouse, Headset', logo: '' },
-    { name: 'AKKO', description: 'Bàn phím cơ', logo: '' },
+    { name: 'AKKO', description: 'BÃ n phÃ­m cÆ¡', logo: '' },
     { name: 'Xigmatek', description: 'Case, PSU, Cooling', logo: '' },
-    { name: 'Seasonic', description: 'PSU cao cấp', logo: '' },
+    { name: 'Seasonic', description: 'PSU cao cáº¥p', logo: '' },
     { name: 'ADATA', description: 'RAM, SSD, USB', logo: '' },
-    { name: 'E-DRA', description: 'Gaming Gear Việt Nam', logo: '' },
+    { name: 'E-DRA', description: 'Gaming Gear Viá»‡t Nam', logo: '' },
     { name: 'Sapphire', description: 'VGA AMD Radeon', logo: '' },
-    { name: 'Deepcool', description: 'Tản nhiệt, Case, PSU', logo: '' },
-    { name: 'Noctua', description: 'Tản nhiệt, Quạt tản nhiệt cao cấp', logo: '' },
+    { name: 'Deepcool', description: 'Táº£n nhiá»‡t, Case, PSU', logo: '' },
+    { name: 'Noctua', description: 'Táº£n nhiá»‡t, Quáº¡t táº£n nhiá»‡t cao cáº¥p', logo: '' },
     { name: 'Apple', description: 'Laptop MacBook, iPhone, iPad', logo: '' },
-    { name: 'Epson', description: 'Máy in, máy chiếu chất lượng cao', logo: '' },
-    { name: 'Xiaomi', description: 'Thiết bị điện tử, di động', logo: '' },
-    { name: 'TP-Link', description: 'Thiết bị mạng Wi-Fi', logo: '' },
-    { name: 'Havit', description: 'Tai nghe loa nghe nhạc giá rẻ', logo: '' }
+    { name: 'Epson', description: 'MÃ¡y in, mÃ¡y chiáº¿u cháº¥t lÆ°á»£ng cao', logo: '' },
+    { name: 'Xiaomi', description: 'Thiáº¿t bá»‹ Ä‘iá»‡n tá»­, di Ä‘á»™ng', logo: '' },
+    { name: 'TP-Link', description: 'Thiáº¿t bá»‹ máº¡ng Wi-Fi', logo: '' },
+    { name: 'Havit', description: 'Tai nghe loa nghe nháº¡c giÃ¡ ráº»', logo: '' }
 ];
 
 // GearVN Shopify handles mapping
@@ -469,9 +469,9 @@ const GEARVN_HANDLES = [
     { handle: 'laptop-gaming-ban-chay', categorySlug: 'laptop-gaming-asus' }
 ];
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // DOCUMENT BUILDERS
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function buildBrand(data) {
     const now = new Date();
     return {
@@ -587,9 +587,9 @@ function buildProductAttributeAllowValue(productId, attributeValueId) {
     };
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // ELASTICSEARCH INTEGRATION
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 async function checkElasticsearch() {
     try {
         const resp = await axios.get(`${ES_URL}/_cluster/health`, { timeout: REQUEST_TIMEOUT });
@@ -716,9 +716,9 @@ function buildESDocument(variant, product, brand, category) {
     };
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // DETECT BRAND HELPERS
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function detectBrand(productName, brandMap, defaultBrandName = null) {
     const nameLower = productName.toLowerCase();
     for (const [brandName, brandDoc] of brandMap) {
@@ -730,15 +730,15 @@ function detectBrand(productName, brandMap, defaultBrandName = null) {
     return brandMap.get('Intel') || [...brandMap.values()][0];
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HIGH-FIDELITY DYNAMIC TEMPLATE GENERATOR FOR ALL CATEGORIES
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function generateProductDataForCategory(categorySlug, categoryName, brandDoc, websiteSource) {
     const brandName = brandDoc.name;
     let names = [];
     let specs = [];
     let priceRange = [1000000, 10000000];
-    let optionName = 'Phiên bản';
+    let optionName = 'PhiÃªn báº£n';
     let optionValues = ['Standard', 'Pro', 'Premium'];
 
     if (categorySlug.includes('cpu-intel')) {
@@ -747,41 +747,41 @@ function generateProductDataForCategory(categorySlug, categoryName, brandDoc, we
             `CPU Intel Core i7-${13700 + Math.floor(Math.random()*1000)}K`,
             `CPU Intel Core i9-${13900 + Math.floor(Math.random()*1000)}KS`
         ];
-        specs = ["Socket LGA1700, thế hệ mới hiệu năng cao", "Socket LGA1700, hỗ trợ ép xung mạnh mẽ", "Socket LGA1851, cực đỉnh cho gaming và đồ họa"];
+        specs = ["Socket LGA1700, tháº¿ há»‡ má»›i hiá»‡u nÄƒng cao", "Socket LGA1700, há»— trá»£ Ã©p xung máº¡nh máº½", "Socket LGA1851, cá»±c Ä‘á»‰nh cho gaming vÃ  Ä‘á»“ há»a"];
         priceRange = [4000000, 20000000];
-        optionName = 'Phiên bản';
-        optionValues = ['Tray (Không quạt)', 'Box Chính Hãng'];
+        optionName = 'PhiÃªn báº£n';
+        optionValues = ['Tray (KhÃ´ng quáº¡t)', 'Box ChÃ­nh HÃ£ng'];
     } else if (categorySlug.includes('cpu-amd')) {
         names = [
             `CPU AMD Ryzen 5 ${7600 + Math.floor(Math.random()*2000)}X`,
             `CPU AMD Ryzen 7 ${7800 + Math.floor(Math.random()*2000)}X3D`,
             `CPU AMD Ryzen 9 ${7900 + Math.floor(Math.random()*2000)}X`
         ];
-        specs = ["AM5 Socket, 6 nhân 12 luồng", "AM5 Socket, 8 nhân 16 luồng, 3D V-Cache siêu mạnh", "AM5 Socket, 12 nhân 24 luồng hiệu năng cực khủng"];
+        specs = ["AM5 Socket, 6 nhÃ¢n 12 luá»“ng", "AM5 Socket, 8 nhÃ¢n 16 luá»“ng, 3D V-Cache siÃªu máº¡nh", "AM5 Socket, 12 nhÃ¢n 24 luá»“ng hiá»‡u nÄƒng cá»±c khá»§ng"];
         priceRange = [5000000, 18000000];
-        optionName = 'Phiên bản';
-        optionValues = ['Tray (Không quạt)', 'Box Chính Hãng'];
+        optionName = 'PhiÃªn báº£n';
+        optionValues = ['Tray (KhÃ´ng quáº¡t)', 'Box ChÃ­nh HÃ£ng'];
     } else if (categorySlug.includes('vga-nvidia')) {
         const models = ['RTX 4060', 'RTX 4060 Ti', 'RTX 4070 Super', 'RTX 4080 Super', 'RTX 4090', 'RTX 5070', 'RTX 5080', 'RTX 5090'];
         const pickedModel = models[Math.floor(Math.random() * models.length)];
         names = [
-            `Card màn hình ${brandName} GeForce ${pickedModel} Gaming OC`,
-            `Card màn hình ${brandName} GeForce ${pickedModel} ROG Strix`,
-            `Card màn hình ${brandName} GeForce ${pickedModel} TUF Gaming`
+            `Card mÃ n hÃ¬nh ${brandName} GeForce ${pickedModel} Gaming OC`,
+            `Card mÃ n hÃ¬nh ${brandName} GeForce ${pickedModel} ROG Strix`,
+            `Card mÃ n hÃ¬nh ${brandName} GeForce ${pickedModel} TUF Gaming`
         ];
-        specs = ["Hỗ trợ Ray Tracing, DLSS 3.0 thế hệ mới", "Thiết kế hầm hố, tản nhiệt cực mát", "Linh kiện siêu bền chuẩn quân đội"];
+        specs = ["Há»— trá»£ Ray Tracing, DLSS 3.0 tháº¿ há»‡ má»›i", "Thiáº¿t káº¿ háº§m há»‘, táº£n nhiá»‡t cá»±c mÃ¡t", "Linh kiá»‡n siÃªu bá»n chuáº©n quÃ¢n Ä‘á»™i"];
         priceRange = [8000000, 75000000];
-        optionName = 'Phiên bản';
-        optionValues = ['Standard Edition', 'OC Edition (Ép xung)'];
+        optionName = 'PhiÃªn báº£n';
+        optionValues = ['Standard Edition', 'OC Edition (Ã‰p xung)'];
     } else if (categorySlug.includes('vga-amd')) {
         names = [
-            `Card màn hình ${brandName} Radeon RX 7600 XT Pulse`,
-            `Card màn hình ${brandName} Radeon RX 7700 XT Challenger`,
-            `Card màn hình ${brandName} Radeon RX 7800 XT Dual`
+            `Card mÃ n hÃ¬nh ${brandName} Radeon RX 7600 XT Pulse`,
+            `Card mÃ n hÃ¬nh ${brandName} Radeon RX 7700 XT Challenger`,
+            `Card mÃ n hÃ¬nh ${brandName} Radeon RX 7800 XT Dual`
         ];
-        specs = ["Kiến trúc RDNA 3, chiến game mượt mà", "Hỗ trợ FSR 3.0, dung lượng VRAM lớn", "Hoạt động mát mẻ, tiết kiệm điện năng"];
+        specs = ["Kiáº¿n trÃºc RDNA 3, chiáº¿n game mÆ°á»£t mÃ ", "Há»— trá»£ FSR 3.0, dung lÆ°á»£ng VRAM lá»›n", "Hoáº¡t Ä‘á»™ng mÃ¡t máº», tiáº¿t kiá»‡m Ä‘iá»‡n nÄƒng"];
         priceRange = [7000000, 28000000];
-        optionName = 'Phiên bản';
+        optionName = 'PhiÃªn báº£n';
         optionValues = ['Standard Edition', 'OC Edition'];
     } else if (categorySlug.includes('ram-')) {
         names = [
@@ -789,59 +789,59 @@ function generateProductDataForCategory(categorySlug, categoryName, brandDoc, we
             `RAM ${brandName} FURY Beast DDR5`,
             `RAM ${brandName} Trident Z5 Neo`
         ];
-        specs = ["Tương thích Intel XMP 3.0 & AMD EXPO", "Hỗ trợ đèn LED RGB rực rỡ", "Tản nhiệt nhôm cao cấp cực đẹp"];
+        specs = ["TÆ°Æ¡ng thÃ­ch Intel XMP 3.0 & AMD EXPO", "Há»— trá»£ Ä‘Ã¨n LED RGB rá»±c rá»¡", "Táº£n nhiá»‡t nhÃ´m cao cáº¥p cá»±c Ä‘áº¹p"];
         priceRange = [1000000, 8000000];
         optionName = 'RAM';
         optionValues = ['8GB', '16GB', '32GB', '64GB'];
     } else if (categorySlug.includes('ssd-') || categorySlug.includes('hdd-')) {
         names = [
-            `Ổ cứng SSD ${brandName} NVMe M.2 PCIe 4.0`,
-            `Ổ cứng SSD ${brandName} SATA III 2.5" EVO`,
-            `Ổ cứng HDD ${brandName} Desktop 3.5"`
+            `á»” cá»©ng SSD ${brandName} NVMe M.2 PCIe 4.0`,
+            `á»” cá»©ng SSD ${brandName} SATA III 2.5" EVO`,
+            `á»” cá»©ng HDD ${brandName} Desktop 3.5"`
         ];
-        specs = ["Tốc độ đọc ghi cực nhanh vượt trội", "Chuẩn SATA dễ dàng lắp đặt nâng cấp", "Bền bỉ, lưu trữ dung lượng lớn an toàn"];
+        specs = ["Tá»‘c Ä‘á»™ Ä‘á»c ghi cá»±c nhanh vÆ°á»£t trá»™i", "Chuáº©n SATA dá»… dÃ ng láº¯p Ä‘áº·t nÃ¢ng cáº¥p", "Bá»n bá»‰, lÆ°u trá»¯ dung lÆ°á»£ng lá»›n an toÃ n"];
         priceRange = [500000, 5000000];
-        optionName = 'Ổ cứng SSD';
+        optionName = 'á»” cá»©ng SSD';
         optionValues = ['256GB', '512GB', '1TB', '2TB'];
     } else if (categorySlug.includes('mainboard')) {
         names = [
-            `Bo mạch chủ ${brandName} TUF Gaming B760`,
-            `Bo mạch chủ ${brandName} ROG Strix Z790`,
-            `Bo mạch chủ ${brandName} PRO B650`
+            `Bo máº¡ch chá»§ ${brandName} TUF Gaming B760`,
+            `Bo máº¡ch chá»§ ${brandName} ROG Strix Z790`,
+            `Bo máº¡ch chá»§ ${brandName} PRO B650`
         ];
-        specs = ["Hỗ trợ CPU Intel thế hệ mới nhất", "Hỗ trợ khe PCIe 5.0 và RAM DDR5", "Dàn VRM chất lượng cao, tản nhiệt tốt"];
+        specs = ["Há»— trá»£ CPU Intel tháº¿ há»‡ má»›i nháº¥t", "Há»— trá»£ khe PCIe 5.0 vÃ  RAM DDR5", "DÃ n VRM cháº¥t lÆ°á»£ng cao, táº£n nhiá»‡t tá»‘t"];
         priceRange = [2500000, 15000000];
-        optionName = 'Phiên bản';
+        optionName = 'PhiÃªn báº£n';
         optionValues = ['Standard', 'Wi-Fi Edition'];
     } else if (categorySlug.includes('psu')) {
         names = [
-            `Nguồn máy tính ${brandName} CV650 650W`,
-            `Nguồn máy tính ${brandName} RM750x 750W Gold`,
-            `Nguồn máy tính ${brandName} RM1000x 1000W ATX 3.0`
+            `Nguá»“n mÃ¡y tÃ­nh ${brandName} CV650 650W`,
+            `Nguá»“n mÃ¡y tÃ­nh ${brandName} RM750x 750W Gold`,
+            `Nguá»“n mÃ¡y tÃ­nh ${brandName} RM1000x 1000W ATX 3.0`
         ];
-        specs = ["Chuẩn 80 Plus Bronze hiệu suất ổn định", "Chuẩn 80 Plus Gold Modular cao cấp", "Hỗ trợ chuẩn ATX 3.0 cắm trực tiếp VGA mới"];
+        specs = ["Chuáº©n 80 Plus Bronze hiá»‡u suáº¥t á»•n Ä‘á»‹nh", "Chuáº©n 80 Plus Gold Modular cao cáº¥p", "Há»— trá»£ chuáº©n ATX 3.0 cáº¯m trá»±c tiáº¿p VGA má»›i"];
         priceRange = [1000000, 5000000];
-        optionName = 'Phiên bản';
+        optionName = 'PhiÃªn báº£n';
         optionValues = ['Standard', 'Full Modular'];
     } else if (categorySlug.includes('case')) {
         names = [
-            `Vỏ case máy tính ${brandName} Sky Two Mid Tower`,
-            `Vỏ case máy tính ${brandName} H6 Flow bể cá`,
-            `Vỏ case máy tính ${brandName} O11 Dynamic Full Tower`
+            `Vá» case mÃ¡y tÃ­nh ${brandName} Sky Two Mid Tower`,
+            `Vá» case mÃ¡y tÃ­nh ${brandName} H6 Flow bá»ƒ cÃ¡`,
+            `Vá» case mÃ¡y tÃ­nh ${brandName} O11 Dynamic Full Tower`
         ];
-        specs = ["Kèm sẵn quạt ARGB, mặt kính cường lực", "Thiết kế bể cá nhìn xuyên thấu tuyệt đẹp", "Hỗ trợ tản nhiệt nước 360mm dễ dàng"];
+        specs = ["KÃ¨m sáºµn quáº¡t ARGB, máº·t kÃ­nh cÆ°á»ng lá»±c", "Thiáº¿t káº¿ bá»ƒ cÃ¡ nhÃ¬n xuyÃªn tháº¥u tuyá»‡t Ä‘áº¹p", "Há»— trá»£ táº£n nhiá»‡t nÆ°á»›c 360mm dá»… dÃ ng"];
         priceRange = [800000, 6000000];
-        optionName = 'Màu sắc';
-        optionValues = ['Đen', 'Trắng', 'Xám'];
+        optionName = 'MÃ u sáº¯c';
+        optionValues = ['Äen', 'Tráº¯ng', 'XÃ¡m'];
     } else if (categorySlug.includes('tan-nhiet') || categorySlug.includes('cooling') || categorySlug.includes('quat')) {
         names = [
-            `Tản nhiệt nước AIO ${brandName} Kraken 360`,
-            `Tản nhiệt khí ${brandName} AK620 Digital Dual Tower`,
-            `Bộ 3 quạt case ${brandName} LL120 RGB 120mm`
+            `Táº£n nhiá»‡t nÆ°á»›c AIO ${brandName} Kraken 360`,
+            `Táº£n nhiá»‡t khÃ­ ${brandName} AK620 Digital Dual Tower`,
+            `Bá»™ 3 quáº¡t case ${brandName} LL120 RGB 120mm`
         ];
-        specs = ["Hiệu năng làm mát đỉnh cao cho CPU", "Có màn hình hiển thị nhiệt độ thực tế", "Led RGB đồng bộ phần mềm cực đẹp"];
+        specs = ["Hiá»‡u nÄƒng lÃ m mÃ¡t Ä‘á»‰nh cao cho CPU", "CÃ³ mÃ n hÃ¬nh hiá»ƒn thá»‹ nhiá»‡t Ä‘á»™ thá»±c táº¿", "Led RGB Ä‘á»“ng bá»™ pháº§n má»m cá»±c Ä‘áº¹p"];
         priceRange = [500000, 7000000];
-        optionName = 'Phiên bản';
+        optionName = 'PhiÃªn báº£n';
         optionValues = ['Standard Edition', 'RGB Edition'];
     } else if (categorySlug.includes('laptop-gaming')) {
         names = [
@@ -849,129 +849,129 @@ function generateProductDataForCategory(categorySlug, categoryName, brandDoc, we
             `Laptop Gaming ${brandName} ROG Strix G16`,
             `Laptop Gaming ${brandName} Legion 5 Pro`
         ];
-        specs = ["Màn hình 165Hz IPS FHD, Core i7, RTX 4060", "Màn hình 240Hz 2K QHD, Core i9, RTX 4070", "Màn hình 144Hz, Ryzen 7, RTX 4050"];
+        specs = ["MÃ n hÃ¬nh 165Hz IPS FHD, Core i7, RTX 4060", "MÃ n hÃ¬nh 240Hz 2K QHD, Core i9, RTX 4070", "MÃ n hÃ¬nh 144Hz, Ryzen 7, RTX 4050"];
         priceRange = [18000000, 55000000];
-        optionName = 'Màu sắc';
-        optionValues = ['Đen', 'Xám', 'Trắng'];
+        optionName = 'MÃ u sáº¯c';
+        optionValues = ['Äen', 'XÃ¡m', 'Tráº¯ng'];
     } else if (categorySlug.includes('macbook') || categorySlug.includes('air') || categorySlug.includes('pro')) {
         names = [
             `Apple MacBook Air 13" M3 Gold`,
             `Apple MacBook Pro 14" M3 Pro Space Gray`,
             `Apple MacBook Pro 16" M3 Max Silver`
         ];
-        specs = ["RAM 8GB | SSD 256GB, siêu mỏng nhẹ thời trang", "RAM 18GB | SSD 512GB, hiệu năng sáng tạo đồ họa vượt trội", "RAM 36GB | SSD 1TB, màn hình lớn cực sắc nét"];
+        specs = ["RAM 8GB | SSD 256GB, siÃªu má»ng nháº¹ thá»i trang", "RAM 18GB | SSD 512GB, hiá»‡u nÄƒng sÃ¡ng táº¡o Ä‘á»“ há»a vÆ°á»£t trá»™i", "RAM 36GB | SSD 1TB, mÃ n hÃ¬nh lá»›n cá»±c sáº¯c nÃ©t"];
         priceRange = [22000000, 95000000];
-        optionName = 'Màu sắc';
-        optionValues = ['Xám Không Gian', 'Bạc', 'Vàng'];
+        optionName = 'MÃ u sáº¯c';
+        optionValues = ['XÃ¡m KhÃ´ng Gian', 'Báº¡c', 'VÃ ng'];
     } else if (categorySlug.includes('laptop')) {
         names = [
             `Laptop ${brandName} Vivobook 14 OLED`,
             `Laptop ${brandName} Inspiron 15 Thin`,
             `Laptop ${brandName} Pavilion 14 Slim`
         ];
-        specs = ["Màn hình OLED sắc nét, Core i5, mỏng nhẹ", "Màn hình lớn tiện dụng văn phòng học tập", "Vỏ nhôm sang trọng lịch lãm"];
+        specs = ["MÃ n hÃ¬nh OLED sáº¯c nÃ©t, Core i5, má»ng nháº¹", "MÃ n hÃ¬nh lá»›n tiá»‡n dá»¥ng vÄƒn phÃ²ng há»c táº­p", "Vá» nhÃ´m sang trá»ng lá»‹ch lÃ£m"];
         priceRange = [10000000, 30000000];
         optionName = 'RAM';
         optionValues = ['8GB RAM', '16GB RAM'];
     } else if (categorySlug.includes('dien-thoai') || categorySlug.includes('iphone') || categorySlug.includes('galaxy') || categorySlug.includes('redmi')) {
         names = [
-            `Điện thoại ${brandName} Galaxy S24 Ultra 5G`,
-            `Điện thoại ${brandName} iPhone 15 Pro Max 256GB`,
-            `Điện thoại ${brandName} Redmi Note 13 Pro`
+            `Äiá»‡n thoáº¡i ${brandName} Galaxy S24 Ultra 5G`,
+            `Äiá»‡n thoáº¡i ${brandName} iPhone 15 Pro Max 256GB`,
+            `Äiá»‡n thoáº¡i ${brandName} Redmi Note 13 Pro`
         ];
-        specs = ["Màn hình Dynamic AMOLED 2X, camera 200MP", "Khung viền Titan siêu nhẹ, chip A17 Pro siêu mạnh", "Màn hình 120Hz AMOLED, sạc nhanh 67W tiện lợi"];
+        specs = ["MÃ n hÃ¬nh Dynamic AMOLED 2X, camera 200MP", "Khung viá»n Titan siÃªu nháº¹, chip A17 Pro siÃªu máº¡nh", "MÃ n hÃ¬nh 120Hz AMOLED, sáº¡c nhanh 67W tiá»‡n lá»£i"];
         priceRange = [5000000, 32000000];
-        optionName = 'Màu sắc';
-        optionValues = ['Đen Titan', 'Trắng Titan', 'Xám', 'Xanh'];
+        optionName = 'MÃ u sáº¯c';
+        optionValues = ['Äen Titan', 'Tráº¯ng Titan', 'XÃ¡m', 'Xanh'];
     } else if (categorySlug.includes('tablet') || categorySlug.includes('ipad') || categorySlug.includes('tab')) {
         names = [
-            `Máy tính bảng ${brandName} iPad Pro M4 Ultra Thin`,
-            `Máy tính bảng ${brandName} iPad Air 6 M2`,
-            `Máy tính bảng ${brandName} Galaxy Tab S9 Ultra`
+            `MÃ¡y tÃ­nh báº£ng ${brandName} iPad Pro M4 Ultra Thin`,
+            `MÃ¡y tÃ­nh báº£ng ${brandName} iPad Air 6 M2`,
+            `MÃ¡y tÃ­nh báº£ng ${brandName} Galaxy Tab S9 Ultra`
         ];
-        specs = ["Màn hình Ultra Retina Tandem OLED, chip M4", "Màn hình Liquid Retina 11 inch, chip M2 hiệu năng cao", "Màn hình Dynamic AMOLED 2X kèm bút S Pen tiện lợi"];
+        specs = ["MÃ n hÃ¬nh Ultra Retina Tandem OLED, chip M4", "MÃ n hÃ¬nh Liquid Retina 11 inch, chip M2 hiá»‡u nÄƒng cao", "MÃ n hÃ¬nh Dynamic AMOLED 2X kÃ¨m bÃºt S Pen tiá»‡n lá»£i"];
         priceRange = [10000000, 40000000];
-        optionName = 'Màu sắc';
-        optionValues = ['Xám', 'Bạc', 'Xanh'];
+        optionName = 'MÃ u sáº¯c';
+        optionValues = ['XÃ¡m', 'Báº¡c', 'Xanh'];
     } else if (categorySlug.includes('pc-')) {
         names = [
-            `Máy tính để bàn PC ${brandName} Gaming Custom`,
-            `Máy tính để bàn PC ${brandName} Office Business`,
-            `Máy tính để bàn PC ${brandName} Workstation Pro`
+            `MÃ¡y tÃ­nh Ä‘á»ƒ bÃ n PC ${brandName} Gaming Custom`,
+            `MÃ¡y tÃ­nh Ä‘á»ƒ bÃ n PC ${brandName} Office Business`,
+            `MÃ¡y tÃ­nh Ä‘á»ƒ bÃ n PC ${brandName} Workstation Pro`
         ];
-        specs = ["Cấu hình chiến game ngon mượt mà", "Phục vụ tốt các công việc văn phòng học tập", "Chuyên dụng thiết kế đồ họa vẽ 3D dựng phim"];
+        specs = ["Cáº¥u hÃ¬nh chiáº¿n game ngon mÆ°á»£t mÃ ", "Phá»¥c vá»¥ tá»‘t cÃ¡c cÃ´ng viá»‡c vÄƒn phÃ²ng há»c táº­p", "ChuyÃªn dá»¥ng thiáº¿t káº¿ Ä‘á»“ há»a váº½ 3D dá»±ng phim"];
         priceRange = [8000000, 60000000];
-        optionName = 'Phiên bản';
+        optionName = 'PhiÃªn báº£n';
         optionValues = ['Standard', 'Vip Pro'];
     } else if (categorySlug.includes('man-hinh')) {
         names = [
-            `Màn hình máy tính ${brandName} 24" FHD IPS 75Hz`,
-            `Màn hình máy tính ${brandName} 27" 2K 180Hz Gaming`,
-            `Màn hình máy tính ${brandName} 34" Cong Ultrawide`
+            `MÃ n hÃ¬nh mÃ¡y tÃ­nh ${brandName} 24" FHD IPS 75Hz`,
+            `MÃ n hÃ¬nh mÃ¡y tÃ­nh ${brandName} 27" 2K 180Hz Gaming`,
+            `MÃ n hÃ¬nh mÃ¡y tÃ­nh ${brandName} 34" Cong Ultrawide`
         ];
-        specs = ["Thiết kế tràn viền thời trang, chống lóa tốt", "Tần số quét cao chiến game cực mượt không xé hình", "Màn hình cong góc nhìn siêu rộng trải nghiệm chân thực"];
+        specs = ["Thiáº¿t káº¿ trÃ n viá»n thá»i trang, chá»‘ng lÃ³a tá»‘t", "Táº§n sá»‘ quÃ©t cao chiáº¿n game cá»±c mÆ°á»£t khÃ´ng xÃ© hÃ¬nh", "MÃ n hÃ¬nh cong gÃ³c nhÃ¬n siÃªu rá»™ng tráº£i nghiá»‡m chÃ¢n thá»±c"];
         priceRange = [2000000, 18000000];
-        optionName = 'Kích thước';
+        optionName = 'KÃ­ch thÆ°á»›c';
         optionValues = ['24 inch', '27 inch', '32 inch', '34 inch'];
     } else if (categorySlug.includes('ban-phim')) {
         names = [
-            `Bàn phím cơ ${brandName} 3087 v2 Akko`,
-            `Bàn phím cơ ${brandName} K70 Pro RGB Corsair`,
-            `Bàn phím cơ ${brandName} G Pro Wireless`
+            `BÃ n phÃ­m cÆ¡ ${brandName} 3087 v2 Akko`,
+            `BÃ n phÃ­m cÆ¡ ${brandName} K70 Pro RGB Corsair`,
+            `BÃ n phÃ­m cÆ¡ ${brandName} G Pro Wireless`
         ];
-        specs = ["Layout TKL nhỏ gọn tiện dụng mang đi lại", "Switch cơ cao cấp gõ cực đã tai, có led RGB", "Chuẩn kết nối không dây siêu tốc độ phản hồi 1ms"];
+        specs = ["Layout TKL nhá» gá»n tiá»‡n dá»¥ng mang Ä‘i láº¡i", "Switch cÆ¡ cao cáº¥p gÃµ cá»±c Ä‘Ã£ tai, cÃ³ led RGB", "Chuáº©n káº¿t ná»‘i khÃ´ng dÃ¢y siÃªu tá»‘c Ä‘á»™ pháº£n há»“i 1ms"];
         priceRange = [800000, 5000000];
-        optionName = 'Màu sắc';
-        optionValues = ['Đen', 'Trắng', 'RGB'];
+        optionName = 'MÃ u sáº¯c';
+        optionValues = ['Äen', 'Tráº¯ng', 'RGB'];
     } else if (categorySlug.includes('chuot')) {
         names = [
-            `Chuột chơi game ${brandName} G102 Lightsync`,
-            `Chuột chơi game ${brandName} DeathAdder Pro Wireless`,
-            `Chuột văn phòng ${brandName} Silent không dây`
+            `Chuá»™t chÆ¡i game ${brandName} G102 Lightsync`,
+            `Chuá»™t chÆ¡i game ${brandName} DeathAdder Pro Wireless`,
+            `Chuá»™t vÄƒn phÃ²ng ${brandName} Silent khÃ´ng dÃ¢y`
         ];
-        specs = ["Cảm biến độ nhạy cao, click nảy êm ái", "Kiểu dáng công thái học cầm vừa tay thoải mái", "Click silent không gây tiếng ồn ảnh hưởng xung quanh"];
+        specs = ["Cáº£m biáº¿n Ä‘á»™ nháº¡y cao, click náº£y Ãªm Ã¡i", "Kiá»ƒu dÃ¡ng cÃ´ng thÃ¡i há»c cáº§m vá»«a tay thoáº£i mÃ¡i", "Click silent khÃ´ng gÃ¢y tiáº¿ng á»“n áº£nh hÆ°á»Ÿng xung quanh"];
         priceRange = [200000, 3500000];
-        optionName = 'Màu sắc';
-        optionValues = ['Đen', 'Trắng', 'Hồng'];
+        optionName = 'MÃ u sáº¯c';
+        optionValues = ['Äen', 'Tráº¯ng', 'Há»“ng'];
     } else if (categorySlug.includes('wifi') || categorySlug.includes('router') || categorySlug.includes('repeater') || categorySlug.includes('mesh')) {
         names = [
-            `Bộ phát Wi-Fi ${brandName} Router Archer AX55 Wi-Fi 6`,
-            `Bộ kích sóng Wi-Fi ${brandName} Repeater RE305 Băng tần kép`,
-            `Hệ thống Wi-Fi Mesh ${brandName} Deco X50 3-Pack`
+            `Bá»™ phÃ¡t Wi-Fi ${brandName} Router Archer AX55 Wi-Fi 6`,
+            `Bá»™ kÃ­ch sÃ³ng Wi-Fi ${brandName} Repeater RE305 BÄƒng táº§n kÃ©p`,
+            `Há»‡ thá»‘ng Wi-Fi Mesh ${brandName} Deco X50 3-Pack`
         ];
-        specs = ["Wi-Fi 6 Băng tần kép tốc độ 3000Mbps", "Mở rộng sóng Wi-Fi băng tần kép tiện dụng dễ cài đặt", "Hệ thống Mesh phủ sóng toàn bộ ngôi nhà không góc chết"];
+        specs = ["Wi-Fi 6 BÄƒng táº§n kÃ©p tá»‘c Ä‘á»™ 3000Mbps", "Má»Ÿ rá»™ng sÃ³ng Wi-Fi bÄƒng táº§n kÃ©p tiá»‡n dá»¥ng dá»… cÃ i Ä‘áº·t", "Há»‡ thá»‘ng Mesh phá»§ sÃ³ng toÃ n bá»™ ngÃ´i nhÃ  khÃ´ng gÃ³c cháº¿t"];
         priceRange = [400000, 5000000];
-        optionName = 'Phiên bản';
+        optionName = 'PhiÃªn báº£n';
         optionValues = ['Standard', 'Vip Pro'];
     } else if (categorySlug.includes('cap-') || categorySlug.includes('hub') || categorySlug.includes('hdmi') || categorySlug.includes('lan')) {
         names = [
-            `Cáp kết nối ${brandName} HDMI 2.1 Ultra High Speed 2m`,
-            `Cổng chuyển đổi ${brandName} Hub USB-C 6-in-1 Aluminum`,
-            `Cáp mạng ${brandName} LAN Cat6 UTP 3m Premium`
+            `CÃ¡p káº¿t ná»‘i ${brandName} HDMI 2.1 Ultra High Speed 2m`,
+            `Cá»•ng chuyá»ƒn Ä‘á»•i ${brandName} Hub USB-C 6-in-1 Aluminum`,
+            `CÃ¡p máº¡ng ${brandName} LAN Cat6 UTP 3m Premium`
         ];
-        specs = ["Hỗ trợ xuất hình ảnh 8K@60Hz, 4K@120Hz sắc nét", "Mở rộng cổng kết nối USB, HDMI, đầu đọc thẻ nhanh chóng", "Truyền tải internet tốc độ cao 1Gbps ổn định chống nhiễu"];
+        specs = ["Há»— trá»£ xuáº¥t hÃ¬nh áº£nh 8K@60Hz, 4K@120Hz sáº¯c nÃ©t", "Má»Ÿ rá»™ng cá»•ng káº¿t ná»‘i USB, HDMI, Ä‘áº§u Ä‘á»c tháº» nhanh chÃ³ng", "Truyá»n táº£i internet tá»‘c Ä‘á»™ cao 1Gbps á»•n Ä‘á»‹nh chá»‘ng nhiá»…u"];
         priceRange = [100000, 1500000];
-        optionName = 'Phiên bản';
+        optionName = 'PhiÃªn báº£n';
         optionValues = ['Standard', 'Premium'];
     } else if (categorySlug.includes('the-nho') || categorySlug.includes('usb')) {
         names = [
-            `Thẻ nhớ MicroSD ${brandName} Evo Plus Class 10`,
-            `USB 3.2 ${brandName} Ultra Fit Siêu nhỏ`,
+            `Tháº» nhá»› MicroSD ${brandName} Evo Plus Class 10`,
+            `USB 3.2 ${brandName} Ultra Fit SiÃªu nhá»`,
             `USB-C ${brandName} Dual Drive SanDisk`
         ];
-        specs = ["Tốc độ đọc lên tới 130MB/s chuẩn U3 ghi hình mượt", "Thiết kế siêu nhỏ gọn thích hợp lưu trữ trên ô tô laptop", "Hai đầu kết nối USB-A và USB-C truyền file cực nhanh tiện lợi"];
+        specs = ["Tá»‘c Ä‘á»™ Ä‘á»c lÃªn tá»›i 130MB/s chuáº©n U3 ghi hÃ¬nh mÆ°á»£t", "Thiáº¿t káº¿ siÃªu nhá» gá»n thÃ­ch há»£p lÆ°u trá»¯ trÃªn Ã´ tÃ´ laptop", "Hai Ä‘áº§u káº¿t ná»‘i USB-A vÃ  USB-C truyá»n file cá»±c nhanh tiá»‡n lá»£i"];
         priceRange = [150000, 1000000];
-        optionName = 'Phiên bản';
+        optionName = 'PhiÃªn báº£n';
         optionValues = ['64GB', '128GB', '256GB'];
     } else {
         names = [
             `Tai nghe Gaming ${brandName} Over-ear 7.1`,
-            `Loa máy tính ${brandName} 2.1 Bass Boosted`,
-            `Microphone thu âm livestream ${brandName}`
+            `Loa mÃ¡y tÃ­nh ${brandName} 2.1 Bass Boosted`,
+            `Microphone thu Ã¢m livestream ${brandName}`
         ];
-        specs = ["Chất âm trung thực sống động, bass trầm ấm", "Thiết kế hiện đại decor góc làm việc cực đẹp", "Hỗ trợ microphone lọc tạp âm tốt đàm thoại rõ ràng"];
+        specs = ["Cháº¥t Ã¢m trung thá»±c sá»‘ng Ä‘á»™ng, bass tráº§m áº¥m", "Thiáº¿t káº¿ hiá»‡n Ä‘áº¡i decor gÃ³c lÃ m viá»‡c cá»±c Ä‘áº¹p", "Há»— trá»£ microphone lá»c táº¡p Ã¢m tá»‘t Ä‘Ã m thoáº¡i rÃµ rÃ ng"];
         priceRange = [500000, 6000000];
-        optionName = 'Phiên bản';
+        optionName = 'PhiÃªn báº£n';
         optionValues = ['Standard', 'Premium'];
     }
 
@@ -985,13 +985,13 @@ function generateProductDataForCategory(categorySlug, categoryName, brandDoc, we
     };
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CORE SCRAPER & GENERATOR PIPELINE
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 async function main() {
     console.log('===============================================================');
-    console.log('💻 Starting Multi-Source Scraper & Generator (180k+ Target)');
-    console.log('   6 Sources: GearVN, CellphoneS, Phong Vũ, HACOM, An Phát, ThinkPro');
+    console.log('ðŸ’» Starting Multi-Source Scraper & Generator (180k+ Target)');
+    console.log('   6 Sources: GearVN, CellphoneS, Phong VÅ©, HACOM, An PhÃ¡t, ThinkPro');
     console.log('   Category depth: Up to 3 levels/tiers (8 Root Categories Tree)');
     console.log('===============================================================');
 
@@ -1003,7 +1003,7 @@ async function main() {
     const esAvailable = await checkElasticsearch();
 
     try {
-        // ── 1. GUEST ACCOUNT ──
+        // â”€â”€ 1. GUEST ACCOUNT â”€â”€
         let guest = await db.collection('accountguests').findOne({
             accountStatus: 'ACTIVE', isEmailVerified: true
         }, { sort: { createdAt: 1 } });
@@ -1022,7 +1022,7 @@ async function main() {
         }
         const createdBy = guest._id.toHexString();
 
-        // ── 2. CLEAN SLATE FOR ALL BUT GUESTS ──
+        // â”€â”€ 2. CLEAN SLATE FOR ALL BUT GUESTS â”€â”€
         console.log('[MongoDB] Clearing old collection records...');
         await db.collection('categories').deleteMany({});
         await db.collection('brands').deleteMany({});
@@ -1033,7 +1033,7 @@ async function main() {
         await db.collection('productattributeallowvalues').deleteMany({});
         await db.collection('productviews').deleteMany({});
 
-        // ── 3. REBUILD 3-LEVEL CATEGORIES ──
+        // â”€â”€ 3. REBUILD 3-LEVEL CATEGORIES â”€â”€
         console.log('[MongoDB] Inserting clean 3-level categories...');
         const level3Categories = [];
         const categoryMapBySlug = new Map();
@@ -1058,22 +1058,22 @@ async function main() {
         }
         console.log(`[MongoDB] Rebuilt categories. Level 3 Count: ${level3Categories.length}`);
 
-        // ── 4. CREATE BRANDS ──
+        // â”€â”€ 4. CREATE BRANDS â”€â”€
         const brands = BRANDS_DATA.map(b => buildBrand(b));
         const brandMap = new Map();
         for (const b of brands) brandMap.set(b.name, b);
         await db.collection('brands').insertMany(brands);
         console.log(`[MongoDB] Created ${brands.length} brands.`);
 
-        // ── 5. CREATE CORE ATTRIBUTES ──
+        // â”€â”€ 5. CREATE CORE ATTRIBUTES â”€â”€
         const attrDefs = [
             { name: 'RAM', displayType: 'BUTTON' },
-            { name: 'Ổ cứng SSD', displayType: 'BUTTON' },
+            { name: 'á»” cá»©ng SSD', displayType: 'BUTTON' },
             { name: 'CPU', displayType: 'BUTTON' },
             { name: 'VGA', displayType: 'BUTTON' },
-            { name: 'Màu sắc', displayType: 'COLOR' },
-            { name: 'Kích thước', displayType: 'BUTTON' },
-            { name: 'Phiên bản', displayType: 'BUTTON' },
+            { name: 'MÃ u sáº¯c', displayType: 'COLOR' },
+            { name: 'KÃ­ch thÆ°á»›c', displayType: 'BUTTON' },
+            { name: 'PhiÃªn báº£n', displayType: 'BUTTON' },
         ];
         const attributes = attrDefs.map(a => buildProductAttribute(a.name, a.displayType, createdBy));
         const attrMap = new Map();
@@ -1086,12 +1086,12 @@ async function main() {
 
         const mockAttrValues = {
             'RAM': ['8GB', '16GB', '32GB', '64GB'],
-            'Ổ cứng SSD': ['256GB', '512GB', '1TB', '2TB'],
+            'á»” cá»©ng SSD': ['256GB', '512GB', '1TB', '2TB'],
             'CPU': ['Intel Core i5', 'Intel Core i7', 'AMD Ryzen 5', 'AMD Ryzen 7'],
             'VGA': ['RTX 4060', 'RTX 4070', 'RTX 4080', 'RTX 4090'],
-            'Màu sắc': ['Đen', 'Trắng', 'Xám', 'Bạc', 'Vàng', 'Hồng', 'Xám Không Gian', 'Đen Titan', 'Trắng Titan', 'Xanh'],
-            'Kích thước': ['24 inch', '27 inch', '32 inch', '34 inch'],
-            'Phiên bản': ['Standard', 'Pro', 'Premium', 'Tray (Không quạt)', 'Box Chính Hãng', 'Standard Edition', 'OC Edition', 'RGB Edition', 'Full Modular', 'Wi-Fi Edition', '8GB RAM', '16GB RAM', 'Vip Pro', '64GB', '128GB', '256GB']
+            'MÃ u sáº¯c': ['Äen', 'Tráº¯ng', 'XÃ¡m', 'Báº¡c', 'VÃ ng', 'Há»“ng', 'XÃ¡m KhÃ´ng Gian', 'Äen Titan', 'Tráº¯ng Titan', 'Xanh'],
+            'KÃ­ch thÆ°á»›c': ['24 inch', '27 inch', '32 inch', '34 inch'],
+            'PhiÃªn báº£n': ['Standard', 'Pro', 'Premium', 'Tray (KhÃ´ng quáº¡t)', 'Box ChÃ­nh HÃ£ng', 'Standard Edition', 'OC Edition', 'RGB Edition', 'Full Modular', 'Wi-Fi Edition', '8GB RAM', '16GB RAM', 'Vip Pro', '64GB', '128GB', '256GB']
         };
 
         for (const [attrName, vals] of Object.entries(mockAttrValues)) {
@@ -1101,8 +1101,8 @@ async function main() {
                 if (attrValueCache.has(cacheKey)) continue;
 
                 const valDoc = buildProductAttributeValue(val, val, attrDoc._id.toHexString(), createdBy);
-                if (attrName === 'Màu sắc') {
-                    valDoc.colorHex = val === 'Đen' ? '#000000' : val === 'Trắng' ? '#FFFFFF' : val === 'Xám' ? '#808080' : val === 'Hồng' ? '#FFC0CB' : '#C0C0C0';
+                if (attrName === 'MÃ u sáº¯c') {
+                    valDoc.colorHex = val === 'Äen' ? '#000000' : val === 'Tráº¯ng' ? '#FFFFFF' : val === 'XÃ¡m' ? '#808080' : val === 'Há»“ng' ? '#FFC0CB' : '#C0C0C0';
                 }
                 allAttrValues.push(valDoc);
                 attrValueCache.set(cacheKey, valDoc);
@@ -1120,7 +1120,7 @@ async function main() {
             'https://product.hstatic.net/200000722513/product/ban-phim-co-corsair-k70-rgb-pro_3fb8a4c28f114ab8bfbbfd7f7633fa58.jpg'
         ];
 
-        // ── 6. TRY SCRAPING GEARVN SHOPIFY (Resilient, 2.5s Timeout) ──
+        // â”€â”€ 6. TRY SCRAPING GEARVN SHOPIFY (Resilient, 2.5s Timeout) â”€â”€
         console.log('[Scraper] Fetching sample live products from GearVN collections...');
         const scrapedProducts = [];
 
@@ -1159,7 +1159,7 @@ async function main() {
         // Deduplicate image pool
         imageUrlPool = [...new Set(imageUrlPool)].filter(Boolean);
 
-        // ── 7. MASSIVE SCALABLE PRODUCT GENERATOR (Target 180,000+ variants) ──
+        // â”€â”€ 7. MASSIVE SCALABLE PRODUCT GENERATOR (Target 180,000+ variants) â”€â”€
         const allProducts = [];
         const allVariants = [];
         const allAllowValues = [];
@@ -1181,7 +1181,7 @@ async function main() {
 
             const productDoc = buildProduct({
                 name: sp.name,
-                description: sp.description || `${sp.name} chính hãng chất lượng cao.`,
+                description: sp.description || `${sp.name} chÃ­nh hÃ£ng cháº¥t lÆ°á»£ng cao.`,
                 brandId: brandDoc._id.toHexString(),
                 categoryId: categoryDoc._id.toHexString(),
                 minPrice: sp.salePrice,
@@ -1255,7 +1255,7 @@ async function main() {
             
             const productDoc = buildProduct({
                 name: finalProductName,
-                description: `Sản phẩm ${finalProductName} chính hãng được cung cấp bởi hệ thống phân phối ${websiteSource}. Đặc tính nổi bật: ${generated.spec}. Bảo hành đổi mới nhanh chóng tiện lợi toàn quốc.`,
+                description: `Sáº£n pháº©m ${finalProductName} chÃ­nh hÃ£ng Ä‘Æ°á»£c cung cáº¥p bá»Ÿi há»‡ thá»‘ng phÃ¢n phá»‘i ${websiteSource}. Äáº·c tÃ­nh ná»•i báº­t: ${generated.spec}. Báº£o hÃ nh Ä‘á»•i má»›i nhanh chÃ³ng tiá»‡n lá»£i toÃ n quá»‘c.`,
                 brandId: brandDoc._id.toHexString(),
                 categoryId: categoryDoc._id.toHexString(),
                 minPrice: basePrice,
@@ -1320,7 +1320,7 @@ async function main() {
             }
         }
 
-        // ── 8. BULK INSERT INTO MONGO (Batches of 1000 for safety) ──
+        // â”€â”€ 8. BULK INSERT INTO MONGO (Batches of 1000 for safety) â”€â”€
         console.log(`\n[MongoDB] Bulk inserting ${allProducts.length} products to database...`);
         const BATCH_SIZE = 1000;
 
@@ -1344,7 +1344,7 @@ async function main() {
         }
         console.log(`[MongoDB] Successfully inserted all allow values.`);
 
-        // ── 9. ELASTICSEARCH SYNC ──
+        // â”€â”€ 9. ELASTICSEARCH SYNC â”€â”€
         if (esAvailable) {
             console.log('[Elasticsearch] Syncing all variants to index...');
             const indexCreated = await ensureESIndex();
@@ -1353,7 +1353,7 @@ async function main() {
             }
         }
 
-        // ── 10. QDRANT REINDEX TRIGGER (Asynchronous background call) ──
+        // â”€â”€ 10. QDRANT REINDEX TRIGGER (Asynchronous background call) â”€â”€
         console.log('[Qdrant] Triggering full product reindexing on AI-Service...');
         try {
             // Send asynchronous request with short timeout so it doesn't block the scraper completion
@@ -1363,9 +1363,9 @@ async function main() {
             console.log('[Qdrant] Triggered reindex successfully. Process continues in background of AI container.');
         }
 
-        // ── 11. SUMMARY REPORT ──
+        // â”€â”€ 11. SUMMARY REPORT â”€â”€
         console.log('\n===============================================================');
-        console.log('🏁 SCRAPING & GENERATION COMPLETED SUCCESSFULLY!');
+        console.log('ðŸ SCRAPING & GENERATION COMPLETED SUCCESSFULLY!');
         console.log('---------------------------------------------------------------');
         console.log(`- Guest Account Owner:  ${guest.fullname} (${createdBy})`);
         console.log(`- Brand Count:          ${brands.length}`);

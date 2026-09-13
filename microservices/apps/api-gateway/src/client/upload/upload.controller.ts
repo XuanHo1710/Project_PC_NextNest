@@ -18,13 +18,29 @@ if (!existsSync(UPLOAD_DIR)) {
   mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+const ALLOWED_EXTENSIONS = new Set([
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.mp4',
+  '.webm',
+  '.mov',
+]);
+
 const imageVideoStorage = diskStorage({
   destination: (_req, _file, cb) => {
     cb(null, UPLOAD_DIR);
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = extname(file.originalname);
+    let ext = extname(file.originalname).toLowerCase();
+    // Never trust the client-provided name; fall back to the verified mimetype
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      const mimeExt = (file.mimetype || '').split('/')[1];
+      ext = `.${mimeExt === 'quicktime' ? 'mov' : mimeExt || 'bin'}`;
+    }
     cb(null, `${uniqueSuffix}${ext}`);
   },
 });
@@ -43,16 +59,19 @@ const fileFilter = (
     'video/webm',
     'video/quicktime',
   ];
-  if (allowedMimes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
+
+  const ext = extname(file.originalname).toLowerCase();
+  if (!allowedMimes.includes(file.mimetype) || !ALLOWED_EXTENSIONS.has(ext)) {
     cb(
       new BadRequestException(
-        `File type ${file.mimetype} is not allowed. Allowed: jpg, png, gif, webp, mp4, webm`,
+        `File type ${file.mimetype} (${ext || 'no extension'}) is not allowed. Allowed: jpg, png, gif, webp, mp4, webm, mov`,
       ),
       false,
     );
+    return;
   }
+
+  cb(null, true);
 };
 
 @Controller('/client/upload')

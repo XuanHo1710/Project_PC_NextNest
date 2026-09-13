@@ -1,7 +1,7 @@
 'use client'
 
 import { useSelectedRowsDiscount } from "@/components/Content/ContentDiscount";
-import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import { useHasPermission } from "@/hooks/admin/useHasPermission";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { Button, Form, Select } from "antd";
 import { useUpdateManyDiscounts } from "@/hooks/admin";
@@ -11,7 +11,7 @@ const EditSortDiscount = () => {
     const { queryParams, setQueryParams } = useQueryParams();
     const { selectedRows, setSelectedRows } = useSelectedRowsDiscount();
     const updateManyDiscounts = useUpdateManyDiscounts();
-    const { accountLogin } = useAuthEmployee();
+    const hasPermission = useHasPermission();
 
 
 
@@ -75,9 +75,7 @@ const EditSortDiscount = () => {
                         />
                     </div>
                     <div className="flex items-center justify-center w-2/5">
-                        {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                            (p) => p.method === "PATCH" && p.path === "/api/v1/admin/discount/updateMany"
-                        ) &&
+                        {hasPermission("PATCH", "/api/v1/admin/discount/updateMany") &&
                             <Form onFinish={handleEditMulti} className='flex items-center justify-center'>
                                 <Form.Item name="typeChange" className='!m-0' label="Thay đổi: ">
                                     <Select style={{ width: 300 }} placeholder={"Chọn tiêu chí thay đổi"}>

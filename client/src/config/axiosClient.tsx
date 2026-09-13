@@ -1,4 +1,5 @@
 // axiosClient.tsx - Client-side axios instance for calling backend directly
+// Auth = httpOnly cookies sent automatically via withCredentials.
 import useAuthUser from '@/hooks/useAuthUser';
 import axios, {
   AxiosError,
@@ -6,19 +7,35 @@ import axios, {
   InternalAxiosRequestConfig,
 } from 'axios';
 import { toast } from 'react-toastify';
+import { clearSession, hasSessionHint, markSession } from '@/utils/sessionFlag';
 
 const baseURL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1') + '/client';
 
 // Track if refresh is in progress to prevent multiple refresh calls
 let isRefreshing = false;
-let refreshSubscribers: (() => void)[] = [];
+let refreshSubscribers: Array<{
+  resolve: (v: unknown) => void;
+  reject: (e: unknown) => void;
+  originalRequest: InternalAxiosRequestConfig & { _retry?: boolean };
+}> = [];
 
-function subscribeTokenRefresh(cb: () => void) {
-  refreshSubscribers.push(cb);
+function subscribeTokenRefresh(
+  resolve: (v: unknown) => void,
+  reject: (e: unknown) => void,
+  originalRequest: InternalAxiosRequestConfig & { _retry?: boolean },
+) {
+  refreshSubscribers.push({ resolve, reject, originalRequest });
 }
 
 function onRefreshed() {
-  refreshSubscribers.forEach((cb) => cb());
+  refreshSubscribers.forEach((s) => s.resolve(axiosClient(s.originalRequest)));
+  refreshSubscribers = [];
+}
+
+function onRefreshFailed(error: unknown) {
+  refreshSubscribers.forEach((s) =>
+    s.reject(axiosClient.defaults.withCredentials ? error : error),
+  );
   refreshSubscribers = [];
 }
 
@@ -31,18 +48,6 @@ const axiosClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
-// Request interceptor: attach access_token from Zustand store as Bearer token
-axiosClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const { accessToken } = useAuthUser.getState();
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
 
 // Response interceptor: Handle errors and token refresh
 axiosClient.interceptors.response.use(
@@ -59,19 +64,19 @@ axiosClient.interceptors.response.use(
         statusCode: number;
       };
 
-      // Handle 401 - Unauthorized (token expired)
+      // Handle 401 - access token expired -> rotate via backend refresh endpoint.
+      // The gateway reads client_refresh_token cookie, checks the Redis session
+      // and sets new cookies on the response.
       if (status === 401 && !originalRequest._retry) {
-        // Don't retry refresh/login endpoints
+        // Don't retry auth endpoints themselves
         if (originalRequest.url?.includes('/auth/refresh') ||
           originalRequest.url?.includes('/auth/login')) {
           return Promise.reject(error);
         }
 
         if (isRefreshing) {
-          return new Promise((resolve) => {
-            subscribeTokenRefresh(() => {
-              resolve(axiosClient(originalRequest));
-            });
+          return new Promise((resolve, reject) => {
+            subscribeTokenRefresh(resolve, reject, originalRequest);
           });
         }
 
@@ -79,47 +84,39 @@ axiosClient.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          // Call Next.js API refresh route — it reads client_refresh_token cookie,
-          // calls backend, and sets new client_access_token cookie
           const refreshResponse = await axios.post(
-            '/api/client/auth/refresh',
+            `${baseURL}/auth/refresh`,
             {},
+            { withCredentials: true },
           );
 
-          if (refreshResponse.data.success && refreshResponse.data.data?.access_token) {
-            // Update Zustand store with new access_token
-            const { setAccessToken, setUser } = useAuthUser.getState();
-            setAccessToken(refreshResponse.data.data.access_token);
-
-            // Update user data from payload if available
-            const payload = refreshResponse.data.data.payload;
-            if (payload) {
-              setUser({
-                _id: payload._id || payload.id,
-                fullname: payload.fullname,
-                email: payload.email,
-                accountStatus: payload.accountStatus,
-                authProvider: payload.authProvider,
-                avatar: payload.avatar,
-                gender: payload.gender,
-                phone: payload.phone,
-                id: payload._id || payload.id,
-                isEmailVerified: payload.isEmailVerified,
-              });
-            }
+          const user = refreshResponse.data?.data?.user;
+          if (user?._id) {
+            useAuthUser.getState().setUser(user);
+            markSession();
           }
 
           // Refresh succeeded — notify queued requests
           onRefreshed();
 
-          // Retry original request with new token (interceptor will read from Zustand)
+          // Retry original request; browser now has fresh cookies
           return axiosClient(originalRequest);
         } catch {
-          // Refresh failed — clear auth state and redirect
+          // Refresh failed — release queued requests with the failure,
+          // clear auth state and redirect.
+          // Only notify users who actually had a session before: a fresh
+          // guest hitting a protected endpoint (401 -> refresh 400) must
+          // not see "session expired".
+          const hadSession = hasSessionHint();
+          onRefreshFailed(error);
+
           const { resetAuth } = useAuthUser.getState();
           resetAuth();
 
-          toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+          if (hadSession) {
+            toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+            clearSession();
+          }
 
           if (typeof window !== undefined) {
             if (window.location.pathname === '/order'

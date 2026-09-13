@@ -5,26 +5,25 @@ import useAuthEmployee from '@/hooks/AuthEmployeeContext';
 import { IAccountLogin } from '@/types/account-employee';
 import { pathAdminRoutes } from '@/config/route';
 import { useRouter } from 'next/navigation';
-import { roleService } from '@/services/admin/role.service';
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const { setAccountLogin, setAccessToken, resetAuth } = useAuthEmployee();
+    const { setAccountLogin, resetAuth } = useAuthEmployee();
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
         const fetchAccount = async () => {
             try {
-                const res = await axios.post('/api/admin/auth/profile', {});
+                // Authenticated via admin_access_token httpOnly cookie (sent automatically).
+                const res = await axios.get(`${API_BASE}/admin/auth/profile`, {
+                    withCredentials: true,
+                });
                 if (res.data !== null && res.data.data) {
-                    // Store access_token in Zustand so admin axios can attach it as Bearer token
-                    if (res.data.data.access_token) {
-                        setAccessToken(res.data.data.access_token);
-                    }
-                    const { user } = res.data.data;
-
-
+                    const user = res.data.data.user ?? res.data.data;
 
                     setAccountLogin({
                         _id: user._id,
@@ -51,7 +50,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             }
         };
         fetchAccount();
-    }, [setAccountLogin, setAccessToken, resetAuth, router]);
+    }, [setAccountLogin, resetAuth, router]);
 
     if (loading) {
         return (

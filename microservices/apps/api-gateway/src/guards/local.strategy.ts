@@ -16,7 +16,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(IDEmp: string, password: string) {
-    console.log('LocalStrategy validate called with ', { IDEmp, password });
     const account = await firstValueFrom(
       this.authService.send('auth.signInAdmin', { IDEmp, password }),
     );

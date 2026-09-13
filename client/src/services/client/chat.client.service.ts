@@ -60,20 +60,20 @@ class ChatClientService {
   }
 
   /**
-   * Get all conversations for a user
+   * Get all conversations for the authenticated user (identity from cookie)
    */
-  async getConversations(userId: string): Promise<IConversation[]> {
-    const res = await axiosClient.get(`/chat/conversations/${userId}`);
+  async getConversations(_userId?: string): Promise<IConversation[]> {
+    const res = await axiosClient.get(`/chat/conversations`);
     return res.data;
   }
 
   /**
-   * Send a message
+   * Send a message. senderId is derived server-side from the cookie.
    */
   async sendMessage(data: {
     conversationId: string;
-    senderId: string;
-    senderName: string;
+    senderId?: string;
+    senderName?: string;
     content: string;
     type?: string;
   }): Promise<IChatMessage> {
@@ -98,17 +98,17 @@ class ChatClientService {
   }
 
   /**
-   * Mark messages as read
+   * Mark messages as read for the authenticated user
    */
-  async markAsRead(conversationId: string, userId: string): Promise<void> {
-    await axiosClient.patch(`/chat/read/${conversationId}`, { userId });
+  async markAsRead(conversationId: string, _userId?: string): Promise<void> {
+    await axiosClient.patch(`/chat/read/${conversationId}`, {});
   }
 
   /**
-   * Get unread count
+   * Get unread count for the authenticated user
    */
-  async getUnreadCount(userId: string): Promise<{ unreadCount: number }> {
-    const res = await axiosClient.get(`/chat/unread/${userId}`);
+  async getUnreadCount(_userId?: string): Promise<{ unreadCount: number }> {
+    const res = await axiosClient.get(`/chat/unread`);
     return res.data;
   }
 }

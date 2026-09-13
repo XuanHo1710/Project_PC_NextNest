@@ -10,9 +10,9 @@ import EditSortAccountGuest from "@/components/EditSort/account-guest/EditSortAc
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { IAccountGuest } from "@/types/account-guest";
 import { useAccountGuests, useDeleteAccountGuest, useUpdateAccountGuest } from "@/hooks/admin";
-import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { FaBan, FaCheckCircle, FaTrashAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { useHasPermission } from "@/hooks/admin/useHasPermission";
 
 
 const SelectedContextAccountGuest = createContext<SelectedContextType | undefined>(undefined);
@@ -32,7 +32,7 @@ export default function ContentAccountGuest() {
         "authProvider"
     ]);
 
-    const { accountLogin } = useAuthEmployee();
+    const hasPermission = useHasPermission();
 
     // Reset pagination to page=1 when component mounts and wait for it to complete
     useEffect(() => {
@@ -55,6 +55,7 @@ export default function ContentAccountGuest() {
     const deleteAccountGuest = useDeleteAccountGuest();
     const updateAccountGuest = useUpdateAccountGuest();
 
+    // Hard delete: guest account is removed via service.delete().
     const handleDelete = async (id: string) => {
         try {
             await deleteAccountGuest.mutateAsync(id);
@@ -149,9 +150,7 @@ export default function ContentAccountGuest() {
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
                     {/* Nút khóa/mở khóa tài khoản */}
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-guest/:id"
-                    ) && (
+                    {hasPermission("PATCH", "/api/v1/admin/account-guest/:id") && (
                             <Popconfirm
                                 title={record.accountStatus === "SUSPENDED" ? "Mở khóa tài khoản" : "Khóa tài khoản"}
                                 description={record.accountStatus === "SUSPENDED"

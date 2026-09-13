@@ -1125,16 +1125,13 @@ export class ProductService {
   }
 
   async createBulkProductVariants(variants: CreateProductVariantDto[]) {
-    const results: any[] = [];
-    for (const dto of variants) {
-      const payload = {
+    if (!variants || variants.length === 0) return [];
+    const results = await this.productVariantModel.insertMany(
+      variants.map((dto) => ({
         ...dto,
         product: new Types.ObjectId(dto.product),
-      };
-      const variant = new this.productVariantModel(payload);
-      const variantSaved = (await variant.save()).toObject();
-      results.push(variantSaved);
-    }
+      })),
+    );
     // Recompute prices for the parent product
     if (variants.length > 0) {
       await this.recomputeProductPrices(variants[0].product);
@@ -1144,7 +1141,9 @@ export class ProductService {
       if (refs) {
         const attributeMap = await this.getAttributeCodeToNameMap();
         this.emitEsEvent('es.variant.bulkUpserted', {
-          variants: results,
+          variants: results.map((r: any) =>
+            typeof r.toObject === 'function' ? r.toObject() : r,
+          ),
           product: refs.product,
           brand: refs.brand,
           category: refs.category,
@@ -1371,6 +1370,11 @@ export class ProductService {
     if (!Types.ObjectId.isValid(variantId)) {
       throw new NotFoundException(`Invalid product variant ID: ${variantId}`);
     }
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new BadRequestException(
+        `Số lượng không hợp lệ cho variant ${variantId}: ${quantity}`,
+      );
+    }
 
     const variant = await this.productVariantModel
       .findOneAndUpdate(
@@ -1398,6 +1402,11 @@ export class ProductService {
     if (!Types.ObjectId.isValid(variantId)) {
       throw new NotFoundException(`Invalid product variant ID: ${variantId}`);
     }
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new BadRequestException(
+        `Số lượng không hợp lệ cho variant ${variantId}: ${quantity}`,
+      );
+    }
 
     const variant = await this.productVariantModel
       .findOneAndUpdate(
@@ -1417,6 +1426,210 @@ export class ProductService {
     }
 
     return variant;
+  }
+
+  /**
+   * Atomic bulk stock decrement using a single bulkWrite.
+   * Reads current stock BEFORE writing so failure detection compares against
+   * pre-write values (a post-write read would misreport applied items).
+   * Applies every operation that can succeed (guarded per-op), collects the
+   * failed variant IDs and throws BadRequestException listing them so the
+   * caller (order-service / saga-orchestration-service) can compensate.
+   */
+  async decrementVariantsStockBulk(
+    items: Array<{ variantId: string; quantity: number }>,
+  ) {
+    if (!Array.isArray(items)) {
+      throw new BadRequestException('items must be an array');
+    }
+
+    const invalidIds: string[] = [];
+
+    // Merge duplicate variants by summing quantities so stock checks and
+    // decrements stay consistent when one variant appears in multiple rows.
+    const merged = new Map<
+      string,
+      { id: Types.ObjectId; quantity: number }
+    >();
+    for (const item of items) {
+      if (
+        !item ||
+        !Types.ObjectId.isValid(item?.variantId) ||
+        !Number.isInteger(item?.quantity) ||
+        (item?.quantity as number) <= 0
+      ) {
+        invalidIds.push(String(item?.variantId ?? 'unknown'));
+        continue;
+      }
+      const existing = merged.get(String(item.variantId));
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        merged.set(String(item.variantId), {
+          id: new Types.ObjectId(item.variantId),
+          quantity: item.quantity,
+        });
+      }
+    }
+
+    if (invalidIds.length > 0) {
+      // Nothing is applied when the payload itself is invalid.
+      // Structured result instead of throwing: RPC error serialization would
+      // strip custom fields and callers need exact failure info.
+      return {
+        success: false,
+        appliedCount: 0,
+        failedVariantIds: invalidIds,
+        message: `Invalid stock items (bad id or quantity): ${invalidIds.join(', ')}`,
+      };
+    }
+
+    const requested = Array.from(merged.entries()).map(
+      ([variantId, v]) => ({ variantId, ...v }),
+    );
+
+    if (requested.length === 0) {
+      return { success: true, appliedCount: 0, failedVariantIds: [] };
+    }
+
+    // ── READ STOCK BEFORE WRITE ─────────────────────────────
+    const candidates = await this.productVariantModel
+      .find({
+        _id: { $in: requested.map((r) => r.id) },
+        isDeleted: { $ne: true },
+      })
+      .select('_id stock')
+      .lean()
+      .exec();
+    const stockMap = new Map(
+      candidates.map((v: any) => [v._id.toString(), v.stock || 0]),
+    );
+
+    const failedVariantIds: string[] = [];
+    const applicable = requested.filter((r) => {
+      const stock = stockMap.get(r.variantId);
+      if (stock === undefined || stock < r.quantity) {
+        failedVariantIds.push(r.variantId);
+        return false;
+      }
+      return true;
+    });
+
+    // ALL-OR-NOTHING: any known failure => apply NOTHING.
+    if (failedVariantIds.length > 0 || applicable.length === 0) {
+      return {
+        success: false,
+        appliedCount: 0,
+        failedVariantIds,
+        message: `Không thể trừ tồn kho cho các variant: ${failedVariantIds.join(', ')}`,
+      };
+    }
+
+    // ── WRITE ($gte guard makes each op race-safe; per-op UpdateResult tells
+    // us exactly which items applied so failures can be reversed precisely) ──
+    const racedOut: string[] = [];
+    const appliedDocs: Array<{ variantId: string; quantity: number }> = [];
+    for (const r of applicable) {
+      const op = await this.productVariantModel
+        .updateOne(
+          {
+            _id: r.id,
+            stock: { $gte: r.quantity },
+            isDeleted: { $ne: true },
+          },
+          { $inc: { stock: -r.quantity } },
+        )
+        .exec();
+      if (op.matchedCount > 0) {
+        appliedDocs.push({ variantId: r.variantId, quantity: r.quantity });
+      } else {
+        racedOut.push(r.variantId);
+      }
+    }
+
+    // A matched-count of 0 means a concurrent writer consumed stock between
+    // our read and write. Reverse exactly what DID apply so the operation
+    // stays atomic from the caller's perspective.
+    if (racedOut.length > 0) {
+      if (appliedDocs.length > 0) {
+        await this.productVariantModel.bulkWrite(
+          appliedDocs.map((r) => ({
+            updateOne: {
+              filter: {
+                _id: new Types.ObjectId(r.variantId),
+                isDeleted: { $ne: true },
+              },
+              update: { $inc: { stock: r.quantity } },
+            },
+          })),
+          { ordered: false },
+        );
+      }
+      return {
+        success: false,
+        appliedCount: 0,
+        failedVariantIds: racedOut,
+        message: `Không thể trừ tồn kho cho các variant: ${racedOut.join(', ')}`,
+      };
+    }
+
+    return {
+      success: true,
+      appliedCount: appliedDocs.length,
+      failedVariantIds: [],
+    };
+  }
+
+  /**
+   * Bulk stock restoration (compensation / cancel / expiry) using a single
+   * bulkWrite with $inc:+quantity and no stock condition.
+   */
+  async incrementVariantsStockBulk(
+    items: Array<{ variantId: string; quantity: number }>,
+  ) {
+    if (!Array.isArray(items)) {
+      throw new BadRequestException('items must be an array');
+    }
+
+    const operations: any[] = [];
+    const invalidIds: string[] = [];
+
+    for (const item of items) {
+      if (
+        !item ||
+        !Types.ObjectId.isValid(item?.variantId) ||
+        !Number.isInteger(item?.quantity) ||
+        (item?.quantity as number) <= 0
+      ) {
+        invalidIds.push(String(item?.variantId ?? 'unknown'));
+        continue;
+      }
+      operations.push({
+        updateOne: {
+          filter: {
+            _id: new Types.ObjectId(item.variantId),
+            isDeleted: { $ne: true },
+          },
+          update: { $inc: { stock: item.quantity } },
+        },
+      });
+    }
+
+    if (invalidIds.length > 0) {
+      throw new BadRequestException(
+        `Invalid stock items (bad id or quantity): ${invalidIds.join(', ')}`,
+      );
+    }
+
+    if (operations.length === 0) {
+      return { modifiedCount: 0 };
+    }
+
+    const result = await this.productVariantModel.bulkWrite(operations, {
+      ordered: false,
+    });
+
+    return { modifiedCount: result.modifiedCount || 0 };
   }
 
   // ============= PRODUCT ATTRIBUTE CRUD =============
@@ -2008,61 +2221,81 @@ export class ProductService {
    * Fetch ALL active products + their variants from MongoDB,
    * emit per-product events to elasticsearch-service for full reindex.
    * Reuses existing es.variant.deleteAndRecreate handler.
+   * Iterates the catalog in paged batches (_id > lastId) to avoid loading
+   * every product into memory at once.
    */
   async reindexAllToElasticsearch() {
     this.logger.log('Starting full Elasticsearch reindex…');
 
-    const products = await this.productModel
-      .find({ isDeleted: { $ne: true } })
-      .populate('brand', 'name slug logo')
-      .populate('category', 'name slug')
-      .lean()
-      .exec();
+    const BATCH_SIZE = 200;
 
     // Build attribute code→name map once for all products
     const attributeMap = await this.getAttributeCodeToNameMap();
 
-    // Batch fetch ALL variants at once instead of N+1 queries per product
-    const productIds = products.map((p) => p._id);
-    const allVariants = await this.productVariantModel
-      .find({ product: { $in: productIds }, isDeleted: { $ne: true } })
-      .lean()
-      .exec();
-
-    // Group variants by product
-    const variantsByProduct = new Map<string, any[]>();
-    for (const v of allVariants) {
-      const pid = v.product.toString();
-      if (!variantsByProduct.has(pid)) variantsByProduct.set(pid, []);
-      variantsByProduct.get(pid)!.push(v);
-    }
-
+    let lastId: Types.ObjectId | null = null;
+    let totalProducts = 0;
     let totalVariants = 0;
 
-    for (const product of products) {
-      const variants = variantsByProduct.get(product._id.toString()) || [];
+    while (true) {
+      const query: any = { isDeleted: { $ne: true } };
+      if (lastId) {
+        query._id = { $gt: lastId };
+      }
 
-      if (variants.length === 0) continue;
+      const products = await this.productModel
+        .find(query)
+        .sort({ _id: 1 })
+        .limit(BATCH_SIZE)
+        .populate('brand', 'name slug logo')
+        .populate('category', 'name slug')
+        .lean()
+        .exec();
 
-      totalVariants += variants.length;
+      if (products.length === 0) break;
 
-      this.emitEsEvent('es.variant.deleteAndRecreate', {
-        productId: (product._id as any).toString(),
-        variants,
-        product,
-        brand: product.brand || null,
-        category: product.category || null,
-        attributeMap,
-      });
+      lastId = products[products.length - 1]._id as Types.ObjectId;
+      totalProducts += products.length;
+
+      // Batch fetch variants for this page only
+      const productIds = products.map((p) => p._id);
+      const allVariants = await this.productVariantModel
+        .find({ product: { $in: productIds }, isDeleted: { $ne: true } })
+        .lean()
+        .exec();
+
+      // Group variants by product
+      const variantsByProduct = new Map<string, any[]>();
+      for (const v of allVariants) {
+        const pid = v.product.toString();
+        if (!variantsByProduct.has(pid)) variantsByProduct.set(pid, []);
+        variantsByProduct.get(pid)!.push(v);
+      }
+
+      for (const product of products) {
+        const variants = variantsByProduct.get(product._id.toString()) || [];
+
+        if (variants.length === 0) continue;
+
+        totalVariants += variants.length;
+
+        this.emitEsEvent('es.variant.deleteAndRecreate', {
+          productId: (product._id as any).toString(),
+          variants,
+          product,
+          brand: product.brand || null,
+          category: product.category || null,
+          attributeMap,
+        });
+      }
     }
 
     this.logger.log(
-      `Reindex dispatched: ${products.length} products, ${totalVariants} variants`,
+      `Reindex dispatched: ${totalProducts} products, ${totalVariants} variants`,
     );
 
     return {
       message: 'Reindex dispatched',
-      products: products.length,
+      products: totalProducts,
       variants: totalVariants,
     };
   }

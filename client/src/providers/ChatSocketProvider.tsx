@@ -35,7 +35,8 @@ export default function ChatSocketProvider({ children }: { children: React.React
         if (socketRef.current?.connected) return;
 
         const socket = io(SOCKET_URL, {
-            query: { userId },
+            // Identity comes from the httpOnly cookie verified server-side.
+            withCredentials: true,
             transports: ['websocket', 'polling'],
             reconnection: true,
             reconnectionAttempts: Infinity,

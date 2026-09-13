@@ -1,5 +1,5 @@
 'use client'
-import { Modal, Popconfirm, Spin, Tag } from "antd";
+import { Modal, Spin, Tag } from "antd";
 import type { ColumnsType, ColumnType } from "antd/es/table";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
 import { createContext, useContext, useState } from "react";
@@ -10,10 +10,11 @@ import ActionDiscount from "@/components/ActionFilter/discount/ActionDiscount";
 import FilterDiscount from "@/components/ActionFilter/discount/FilterDiscount";
 import EditSortDiscount from "@/components/EditSort/discount/EditSortDiscount";
 import ContentModalDiscount from "@/components/ContentModal/discount/ContentModalDiscount";
-import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import ConfirmDeletePopconfirm from "@/components/common/ConfirmDeletePopconfirm";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { IDiscount } from "@/types/discount";
 import { useDiscounts, useDeleteDiscount } from "@/hooks/admin";
+import { useHasPermission } from "@/hooks/admin/useHasPermission";
 
 
 
@@ -45,8 +46,9 @@ export default function ContentDiscount() {
     const discounts = discountsResult?.data ?? [];
 
     const deleteDiscount = useDeleteDiscount();
-    const { accountLogin } = useAuthEmployee();
+    const hasPermission = useHasPermission();
 
+    // Hard delete: discount is removed via service.delete().
     const handleDelete = async (id: string) => {
         try {
             await deleteDiscount.mutateAsync(id);
@@ -97,9 +99,7 @@ export default function ContentDiscount() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/discount/:id"
-                    ) &&
+                    {hasPermission("PATCH", "/api/v1/admin/discount/:id") &&
                         <FaPen
                             onClick={() => {
                                 setOpen(true);
@@ -109,18 +109,13 @@ export default function ContentDiscount() {
                         />
                     }
 
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/discount/:id"
-                    ) &&
-                        <Popconfirm
-                            title="Xóa dòng của bạn"
-                            description="Bạn có chắc chắn muốn xóa dòng này ?"
+                    {hasPermission("DELETE", "/api/v1/admin/discount/:id") &&
+                        <ConfirmDeletePopconfirm
                             onConfirm={() => handleDelete(record._id as string)}
-                            okText="Xóa"
-                            cancelText="Không"
+                            loading={deleteDiscount.isPending}
                         >
                             <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                        </Popconfirm>
+                        </ConfirmDeletePopconfirm>
                     }
                 </div>
             ),
@@ -128,9 +123,7 @@ export default function ContentDiscount() {
     ];
 
     let dataTable: DataType<IDiscount>[] = [];
-    if (!loading && discounts.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
-        (p) => p.method === "GET" && p.path === "/api/v1/admin/discount"
-    )) {
+    if (!loading && discounts.length > 0 && hasPermission("GET", "/api/v1/admin/discount")) {
         dataTable = discounts.map((item: IDiscount, index: number) => {
             const row = {
                 key: index.toString(),
@@ -150,9 +143,7 @@ export default function ContentDiscount() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "PATCH" && p.path === "/api/v1/admin/discount/:id"
-                ) &&
+                {hasPermission("PATCH", "/api/v1/admin/discount/:id") &&
                     <UpdateModalDiscount setOpen={setOpen} dataDiscount={dataClick} />
                 }
             </Modal>

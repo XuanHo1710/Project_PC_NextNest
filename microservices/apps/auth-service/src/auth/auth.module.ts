@@ -13,7 +13,7 @@ import { AccountGuestModule } from 'src/account-guest/account-guest.module';
 import { RedisModule } from 'src/redis/redis.module';
 import { AccountEmployeeModule } from 'src/account-employee/account-employee.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MICROSERVICE, getRabbitMqUrl } from '@project-pc/common';
 
 @Module({
   imports: [
@@ -29,7 +29,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.NOTIFICATION_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'notification.main',
           queueOptions: {
             durable: true,

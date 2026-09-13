@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { extractJwtFromCookie } from '../core/auth-cookies';
 
 @Injectable()
 export class ClientJwtStrategy extends PassportStrategy(
@@ -9,12 +10,21 @@ export class ClientJwtStrategy extends PassportStrategy(
   'client-jwt',
 ) {
   constructor(private configService: ConfigService) {
+    const secret = configService.get<string>('JWT_ACCESS_TOKEN_SECRET');
+
+    if (!secret) {
+      throw new Error(
+        'JWT_ACCESS_TOKEN_SECRET is not defined in environment variables',
+      );
+    }
+
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        extractJwtFromCookie('client_access_token'),
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('JWT_ACCESS_TOKEN_SECRET') ||
-        'default-secret',
+      secretOrKey: secret,
     });
   }
 

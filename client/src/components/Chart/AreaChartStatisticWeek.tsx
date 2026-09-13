@@ -91,7 +91,7 @@ export const AreaChartStatisticWeek = () => {
                             return new Date(value).toLocaleDateString("vi-VN", { month: "long", day: "numeric", year: "numeric" })
                         }}
                         formatter={(value: number, name: string) => {
-                            if (name === 'revenue') return [formatCurrency(value) + 'đ', 'Doanh thu'];
+                            if (name === 'revenue') return [formatCurrency(value), 'Doanh thu'];
                             return [value, 'Đơn hàng'];
                         }}
                     />

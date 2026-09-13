@@ -69,15 +69,15 @@ const CardProduct = ({ product, css = '' }: CardProductProps) => {
             {/* Product Info */}
             <div className="card-content mb-3 text-center">
                 <Link href={`/product/${product.slug}`}>
-                    <h2 className="font-medium cursor-pointer min-h-12 hover:text-blue-500 text-sm lg:text-base line-clamp-2">
+                    <h3 className="font-medium cursor-pointer min-h-12 hover:text-blue-500 text-sm lg:text-base line-clamp-2">
                         {product.name}
-                    </h2>
+                    </h3>
                 </Link>
 
                 {/* Display Price (after discount) */}
-                <h2 className="font-bold cursor-default text-xl my-1 text-blue-400">
+                <p className="font-bold cursor-default text-xl my-1 text-blue-400">
                     {displayPrice.toLocaleString('vi-VN')} đ
-                </h2>
+                </p>
 
                 {/* Original Price & Discount */}
                 {discount > 0 && (

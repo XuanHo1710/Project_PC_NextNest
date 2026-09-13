@@ -37,8 +37,10 @@ export class AccountGuestService {
     createAccountGuestDto: CreateAccountGuestDto,
   ): Promise<AccountGuest> {
     // Check if email already exists
+    createAccountGuestDto.email = String(createAccountGuestDto.email || '')
+      .trim()
+      .toLowerCase();
 
-    console.log(createAccountGuestDto);
     const existingAccount = await this.accountGuestModel.findOne({
       email: createAccountGuestDto.email,
       deletedAt: { $exists: false },
@@ -70,12 +72,15 @@ export class AccountGuestService {
 
     // Generate email verification token
     const emailVerificationToken = crypto.randomBytes(32).toString('hex');
-    const otpCodeForEmail = Math.floor(100000 + Math.random() * 900000);
+    const otpCodeForEmail = crypto.randomInt(100000, 1000000);
     const emailVerificationExpires = new Date();
     emailVerificationExpires.setHours(emailVerificationExpires.getHours() + 24); // 24 hours
 
     const accountData = {
       ...createAccountGuestDto,
+      email: String(createAccountGuestDto.email || '')
+        .trim()
+        .toLowerCase(),
       password: hashedPassword,
       otpCodeForEmail,
       emailVerificationToken,
@@ -106,6 +111,13 @@ export class AccountGuestService {
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = query;
+
+    // Clamp pagination to sane bounds
+    const safePage = Math.min(Math.max(parseInt(page, 10) || 1, 1), 10000);
+    const safeLimit = Math.min(
+      Math.max(parseInt(limit, 10) || 10, 1),
+      100,
+    );
 
     // Build search filter
     const filter: any = { deletedAt: { $exists: false } };
@@ -139,7 +151,7 @@ export class AccountGuestService {
       if (lastLoginTo) filter.lastLoginAt.$lte = new Date(lastLoginTo);
     }
 
-    const skip = (page - 1) * limit;
+    const skip = (safePage - 1) * safeLimit;
     const sortOptions: any = {};
     sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
@@ -147,11 +159,11 @@ export class AccountGuestService {
       this.accountGuestModel
         .find(filter)
         .select(
-          '-password -emailVerificationToken -resetPasswordToken -twoFactorSecret',
+          '-password -emailVerificationToken -resetPasswordToken -twoFactorSecret -otpCodeForEmail -verifyToken',
         )
         .sort(sortOptions)
         .skip(skip)
-        .limit(limit)
+        .limit(safeLimit)
         .exec(),
       this.accountGuestModel.countDocuments(filter),
     ]);
@@ -159,12 +171,12 @@ export class AccountGuestService {
     return {
       data,
       pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(total / limit),
+        currentPage: safePage,
+        totalPages: Math.ceil(total / safeLimit),
         totalItems: total,
-        itemsPerPage: limit,
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPrevPage: page > 1,
+        itemsPerPage: safeLimit,
+        hasNextPage: safePage < Math.ceil(total / safeLimit),
+        hasPrevPage: safePage > 1,
       },
     };
   }
@@ -173,7 +185,7 @@ export class AccountGuestService {
     const account = await this.accountGuestModel
       .findOne({ _id: id, deletedAt: { $exists: false } })
       .select(
-        '-password -emailVerificationToken -resetPasswordToken -twoFactorSecret',
+        '-password -emailVerificationToken -resetPasswordToken -twoFactorSecret -otpCodeForEmail -verifyToken',
       )
       .exec();
 
@@ -210,19 +222,83 @@ export class AccountGuestService {
       throw new NotFoundException('Account not found');
     }
 
-    // Hash password if provided
-    if (updateAccountGuestDto.password) {
-      updateAccountGuestDto.password = await bcrypt.hash(
-        updateAccountGuestDto.password,
-        10,
+    // Mass-assignment protection: only profile fields may pass through the
+    // generic update. Status/verified/points/auth fields must go through
+    // dedicated flows (updateAuthState, verifyEmail, ...).
+    const allowed = [
+      'fullname',
+      'avatar',
+      'gender',
+      'phone',
+      'address',
+      'dateOfBirth',
+    ];
+    const picked: Record<string, unknown> = {};
+    for (const key of allowed) {
+      const value = (updateAccountGuestDto as any)?.[key];
+      if (value !== undefined) {
+        picked[key] = value;
+      }
+    }
+
+    if (Object.keys(picked).length === 0) {
+      throw new BadRequestException(
+        'Không có trường hợp lệ để cập nhật tài khoản',
       );
     }
 
     const updatedAccount = await this.accountGuestModel
-      .findByIdAndUpdate(id, updateAccountGuestDto, { new: true })
-      .select(
-        '-password -emailVerificationToken -resetPasswordToken -twoFactorSecret',
-      )
+      .findByIdAndUpdate(id, picked, { new: true })
+      .select('-password -emailVerificationToken -resetPasswordToken -twoFactorSecret')
+      .exec();
+
+    if (!updatedAccount) {
+      throw new NotFoundException('Account not found');
+    }
+
+    return updatedAccount;
+  }
+
+  /**
+   * Dedicated, allowlisted state transitions used by trusted internal flows
+   * (Google account linking, admin activate/suspend). Never expose this
+   * directly to user-controlled payloads.
+   */
+  async updateAuthState(
+    id: string,
+    patch: {
+      googleId?: string;
+      authProvider?: string;
+      isEmailVerified?: boolean;
+      accountStatus?: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+      isActive?: boolean;
+      adminNotes?: string;
+    },
+  ): Promise<AccountGuest> {
+    const allowed = [
+      'googleId',
+      'authProvider',
+      'isEmailVerified',
+      'accountStatus',
+      'isActive',
+      'adminNotes',
+    ] as const;
+
+    const picked: Record<string, unknown> = {};
+    for (const key of allowed) {
+      const value = (patch as any)?.[key];
+      if (value !== undefined) {
+        picked[key] = value;
+      }
+    }
+
+    if (Object.keys(picked).length === 0) {
+      throw new BadRequestException('Không có trường hợp lệ để cập nhật');
+    }
+
+    const updatedAccount = await this.accountGuestModel
+      .findByIdAndUpdate(new Types.ObjectId(id), picked, { new: true })
+      .select('-password -emailVerificationToken -resetPasswordToken -twoFactorSecret')
       .exec();
 
     if (!updatedAccount) {
@@ -311,19 +387,20 @@ export class AccountGuestService {
     const loginDate = new Date();
     loginDate.setHours(0, 0, 0, 0);
 
+    // mongoose v9 mis-types positional-array filters/updates; runtime is valid
     const result = await this.accountGuestModel.updateOne(
       {
-        id: id,
+        _id: new Types.ObjectId(id),
         'loginInformation.loginAt': loginDate,
-      },
+      } as any,
       {
         $inc: { 'loginInformation.$.loginCount': 1 },
-      },
+      } as any,
     );
 
     if (result.matchedCount === 0) {
       await this.accountGuestModel.updateOne(
-        { id: id },
+        { _id: new Types.ObjectId(id) },
         {
           $push: {
             loginInformation: {

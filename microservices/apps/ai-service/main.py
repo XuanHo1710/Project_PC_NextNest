@@ -264,9 +264,12 @@ async def index_single_product_endpoint(request: IndexProductRequest):
     from product_index import index_single_product
 
     try:
-        result = index_single_product(request.productId)
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None, lambda: index_single_product(request.productId)
+        )
         from chat import refresh_catalog_context
-        refresh_catalog_context()
+        await loop.run_in_executor(None, refresh_catalog_context)
         return IndexProductResponse(**result)
     except Exception as e:
         logger.error(f"Index product error: {e}")
@@ -279,9 +282,12 @@ async def delete_product_index_endpoint(product_id: str):
     from product_index import delete_product_from_index
 
     try:
-        result = delete_product_from_index(product_id)
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None, lambda: delete_product_from_index(product_id)
+        )
         from chat import refresh_catalog_context
-        refresh_catalog_context()
+        await loop.run_in_executor(None, refresh_catalog_context)
         return result
     except Exception as e:
         logger.error(f"Delete product index error: {e}")
@@ -295,8 +301,11 @@ async def reindex_products():
     from chat import refresh_catalog_context
 
     try:
-        result = index_all_products()
-        refresh_catalog_context()  # Also refresh the chat catalog context
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, index_all_products)
+        await loop.run_in_executor(
+            None, refresh_catalog_context
+        )  # Also refresh the chat catalog context
         return ReindexResponse(**result)
     except Exception as e:
         logger.error(f"Reindex error: {e}")
@@ -331,16 +340,23 @@ async def predict_price_endpoint(request: PricePredictRequest):
         try:
             from recommendation import _fetch_product_cards
             from database import get_mongo_db
-            db = get_mongo_db()
+
+            def _fetch_similar(price: float):
+                # Blocking pymongo calls — executed on the default thread pool
+                db = get_mongo_db()
+                products = list(
+                    db["products"].find({
+                        "isDeleted": {"$ne": True}, "status": "ACTIVE",
+                        "minPrice": {"$gte": int(price * 0.7), "$lte": int(price * 1.3)},
+                    }).sort("createdAt", -1).limit(6)
+                )
+                if not products:
+                    return []
+                return _fetch_product_cards([str(p["_id"]) for p in products])
+
+            loop = asyncio.get_event_loop()
             price = result["predicted_price"]
-            products = list(
-                db["products"].find({
-                    "isDeleted": {"$ne": True}, "status": "ACTIVE",
-                    "minPrice": {"$gte": int(price * 0.7), "$lte": int(price * 1.3)},
-                }).sort("createdAt", -1).limit(6)
-            )
-            if products:
-                similar = _fetch_product_cards([str(p["_id"]) for p in products])
+            similar = await loop.run_in_executor(None, lambda: _fetch_similar(price))
         except Exception as e:
             logger.warning(f"Failed to fetch similar products: {e}")
 
@@ -386,6 +402,6 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=settings.AI_SERVICE_PORT,
-        reload=os.environ.get("AI_NO_RELOAD") != "1",
+        reload=os.environ.get("AI_DEV") == "1",
         log_level="info",
     )

@@ -15,14 +15,14 @@ import { AiOutlineTags, AiOutlineAppstore } from 'react-icons/ai';
 import { TbBrandApple } from 'react-icons/tb';
 import Link from 'next/link';
 import { MoneyCollectOutlined, ShoppingCartOutlined } from '@ant-design/icons';
-import useAuthEmployee from '@/hooks/AuthEmployeeContext';
+import { useHasPermission } from '@/hooks/admin/useHasPermission';
 import { pathAdminRoutes } from '@/config/route';
 
 
 type MenuItem = Required<MenuProps>['items'][number];
 
 export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
-    const { accountLogin } = useAuthEmployee();
+    const hasPermission = useHasPermission();
 
 
 
@@ -37,30 +37,22 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     label: <Link href={pathAdminRoutes.dashboard}>Dashboard</Link>,
                     icon: <FaHome />
                 },
-                accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "GET" && p.path === "/api/v1/admin/product"
-                ) ? {
+                hasPermission("GET", "/api/v1/admin/product") ? {
                     key: 'products-group',
                     label: <Link href={pathAdminRoutes.products}>Sản phẩm</Link>,
                     icon: <GiLaptop />,
                 } : null,
-                accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "GET" && p.path === "/api/v1/admin/category"
-                ) ? {
+                hasPermission("GET", "/api/v1/admin/category") ? {
                     key: 'category',
                     label: <Link href={pathAdminRoutes.category}>Danh mục sản phẩm</Link>,
                     icon: <BiCategory />
                 } : null,
-                accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "GET" && p.path === "/api/v1/admin/brand"
-                ) ? {
+                hasPermission("GET", "/api/v1/admin/brand") ? {
                     key: 'brand',
                     label: <Link href={pathAdminRoutes.brand}>Thương hiệu</Link>,
                     icon: <TbBrandApple />
                 } : null,
-                accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "GET" && p.path === "/api/v1/admin/order"
-                ) ? {
+                hasPermission("GET", "/api/v1/admin/order") ? {
                     key: 'order',
                     label: <Link href={pathAdminRoutes.order}>Đơn hàng</Link>,
                     icon: <ShoppingCartOutlined />
@@ -80,9 +72,7 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                     label: 'Tài khoản',
                     icon: <MdManageAccounts />,
                     children: [
-                        accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                            (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
-                        ) ? {
+                        hasPermission("GET", "/api/v1/admin/account-employee") ? {
                             key: 'employeeAccount',
                             label: <Link href={pathAdminRoutes.accountEmployee}>Tài khoản nhân viên</Link>,
                             icon: <IoIosPeople />
@@ -94,16 +84,12 @@ export const Sidebar = ({ collapsed }: { collapsed: boolean }) => {
                         },
                     ],
                 },
-                accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "GET" && p.path === "/api/v1/admin/role"
-                ) ? {
+                hasPermission("GET", "/api/v1/admin/role") ? {
                     key: 'role',
                     label: <Link href={pathAdminRoutes.role}>Vai trò</Link>,
                     icon: <SiAdguard />
                 } : null,
-                accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "GET" && p.path === "/api/v1/admin/role"
-                ) ? {
+                hasPermission("GET", "/api/v1/admin/role") ? {
                     key: 'permission',
                     label: <Link href={pathAdminRoutes.permission}>Phân quyền</Link>,
                     icon: <GoLaw />

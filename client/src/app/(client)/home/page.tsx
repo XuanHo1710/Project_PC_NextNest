@@ -1,6 +1,7 @@
 'use client';
 import CardProduct from "@/components/client/CardProduct/CardProduct";
-import { categoryClientService, productClientService, chatbotClientService } from "@/services/client";
+import { productClientService, chatbotClientService } from "@/services/client";
+import { useCategories } from "@/hooks/client/useCategories";
 import { ICategory } from "@/types/category";
 import { IBrand } from "@/types/brand";
 import { IProductCard } from "@/types/product";
@@ -24,11 +25,7 @@ import { PaginatedResponse } from "@/types/common";
 export default function HomeClient() {
     const { user } = useAuthUser();
 
-    const { data: categories } = useQuery<ICategory[]>({
-        queryKey: ['categories'],
-        queryFn: () => categoryClientService.getAllCategories(),
-        staleTime: 1000 * 60 * 5,
-    });
+    const { categories } = useCategories();
 
     const { data: brands } = useQuery<PaginatedResponse<IBrand>>({
         queryKey: ['brands', 'featured'],

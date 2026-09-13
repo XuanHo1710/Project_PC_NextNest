@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+*.log
+__pycache__
+*.pyc
+models/*.pkl
+charts
+*.ipynb
+_debug_index.py
+hybrid_model_test.py
+.git
+.turbo

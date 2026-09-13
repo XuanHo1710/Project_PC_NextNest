@@ -4,31 +4,56 @@ import {
   Controller,
   Get,
   Inject,
-  Param,
   Post,
   Query,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { MICROSERVICE } from '@project-pc/common';
 
 import type { Request, Response } from 'express';
-import { Guest, Public } from '../../decorators/customize';
+import { Public } from '../../decorators/customize';
 import { GoogleAuthGuard } from '../../guards/google-auth.guard';
 import { ClientLocalAuthGuard } from 'guards/client-local-jwt.guard';
+import {
+  clearAuthCookies,
+  getCookie,
+  setAuthCookies,
+} from '../../core/auth-cookies';
 import { firstValueFrom } from 'rxjs';
-import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 
-const ms = require('ms');
+const jwt = require('jsonwebtoken');
 
+function safeJsonStringify(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
+/**
+ * Extracts the session owner from a refresh token ONLY after verifying its
+ * signature — prevents forged tokens from revoking other users' sessions.
+ */
+function verifiedRefreshOwnerId(refreshToken: string): string | null {
+  try {
+    const decoded: any = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_TOKEN_SECRET as string,
+    );
+    return decoded?._id ? String(decoded._id) : null;
+  } catch {
+    return null;
+  }
+}
+
+@Throttle({ default: { limit: 20, ttl: 60_000 } })
 @Controller('/client/auth')
 export class AuthController {
   constructor(
     @Inject(MICROSERVICE.AUTH_SERVICE)
     private readonly authService: ClientProxy,
-    private readonly configService: ConfigService,
   ) {}
 
   @UseGuards(ClientLocalAuthGuard)
@@ -42,7 +67,19 @@ export class AuthController {
     const dataLogin = await firstValueFrom(
       this.authService.send('auth.login', { user }),
     );
-    return dataLogin;
+
+    if (!dataLogin?.access_token) {
+      return dataLogin;
+    }
+
+    setAuthCookies(
+      response,
+      'client',
+      dataLogin.access_token,
+      dataLogin.refresh_token,
+    );
+
+    return { user: dataLogin.payload };
   }
 
   @Post('register')
@@ -64,7 +101,7 @@ export class AuthController {
 
     const guest = await firstValueFrom(
       this.authService.send('auth.register', {
-        email,
+        email: String(email).trim().toLowerCase(),
         password,
         fullname,
         phone,
@@ -83,13 +120,16 @@ export class AuthController {
   @Get('google/callback')
   @Public()
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Guest() user: any, @Res() response: Response) {
+  async googleAuthRedirect(@Req() request: Request, @Res() response: Response) {
+    const user: any = (request as any).user;
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+
     if (!user) {
       return response.send(`
       <script>
         window.opener.postMessage(
           { type: 'GOOGLE_LOGIN_FAILED' },
-          '${process.env.CLIENT_URL}'
+          '${safeJsonStringify(clientUrl)}'
         );
         window.close();
       </script>
@@ -104,24 +144,37 @@ export class AuthController {
       const result = await firstValueFrom(
         this.authService.send('auth.login', { user: checkAccountGoogle }),
       );
+
+      if (!result?.access_token) {
+        throw new Error('Login failed');
+      }
+
+      setAuthCookies(
+        response,
+        'client',
+        result.access_token,
+        result.refresh_token,
+      );
+
       return response.send(`
       <script>
         window.opener.postMessage(
           {
             type: 'GOOGLE_LOGIN_SUCCESS',
-            payload: ${JSON.stringify(result)}
+            payload: ${safeJsonStringify(result.payload)}
           },
-          '${process.env.CLIENT_URL}'
+          '${safeJsonStringify(clientUrl)}'
         );
         window.close();
       </script>
     `);
     } catch (error) {
+      clearAuthCookies(response, 'client');
       return response.send(`
       <script>
         window.opener.postMessage(
           { type: 'GOOGLE_LOGIN_FAILED' },
-          '${process.env.CLIENT_URL}'
+          '${safeJsonStringify(clientUrl)}'
         );
         window.close();
       </script>
@@ -189,48 +242,59 @@ export class AuthController {
 
   @Post('refresh')
   @Public()
-  async refresh(@Req() request: Request) {
-    try {
-      const sessionId = request.cookies?.client_sessionId;
-      if (!sessionId) {
-        throw new BadRequestException('Session ID không tồn tại');
-      }
-
-      const result = await firstValueFrom(
-        this.authService.send('auth.refreshToken', {
-          sessionId,
-        }),
-      );
-
-      if (!result || !result.access_token) {
-        throw new BadRequestException('Không thể tạo access token mới');
-      }
-
-      return result;
-    } catch (error) {
-      console.error('Error in refresh handler:', error);
-      throw error;
-    }
-  }
-
-  @Post('logout')
-  async logout(
-    @Guest() guest: any,
+  async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    if (request.cookies?.client_refresh_token) {
-      response.clearCookie('client_refresh_token', {
-        path: '/',
-      });
+    const refreshToken = getCookie(request, 'client_refresh_token');
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token không tồn tại');
     }
 
-    return this.authService.send('auth.logout', { id: guest._id });
+    const result = await firstValueFrom(
+      this.authService.send('auth.refreshToken', { refreshToken }),
+    );
+
+    // TCP serializes thrown HttpExceptions as plain {status:'error'} payloads
+    if ((result as any)?.status === 'error') {
+      clearAuthCookies(response, 'client');
+      throw new UnauthorizedException(
+        (result as any).message || 'Phiên đăng nhập không hợp lệ',
+      );
+    }
+
+    if (!result || !result.access_token) {
+      throw new BadRequestException('Không thể tạo access token mới');
+    }
+
+    setAuthCookies(
+      response,
+      'client',
+      result.access_token,
+      result.refresh_token,
+    );
+
+    return { user: result.payload };
   }
 
-  @Get('profile')
-  async getProfile(@Guest() guest: any) {
-    console.log('Called profile endpoint', guest);
-    return guest;
+  @Post('logout')
+  @Public()
+  async logout(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const refreshToken = getCookie(request, 'client_refresh_token');
+
+    if (refreshToken) {
+      const ownerId = verifiedRefreshOwnerId(refreshToken);
+      if (ownerId) {
+        await firstValueFrom(
+          this.authService.send('auth.logout', { id: ownerId }),
+        );
+      }
+    }
+
+    clearAuthCookies(response, 'client');
+    return { message: 'Đăng xuất thành công' };
   }
 }

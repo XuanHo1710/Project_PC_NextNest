@@ -10,7 +10,6 @@ export class AuthController {
 
   @MessagePattern('auth.signIn')
   async signIn(@Payload() data: { email: string; password: string }) {
-    console.log('auth.signIn payload:', data);
     const { email, password } = data;
 
     return this.authService.signIn(email, password);
@@ -54,17 +53,18 @@ export class AuthController {
       const guest = await this.authService.googleLogin(user);
       return guest;
     } catch (error) {
-      console.error('Google auth error:', error);
+      const message = error instanceof Error ? error.message : 'unknown';
+      console.error('Google auth error:', message);
       return null;
     }
   }
 
   @MessagePattern('auth.refreshToken')
-  async refresh(@Payload() data: { sessionId: string }) {
-    if (!data.sessionId) {
-      throw new BadRequestException('Session ID không tồn tại');
+  async refresh(@Payload() data: { refreshToken: string }) {
+    if (!data?.refreshToken) {
+      throw new BadRequestException('Refresh token không tồn tại');
     }
-    return this.authService.processNewToken(data.sessionId);
+    return this.authService.processNewToken(data.refreshToken);
   }
 
   @MessagePattern('auth.logout')
@@ -89,16 +89,15 @@ export class AuthController {
   }
 
   @MessagePattern('auth.refreshTokenAdmin')
-  refreshToken(@Payload() data: { sessionId: string }) {
-    if (!data.sessionId) {
-      throw new BadRequestException('Session không tồn tại');
+  refreshToken(@Payload() data: { refreshToken: string }) {
+    if (!data?.refreshToken) {
+      throw new BadRequestException('Refresh token không tồn tại');
     }
-    return this.authService.processNewTokenAdmin(data.sessionId);
+    return this.authService.processNewTokenAdmin(data.refreshToken);
   }
 
   @MessagePattern('auth.signInAdmin')
   async signInAdmin(@Payload() data: { IDEmp: string; password: string }) {
-    console.log('auth.signInAdmin payload:', data);
     const { IDEmp, password } = data;
     return this.authService.signInAdmin(IDEmp, password);
   }

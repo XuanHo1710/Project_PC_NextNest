@@ -1,5 +1,5 @@
 'use client'
-import { Modal, Popconfirm, Spin, Switch, Tag } from "antd";
+import { Modal, Spin, Switch, Tag } from "antd";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
 import { createContext, useContext, useState, useEffect } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
@@ -8,12 +8,13 @@ import EditSortBrand from "@/components/EditSort/brand/EditSortBrand";
 import ActionBrand from "@/components/ActionFilter/brand/ActionBrand";
 import { ColumnsType } from "antd/es/table";
 import ContentModalBrand from "@/components/ContentModal/brand/ContentModalBrand";
-import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { IBrand } from "@/types/brand";
 import { useBrands, useDeleteBrand, useUpdateBrand } from '@/hooks/admin/useBrand';
 import UpdateModalBrand from "@/components/ContentModal/brand/UpdateModalBrand";
 import FilterBrand from "@/components/ActionFilter/brand/FilterBrand";
+import ConfirmDeletePopconfirm from "@/components/common/ConfirmDeletePopconfirm";
+import { useHasPermission } from "@/hooks/admin/useHasPermission";
 
 const SelectedContextBrand = createContext<SelectedContextType | undefined>(undefined);
 
@@ -23,8 +24,6 @@ export default function ContentBrand() {
     const { queryParams, setQueryParams } = useQueryParams();
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
     const [isReady, setIsReady] = useState(false);
-
-    const { accountLogin } = useAuthEmployee();
 
     // Reset pagination to page=1 when component mounts and wait for it to complete
     useEffect(() => {
@@ -50,7 +49,9 @@ export default function ContentBrand() {
 
     const deleteBrand = useDeleteBrand();
     const updateBrandMutation = useUpdateBrand();
+    const hasPermission = useHasPermission();
 
+    // Soft delete: brand is marked isDeleted=true via update(), not removed.
     const handleDelete = async (id: string) => {
         try {
             await deleteBrand.mutateAsync(id);
@@ -147,9 +148,7 @@ export default function ContentBrand() {
             width: 100,
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/brand/:id"
-                    ) &&
+                    {hasPermission("PATCH", "/api/v1/admin/brand/:id") &&
                         <FaPen
                             onClick={() => {
                                 setOpen(true);
@@ -159,18 +158,13 @@ export default function ContentBrand() {
                         />
                     }
 
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/brand/:id"
-                    ) &&
-                        <Popconfirm
-                            title="Xóa thương hiệu"
-                            description="Bạn có chắc chắn muốn xóa thương hiệu này?"
+                    {hasPermission("DELETE", "/api/v1/admin/brand/:id") &&
+                        <ConfirmDeletePopconfirm
                             onConfirm={() => handleDelete(record._id as string)}
-                            okText="Xóa"
-                            cancelText="Không"
+                            loading={deleteBrand.isPending}
                         >
                             <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                        </Popconfirm>
+                        </ConfirmDeletePopconfirm>
                     }
                 </div>
             ),
@@ -197,9 +191,7 @@ export default function ContentBrand() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "PATCH" && p.path === "/api/v1/admin/brand/:id"
-                ) &&
+                {hasPermission("PATCH", "/api/v1/admin/brand/:id") &&
                     <UpdateModalBrand setOpen={setOpen} dataBrand={dataClick} />
                 }
             </Modal>

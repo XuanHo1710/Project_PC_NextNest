@@ -1,17 +1,33 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import {
+  MICROSERVICE,
+  getServiceHost,
+  getServicePort,
+  getRabbitMqUrl,
+} from '@project-pc/common';
 import { SagaController } from 'src/saga/saga.controller';
 import { SagaService } from 'src/saga/saga.service';
+import {
+  SagaState,
+  SagaStateSchema,
+} from 'src/saga/entities/saga-state.entity';
 
 @Module({
   imports: [
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI || 'mongodb://localhost:27017/project-pc',
+    ),
+    MongooseModule.forFeature([
+      { name: SagaState.name, schema: SagaStateSchema },
+    ]),
     ClientsModule.register([
       {
         name: MICROSERVICE.ORDER_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'order.main',
           queueOptions: {
             durable: true,
@@ -26,7 +42,7 @@ import { SagaService } from 'src/saga/saga.service';
         name: MICROSERVICE.PAYMENT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'payment.main',
           queueOptions: {
             durable: true,
@@ -41,7 +57,7 @@ import { SagaService } from 'src/saga/saga.service';
         name: MICROSERVICE.PRODUCT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'product.main',
           queueOptions: {
             durable: true,
@@ -56,7 +72,7 @@ import { SagaService } from 'src/saga/saga.service';
         name: MICROSERVICE.NOTIFICATION_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'notification.main',
           queueOptions: {
             durable: true,
@@ -71,8 +87,8 @@ import { SagaService } from 'src/saga/saga.service';
         name: MICROSERVICE.CART_SERVICE,
         transport: Transport.TCP,
         options: {
-          host: process.env.CART_SERVICE_HOST ?? 'cart-service',
-          port: MICROSERVICE_PORT.CART_SERVICE,
+          host: getServiceHost(MICROSERVICE.CART_SERVICE),
+          port: getServicePort(MICROSERVICE.CART_SERVICE),
         },
       },
     ]),

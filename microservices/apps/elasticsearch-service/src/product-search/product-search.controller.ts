@@ -6,7 +6,12 @@ import {
   Payload,
   RmqContext,
 } from '@nestjs/microservices';
+import { Channel, ConsumeMessage } from 'amqplib';
 import { ProductSearchService } from './product-search.service';
+
+const RETRY_QUEUE = 'elasticsearch.retry';
+const DLQ_QUEUE = 'elasticsearch.dlq';
+const MAX_RETRIES = 3;
 
 @Controller()
 export class ProductSearchController {
@@ -21,6 +26,107 @@ export class ProductSearchController {
       channel.ack(msg);
     } catch {
       // Ignore if not RMQ context (e.g., TCP)
+    }
+  }
+
+  /**
+   * Total number of completed retry cycles recorded by the broker.
+   * RabbitMQ appends an x-death entry each time a message is dead-lettered
+   * out of elasticsearch.retry (after its TTL expires).
+   */
+  private getRetryCount(
+    msg: ReturnType<RmqContext['getMessage']> | null,
+  ): number {
+    const headers = (msg as { properties?: { headers?: Record<string, any> } })
+      ?.properties?.headers;
+    const xDeath = headers?.['x-death'];
+    if (!Array.isArray(xDeath)) return 0;
+    let total = 0;
+    for (const d of xDeath) {
+      if (d?.queue === RETRY_QUEUE && typeof d.count === 'number') {
+        total += d.count;
+      }
+    }
+    return total;
+  }
+
+  /**
+   * Bounded retry for ES sync event handlers.
+   * On failure: attempts < MAX_RETRIES → copy message into elasticsearch.retry
+   * (5s TTL, then dead-letters back into elasticsearch.main) and ack the
+   * original. After exhausting retries → park the poison message in
+   * elasticsearch.dlq and ack, instead of looping forever.
+   */
+  private async runWithRetry(
+    context: RmqContext,
+    pattern: string,
+    data: unknown,
+    fn: () => Promise<void>,
+  ) {
+    let channel: Channel;
+    let msg: ReturnType<RmqContext['getMessage']>;
+    try {
+      channel = context.getChannelRef();
+      msg = context.getMessage();
+    } catch {
+      // Non-RMQ context (e.g., TCP): no ack semantics available
+      await fn();
+      return;
+    }
+
+    try {
+      await fn();
+      this.ackMsg(context);
+    } catch (error) {
+      const retriesDone = this.getRetryCount(msg);
+
+      if (retriesDone < MAX_RETRIES) {
+        this.logger.warn(
+          `${pattern} failed (retry ${retriesDone + 1}/${MAX_RETRIES}): ${error.message} — scheduling for retry`,
+        );
+        try {
+          // Rebuild the full NestJS envelope {pattern, data} so the redelivered
+          // message routes back to the same handler; preserve headers (x-death)
+          channel.sendToQueue(
+            RETRY_QUEUE,
+            Buffer.from(JSON.stringify({ pattern, data })),
+            {
+              persistent: true,
+              headers: { ...(msg.properties?.headers || {}) },
+            },
+          );
+          this.ackMsg(context);
+        } catch (publishErr) {
+          this.logger.error(
+            `${pattern}: failed to publish to ${RETRY_QUEUE} (${publishErr.message}) — requeueing original`,
+          );
+          channel.nack(msg as ConsumeMessage, false, true);
+        }
+      } else {
+        this.logger.error(
+          `${pattern}: dropping poison message after ${retriesDone} retries — parked in ${DLQ_QUEUE}. Error: ${error.message}`,
+        );
+        try {
+          channel.sendToQueue(
+            DLQ_QUEUE,
+            Buffer.from(
+              JSON.stringify({
+                pattern,
+                error: error.message,
+                retries: retriesDone,
+                failedAt: new Date().toISOString(),
+                data,
+              }),
+            ),
+            { persistent: true },
+          );
+        } catch (dlqErr) {
+          this.logger.error(
+            `${pattern}: failed to publish to ${DLQ_QUEUE}: ${dlqErr.message}`,
+          );
+        }
+        this.ackMsg(context);
+      }
     }
   }
 
@@ -42,17 +148,18 @@ export class ProductSearchController {
     @Ctx() context: RmqContext,
   ) {
     this.logger.log(`Product created: ${data.product?.name}`);
-    const items = (data.variants || []).map((v) => ({
-      variant: v,
-      product: data.product,
-      brand: data.brand,
-      category: data.category,
-      attributeMap: data.attributeMap,
-    }));
-    if (items.length > 0) {
-      await this.productSearchService.indexVariantsBulk(items);
-    }
-    this.ackMsg(context);
+    await this.runWithRetry(context, 'es.product.created', data, async () => {
+      const items = (data.variants || []).map((v) => ({
+        variant: v,
+        product: data.product,
+        brand: data.brand,
+        category: data.category,
+        attributeMap: data.attributeMap,
+      }));
+      if (items.length > 0) {
+        await this.productSearchService.indexVariantsBulk(items);
+      }
+    });
   }
 
   /**
@@ -70,8 +177,9 @@ export class ProductSearchController {
     @Ctx() context: RmqContext,
   ) {
     this.logger.log(`Product updated: ${data.product?.name}`);
-    await this.productSearchService.updateProductInfo(data);
-    this.ackMsg(context);
+    await this.runWithRetry(context, 'es.product.updated', data, async () => {
+      await this.productSearchService.updateProductInfo(data);
+    });
   }
 
   /**
@@ -83,8 +191,9 @@ export class ProductSearchController {
     @Ctx() context: RmqContext,
   ) {
     this.logger.log(`Product deleted: ${data.productId}`);
-    await this.productSearchService.removeByProductId(data.productId);
-    this.ackMsg(context);
+    await this.runWithRetry(context, 'es.product.deleted', data, async () => {
+      await this.productSearchService.removeByProductId(data.productId);
+    });
   }
 
   /**
@@ -103,8 +212,9 @@ export class ProductSearchController {
     @Ctx() context: RmqContext,
   ) {
     this.logger.log(`Variant upserted: ${data.variant?._id}`);
-    await this.productSearchService.indexVariant(data);
-    this.ackMsg(context);
+    await this.runWithRetry(context, 'es.variant.upserted', data, async () => {
+      await this.productSearchService.indexVariant(data);
+    });
   }
 
   /**
@@ -124,17 +234,23 @@ export class ProductSearchController {
     this.logger.log(
       `Variants bulk upserted: ${data.variants?.length} for product ${data.product?.name}`,
     );
-    const items = (data.variants || []).map((v) => ({
-      variant: v,
-      product: data.product,
-      brand: data.brand,
-      category: data.category,
-      attributeMap: (data as any).attributeMap,
-    }));
-    if (items.length > 0) {
-      await this.productSearchService.indexVariantsBulk(items);
-    }
-    this.ackMsg(context);
+    await this.runWithRetry(
+      context,
+      'es.variant.bulkUpserted',
+      data,
+      async () => {
+        const items = (data.variants || []).map((v) => ({
+          variant: v,
+          product: data.product,
+          brand: data.brand,
+          category: data.category,
+          attributeMap: (data as any).attributeMap,
+        }));
+        if (items.length > 0) {
+          await this.productSearchService.indexVariantsBulk(items);
+        }
+      },
+    );
   }
 
   /**
@@ -146,8 +262,9 @@ export class ProductSearchController {
     @Ctx() context: RmqContext,
   ) {
     this.logger.log(`Variant deleted: ${data.variantId}`);
-    await this.productSearchService.removeVariant(data.variantId);
-    this.ackMsg(context);
+    await this.runWithRetry(context, 'es.variant.deleted', data, async () => {
+      await this.productSearchService.removeVariant(data.variantId);
+    });
   }
 
   /**
@@ -159,8 +276,9 @@ export class ProductSearchController {
     @Ctx() context: RmqContext,
   ) {
     this.logger.log(`All variants deleted for product: ${data.productId}`);
-    await this.productSearchService.removeByProductId(data.productId);
-    this.ackMsg(context);
+    await this.runWithRetry(context, 'es.variant.allDeleted', data, async () => {
+      await this.productSearchService.removeByProductId(data.productId);
+    });
   }
 
   /**
@@ -180,18 +298,24 @@ export class ProductSearchController {
     @Ctx() context: RmqContext,
   ) {
     this.logger.log(`Variants delete+recreate for product: ${data.productId}`);
-    await this.productSearchService.removeByProductId(data.productId);
-    const items = (data.variants || []).map((v) => ({
-      variant: v,
-      product: data.product,
-      brand: data.brand,
-      category: data.category,
-      attributeMap: data.attributeMap,
-    }));
-    if (items.length > 0) {
-      await this.productSearchService.indexVariantsBulk(items);
-    }
-    this.ackMsg(context);
+    await this.runWithRetry(
+      context,
+      'es.variant.deleteAndRecreate',
+      data,
+      async () => {
+        await this.productSearchService.removeByProductId(data.productId);
+        const items = (data.variants || []).map((v) => ({
+          variant: v,
+          product: data.product,
+          brand: data.brand,
+          category: data.category,
+          attributeMap: data.attributeMap,
+        }));
+        if (items.length > 0) {
+          await this.productSearchService.indexVariantsBulk(items);
+        }
+      },
+    );
   }
 
   // ============= TCP MESSAGE PATTERNS (from gateway) =============

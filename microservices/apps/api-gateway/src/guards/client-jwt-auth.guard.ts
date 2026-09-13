@@ -13,6 +13,17 @@ export class ClientJwtAuthGuard extends AuthGuard('client-jwt') {
     super();
   }
 
+  /**
+   * Both ClientJwtAuthGuard and JwtAuthGuard are registered as APP_GUARD
+   * (NestJS merges every module's APP_GUARD into one global chain).
+   * This guard therefore only ACTS on client-area routes and defers
+   * admin-area routes to JwtAuthGuard, avoiding cross-blocking.
+   */
+  private isClientArea(request: any): boolean {
+    const url = String(request?.originalUrl ?? request?.url ?? '');
+    return !url.startsWith('/api/v1/admin') && !url.startsWith('/api/admin');
+  }
+
   canActivate(context: ExecutionContext) {
     // Check if route is marked as public
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -21,6 +32,11 @@ export class ClientJwtAuthGuard extends AuthGuard('client-jwt') {
     ]);
 
     if (isPublic) {
+      return true;
+    }
+
+    const request = context.switchToHttp().getRequest();
+    if (!this.isClientArea(request)) {
       return true;
     }
 

@@ -80,7 +80,7 @@ export const SaleChartStatistic = () => {
                         />
                         <Tooltip
                             formatter={(value: number, name: string) => {
-                                if (name === 'income') return [formatCurrency(value) + 'đ', 'Doanh thu'];
+                                if (name === 'income') return [formatCurrency(value), 'Doanh thu'];
                                 return [value, 'Số đơn'];
                             }}
                         />

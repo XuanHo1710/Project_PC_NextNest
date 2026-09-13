@@ -1,11 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PaymentController } from './payment.controller';
-import { VnpayService } from './payment.service';
+import { PayosService } from './payment.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Payment, PaymentSchema } from 'src/payment/entity/payment.entity';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import {
+  MICROSERVICE,
+  getServiceHost,
+  getServicePort,
+  getRabbitMqUrl,
+} from '@project-pc/common';
 
 @Module({
   imports: [
@@ -14,7 +19,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.NOTIFICATION_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'notification.main',
           queueOptions: {
             durable: true,
@@ -29,7 +34,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.PRODUCT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'product.main',
           queueOptions: {
             durable: true,
@@ -44,7 +49,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.ORDER_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'order.main',
           queueOptions: {
             durable: true,
@@ -59,8 +64,8 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
         name: MICROSERVICE.CART_SERVICE,
         transport: Transport.TCP,
         options: {
-          host: process.env.CART_SERVICE_HOST ?? 'cart-service',
-          port: MICROSERVICE_PORT.CART_SERVICE,
+          host: getServiceHost(MICROSERVICE.CART_SERVICE),
+          port: getServicePort(MICROSERVICE.CART_SERVICE),
         },
       },
     ]),
@@ -68,7 +73,7 @@ import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
     ConfigModule,
   ],
   controllers: [PaymentController],
-  providers: [VnpayService],
-  exports: [VnpayService],
+  providers: [PayosService],
+  exports: [PayosService],
 })
 export class PaymentModule {}

@@ -2,7 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { setupPaymentRabbitMQ } from 'src/rabbitmq.payment.setup';
-import { MICROSERVICE_PORT } from '@project-pc/common';
+import {
+  MICROSERVICE,
+  getServicePort,
+  getRabbitMqUrl,
+} from '@project-pc/common';
+
+const PAYMENT_HTTP_PORT = Number(process.env.PAYMENT_HTTP_PORT) || 3011;
+
 async function bootstrap() {
   await setupPaymentRabbitMQ();
   const app = await NestFactory.create(AppModule);
@@ -10,7 +17,7 @@ async function bootstrap() {
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
-      urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+      urls: [getRabbitMqUrl()],
       queue: 'payment.main',
       noAck: false,
       prefetchCount: 10,
@@ -28,10 +35,13 @@ async function bootstrap() {
     transport: Transport.TCP,
     options: {
       host: '0.0.0.0',
-      port: MICROSERVICE_PORT.PAYMENT_SERVICE,
+      port: getServicePort(MICROSERVICE.PAYMENT_SERVICE),
     },
   });
 
   await app.startAllMicroservices();
+
+  // HTTP server cho PayOS webhook callback (POST /payment/payos-webhook)
+  await app.listen(PAYMENT_HTTP_PORT);
 }
 bootstrap();

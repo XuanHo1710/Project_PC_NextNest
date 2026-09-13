@@ -1,5 +1,5 @@
-const { MongoClient } = require('mongodb');
-const URI = 'mongodb+srv://xuanhodcbas:0984232310ho.@cluster0.f7sbfkn.mongodb.net/project-pc-hoang-ha';
+﻿const { MongoClient } = require('mongodb');
+const URI = process.env.MONGODB_URI || '';
 
 async function main() {
     console.log('Connecting to MongoDB...');
@@ -22,8 +22,8 @@ async function main() {
         count++;
         const d = p.description || '';
         totalLen += d.length;
-        const hasNav = d.includes('DANH MỤC SẢN PHẨM') || d.includes('PC Gaming, Streaming') || d.includes('Giỏ hàng');
-        const hasPayment = d.includes('Phương thức thanh toán') || d.includes('ZaloPay') || d.includes('VNPAY');
+        const hasNav = d.includes('DANH Má»¤C Sáº¢N PHáº¨M') || d.includes('PC Gaming, Streaming') || d.includes('Giá» hÃ ng');
+        const hasPayment = d.includes('PhÆ°Æ¡ng thá»©c thanh toÃ¡n') || d.includes('ZaloPay') || d.includes('VNPAY');
         const hasNuxt = d.includes('__nuxt') || d.includes('data-server-rendered');
         const isHuge = d.length > 200000;
 

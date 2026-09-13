@@ -1,22 +1,22 @@
-/**
+﻿/**
  * PCMarket.vn Product Scraper (Node.js)
  * =======================================
- * Cào sản phẩm từ https://pcmarket.vn/ và tạo đầy đủ:
- *   - Brand (các thương hiệu PC nổi tiếng)
- *   - Product (sản phẩm chính)
- *   - ProductAttribute (thuộc tính: RAM, SSD, ...) — per createdBy
- *   - ProductAttributeValue (giá trị: 16GB, 32GB, ...) — per createdBy
- *   - ProductAttributeAllowValue (liên kết product ↔ attributeValue)
- *   - ProductVariant (biến thể sản phẩm từ tổ hợp thuộc tính)
+ * CÃ o sáº£n pháº©m tá»« https://pcmarket.vn/ vÃ  táº¡o Ä‘áº§y Ä‘á»§:
+ *   - Brand (cÃ¡c thÆ°Æ¡ng hiá»‡u PC ná»•i tiáº¿ng)
+ *   - Product (sáº£n pháº©m chÃ­nh)
+ *   - ProductAttribute (thuá»™c tÃ­nh: RAM, SSD, ...) â€” per createdBy
+ *   - ProductAttributeValue (giÃ¡ trá»‹: 16GB, 32GB, ...) â€” per createdBy
+ *   - ProductAttributeAllowValue (liÃªn káº¿t product â†” attributeValue)
+ *   - ProductVariant (biáº¿n thá»ƒ sáº£n pháº©m tá»« tá»• há»£p thuá»™c tÃ­nh)
  *
- * Mỗi ProductAttribute, ProductAttributeValue thuộc về 1 createdBy (guest),
- * KHÔNG public cho người khác dùng chung.
+ * Má»—i ProductAttribute, ProductAttributeValue thuá»™c vá» 1 createdBy (guest),
+ * KHÃ”NG public cho ngÆ°á»i khÃ¡c dÃ¹ng chung.
  *
  * Usage:
  *   npm install mongodb axios cheerio slugify
  *   node scrape_products.js
  *
- * Đọc .env hoặc hardcode MONGODB_URI. Guest account được query từ DB.
+ * Äá»c .env hoáº·c hardcode MONGODB_URI. Guest account Ä‘Æ°á»£c query tá»« DB.
  */
 
 const axios = require('axios');
@@ -26,17 +26,17 @@ const slugify = require('slugify');
 const fs = require('fs');
 const path = require('path');
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFIG
-// ═══════════════════════════════════════════════════════════════
-const MONGODB_URI = 'mongodb+srv://xuanhodcbas:0984232310ho.@cluster0.f7sbfkn.mongodb.net/project-pc-hoang-ha';
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const MONGODB_URI = process.env.MONGODB_URI || '';
 const DB_NAME = 'project-pc-hoang-ha';
 const BASE_URL = 'https://pcmarket.vn';
 const OUTPUT_DIR = __dirname;
 
-// Số sản phẩm tối đa cào mỗi category page
+// Sá»‘ sáº£n pháº©m tá»‘i Ä‘a cÃ o má»—i category page
 const MAX_PRODUCTS_PER_CATEGORY = 12;
-// Delay giữa các request (ms) — tránh spam server
+// Delay giá»¯a cÃ¡c request (ms) â€” trÃ¡nh spam server
 const REQUEST_DELAY = 800;
 
 const HEADERS = {
@@ -45,9 +45,9 @@ const HEADERS = {
     'Accept-Language': 'vi-VN,vi;q=0.9',
 };
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HELPERS
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const slugMap = new Map();
 
 function makeSlug(name) {
@@ -96,36 +96,36 @@ async function fetchPage(url) {
     return cheerio.load(resp.data);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// BRAND DATA — Các thương hiệu PC nổi tiếng
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// BRAND DATA â€” CÃ¡c thÆ°Æ¡ng hiá»‡u PC ná»•i tiáº¿ng
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const BRANDS_DATA = [
-    { name: 'Intel', description: 'Nhà sản xuất CPU hàng đầu thế giới', website: 'https://www.intel.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/200px-Intel_logo_%282006-2020%29.svg.png' },
+    { name: 'Intel', description: 'NhÃ  sáº£n xuáº¥t CPU hÃ ng Ä‘áº§u tháº¿ giá»›i', website: 'https://www.intel.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/200px-Intel_logo_%282006-2020%29.svg.png' },
     { name: 'AMD', description: 'Advanced Micro Devices - CPU & GPU', website: 'https://www.amd.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/AMD_Logo.svg/200px-AMD_Logo.svg.png' },
-    { name: 'NVIDIA', description: 'Nhà sản xuất GPU, AI computing', website: 'https://www.nvidia.com', logo: 'https://upload.wikimedia.org/wikipedia/sco/thumb/2/21/Nvidia_logo.svg/200px-Nvidia_logo.svg.png' },
+    { name: 'NVIDIA', description: 'NhÃ  sáº£n xuáº¥t GPU, AI computing', website: 'https://www.nvidia.com', logo: 'https://upload.wikimedia.org/wikipedia/sco/thumb/2/21/Nvidia_logo.svg/200px-Nvidia_logo.svg.png' },
     { name: 'ASUS', description: 'Mainboard, VGA, Laptop, Gaming Gear', website: 'https://www.asus.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/ASUS_Logo.svg/200px-ASUS_Logo.svg.png' },
     { name: 'MSI', description: 'Micro-Star International - Gaming & Professional', website: 'https://www.msi.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/MSI_Logo.svg/200px-MSI_Logo.svg.png' },
     { name: 'GIGABYTE', description: 'Mainboard, VGA, Laptop, PC Components', website: 'https://www.gigabyte.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Gigabyte_Technology_logo_20080107.svg/200px-Gigabyte_Technology_logo_20080107.svg.png' },
     { name: 'Corsair', description: 'RAM, PSU, Case, Gaming Peripherals', website: 'https://www.corsair.com', logo: '' },
     { name: 'NZXT', description: 'Case, Cooling, PC Components', website: 'https://nzxt.com', logo: '' },
-    { name: 'Cooler Master', description: 'Case, PSU, Tản nhiệt, Gaming Gear', website: 'https://www.coolermaster.com', logo: '' },
+    { name: 'Cooler Master', description: 'Case, PSU, Táº£n nhiá»‡t, Gaming Gear', website: 'https://www.coolermaster.com', logo: '' },
     { name: 'Kingston', description: 'RAM, SSD, USB Flash Drive', website: 'https://www.kingston.com', logo: '' },
-    { name: 'Samsung', description: 'SSD, RAM, Màn hình, Storage', website: 'https://www.samsung.com', logo: '' },
+    { name: 'Samsung', description: 'SSD, RAM, MÃ n hÃ¬nh, Storage', website: 'https://www.samsung.com', logo: '' },
     { name: 'Western Digital', description: 'SSD, HDD, Storage Solutions', website: 'https://www.westerndigital.com', logo: '' },
-    { name: 'Logitech', description: 'Chuột, Bàn phím, Tai nghe, Webcam', website: 'https://www.logitech.com', logo: '' },
+    { name: 'Logitech', description: 'Chuá»™t, BÃ n phÃ­m, Tai nghe, Webcam', website: 'https://www.logitech.com', logo: '' },
     { name: 'Razer', description: 'Gaming Peripherals, Laptop Gaming', website: 'https://www.razer.com', logo: '' },
     { name: 'SteelSeries', description: 'Gaming Headset, Mouse, Keyboard', website: 'https://steelseries.com', logo: '' },
     { name: 'PCM', description: 'PC Market - Build PC Gaming & Workstation', website: 'https://pcmarket.vn', logo: '' },
-    { name: 'ZOTAC', description: 'Card màn hình NVIDIA GeForce', website: 'https://www.zotac.com', logo: '' },
+    { name: 'ZOTAC', description: 'Card mÃ n hÃ¬nh NVIDIA GeForce', website: 'https://www.zotac.com', logo: '' },
     { name: 'ASRock', description: 'Mainboard, VGA', website: 'https://www.asrock.com', logo: '' },
     { name: 'Thermaltake', description: 'Case, PSU, Cooling, Gaming Gear', website: 'https://www.thermaltake.com', logo: '' },
-    { name: 'Dell', description: 'Laptop, Màn hình, PC, Server', website: 'https://www.dell.com', logo: '' },
+    { name: 'Dell', description: 'Laptop, MÃ n hÃ¬nh, PC, Server', website: 'https://www.dell.com', logo: '' },
 ];
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CATEGORY PAGES TO SCRAPE
-// ═══════════════════════════════════════════════════════════════
-// Map category URL → tên category (để match với categories trong DB)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Map category URL â†’ tÃªn category (Ä‘á»ƒ match vá»›i categories trong DB)
 const CATEGORY_PAGES = [
     { url: '/may-tinh-choi-game-pcm.html', categorySlug: 'may-tinh-choi-game-pcm' },
     { url: '/pc-core-ultra', categorySlug: 'pc-core-ultra' },
@@ -134,19 +134,19 @@ const CATEGORY_PAGES = [
     { url: '/pc-amd-gaming.html', categorySlug: 'pc-amd-gaming' },
 ];
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // SCRAPE PRODUCT LIST PAGE
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 /**
- * Scrape danh sách sản phẩm từ 1 category page
+ * Scrape danh sÃ¡ch sáº£n pháº©m tá»« 1 category page
  * HTML structure: .product_list .p-item
- *   - a.p-img href → detail URL
- *   - a.p-img img data-src → thumbnail image
- *   - .p-discount → "-5%"
- *   - a.p-name → product name
- *   - .p-price → sale price (VNĐ)
- *   - Giá gốc → element thứ 2 trong .p-price-group
+ *   - a.p-img href â†’ detail URL
+ *   - a.p-img img data-src â†’ thumbnail image
+ *   - .p-discount â†’ "-5%"
+ *   - a.p-name â†’ product name
+ *   - .p-price â†’ sale price (VNÄ)
+ *   - GiÃ¡ gá»‘c â†’ element thá»© 2 trong .p-price-group
  */
 async function scrapeListPage(url) {
     console.log(`\n[*] Scraping list: ${BASE_URL}${url}`);
@@ -163,7 +163,7 @@ async function scrapeListPage(url) {
         const discountText = el.find('.p-discount').text().trim(); // e.g., "-5%"
         const priceText = el.find('.p-price').first().text().trim();
 
-        // Parse giá gốc từ element thứ 2
+        // Parse giÃ¡ gá»‘c tá»« element thá»© 2
         const priceGroupEls = el.find('.p-price-group span');
         let marketPriceText = '';
         if (priceGroupEls.length > 1) {
@@ -186,25 +186,25 @@ async function scrapeListPage(url) {
         });
     });
 
-    console.log(`[+] Tìm thấy ${products.length} sản phẩm`);
+    console.log(`[+] TÃ¬m tháº¥y ${products.length} sáº£n pháº©m`);
     return products;
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // SCRAPE PRODUCT DETAIL PAGE
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 /**
- * Scrape chi tiết 1 sản phẩm
+ * Scrape chi tiáº¿t 1 sáº£n pháº©m
  * HTML structure:
- *   - h1 → product name
- *   - .pd-price.js-variant-price → sale price
- *   - .pd-market-price → original price
- *   - .bk-product-price → numeric price (hidden)
- *   - .tb-hura8-variant-selection tr → variant options
- *   - Second <table> → component specs
- *   - .pro-desc-container → description HTML
- *   - img[src*="media/product"] → product images
+ *   - h1 â†’ product name
+ *   - .pd-price.js-variant-price â†’ sale price
+ *   - .pd-market-price â†’ original price
+ *   - .bk-product-price â†’ numeric price (hidden)
+ *   - .tb-hura8-variant-selection tr â†’ variant options
+ *   - Second <table> â†’ component specs
+ *   - .pro-desc-container â†’ description HTML
+ *   - img[src*="media/product"] â†’ product images
  */
 async function scrapeProductDetail(url) {
     console.log(`  [*] Detail: ${url}`);
@@ -225,11 +225,11 @@ async function scrapeProductDetail(url) {
             const src = $(this).attr('src');
             if (src && !images.includes(src)) {
                 const fullUrl = src.startsWith('http') ? src : `${BASE_URL}${src}`;
-                // Bỏ thumbnail nhỏ (250_), lấy ảnh gốc
+                // Bá» thumbnail nhá» (250_), láº¥y áº£nh gá»‘c
                 images.push(fullUrl);
             }
         });
-        // Deduplicate bằng cách lấy ảnh gốc (bỏ prefix 250_)
+        // Deduplicate báº±ng cÃ¡ch láº¥y áº£nh gá»‘c (bá» prefix 250_)
         const uniqueImages = [];
         const seenBase = new Set();
         for (const img of images) {
@@ -240,7 +240,7 @@ async function scrapeProductDetail(url) {
             }
         }
 
-        // Variant options từ bảng variant
+        // Variant options tá»« báº£ng variant
         const variantOptions = [];
         $('.tb-hura8-variant-selection tr').each(function () {
             const label = $(this).find('.variant-option-label, td').first().text().trim();
@@ -249,28 +249,28 @@ async function scrapeProductDetail(url) {
             const values = [];
             $(this).find('label, .variant-option-item, td:not(.variant-option-label)').each(function () {
                 const $el = $(this);
-                // Tìm text trong label/span
+                // TÃ¬m text trong label/span
                 let val = $el.find('span').text().trim() || $el.text().trim();
-                // Loại bỏ label trùng
+                // Loáº¡i bá» label trÃ¹ng
                 if (val && val !== label && !val.includes(label)) {
-                    // Tách nhiều values nếu nối nhau
-                    // Ví dụ: "Ram 16GB DDR4Ram 32GB DDR4" → split
+                    // TÃ¡ch nhiá»u values náº¿u ná»‘i nhau
+                    // VÃ­ dá»¥: "Ram 16GB DDR4Ram 32GB DDR4" â†’ split
                     const splits = val.match(/[A-Z][^A-Z]*/g) || [val];
                     if (splits.length > 1 && splits[0].length > 3) {
-                        // Thử split theo pattern
+                        // Thá»­ split theo pattern
                     }
                     values.push(val.trim());
                 }
             });
 
             if (label && values.length > 0) {
-                // Parse lại values — chúng có thể bị nối nhau
+                // Parse láº¡i values â€” chÃºng cÃ³ thá»ƒ bá»‹ ná»‘i nhau
                 const parsedValues = parseVariantValues(values);
                 variantOptions.push({ label, values: parsedValues });
             }
         });
 
-        // Specs table (bảng thứ 2, không phải variant table)
+        // Specs table (báº£ng thá»© 2, khÃ´ng pháº£i variant table)
         const specs = [];
         $('table').each(function (i) {
             const cls = $(this).attr('class') || '';
@@ -316,19 +316,19 @@ async function scrapeProductDetail(url) {
 }
 
 /**
- * Parse variant values bị nối nhau
- * Ví dụ: "Ram 16GB DDR4Ram 32GB DDR4" → ["Ram 16GB DDR4", "Ram 32GB DDR4"]
+ * Parse variant values bá»‹ ná»‘i nhau
+ * VÃ­ dá»¥: "Ram 16GB DDR4Ram 32GB DDR4" â†’ ["Ram 16GB DDR4", "Ram 32GB DDR4"]
  */
 function parseVariantValues(rawValues) {
     const result = [];
     for (const raw of rawValues) {
-        // Thử split tại vị trí uppercase letter sau lowercase/digit
+        // Thá»­ split táº¡i vá»‹ trÃ­ uppercase letter sau lowercase/digit
         // Pattern: "Ram 16GB DDR4Ram 32GB DDR4"
         const parts = raw.split(/(?<=[a-z0-9])(?=[A-Z][a-z])/);
         if (parts.length > 1) {
             result.push(...parts.map(p => p.trim()).filter(Boolean));
         } else {
-            // Thử split tại dấu SSD
+            // Thá»­ split táº¡i dáº¥u SSD
             const ssdParts = raw.split(/(?=SSD\s)/);
             if (ssdParts.length > 1) {
                 result.push(...ssdParts.map(p => p.trim()).filter(Boolean));
@@ -340,9 +340,9 @@ function parseVariantValues(rawValues) {
     return [...new Set(result)]; // deduplicate
 }
 
-// ═══════════════════════════════════════════════════════════════
-// DATA BUILDERS — Tạo documents MongoDB
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// DATA BUILDERS â€” Táº¡o documents MongoDB
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function buildBrand(brandData) {
     const now = new Date();
@@ -417,7 +417,7 @@ function buildProduct(data) {
         minPrice: data.minPrice || 0,
         maxPrice: data.maxPrice || 0,
         status: 'ACTIVE',
-        defaultProductVariantId: null, // sẽ set sau khi tạo variant
+        defaultProductVariantId: null, // sáº½ set sau khi táº¡o variant
         totalRatings: 0,
         avgRating: 0,
         totalStock: data.totalStock || 0,
@@ -438,7 +438,7 @@ function buildProductVariant(data) {
         price: data.price,
         stock: data.stock || Math.floor(Math.random() * 50) + 5,
         discount: data.discount || 0,
-        combination: data.combination, // Map<string, string> — { "ram": attrValueId, "ssd": attrValueId }
+        combination: data.combination, // Map<string, string> â€” { "ram": attrValueId, "ssd": attrValueId }
         images: data.images || [],
         isDeleted: false,
         createdAt: now,
@@ -446,20 +446,20 @@ function buildProductVariant(data) {
     };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// BRAND MATCHING — Detect brand từ tên sản phẩm
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// BRAND MATCHING â€” Detect brand tá»« tÃªn sáº£n pháº©m
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 /**
- * Xác định brand dựa vào tên sản phẩm hoặc specs
- * Mặc định PC từ pcmarket.vn = "PCM" brand
+ * XÃ¡c Ä‘á»‹nh brand dá»±a vÃ o tÃªn sáº£n pháº©m hoáº·c specs
+ * Máº·c Ä‘á»‹nh PC tá»« pcmarket.vn = "PCM" brand
  */
 function detectBrand(productName, specs, brandMap) {
     const nameLower = productName.toLowerCase();
     const specText = specs.map(s => s.component || '').join(' ').toLowerCase();
     const combined = `${nameLower} ${specText}`;
 
-    // Priority: nếu tên chứa brand name
+    // Priority: náº¿u tÃªn chá»©a brand name
     const brandPriority = ['ASUS', 'MSI', 'GIGABYTE', 'Corsair', 'NZXT', 'Dell', 'Logitech', 'Razer', 'ZOTAC', 'ASRock'];
     for (const brandName of brandPriority) {
         if (combined.includes(brandName.toLowerCase())) {
@@ -467,7 +467,7 @@ function detectBrand(productName, specs, brandMap) {
         }
     }
 
-    // PC builds → PCM brand
+    // PC builds â†’ PCM brand
     if (nameLower.includes('pc ') || nameLower.includes('pc-') || nameLower.startsWith('pc')) {
         return brandMap.get('PCM');
     }
@@ -475,54 +475,54 @@ function detectBrand(productName, specs, brandMap) {
     return brandMap.get('PCM'); // default
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MAIN PIPELINE
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 async function main() {
-    console.log('═'.repeat(60));
+    console.log('â•'.repeat(60));
     console.log('  PCMarket.vn Product Scraper');
     console.log('  Brands + Products + Attributes + Variants');
-    console.log('═'.repeat(60));
+    console.log('â•'.repeat(60));
 
-    // ── Connect MongoDB ──
-    console.log('\n[*] Kết nối MongoDB Atlas...');
+    // â”€â”€ Connect MongoDB â”€â”€
+    console.log('\n[*] Káº¿t ná»‘i MongoDB Atlas...');
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
     const db = client.db(DB_NAME);
     console.log('[+] Connected!');
 
     try {
-        // ── 1. Lấy guest account cho createdBy ──
-        console.log('\n[1] Tìm guest account cho createdBy...');
+        // â”€â”€ 1. Láº¥y guest account cho createdBy â”€â”€
+        console.log('\n[1] TÃ¬m guest account cho createdBy...');
         const guest = await db.collection('accountguests').findOne({
             accountStatus: 'ACTIVE',
             isEmailVerified: true,
         }, { sort: { createdAt: 1 } });
 
         if (!guest) {
-            throw new Error('Không tìm thấy guest account ACTIVE nào!');
+            throw new Error('KhÃ´ng tÃ¬m tháº¥y guest account ACTIVE nÃ o!');
         }
         const createdBy = guest._id.toHexString();
-        console.log(`[+] Dùng guest: ${guest.fullname} (${guest.email}) — _id: ${createdBy}`);
+        console.log(`[+] DÃ¹ng guest: ${guest.fullname} (${guest.email}) â€” _id: ${createdBy}`);
 
-        // ── 2. Tạo Brands ──
-        console.log('\n[2] Tạo Brands...');
+        // â”€â”€ 2. Táº¡o Brands â”€â”€
+        console.log('\n[2] Táº¡o Brands...');
         const brands = BRANDS_DATA.map(b => buildBrand(b));
-        const brandMap = new Map(); // name → brand doc
+        const brandMap = new Map(); // name â†’ brand doc
         for (const b of brands) { brandMap.set(b.name, b); }
 
-        // Xóa brands cũ và insert mới (tùy chọn)
+        // XÃ³a brands cÅ© vÃ  insert má»›i (tÃ¹y chá»n)
         await db.collection('brands').deleteMany({});
         if (brands.length > 0) {
             await db.collection('brands').insertMany(brands);
         }
-        console.log(`[+] Đã tạo ${brands.length} brands`);
+        console.log(`[+] ÄÃ£ táº¡o ${brands.length} brands`);
 
-        // ── 3. Lấy categories từ DB ──
-        console.log('\n[3] Lấy categories từ DB...');
+        // â”€â”€ 3. Láº¥y categories tá»« DB â”€â”€
+        console.log('\n[3] Láº¥y categories tá»« DB...');
         const allCategories = await db.collection('categories').find({ isDeleted: { $ne: true } }).toArray();
-        console.log(`[+] Có ${allCategories.length} categories trong DB`);
+        console.log(`[+] CÃ³ ${allCategories.length} categories trong DB`);
 
         // Build category map by slug
         const categoryBySlug = new Map();
@@ -530,30 +530,30 @@ async function main() {
             categoryBySlug.set(cat.slug, cat);
         }
 
-        // ── 4. Tạo ProductAttributes cho guest này ──
-        console.log('\n[4] Tạo ProductAttributes...');
+        // â”€â”€ 4. Táº¡o ProductAttributes cho guest nÃ y â”€â”€
+        console.log('\n[4] Táº¡o ProductAttributes...');
         const attrDefs = [
             { name: 'RAM', displayType: 'BUTTON' },
-            { name: 'Ổ cứng SSD', displayType: 'BUTTON' },
+            { name: 'á»” cá»©ng SSD', displayType: 'BUTTON' },
             { name: 'CPU', displayType: 'BUTTON' },
             { name: 'VGA', displayType: 'BUTTON' },
         ];
 
-        // Xóa attributes cũ của guest này
+        // XÃ³a attributes cÅ© cá»§a guest nÃ y
         await db.collection('productattributes').deleteMany({ createdBy: new ObjectId(createdBy) });
         await db.collection('productattributevalues').deleteMany({ createdBy: new ObjectId(createdBy) });
 
         const attributes = attrDefs.map(a => buildProductAttribute(a.name, a.displayType, createdBy));
-        const attrMap = new Map(); // name → attribute doc
+        const attrMap = new Map(); // name â†’ attribute doc
         for (const a of attributes) { attrMap.set(a.name, a); }
 
         if (attributes.length > 0) {
             await db.collection('productattributes').insertMany(attributes);
         }
-        console.log(`[+] Đã tạo ${attributes.length} attributes: ${attrDefs.map(a => a.name).join(', ')}`);
+        console.log(`[+] ÄÃ£ táº¡o ${attributes.length} attributes: ${attrDefs.map(a => a.name).join(', ')}`);
 
-        // ── 5. Scrape products từ pcmarket.vn ──
-        console.log('\n[5] Scraping products từ pcmarket.vn...');
+        // â”€â”€ 5. Scrape products tá»« pcmarket.vn â”€â”€
+        console.log('\n[5] Scraping products tá»« pcmarket.vn...');
 
         const allProducts = [];    // Product docs
         const allVariants = [];    // ProductVariant docs
@@ -561,9 +561,9 @@ async function main() {
         const allAllowValues = []; // ProductAttributeAllowValue docs
 
         // Cache attribute values by name to avoid duplicates
-        const attrValueCache = new Map(); // "attrName::valueName" → attrValue doc
+        const attrValueCache = new Map(); // "attrName::valueName" â†’ attrValue doc
 
-        // Deduplicate products by detail URL (cùng 1 sản phẩm xuất hiện ở nhiều category)
+        // Deduplicate products by detail URL (cÃ¹ng 1 sáº£n pháº©m xuáº¥t hiá»‡n á»Ÿ nhiá»u category)
         const scrapedUrls = new Set();
 
         for (const catPage of CATEGORY_PAGES) {
@@ -572,9 +572,9 @@ async function main() {
             const cat = categoryBySlug.get(catPage.categorySlug);
             if (cat) {
                 categoryId = cat._id.toHexString();
-                console.log(`\n── Category: ${cat.name} (${catPage.categorySlug}) ──`);
+                console.log(`\nâ”€â”€ Category: ${cat.name} (${catPage.categorySlug}) â”€â”€`);
             } else {
-                console.log(`\n── Category: ${catPage.categorySlug} (không tìm thấy trong DB, bỏ qua categoryId) ──`);
+                console.log(`\nâ”€â”€ Category: ${catPage.categorySlug} (khÃ´ng tÃ¬m tháº¥y trong DB, bá» qua categoryId) â”€â”€`);
             }
 
             // Scrape list page
@@ -582,9 +582,9 @@ async function main() {
             await delay(REQUEST_DELAY);
 
             for (const item of listItems) {
-                // Skip duplicate products (cùng URL xuất hiện ở nhiều category pages)
+                // Skip duplicate products (cÃ¹ng URL xuáº¥t hiá»‡n á»Ÿ nhiá»u category pages)
                 if (scrapedUrls.has(item.detailUrl)) {
-                    console.log(`  [~] Bỏ qua (duplicate): ${item.name}`);
+                    console.log(`  [~] Bá» qua (duplicate): ${item.name}`);
                     continue;
                 }
                 scrapedUrls.add(item.detailUrl);
@@ -598,19 +598,19 @@ async function main() {
                 const brand = detectBrand(item.name, detail.specs || [], brandMap);
                 const brandId = brand ? brand._id.toHexString() : null;
 
-                // Parse variant options → create attribute values
+                // Parse variant options â†’ create attribute values
                 const variantDimensions = []; // [{ attrDoc, values: [attrValueDoc, ...] }]
 
                 for (const opt of detail.variantOptions) {
                     // Match attribute by name
                     let attrDoc = attrMap.get(opt.label);
                     if (!attrDoc) {
-                        // Tạo attribute mới nếu chưa có
+                        // Táº¡o attribute má»›i náº¿u chÆ°a cÃ³
                         attrDoc = buildProductAttribute(opt.label, 'BUTTON', createdBy);
                         attrMap.set(opt.label, attrDoc);
                         attributes.push(attrDoc);
                         await db.collection('productattributes').insertOne(attrDoc);
-                        console.log(`    [+] Tạo mới attribute: ${opt.label}`);
+                        console.log(`    [+] Táº¡o má»›i attribute: ${opt.label}`);
                     }
 
                     const dimension = { attrDoc, values: [] };
@@ -633,7 +633,7 @@ async function main() {
                     variantDimensions.push(dimension);
                 }
 
-                // Tính min/max price
+                // TÃ­nh min/max price
                 const basePrice = detail.salePrice || item.salePrice;
                 const originalPrice = detail.marketPrice || item.marketPrice || basePrice;
                 const discount = item.discountPercent || 0;
@@ -650,7 +650,7 @@ async function main() {
                     createdBy,
                 });
 
-                // Build AllowValues (link product → attribute values)
+                // Build AllowValues (link product â†’ attribute values)
                 for (const dim of variantDimensions) {
                     for (const attrVal of dim.values) {
                         allAllowValues.push(
@@ -659,7 +659,7 @@ async function main() {
                     }
                 }
 
-                // Build Variants (tổ hợp từ các dimensions)
+                // Build Variants (tá»• há»£p tá»« cÃ¡c dimensions)
                 const variants = generateVariants(product, variantDimensions, {
                     basePrice: originalPrice,
                     discount,
@@ -668,7 +668,7 @@ async function main() {
                 });
 
                 if (variants.length === 0) {
-                    // Không có variant options → tạo 1 default variant
+                    // KhÃ´ng cÃ³ variant options â†’ táº¡o 1 default variant
                     const defaultVariant = buildProductVariant({
                         sku: `${product.slug.substring(0, 30).toUpperCase().replace(/-/g, '_')}-DEF-001`,
                         subDescription: detail.specs.map(s => s.component).join(', ').substring(0, 200),
@@ -689,20 +689,20 @@ async function main() {
                 allProducts.push(product);
                 allVariants.push(...variants);
 
-                console.log(`  [✓] ${product.name} → ${variants.length} variants, brand: ${brand?.name || 'N/A'}`);
+                console.log(`  [âœ“] ${product.name} â†’ ${variants.length} variants, brand: ${brand?.name || 'N/A'}`);
             }
         }
 
-        // ── 6. Insert tất cả vào MongoDB ──
-        console.log('\n[6] Inserting vào MongoDB...');
+        // â”€â”€ 6. Insert táº¥t cáº£ vÃ o MongoDB â”€â”€
+        console.log('\n[6] Inserting vÃ o MongoDB...');
 
-        // Xóa products cũ của guest này
+        // XÃ³a products cÅ© cá»§a guest nÃ y
         const oldProductIds = (await db.collection('products').find({ createdBy: new ObjectId(createdBy) }).project({ _id: 1 }).toArray()).map(p => p._id);
         if (oldProductIds.length > 0) {
             await db.collection('productvariants').deleteMany({ product: { $in: oldProductIds } });
             await db.collection('productattributeallowvalues').deleteMany({ product: { $in: oldProductIds } });
             await db.collection('products').deleteMany({ createdBy: new ObjectId(createdBy) });
-            console.log(`[!] Đã xóa ${oldProductIds.length} products cũ của guest`);
+            console.log(`[!] ÄÃ£ xÃ³a ${oldProductIds.length} products cÅ© cá»§a guest`);
         }
 
         // Insert attribute values
@@ -729,7 +729,7 @@ async function main() {
             console.log(`[+] Inserted ${allAllowValues.length} allow values`);
         }
 
-        // ── 7. Export JSON ──
+        // â”€â”€ 7. Export JSON â”€â”€
         console.log('\n[7] Exporting JSON files...');
 
         const exportData = {
@@ -748,9 +748,9 @@ async function main() {
         );
         console.log(`[+] Exported: products_output.json`);
 
-        // ── 8. Summary ──
-        console.log(`\n${'═'.repeat(60)}`);
-        console.log(`  📊 Summary:`);
+        // â”€â”€ 8. Summary â”€â”€
+        console.log(`\n${'â•'.repeat(60)}`);
+        console.log(`  ðŸ“Š Summary:`);
         console.log(`  - Brands: ${brands.length}`);
         console.log(`  - Products: ${allProducts.length}`);
         console.log(`  - Variants: ${allVariants.length}`);
@@ -758,7 +758,7 @@ async function main() {
         console.log(`  - Attribute Values: ${allAttrValues.length}`);
         console.log(`  - Allow Values: ${allAllowValues.length}`);
         console.log(`  - createdBy: ${guest.fullname} (${createdBy})`);
-        console.log(`${'═'.repeat(60)}`);
+        console.log(`${'â•'.repeat(60)}`);
 
     } finally {
         await client.close();
@@ -766,23 +766,23 @@ async function main() {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// VARIANT GENERATOR — Tổ hợp từ các dimensions
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// VARIANT GENERATOR â€” Tá»• há»£p tá»« cÃ¡c dimensions
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 /**
- * Sinh tổ hợp variants từ các variant dimensions
- * Ví dụ: RAM [16GB, 32GB] x SSD [256GB, 500GB] = 4 variants
+ * Sinh tá»• há»£p variants tá»« cÃ¡c variant dimensions
+ * VÃ­ dá»¥: RAM [16GB, 32GB] x SSD [256GB, 500GB] = 4 variants
  *
- * Mỗi variant có combination = { "ram": attrValueId, "ssd": attrValueId }
- * Price tăng dần theo index (variant đắt hơn nếu option cao hơn)
+ * Má»—i variant cÃ³ combination = { "ram": attrValueId, "ssd": attrValueId }
+ * Price tÄƒng dáº§n theo index (variant Ä‘áº¯t hÆ¡n náº¿u option cao hÆ¡n)
  */
 function generateVariants(product, dimensions, opts) {
     if (dimensions.length === 0) return [];
 
     const { basePrice, discount, images, specs } = opts;
 
-    // Tạo tổ hợp (cartesian product)
+    // Táº¡o tá»• há»£p (cartesian product)
     const combinations = cartesianProduct(dimensions.map(d => d.values));
 
     // Product slug prefix for SKU uniqueness
@@ -801,7 +801,7 @@ function generateVariants(product, dimensions, opts) {
             skuParts.push(attrValue.value.replace(/\s+/g, '-').substring(0, 15));
         }
 
-        // Price variation: tăng ~5% cho mỗi tier cao hơn
+        // Price variation: tÄƒng ~5% cho má»—i tier cao hÆ¡n
         const priceMultiplier = 1 + (i * 0.05);
         const variantPrice = Math.round(basePrice * priceMultiplier);
 
@@ -824,7 +824,7 @@ function generateVariants(product, dimensions, opts) {
 
 /**
  * Cartesian product
- * [[a1,a2], [b1,b2]] → [[a1,b1], [a1,b2], [a2,b1], [a2,b2]]
+ * [[a1,a2], [b1,b2]] â†’ [[a1,b1], [a1,b2], [a2,b1], [a2,b2]]
  */
 function cartesianProduct(arrays) {
     if (arrays.length === 0) return [[]];
@@ -834,9 +834,9 @@ function cartesianProduct(arrays) {
     );
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // RUN
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 main().catch(err => {
     console.error('[FATAL ERROR]', err);
     process.exit(1);

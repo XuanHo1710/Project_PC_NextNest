@@ -1,6 +1,7 @@
 import axiosInstance from "@/config/axios";
 import type { IOrder } from "@/types/order";
 import type { PaginatedResponse } from "@/types";
+import { asEnvelope } from "./base.service";
 
 class OrderService {
   private baseUrl = "order";
@@ -35,32 +36,34 @@ class OrderService {
     id: string,
     status: string,
   ): Promise<{ data: IOrder; status: number }> {
-    const response = await axiosInstance.patch(`${this.baseUrl}/${id}/status`, {
-      status,
-    });
-    return { data: response.data, status: response.status };
+    const response = asEnvelope<IOrder>(
+      await axiosInstance.patch(`${this.baseUrl}/${id}/status`, {
+        status,
+      }),
+    );
+    return { data: response.data as IOrder, status: response.statusCode };
   }
 
   async updatePayment(
     id: string,
     payment: { isCheckout: boolean; type: string },
   ): Promise<{ data: IOrder; status: number }> {
-    const response = await axiosInstance.patch(
-      `${this.baseUrl}/${id}/payment`,
-      { payment },
+    const response = asEnvelope<IOrder>(
+      await axiosInstance.patch(`${this.baseUrl}/${id}/payment`, { payment }),
     );
-    return { data: response.data, status: response.status };
+    return { data: response.data as IOrder, status: response.statusCode };
   }
 
   async confirmCodPayment(
     id: string,
     amount: number,
   ): Promise<{ data: any; status: number }> {
-    const response = await axiosInstance.patch(
-      `${this.baseUrl}/${id}/confirm-cod`,
-      { amount },
+    const response = asEnvelope<any>(
+      await axiosInstance.patch(`${this.baseUrl}/${id}/confirm-cod`, {
+        amount,
+      }),
     );
-    return { data: response.data, status: response.status };
+    return { data: response.data, status: response.statusCode };
   }
 
   async getStats(): Promise<{
@@ -84,11 +87,13 @@ class OrderService {
     action: "approve" | "reject",
     refund?: boolean,
   ): Promise<{ data: IOrder; status: number }> {
-    const response = await axiosInstance.patch(
-      `${this.baseUrl}/${id}/handle-rejection`,
-      { action, refund },
+    const response = asEnvelope<IOrder>(
+      await axiosInstance.patch(`${this.baseUrl}/${id}/handle-rejection`, {
+        action,
+        refund,
+      }),
     );
-    return { data: response.data, status: response.status };
+    return { data: response.data as IOrder, status: response.statusCode };
   }
 }
 

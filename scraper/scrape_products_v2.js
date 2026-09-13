@@ -1,5 +1,5 @@
-/**
- * PC Product Scraper v2 — pcmarket.vn + gearvn.com
+﻿/**
+ * PC Product Scraper v2 â€” pcmarket.vn + gearvn.com
  * ==================================================
  * - pcmarket.vn: Scrape products WITH native variant selectors (RAM/SSD)
  * - gearvn.com: Scrape via Shopify JSON API, group related products as variants
@@ -19,10 +19,10 @@ const slugify = require('slugify');
 const fs = require('fs');
 const path = require('path');
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CONFIG
-// ═══════════════════════════════════════════════════════════════
-const MONGODB_URI = 'mongodb+srv://xuanhodcbas:0984232310ho.@cluster0.f7sbfkn.mongodb.net/project-pc-hoang-ha';
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+const MONGODB_URI = process.env.MONGODB_URI || '';
 const DB_NAME = 'project-pc-hoang-ha';
 const OUTPUT_DIR = __dirname;
 
@@ -35,9 +35,9 @@ const HEADERS = {
     'Accept-Language': 'vi-VN,vi;q=0.9',
 };
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // HELPERS
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const slugMap = new Map();
 
 function makeSlug(name) {
@@ -109,10 +109,10 @@ function cleanDescription(html) {
 
     // 5. Remove Shopify/site-chrome patterns
     const sitePatterns = [
-        /DANH MỤC SẢN PHẨM/i,
-        /Giỏ hàng/i,
-        /ĐĂNG KÝ NHẬN TIN/i,
-        /Phương thức thanh toán/i,
+        /DANH Má»¤C Sáº¢N PHáº¨M/i,
+        /Giá» hÃ ng/i,
+        /ÄÄ‚NG KÃ NHáº¬N TIN/i,
+        /PhÆ°Æ¡ng thá»©c thanh toÃ¡n/i,
         /window\.__NUXT__/,
         /gtm\.start/,
         /googletagmanager\.com/,
@@ -154,38 +154,38 @@ function cleanDescription(html) {
     return cleaned;
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // BRAND DATA
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const BRANDS_DATA = [
-    { name: 'Intel', description: 'Nhà sản xuất CPU hàng đầu thế giới', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/200px-Intel_logo_%282006-2020%29.svg.png' },
+    { name: 'Intel', description: 'NhÃ  sáº£n xuáº¥t CPU hÃ ng Ä‘áº§u tháº¿ giá»›i', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/200px-Intel_logo_%282006-2020%29.svg.png' },
     { name: 'AMD', description: 'Advanced Micro Devices - CPU & GPU', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/AMD_Logo.svg/200px-AMD_Logo.svg.png' },
-    { name: 'NVIDIA', description: 'Nhà sản xuất GPU, AI computing', logo: 'https://upload.wikimedia.org/wikipedia/sco/thumb/2/21/Nvidia_logo.svg/200px-Nvidia_logo.svg.png' },
+    { name: 'NVIDIA', description: 'NhÃ  sáº£n xuáº¥t GPU, AI computing', logo: 'https://upload.wikimedia.org/wikipedia/sco/thumb/2/21/Nvidia_logo.svg/200px-Nvidia_logo.svg.png' },
     { name: 'ASUS', description: 'Mainboard, VGA, Laptop, Gaming Gear', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/ASUS_Logo.svg/200px-ASUS_Logo.svg.png' },
     { name: 'MSI', description: 'Micro-Star International - Gaming', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/MSI_Logo.svg/200px-MSI_Logo.svg.png' },
     { name: 'GIGABYTE', description: 'Mainboard, VGA, Laptop, PC Components', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Gigabyte_Technology_logo_20080107.svg/200px-Gigabyte_Technology_logo_20080107.svg.png' },
     { name: 'Corsair', description: 'RAM, PSU, Case, Gaming Peripherals', logo: '' },
     { name: 'NZXT', description: 'Case, Cooling, PC Components', logo: '' },
-    { name: 'Cooler Master', description: 'Case, PSU, Tản nhiệt, Gaming Gear', logo: '' },
+    { name: 'Cooler Master', description: 'Case, PSU, Táº£n nhiá»‡t, Gaming Gear', logo: '' },
     { name: 'Kingston', description: 'RAM, SSD, USB Flash Drive', logo: '' },
-    { name: 'Samsung', description: 'SSD, RAM, Màn hình, Storage', logo: '' },
+    { name: 'Samsung', description: 'SSD, RAM, MÃ n hÃ¬nh, Storage', logo: '' },
     { name: 'Western Digital', description: 'SSD, HDD, Storage Solutions', logo: '' },
-    { name: 'Logitech', description: 'Chuột, Bàn phím, Tai nghe, Webcam', logo: '' },
+    { name: 'Logitech', description: 'Chuá»™t, BÃ n phÃ­m, Tai nghe, Webcam', logo: '' },
     { name: 'Razer', description: 'Gaming Peripherals, Laptop Gaming', logo: '' },
     { name: 'SteelSeries', description: 'Gaming Headset, Mouse, Keyboard', logo: '' },
     { name: 'PCM', description: 'PC Market - Build PC Gaming & Workstation', logo: '' },
-    { name: 'ZOTAC', description: 'Card màn hình NVIDIA GeForce', logo: '' },
+    { name: 'ZOTAC', description: 'Card mÃ n hÃ¬nh NVIDIA GeForce', logo: '' },
     { name: 'ASRock', description: 'Mainboard, VGA', logo: '' },
     { name: 'Thermaltake', description: 'Case, PSU, Cooling, Gaming Gear', logo: '' },
-    { name: 'Dell', description: 'Laptop, Màn hình, PC, Server', logo: '' },
+    { name: 'Dell', description: 'Laptop, MÃ n hÃ¬nh, PC, Server', logo: '' },
     { name: 'GVN', description: 'GearVN - PC Gaming & Workstation', logo: '' },
     { name: 'Colorful', description: 'VGA, Mainboard, SSD', logo: '' },
-    { name: 'Lian Li', description: 'Case, Cooling cao cấp', logo: '' },
+    { name: 'Lian Li', description: 'Case, Cooling cao cáº¥p', logo: '' },
 ];
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CATEGORY PAGES TO SCRAPE (pcmarket.vn)
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const PCM_CATEGORY_PAGES = [
     { url: '/may-tinh-choi-game-pcm.html', categorySlug: 'may-tinh-choi-game-pcm' },
     { url: '/pc-core-ultra', categorySlug: 'pc-core-ultra' },
@@ -207,9 +207,9 @@ const GEARVN_COLLECTIONS = [
     { handle: 'tai-nghe-gaming-ban-chay', categorySlug: 'tai-nghe-choi-game', brandDefault: null },
 ];
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // DOCUMENT BUILDERS
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function buildBrand(data) {
     const now = new Date();
@@ -304,7 +304,7 @@ function buildProductVariant(data) {
         price: data.price,
         stock: data.stock || Math.floor(Math.random() * 50) + 5,
         discount: data.discount || 0,
-        // ★ CRITICAL: combination stores LABEL text, NOT ObjectId
+        // â˜… CRITICAL: combination stores LABEL text, NOT ObjectId
         // e.g. { "ram": "16GB DDR4", "o-cung-ssd": "SSD 500GB" }
         combination: data.combination,
         images: data.images || [],
@@ -314,9 +314,9 @@ function buildProductVariant(data) {
     };
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PCMARKET.VN SCRAPER (has variant selectors)
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 async function scrapeListPage(url) {
     console.log(`\n[PCM] Scraping list: https://pcmarket.vn${url}`);
@@ -345,7 +345,7 @@ async function scrapeListPage(url) {
         });
     });
 
-    console.log(`[PCM] Tìm thấy ${products.length} sản phẩm`);
+    console.log(`[PCM] TÃ¬m tháº¥y ${products.length} sáº£n pháº©m`);
     return products;
 }
 
@@ -439,9 +439,9 @@ function parseVariantValues(rawValues) {
     return [...new Set(result)];
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // GEARVN.COM SCRAPER (Shopify JSON API)
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 async function scrapeGearVNCollection(handle, limit = 15) {
     console.log(`\n[GVN] Scraping collection: ${handle}`);
@@ -473,16 +473,16 @@ async function scrapeGearVNCollection(handle, limit = 15) {
             });
         }
 
-        console.log(`[GVN] Tìm thấy ${products.length} sản phẩm`);
+        console.log(`[GVN] TÃ¬m tháº¥y ${products.length} sáº£n pháº©m`);
     } catch (err) {
         console.log(`[GVN] Error: ${err.message}`);
     }
     return products;
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // BRAND DETECTION
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 function detectBrand(productName, brandMap, defaultBrand = null) {
     const nameLower = productName.toLowerCase();
@@ -499,13 +499,13 @@ function detectBrand(productName, brandMap, defaultBrand = null) {
     return brandMap.get('GVN');
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // VARIANT GENERATOR
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 /**
  * Generate variants from dimensions.
- * ★ CRITICAL FIX: combination[attrCode] = attrValue.label (NOT attrValue._id)
+ * â˜… CRITICAL FIX: combination[attrCode] = attrValue.label (NOT attrValue._id)
  */
 function generateVariants(product, dimensions, opts) {
     if (dimensions.length === 0) return [];
@@ -522,7 +522,7 @@ function generateVariants(product, dimensions, opts) {
         for (let j = 0; j < dimensions.length; j++) {
             const attrDoc = dimensions[j].attrDoc;
             const attrValue = combo[j];
-            // ★ FIX: Use label text instead of ObjectId
+            // â˜… FIX: Use label text instead of ObjectId
             combination[attrDoc.code] = attrValue.label;
             skuParts.push(attrValue.value.replace(/\s+/g, '-').substring(0, 15));
         }
@@ -548,7 +548,7 @@ function generateVariants(product, dimensions, opts) {
 
 /**
  * Generate variants from GearVN Shopify variants.
- * Shopify variants have option1/option2/option3 as text labels → perfect for combination.
+ * Shopify variants have option1/option2/option3 as text labels â†’ perfect for combination.
  */
 function generateShopifyVariants(product, shopifyProduct, attrMap, attrValueCache, allAttrValues, allAllowValues, createdBy) {
     const shopifyVariants = shopifyProduct.shopifyVariants || [];
@@ -600,7 +600,7 @@ function generateShopifyVariants(product, shopifyProduct, attrMap, attrValueCach
             // AllowValue
             allAllowValues.push(buildProductAttributeAllowValue(product._id.toHexString(), attrValueDoc._id.toHexString()));
 
-            // ★ Use label text in combination
+            // â˜… Use label text in combination
             combination[attrDoc.code] = attrValueDoc.label;
             skuParts.push(val.replace(/\s+/g, '-').substring(0, 15));
         }
@@ -633,12 +633,12 @@ function generateShopifyVariants(product, shopifyProduct, attrMap, attrValueCach
 function guessOptionName(values) {
     const joined = values.join(' ').toLowerCase();
     if (joined.match(/\b(gb|ram|ddr)\b/i)) return 'RAM';
-    if (joined.match(/\b(ssd|nvme|hdd|tb)\b/i)) return 'Ổ cứng SSD';
+    if (joined.match(/\b(ssd|nvme|hdd|tb)\b/i)) return 'á»” cá»©ng SSD';
     if (joined.match(/\b(rtx|gtx|rx|vga|gpu|radeon|geforce)\b/i)) return 'VGA';
     if (joined.match(/\b(i[3579]|ryzen|core|cpu|ultra)\b/i)) return 'CPU';
-    if (joined.match(/\b(den|trang|xanh|do|hong|black|white|red|blue|pink|green|silver|gray)\b/i)) return 'Màu sắc';
-    if (joined.match(/\b(27|24|32|34|inch|"|hz|144|240|360)\b/i)) return 'Kích thước';
-    return 'Phiên bản';
+    if (joined.match(/\b(den|trang|xanh|do|hong|black|white|red|blue|pink|green|silver|gray)\b/i)) return 'MÃ u sáº¯c';
+    if (joined.match(/\b(27|24|32|34|inch|"|hz|144|240|360)\b/i)) return 'KÃ­ch thÆ°á»›c';
+    return 'PhiÃªn báº£n';
 }
 
 function cartesianProduct(arrays) {
@@ -649,15 +649,15 @@ function cartesianProduct(arrays) {
     );
 }
 
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // MAIN PIPELINE
-// ═══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 async function main() {
-    console.log('═'.repeat(60));
-    console.log('  Product Scraper v2 — pcmarket.vn + gearvn.com');
-    console.log('  ★ FIX: combination uses LABEL text, not ObjectId');
-    console.log('═'.repeat(60));
+    console.log('â•'.repeat(60));
+    console.log('  Product Scraper v2 â€” pcmarket.vn + gearvn.com');
+    console.log('  â˜… FIX: combination uses LABEL text, not ObjectId');
+    console.log('â•'.repeat(60));
 
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
@@ -665,16 +665,16 @@ async function main() {
     console.log('[+] Connected to MongoDB Atlas');
 
     try {
-        // ── 1. Get guest account ──
-        console.log('\n[1] Tìm guest account...');
+        // â”€â”€ 1. Get guest account â”€â”€
+        console.log('\n[1] TÃ¬m guest account...');
         const guest = await db.collection('accountguests').findOne({
             accountStatus: 'ACTIVE', isEmailVerified: true
         }, { sort: { createdAt: 1 } });
-        if (!guest) throw new Error('Không tìm thấy guest account ACTIVE!');
+        if (!guest) throw new Error('KhÃ´ng tÃ¬m tháº¥y guest account ACTIVE!');
         const createdBy = guest._id.toHexString();
         console.log(`[+] Guest: ${guest.fullname} (${createdBy})`);
 
-        // ── 2. CLEAR ALL DATA ──
+        // â”€â”€ 2. CLEAR ALL DATA â”€â”€
         console.log('\n[2] Clearing all existing data...');
         await db.collection('brands').deleteMany({});
         await db.collection('products').deleteMany({});
@@ -685,7 +685,7 @@ async function main() {
         await db.collection('productviews').deleteMany({});
         console.log('[+] All collections cleared');
 
-        // ── 3. Create Brands ──
+        // â”€â”€ 3. Create Brands â”€â”€
         console.log('\n[3] Creating Brands...');
         const brands = BRANDS_DATA.map(b => buildBrand(b));
         const brandMap = new Map();
@@ -693,18 +693,18 @@ async function main() {
         await db.collection('brands').insertMany(brands);
         console.log(`[+] Created ${brands.length} brands`);
 
-        // ── 4. Get categories ──
+        // â”€â”€ 4. Get categories â”€â”€
         console.log('\n[4] Getting categories...');
         const allCategories = await db.collection('categories').find({ isDeleted: { $ne: true } }).toArray();
         console.log(`[+] ${allCategories.length} categories in DB`);
         const categoryBySlug = new Map();
         for (const cat of allCategories) { categoryBySlug.set(cat.slug, cat); }
 
-        // ── 5. Create attributes ──
+        // â”€â”€ 5. Create attributes â”€â”€
         console.log('\n[5] Creating ProductAttributes...');
         const attrDefs = [
             { name: 'RAM', displayType: 'BUTTON' },
-            { name: 'Ổ cứng SSD', displayType: 'BUTTON' },
+            { name: 'á»” cá»©ng SSD', displayType: 'BUTTON' },
             { name: 'CPU', displayType: 'BUTTON' },
             { name: 'VGA', displayType: 'BUTTON' },
         ];
@@ -714,7 +714,7 @@ async function main() {
         await db.collection('productattributes').insertMany(attributes);
         console.log(`[+] Created ${attributes.length} attributes`);
 
-        // ── 6. Scrape products ──
+        // â”€â”€ 6. Scrape products â”€â”€
         const allProducts = [];
         const allVariants = [];
         const allAttrValues = [];
@@ -722,16 +722,16 @@ async function main() {
         const attrValueCache = new Map();
         const scrapedUrls = new Set();
 
-        // ── 6a. pcmarket.vn ──
+        // â”€â”€ 6a. pcmarket.vn â”€â”€
         console.log('\n[6a] Scraping pcmarket.vn...');
         for (const catPage of PCM_CATEGORY_PAGES) {
             let categoryId = null;
             const cat = categoryBySlug.get(catPage.categorySlug);
             if (cat) {
                 categoryId = cat._id.toHexString();
-                console.log(`\n── Category: ${cat.name} ──`);
+                console.log(`\nâ”€â”€ Category: ${cat.name} â”€â”€`);
             } else {
-                console.log(`\n── Category: ${catPage.categorySlug} (not in DB) ──`);
+                console.log(`\nâ”€â”€ Category: ${catPage.categorySlug} (not in DB) â”€â”€`);
             }
 
             let listItems = [];
@@ -753,7 +753,7 @@ async function main() {
                 const brand = detectBrand(item.name, brandMap, 'PCM');
                 const brandId = brand ? brand._id.toHexString() : null;
 
-                // Parse variant options → attribute values + dimensions
+                // Parse variant options â†’ attribute values + dimensions
                 const variantDimensions = [];
                 for (const opt of detail.variantOptions) {
                     let attrDoc = attrMap.get(opt.label);
@@ -830,18 +830,18 @@ async function main() {
 
                 allProducts.push(product);
                 allVariants.push(...variants);
-                console.log(`  [✓] ${product.name} → ${variants.length} variants`);
+                console.log(`  [âœ“] ${product.name} â†’ ${variants.length} variants`);
             }
         }
 
-        // ── 6b. gearvn.com ──
+        // â”€â”€ 6b. gearvn.com â”€â”€
         console.log('\n[6b] Scraping gearvn.com (Shopify JSON API)...');
 
         for (const col of GEARVN_COLLECTIONS) {
             let categoryId = null;
             const cat = categoryBySlug.get(col.categorySlug);
             if (cat) categoryId = cat._id.toHexString();
-            console.log(`\n── GVN Collection: ${col.handle} → ${col.categorySlug} ──`);
+            console.log(`\nâ”€â”€ GVN Collection: ${col.handle} â†’ ${col.categorySlug} â”€â”€`);
 
             let gvnProducts = [];
             try {
@@ -865,7 +865,7 @@ async function main() {
                 const minPrice = prices.length > 0 ? Math.min(...prices) : gvnP.salePrice;
                 const maxPrice = marketPrices.length > 0 ? Math.max(...marketPrices) : gvnP.marketPrice;
 
-                // Clean description HTML — remove Shopify-specific stuff
+                // Clean description HTML â€” remove Shopify-specific stuff
                 let cleanDesc = cleanDescription(gvnP.description || '');
 
                 const product = buildProduct({
@@ -917,18 +917,18 @@ async function main() {
 
                 allProducts.push(product);
                 allVariants.push(...variants);
-                console.log(`  [✓] ${product.name} → ${variants.length} variants, brand: ${brand?.name || 'N/A'}`);
+                console.log(`  [âœ“] ${product.name} â†’ ${variants.length} variants, brand: ${brand?.name || 'N/A'}`);
             }
         }
 
-        // ── 7. Insert new attributes (if any were created dynamically) ──
+        // â”€â”€ 7. Insert new attributes (if any were created dynamically) â”€â”€
         const existingAttrIds = new Set(attrDefs.map(a => a.name));
         const newAttrs = attributes.filter(a => !existingAttrIds.has(a.name));
         if (newAttrs.length > 0) {
             await db.collection('productattributes').insertMany(newAttrs, { ordered: false }).catch(() => { });
         }
 
-        // ── 8. Bulk insert ──
+        // â”€â”€ 8. Bulk insert â”€â”€
         console.log('\n[7] Inserting into MongoDB...');
 
         if (allAttrValues.length > 0) {
@@ -948,9 +948,9 @@ async function main() {
             console.log(`[+] ${allAllowValues.length} allow values`);
         }
 
-        // ── 9. Summary ──
-        console.log(`\n${'═'.repeat(60)}`);
-        console.log(`  📊 Summary:`);
+        // â”€â”€ 9. Summary â”€â”€
+        console.log(`\n${'â•'.repeat(60)}`);
+        console.log(`  ðŸ“Š Summary:`);
         console.log(`  - Brands: ${brands.length}`);
         console.log(`  - Products: ${allProducts.length}`);
         console.log(`  - Variants: ${allVariants.length}`);
@@ -958,15 +958,15 @@ async function main() {
         console.log(`  - Attribute Values: ${allAttrValues.length}`);
         console.log(`  - Allow Values: ${allAllowValues.length}`);
         console.log(`  - createdBy: ${guest.fullname} (${createdBy})`);
-        console.log(`${'═'.repeat(60)}`);
+        console.log(`${'â•'.repeat(60)}`);
 
-        // ── 10. Verify combination format ──
+        // â”€â”€ 10. Verify combination format â”€â”€
         console.log('\n[VERIFY] Sample variant combinations:');
         const sampleVariants = allVariants.filter(v => Object.keys(v.combination).length > 0).slice(0, 5);
         for (const sv of sampleVariants) {
             console.log(`  SKU: ${sv.sku}`);
             console.log(`  combination: ${JSON.stringify(sv.combination)}`);
-            console.log(`  price: ${sv.price.toLocaleString()}đ`);
+            console.log(`  price: ${sv.price.toLocaleString()}Ä‘`);
             console.log('  ---');
         }
 

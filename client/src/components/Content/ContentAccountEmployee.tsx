@@ -6,7 +6,6 @@ import UpdateModalAccountEmployee from "@/components/ContentModal/account-employ
 import DetailModalAccountEmployee from "@/components/ContentModal/account-employee/DetailModalAccountEmployee";
 import EditSortAccountEmployee from "@/components/EditSort/account-employee/EditSortAccountEmployee";
 import TableContent from "@/components/TableContent/TableContent";
-import useAuthEmployee from "@/hooks/AuthEmployeeContext";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
 import { IAccountEmployee } from "@/types";
 import { DataType, SelectedContextType } from "@/types/table.d";
@@ -15,6 +14,7 @@ import { ColumnsType, ColumnType } from "antd/es/table";
 import { createContext, useContext, useState, useEffect } from "react";
 import { FaPen, FaTrashAlt, FaEye } from "react-icons/fa";
 import { useAccountEmployees, useDeleteAccountEmployee } from "@/hooks/admin";
+import { useHasPermission } from "@/hooks/admin/useHasPermission";
 
 const SelectedAccountEmployeeContext = createContext<SelectedContextType | undefined>(undefined);
 
@@ -57,8 +57,9 @@ export default function ContentAccountEmployee() {
     const pagination = (result as any)?.pagination || { currentPage: 1, totalItems: 0, itemsPerPage: 10 };
 
     const deleteAccountEmployee = useDeleteAccountEmployee();
-    const { accountLogin } = useAuthEmployee();
+    const hasPermission = useHasPermission();
 
+    // Hard delete: employee account is removed via service.delete().
     const handleDelete = async (id: string) => {
         try {
             await deleteAccountEmployee.mutateAsync(id);
@@ -103,9 +104,7 @@ export default function ContentAccountEmployee() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
-                    ) &&
+                    {hasPermission("GET", "/api/v1/admin/account-employee") &&
                         <FaEye
                             onClick={() => {
                                 setOpenDetail(true);
@@ -116,9 +115,7 @@ export default function ContentAccountEmployee() {
                         />
                     }
 
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/:id"
-                    ) &&
+                    {hasPermission("PATCH", "/api/v1/admin/account-employee/:id") &&
                         <FaPen
                             onClick={() => {
                                 setOpen(true);
@@ -127,9 +124,7 @@ export default function ContentAccountEmployee() {
                             className='hover:text-blue-500 cursor-pointer'
                         />
                     }
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/account-employee/:id"
-                    ) &&
+                    {hasPermission("DELETE", "/api/v1/admin/account-employee/:id") &&
                         <Popconfirm
                             title="Xóa tài khoản nhân viên"
                             description="Bạn có chắc chắn muốn xóa tài khoản này?"
@@ -146,9 +141,7 @@ export default function ContentAccountEmployee() {
     ];
 
     let dataTable: DataType<IAccountEmployee>[] = [];
-    if (!loading && accountEmployees.length > 0 && accountLogin && accountLogin.role && accountLogin.role.permission.some(
-        (p) => p.method === "GET" && p.path === "/api/v1/admin/account-employee"
-    )) {
+    if (!loading && accountEmployees.length > 0 && hasPermission("GET", "/api/v1/admin/account-employee")) {
         dataTable = accountEmployees.map((item: IAccountEmployee, index: number) => {
             return {
                 key: index.toString(),
@@ -172,9 +165,7 @@ export default function ContentAccountEmployee() {
         <>
             <DetailModalAccountEmployee isOpen={isOpenDetail} setOpen={setOpenDetail} data={dataDetail} />
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "PATCH" && p.path === "/api/v1/admin/account-employee/:id"
-                ) &&
+                {hasPermission("PATCH", "/api/v1/admin/account-employee/:id") &&
                     <UpdateModalAccountEmployee setOpen={setOpen} dataAccountEmployee={dataClick} />
                 }
             </Modal>

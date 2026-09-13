@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Clean broken product descriptions in MongoDB.
  * - Strips entire scraped site chrome (navigation, headers, footers, payment methods)
  * - Removes <script>, <style>, <iframe>, <noscript>, <link>, <meta> tags
@@ -7,25 +7,25 @@
  * - Caps description at 50KB max
  */
 const { MongoClient } = require('mongodb');
-const URI = 'mongodb+srv://xuanhodcbas:0984232310ho.@cluster0.f7sbfkn.mongodb.net/project-pc-hoang-ha';
+const URI = process.env.MONGODB_URI || '';
 
 // Patterns that indicate scraped site chrome (not actual product description)
 const SITE_CHROME_PATTERNS = [
-    'DANH MỤC SẢN PHẨM',
-    'Giỏ hàng',
-    'Đăng nhập',
-    'Đăng ký',
+    'DANH Má»¤C Sáº¢N PHáº¨M',
+    'Giá» hÃ ng',
+    'ÄÄƒng nháº­p',
+    'ÄÄƒng kÃ½',
     'PC Gaming, Streaming',
-    'MÁY TÍNH CHƠI GAME PCM',
-    'PC ĐẸP',
-    'PC GAMING GIÁ RẺ',
-    'Theo Khoảng Giá',
-    'Dưới 10 Triệu',
-    '10 Triệu - 15 Triệu',
-    'ĐĂNG KÝ NHẬN TIN KHUYẾN MÃI',
-    'Nhập số điện thoại của bạn',
-    'Nhận ngay Voucher',
-    'Phương thức thanh toán',
+    'MÃY TÃNH CHÆ I GAME PCM',
+    'PC Äáº¸P',
+    'PC GAMING GIÃ Ráºº',
+    'Theo Khoáº£ng GiÃ¡',
+    'DÆ°á»›i 10 Triá»‡u',
+    '10 Triá»‡u - 15 Triá»‡u',
+    'ÄÄ‚NG KÃ NHáº¬N TIN KHUYáº¾N MÃƒI',
+    'Nháº­p sá»‘ Ä‘iá»‡n thoáº¡i cá»§a báº¡n',
+    'Nháº­n ngay Voucher',
+    'PhÆ°Æ¡ng thá»©c thanh toÃ¡n',
     'data-server-rendered="true"',
     'id="__nuxt"',
     'id="__layout"',
@@ -76,7 +76,7 @@ function cleanDescription(html) {
 
     // 7. Remove common CellphoneS/PCMarket site chrome sections
     // Remove divs containing payment methods
-    cleaned = cleaned.replace(/<div[^>]*>[\s\S]*?Phương thức thanh toán[\s\S]*?<\/div>/gi, '');
+    cleaned = cleaned.replace(/<div[^>]*>[\s\S]*?PhÆ°Æ¡ng thá»©c thanh toÃ¡n[\s\S]*?<\/div>/gi, '');
 
     // 8. Remove inline event handlers and data attributes for security
     cleaned = cleaned.replace(/\s(on\w+|data-gtm|data-analytics|data-tracking)="[^"]*"/gi, '');

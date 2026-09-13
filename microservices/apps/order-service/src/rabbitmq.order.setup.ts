@@ -1,7 +1,8 @@
 import * as amqp from 'amqplib';
+import { getRabbitMqUrl } from '@project-pc/common';
 
 export async function setupOrderRabbitMQ() {
-  const connection = await amqp.connect(process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672');
+  const connection = await amqp.connect(getRabbitMqUrl());
 
   const channel = await connection.createChannel();
 

@@ -25,7 +25,14 @@ export class SagaController {
    * On failure at any step, compensating transactions run in reverse order.
    */
   @MessagePattern('saga.order.create')
-  createOrder(@Payload() data: { createOrderDto: CreateOrderDto; ip: string }) {
-    return this.sagaService.createOrderSaga(data.createOrderDto, data.ip);
+  createOrder(
+    @Payload()
+    data: { createOrderDto: CreateOrderDto; ip: string; orderId?: string },
+  ) {
+    return this.sagaService.createOrderSaga(
+      data.createOrderDto,
+      data.ip,
+      data.orderId,
+    );
   }
 }

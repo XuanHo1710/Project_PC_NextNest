@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import {
+  MICROSERVICE,
+  getServiceHost,
+  getServicePort,
+  getRabbitMqUrl,
+} from '@project-pc/common';
 import { OrderController } from 'client/order/order.controller';
 
 @Module({
@@ -10,7 +15,7 @@ import { OrderController } from 'client/order/order.controller';
         name: MICROSERVICE.ORDER_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'order.main',
           queueOptions: {
             durable: true,
@@ -25,15 +30,15 @@ import { OrderController } from 'client/order/order.controller';
         name: MICROSERVICE.SAGA_ORCHESTRATOR_SERVICE,
         transport: Transport.TCP,
         options: {
-          host: process.env.SAGA_SERVICE_HOST ?? 'saga-orchestration-service',
-          port: MICROSERVICE_PORT.SAGA_ORCHESTRATOR_SERVICE,
+          host: getServiceHost(MICROSERVICE.SAGA_ORCHESTRATOR_SERVICE),
+          port: getServicePort(MICROSERVICE.SAGA_ORCHESTRATOR_SERVICE),
         },
       },
       {
         name: MICROSERVICE.PRODUCT_SERVICE,
         transport: Transport.RMQ,
         options: {
-          urls: [process.env.RABBITMQ_URL ?? 'amqp://admin:admin@rabbitmq:5672'],
+          urls: [getRabbitMqUrl()],
           queue: 'product.main',
           queueOptions: {
             durable: true,

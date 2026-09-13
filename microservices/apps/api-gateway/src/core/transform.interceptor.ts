@@ -30,9 +30,13 @@ export class TransformInterceptor<T>
             .pipe(
                 map((data) => ({
                     statusCode: context.switchToHttp().getResponse().statusCode,
-                    message: this.reflector.get('response_message', context.getHandler())
-                        || '',
+                    message:
+                        this.reflector.get(
+                            'response_message',
+                            context.getHandler(),
+                        ) || '',
                     data: data,
+                    error: null,
                     timestamp: new Date().toISOString(),
                 })),
             );

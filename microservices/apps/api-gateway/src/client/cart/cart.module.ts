@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CartController } from './cart.controller';
-import { MICROSERVICE, MICROSERVICE_PORT } from '@project-pc/common';
+import { MICROSERVICE, getServiceHost, getServicePort } from '@project-pc/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
@@ -10,8 +10,8 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         name: MICROSERVICE.CART_SERVICE,
         transport: Transport.TCP,
         options: {
-          host: process.env.CART_SERVICE_HOST ?? 'cart-service',
-          port: MICROSERVICE_PORT.CART_SERVICE,
+          host: getServiceHost(MICROSERVICE.CART_SERVICE),
+          port: getServicePort(MICROSERVICE.CART_SERVICE),
         },
       },
     ]),

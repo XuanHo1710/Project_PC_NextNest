@@ -1,5 +1,5 @@
 'use client'
-import { Modal, Popconfirm, Spin } from "antd";
+import { Modal, Spin } from "antd";
 import { FaPen, FaTrashAlt } from "react-icons/fa";
 import { createContext, useContext, useState, useEffect } from "react";
 import { useQueryParams } from "@/hooks/QueryParamsContext";
@@ -10,10 +10,11 @@ import { ColumnsType } from "antd/es/table";
 import FilterCategory from "@/components/ActionFilter/category/FilterCategory";
 import ContentModalCategory from "@/components/ContentModal/category/ContentModalCategory";
 import UpdateModalCategory from "@/components/ContentModal/category/UpdateModalCategory";
-import useAuthEmployee from "@/hooks/AuthEmployeeContext";
+import ConfirmDeletePopconfirm from "@/components/common/ConfirmDeletePopconfirm";
 import { DataType, SelectedContextType } from "@/types/table.d";
 import { ICategory } from "@/types/category";
 import { useCategories, useDeleteCategory } from "@/hooks/admin/useCategory";
+import { useHasPermission } from "@/hooks/admin/useHasPermission";
 
 // Extended type for category with parent name
 type CategoryWithParent = ICategory & { parentName?: string };
@@ -36,7 +37,7 @@ export default function ContentCategory() {
     const [selectedRows, setSelectedRows] = useState<Array<string>>([]);
     const [isReady, setIsReady] = useState(false);
 
-    const { accountLogin } = useAuthEmployee();
+    const hasPermission = useHasPermission();
 
     // Reset pagination to page=1 when component mounts and wait for it to complete
     useEffect(() => {
@@ -55,6 +56,7 @@ export default function ContentCategory() {
 
     const deleteCategory = useDeleteCategory();
 
+    // Hard delete: category is removed via service.delete().
     const handleDelete = async (id: string) => {
         try {
             await deleteCategory.mutateAsync(id);
@@ -87,9 +89,7 @@ export default function ContentCategory() {
             key: 'action',
             render: (_, record) => (
                 <div key={record._id} className='flex items-center gap-5'>
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "PATCH" && p.path === "/api/v1/admin/category/:id"
-                    ) &&
+                    {hasPermission("PATCH", "/api/v1/admin/category/:id") &&
                         <FaPen
                             onClick={() => {
                                 setOpen(true);
@@ -99,18 +99,13 @@ export default function ContentCategory() {
                         />
                     }
 
-                    {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                        (p) => p.method === "DELETE" && p.path === "/api/v1/admin/category/:id"
-                    ) &&
-                        <Popconfirm
-                            title="Xóa dòng của bạn"
-                            description="Bạn có chắc chắn muốn xóa dòng này ?"
+                    {hasPermission("DELETE", "/api/v1/admin/category/:id") &&
+                        <ConfirmDeletePopconfirm
                             onConfirm={() => handleDelete(record._id as string)}
-                            okText="Xóa"
-                            cancelText="Không"
+                            loading={deleteCategory.isPending}
                         >
                             <FaTrashAlt className='hover:text-red-500 cursor-pointer' />
-                        </Popconfirm>
+                        </ConfirmDeletePopconfirm>
                     }
                 </div>
             ),
@@ -136,9 +131,7 @@ export default function ContentCategory() {
     return (
         <>
             <Modal width={1000} onCancel={() => setOpen(false)} onOk={() => setOpen(false)} open={isOpen} footer={null}>
-                {accountLogin && accountLogin.role && accountLogin.role.permission.some(
-                    (p) => p.method === "PATCH" && p.path === "/api/v1/admin/category/:id"
-                ) &&
+                {hasPermission("PATCH", "/api/v1/admin/category/:id") &&
                     <UpdateModalCategory setOpen={setOpen} dataCategory={dataClick} />
                 }
             </Modal>

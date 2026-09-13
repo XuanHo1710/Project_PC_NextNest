@@ -13,6 +13,26 @@ import { ClientProxy } from '@nestjs/microservices';
 import { MICROSERVICE } from '@project-pc/common';
 import { firstValueFrom } from 'rxjs';
 
+const jwt = require('jsonwebtoken');
+
+function extractTokenFromHandshake(client: Socket): string | null {
+  const authHeader = client.handshake.headers?.cookie;
+  if (authHeader) {
+    const match = authHeader
+      .split(';')
+      .map((c) => c.trim())
+      .find((c) => c.startsWith('client_access_token='));
+    if (match) {
+      return decodeURIComponent(match.split('=')[1]);
+    }
+  }
+
+  const authToken =
+    (client.handshake.auth?.token as string) ||
+    (client.handshake.query?.token as string);
+  return authToken || null;
+}
+
 // userId -> Set<socketId> (multiple devices/tabs)
 const userSockets = new Map<string, Set<string>>();
 const chatClientOrigin =
@@ -30,20 +50,39 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private readonly logger = new Logger('ChatGateway');
+  private readonly jwtSecret: string;
 
   constructor(
     @Inject(MICROSERVICE.CHAT_SERVICE)
     private readonly chatClient: ClientProxy,
-  ) {}
+  ) {
+    if (!process.env.JWT_ACCESS_TOKEN_SECRET) {
+      throw new Error(
+        'JWT_ACCESS_TOKEN_SECRET is not defined in environment variables',
+      );
+    }
+    this.jwtSecret = process.env.JWT_ACCESS_TOKEN_SECRET;
+  }
 
   // ============ CONNECTION ============
 
   async handleConnection(client: Socket) {
     try {
-      const userId = client.handshake.query.userId as string;
+      const token = extractTokenFromHandshake(client);
+
+      let decoded: any;
+      try {
+        decoded = jwt.verify(token, this.jwtSecret);
+      } catch {
+        this.logger.warn(`Client ${client.id} rejected: invalid or missing token`);
+        client.disconnect();
+        return;
+      }
+
+      const userId = decoded?._id ? String(decoded._id) : null;
 
       if (!userId) {
-        this.logger.warn(`Client ${client.id} connected without userId`);
+        this.logger.warn(`Client ${client.id} connected without valid identity`);
         client.disconnect();
         return;
       }
@@ -59,7 +98,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Join personal room
       client.join(`user:${userId}`);
 
-      // Join all conversation rooms
+      // Join all conversation rooms (server verifies membership per room)
       try {
         const conversations = await firstValueFrom(
           this.chatClient.send('chat.getConversationsByUser', { userId }),
@@ -81,6 +120,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     } catch (error) {
       this.logger.error('Connection error:', error);
+      client.disconnect();
     }
   }
 
@@ -107,15 +147,35 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  // ============ JOIN ROOM ============
+  // ============ JOIN ROOM (membership enforced) ============
 
   @SubscribeMessage('room:join')
-  handleJoinRoom(
+  async handleJoinRoom(
     @MessageBody() data: { conversationId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    client.join(`room:${data.conversationId}`);
-    return { success: true };
+    const userId = client.data.userId as string;
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      // chat-service enforces membership via requesterId and throws otherwise
+      await firstValueFrom(
+        this.chatClient.send('chat.getConversationById', {
+          conversationId: data.conversationId,
+          requesterId: userId,
+        }),
+      );
+
+      client.join(`room:${data.conversationId}`);
+      return { success: true };
+    } catch {
+      this.logger.warn(
+        `User ${userId} denied join to room ${data.conversationId}`,
+      );
+      return { success: false, error: 'Bạn không phải thành viên hội thoại này' };
+    }
   }
 
   // ============ NOTIFY CONVERSATION CREATED (called from HTTP controller) ============
@@ -154,8 +214,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody()
     data: {
       conversationId: string;
-      senderId: string;
-      senderName: string;
+      senderName?: string;
       content: string;
       type?: string; // TEXT | IMAGE | VIDEO | SYSTEM
     },
@@ -171,6 +230,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.chatClient.send('chat.sendMessage', {
           conversationId: data.conversationId,
           senderId: userId,
+          requesterId: userId,
           senderName: data.senderName,
           content: data.content,
           type: data.type || 'TEXT',
@@ -188,6 +248,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         const conversation = await firstValueFrom(
           this.chatClient.send('chat.getConversationById', {
             conversationId: data.conversationId,
+            requesterId: userId,
           }),
         );
         if (conversation?.participants) {
@@ -268,6 +329,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.chatClient.send('chat.markAsRead', {
           conversationId: data.conversationId,
           userId,
+          requesterId: userId,
         }),
       );
 
