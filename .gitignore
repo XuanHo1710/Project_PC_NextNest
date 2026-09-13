@@ -11,6 +11,7 @@ build/
 !docker-compose.yml
 !.github/workflows/*.yml
 *.md
+!docs/deployment-troubleshooting.md
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

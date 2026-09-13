@@ -354,7 +354,7 @@ services:
       - backend
 
   history-log:
-    image: xuanho17102004/project-chat-social-history_log:latest
+    image: xuanho17102004/project-chat-social-history-log:latest
     container_name: history-log
     environment:
       - NODE_ENV=production

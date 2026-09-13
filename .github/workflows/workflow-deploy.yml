@@ -22,6 +22,9 @@ jobs:
         working-directory: microservices
         run: npm ci --no-audit --no-fund
 
+      - name: Verify deployment image names
+        run: node --test microservices/scripts/deployment-images.test.cjs
+
       - name: Verify workspace build contracts
         working-directory: microservices
         run: npm run test:build-contract
