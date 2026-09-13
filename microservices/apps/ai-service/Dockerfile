@@ -7,14 +7,24 @@ FROM python:3.11-slim AS production
 
 WORKDIR /app
 
-# Install system dependencies for sentence-transformers
+# OpenMP runtime for LightGBM/XGBoost; Python dependencies use binary wheels.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for layer caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt constraints-cpu.txt ./
+# Use PyTorch's CPU index only for Torch, then PyPI for the application packages.
+RUN pip install --no-cache-dir --only-binary=:all: \
+      --index-url https://download.pytorch.org/whl/cpu \
+      -c constraints-cpu.txt torch \
+    && pip install --no-cache-dir --only-binary=:all: \
+      -c constraints-cpu.txt -r requirements.txt \
+    && pip check
+
+# Verify native imports and reject accidental GPU dependencies before publishing.
+COPY verify_cpu_runtime.py .
+RUN python verify_cpu_runtime.py
 
 # Copy application code
 COPY . .

@@ -1,0 +1,3 @@
+# Keep the version observed in CI, using the official CPU wheel.
+# Also constrain the second pip install so it cannot replace CPU Torch with CUDA.
+torch==2.14.0+cpu
