@@ -19,7 +19,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: microservices
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify workspace build contracts
+        working-directory: microservices
+        run: npm run test:build-contract
 
       # Compiles @project-pc/common and every NestJS app (tsc) -> fails on type/syntax errors
       - name: Build all services

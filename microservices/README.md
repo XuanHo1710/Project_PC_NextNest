@@ -122,3 +122,35 @@ npm run lint
 ---
 
 **📖 Need help?** Xem [USAGE_GUIDE.ts](./USAGE_GUIDE.ts) hoặc [FIX_SUMMARY.md](./FIX_SUMMARY.md)!
+
+## CI build dependency contract
+
+Every service importing `@project-pc/common` must declare
+`"@project-pc/common": "^0.0.1"` in its production dependencies and keep
+`package-lock.json` synchronized. Turbo uses these declarations with
+`dependsOn: ["^build"]` to build common before its consumers. A workspace
+symlink alone does not guarantee build ordering; a fresh CI runner can fail
+with TS2307 while a developer machine with existing `common/dist` succeeds.
+
+The Quality job runs these commands from `microservices/`:
+
+```sh
+npm ci --no-audit --no-fund
+npm run test:build-contract
+npm run build
+```
+
+The regression check inspects source imports, manifests, lockfile entries and
+Turbo's actual dry-run task graph for each consuming app. It requires installed
+dependencies but does not start services or connect to external infrastructure.
+For direct service builds outside Turbo, build common first with
+`npm run build --workspace=@project-pc/common`.
+
+Validation of the CI dependency fix (Windows, Node 22.20.0, npm 11.7.0):
+- Before the fix: 3 build-contract checks passed, 8 failed for missing dependencies.
+- After the fix: all 11 checks passed; `npm ci --no-audit --no-fund` succeeded.
+- `npm run build -- --force` passed all 12 build tasks with no cache hits,
+  after removing the generated `packages/common/dist` directory.
+- Prettier checks for the changed configuration/test files and workflow YAML
+  parsing passed. The Ubuntu/Node 20 GitHub run and client typecheck were not
+  executed locally; no deployment was performed.
