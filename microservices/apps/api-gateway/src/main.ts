@@ -33,7 +33,12 @@ function sanitizeValueInPlace(value: unknown): void {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginOpenerPolicy: false,
+    }),
+  );
 
   // Strip Mongo operator injection attempts from query params
   // NOTE: Express 5 exposes `req.query` as getter-only — mutate in place, never reassign.

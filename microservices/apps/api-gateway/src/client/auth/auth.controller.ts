@@ -123,18 +123,43 @@ export class AuthController {
   async googleAuthRedirect(@Req() request: Request, @Res() response: Response) {
     const user: any = (request as any).user;
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const cleanClientUrl = clientUrl.replace(/\/$/, '');
+
+    response.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
 
     if (!user) {
       return response.send(`
-      <script>
-        window.opener.postMessage(
-          { type: 'GOOGLE_LOGIN_FAILED' },
-          '${safeJsonStringify(clientUrl)}'
-        );
-        window.close();
-      </script>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Đăng nhập thất bại</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #ef4444; }
+    .btn { margin-top: 16px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <p>Đăng nhập Google thất bại. Đang đóng cửa sổ...</p>
+  <a href="${cleanClientUrl}" class="btn" onclick="window.close()">Đóng cửa sổ</a>
+  <script>
+    try {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'GOOGLE_LOGIN_FAILED' }, ${safeJsonStringify(cleanClientUrl)});
+        window.opener.postMessage({ type: 'GOOGLE_LOGIN_FAILED' }, '*');
+      } else {
+        window.location.href = ${safeJsonStringify(cleanClientUrl)};
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setTimeout(function() { window.close(); }, 500);
+  </script>
+</body>
+</html>
     `);
     }
+
     try {
       const checkAccountGoogle = await firstValueFrom(
         this.authService.send('auth.googleLogin', {
@@ -157,27 +182,70 @@ export class AuthController {
       );
 
       return response.send(`
-      <script>
-        window.opener.postMessage(
-          {
-            type: 'GOOGLE_LOGIN_SUCCESS',
-            payload: ${safeJsonStringify(result.payload)}
-          },
-          '${safeJsonStringify(clientUrl)}'
-        );
-        window.close();
-      </script>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Đăng nhập thành công</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #1e293b; }
+    .spinner { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .btn { margin-top: 16px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="spinner"></div>
+  <p style="font-size: 14px; font-weight: 500;">Đăng nhập thành công! Đang hoàn tất...</p>
+  <a href="${cleanClientUrl}" class="btn" onclick="window.close()">Tiếp tục</a>
+  <script>
+    try {
+      var payload = ${safeJsonStringify(result.payload)};
+      var targetOrigin = ${safeJsonStringify(cleanClientUrl)};
+      if (window.opener) {
+        window.opener.postMessage({ type: 'GOOGLE_LOGIN_SUCCESS', payload: payload }, targetOrigin);
+      } else {
+        window.location.href = targetOrigin;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setTimeout(function() { window.close(); }, 400);
+  </script>
+</body>
+</html>
     `);
     } catch (error) {
       clearAuthCookies(response, 'client');
       return response.send(`
-      <script>
-        window.opener.postMessage(
-          { type: 'GOOGLE_LOGIN_FAILED' },
-          '${safeJsonStringify(clientUrl)}'
-        );
-        window.close();
-      </script>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Đăng nhập thất bại</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #ef4444; }
+    .btn { margin-top: 16px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <p style="font-size: 14px;">Đăng nhập thất bại. Đang đóng...</p>
+  <a href="${cleanClientUrl}" class="btn" onclick="window.close()">Đóng cửa sổ</a>
+  <script>
+    try {
+      var targetOrigin = ${safeJsonStringify(cleanClientUrl)};
+      if (window.opener) {
+        window.opener.postMessage({ type: 'GOOGLE_LOGIN_FAILED' }, targetOrigin);
+      } else {
+        window.location.href = targetOrigin;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setTimeout(function() { window.close(); }, 500);
+  </script>
+</body>
+</html>
     `);
     }
   }

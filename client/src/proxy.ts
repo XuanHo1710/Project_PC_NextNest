@@ -23,6 +23,7 @@ const authPaths = [pathAdminRoutes.login];
 
 export function proxy(request: NextRequest) {
   const clientAccessToken = request.cookies.get("client_access_token")?.value;
+  const clientRefreshToken = request.cookies.get("client_refresh_token")?.value;
   const adminAccessToken = request.cookies.get("admin_access_token")?.value;
   const adminRefreshToken = request.cookies.get("admin_refresh_token")?.value;
 
@@ -50,12 +51,13 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(pathAdminRoutes.login, request.url));
   }
 
-  // Client routes protection - check client_access_token
+  // Client routes protection - check client_access_token or client_refresh_token
   if (
     protectedClientPaths.some((path) =>
       request.nextUrl.pathname.startsWith(path),
     ) &&
-    !clientAccessToken
+    !clientAccessToken &&
+    !clientRefreshToken
   ) {
     const redirectUrl = new URL("/home", request.url);
     redirectUrl.searchParams.set("login", "required");

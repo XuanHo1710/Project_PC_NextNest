@@ -12,6 +12,7 @@ import asyncio
 import logging
 import httpx
 import json
+import uuid
 from datetime import datetime
 from typing import AsyncGenerator
 
@@ -26,12 +27,14 @@ settings = get_settings()
 GROQ_CHAT_COMPLETIONS_URL = f"{settings.GROQ_API_BASE_URL.rstrip('/')}/chat/completions"
 
 
-def _groq_headers() -> dict[str, str]:
+def _groq_headers(session_id: str | None = None) -> dict[str, str]:
     if not settings.GROQ_API_KEY:
         raise RuntimeError("GROQ_API_KEY is not configured")
     return {
         "Authorization": f"Bearer {settings.GROQ_API_KEY}",
         "Content-Type": "application/json",
+        "User-Agent": "python-httpx/0.27.0",
+        "x-session-id": session_id or str(uuid.uuid4()),
     }
 
 
@@ -504,6 +507,9 @@ async def chat_with_groq_stream(
                     "max_completion_tokens": 1024,
                 },
             ) as response:
+                if response.status_code >= 400:
+                    err_body = await response.aread()
+                    logger.error(f"Groq stream error status {response.status_code}: {err_body.decode('utf-8', errors='ignore')}")
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if not line.strip():

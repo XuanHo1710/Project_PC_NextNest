@@ -108,21 +108,35 @@ export default function HomeClient() {
     const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
     const hoveredChildren = hoveredCategoryId ? (childrenMap[hoveredCategoryId] || []) : [];
 
+    // Dynamic slidesToShow based on window width (Ant Design Carousel doesn't support responsive prop)
+    const [slidesToShow, setSlidesToShow] = useState(5);
+    const [brandSlidesToShow, setBrandSlidesToShow] = useState(5);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const w = window.innerWidth;
+            // Product carousel
+            if (w < 480) setSlidesToShow(2);
+            else if (w < 640) setSlidesToShow(2);
+            else if (w < 800) setSlidesToShow(3);
+            else if (w < 1024) setSlidesToShow(4);
+            else setSlidesToShow(5);
+
+            // Brand carousel
+            if (w < 480) setBrandSlidesToShow(2);
+            else if (w < 640) setBrandSlidesToShow(2);
+            else if (w < 800) setBrandSlidesToShow(3);
+            else if (w < 1024) setBrandSlidesToShow(4);
+            else setBrandSlidesToShow(5);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     if (isLoadingProducts) {
         return <HomePageSkeleton />
     }
-
-    const responsiveSettings = [
-        { breakpoint: 1024, settings: { slidesToShow: 4, slidesToScroll: 1 } },
-        { breakpoint: 800, settings: { slidesToShow: 3, slidesToScroll: 1 } },
-        { breakpoint: 600, settings: { slidesToShow: 2, slidesToScroll: 1 } },
-    ];
-
-    const brandResponsiveSettings = [
-        { breakpoint: 1024, settings: { slidesToShow: 4, slidesToScroll: 1 } },
-        { breakpoint: 800, settings: { slidesToShow: 3, slidesToScroll: 1 } },
-        { breakpoint: 600, settings: { slidesToShow: 2, slidesToScroll: 1 } },
-    ];
 
     const ListIcon = [
         <MdLaptopChromebook key={1} className="text-xl" />,
@@ -323,19 +337,19 @@ export default function HomeClient() {
                 {/* ============= RECENTLY VIEWED (only for logged-in users) ============= */}
                 {recentlyViewed && recentlyViewed.length > 0 && (
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-                        <div className="dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
+                    <div className="dark:bg-slate-800 rounded-lg bg-white py-6 sm:py-8 px-3 sm:px-5 md:px-7 shadow-sm border border-gray-100">
                             <div className="flex items-center justify-between mb-6">
                                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
                                     Sản phẩm xem gần đây
                                 </h1>
                             </div>
                             <Carousel
-                                slidesToShow={5} slidesToScroll={1} draggable dots={false}
-                                arrows autoplaySpeed={3000} responsive={responsiveSettings}
+                                slidesToShow={slidesToShow} slidesToScroll={1} draggable dots={false}
+                                arrows autoplaySpeed={3000}
                             >
                                 {recentlyViewed.map((product: IProductCard) => (
                                     <div key={product._id} className="px-1.5">
-                                        <CardProduct css="p-3" product={product} />
+                                        <CardProduct css="p-1 sm:p-3" product={product} />
                                     </div>
                                 ))}
                             </Carousel>
@@ -352,8 +366,8 @@ export default function HomeClient() {
                             </h1>
                         </div>
                         <Carousel
-                            slidesToShow={5} slidesToScroll={1} draggable dots={false}
-                            autoplay arrows autoplaySpeed={3000} responsive={brandResponsiveSettings}
+                            slidesToShow={brandSlidesToShow} slidesToScroll={1} draggable dots={false}
+                            autoplay arrows autoplaySpeed={3000}
                             className="brand-carousel pb-4"
                         >
                             {brands.data.map((brand) => (
@@ -422,14 +436,14 @@ export default function HomeClient() {
                                 </div>
                             </div>
                             {/* Products */}
-                            <div className="bg-white dark:bg-slate-800 py-8 px-5 sm:px-7">
+                            <div className="bg-white dark:bg-slate-800 py-6 sm:py-8 px-3 sm:px-5 md:px-7">
                                 <Carousel
-                                    slidesToShow={5} slidesToScroll={1} draggable dots={false}
-                                    autoplay arrows autoplaySpeed={2500} responsive={responsiveSettings}
+                                    slidesToShow={slidesToShow} slidesToScroll={1} draggable dots={false}
+                                    autoplay arrows autoplaySpeed={2500}
                                 >
                                     {topDiscountProducts.map((product: IProductCard) => (
                                         <div key={product._id} className="px-1.5">
-                                            <CardProduct css="p-3" product={product} />
+                                            <CardProduct css="p-1 sm:p-3" product={product} />
                                         </div>
                                     ))}
                                 </Carousel>
@@ -441,7 +455,7 @@ export default function HomeClient() {
                 {/* ============= AI RECOMMENDATIONS — Gợi ý AI cho bạn ============= */}
                 {aiRecommendations && aiRecommendations.length > 0 && (
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-                        <div className="dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
+                    <div className="dark:bg-slate-800 rounded-lg bg-white py-6 sm:py-8 px-3 sm:px-5 md:px-7 shadow-sm border border-gray-100">
                             <div className="flex items-center justify-between mb-6">
                                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white flex items-center gap-2">
                                     <HiOutlineSparkles className="text-yellow-500" />
@@ -452,12 +466,12 @@ export default function HomeClient() {
                                 </span>
                             </div>
                             <Carousel
-                                slidesToShow={5} slidesToScroll={1} draggable dots={false}
-                                arrows autoplaySpeed={3500} responsive={responsiveSettings}
+                                slidesToShow={slidesToShow} slidesToScroll={1} draggable dots={false}
+                                arrows autoplaySpeed={3500}
                             >
                                 {aiRecommendations.map((product: IProductCard) => (
                                     <div key={product._id} className="px-1.5">
-                                        <CardProduct css="p-3" product={product} />
+                                        <CardProduct css="p-1 sm:p-3" product={product} />
                                     </div>
                                 ))}
                             </Carousel>
@@ -467,17 +481,17 @@ export default function HomeClient() {
 
                 {/* ============= PRODUCT GRID — Gợi ý cho bạn ============= */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-                    <div className="dark:bg-slate-800 rounded-lg bg-white py-8 px-5 sm:px-7 shadow-sm border border-gray-100">
+                    <div className="dark:bg-slate-800 rounded-lg bg-white py-6 sm:py-8 px-3 sm:px-5 md:px-7 shadow-sm border border-gray-100">
                         <div className="flex items-center justify-between mb-6">
                             <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 dark:text-white">
                                 Gợi ý cho bạn
                             </h1>
                         </div>
                         {clientProducts && clientProducts.data && clientProducts.data.length > 0 ? (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
                                 {clientProducts.data.map((product: IProductCard) => (
-                                    <div key={product._id}>
-                                        <CardProduct css="p-3" product={product} />
+                                    <div key={product._id} className="min-w-0">
+                                        <CardProduct css="p-1 sm:p-3" product={product} />
                                     </div>
                                 ))}
                             </div>

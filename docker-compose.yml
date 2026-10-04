@@ -98,7 +98,7 @@ services:
       - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://pc.social-chat-xuanho.io.vn}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000', (r) => { process.exit(r.statusCode < 500 ? 0 : 1) }).on('error', () => process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -107,6 +107,11 @@ services:
       - frontend
   api-gateway:
     image: xuanho17102004/project-chat-social-api-gateway:latest
+    build:
+      context: ./microservices
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: api-gateway
     container_name: api-gateway-1
     ports:
       - "8080:8080"
@@ -121,6 +126,7 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-https://api.social-chat-xuanho.io.vn/api/v1/client/auth/google/callback}
       - CLIENT_URL=${CLIENT_URL:-https://pc.social-chat-xuanho.io.vn}
+      - COOKIE_DOMAIN=${COOKIE_DOMAIN:-.social-chat-xuanho.io.vn}
       - AI_SERVICE_URL=http://ai-service:8000
       - AUTH_SERVICE_HOST=auth-service
       - AUTH_SERVICE_PORT=3001
@@ -157,7 +163,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v1/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

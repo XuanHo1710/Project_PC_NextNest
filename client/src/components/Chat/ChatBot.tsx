@@ -16,6 +16,7 @@ import {
     getProductOriginalPrice,
     formatCurrencyVND,
 } from '@/utils/productHelpers';
+import ChatMessageContent from './ChatMessageContent';
 
 const EmojiPicker = lazy(() => import('@emoji-mart/react'));
 
@@ -371,7 +372,11 @@ const ChatBot = () => {
                                             : 'bg-white text-gray-800 border border-blue-100/60 rounded-bl-md'
                                             }`}
                                     >
-                                        <p className="leading-relaxed text-[13px] whitespace-pre-wrap break-words">{msg.text}</p>
+                                        {msg.sender === 'user' ? (
+                                            <p className="leading-relaxed text-[13px] whitespace-pre-wrap break-words">{msg.text}</p>
+                                        ) : (
+                                            <ChatMessageContent content={msg.text} />
+                                        )}
                                     </div>
 
                                     {/* Product cards */}
@@ -436,10 +441,10 @@ const ChatBot = () => {
                                                 <span className="text-[12px] text-gray-400 italic">AI đang soạn tin...</span>
                                             </div>
                                         ) : (
-                                            <p className="leading-relaxed text-[13px] whitespace-pre-wrap break-words">
-                                                {streaming.fullText.substring(0, streaming.displayedChars)}
-                                                <span className="inline-block w-[2px] h-[14px] bg-blue-500 ml-0.5 align-middle animate-pulse" />
-                                            </p>
+                                            <ChatMessageContent
+                                                content={streaming.fullText.substring(0, streaming.displayedChars)}
+                                                isStreaming={streaming.displayedChars < streaming.fullText.length}
+                                            />
                                         )}
                                     </div>
 

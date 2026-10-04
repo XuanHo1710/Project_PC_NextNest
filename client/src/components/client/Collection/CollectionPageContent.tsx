@@ -219,6 +219,15 @@ export default function CollectionPageContent({ mode }: { mode: CollectionMode }
                 onClose={() => setDrawerOpen(false)}
                 open={drawerOpen}
                 size="large"
+                closable={true}
+                extra={
+                    <button
+                        onClick={() => setDrawerOpen(false)}
+                        className="text-gray-500 hover:text-gray-800 dark:hover:text-white text-xl p-1"
+                    >
+                        <i className="fa-solid fa-xmark"></i>
+                    </button>
+                }
             >
                 <div className="mb-4">
                     <h3 className="uppercase font-semibold py-2 border-b-2 border-stone-200">CPU</h3>
@@ -396,28 +405,28 @@ export default function CollectionPageContent({ mode }: { mode: CollectionMode }
                     <div className="col-span-12 lg:col-span-9">
                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm px-4 py-5 mb-10">
                             <div className="flex items-center justify-between flex-wrap gap-3 mb-5">
-                                <div className="flex gap-2 flex-wrap">
+                                <div className="flex gap-1.5 sm:gap-2 flex-wrap">
                                     <button
                                         onClick={() => handleSort("")}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
+                                        className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${activeSort === "" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
                                     >
                                         Mới nhất
                                     </button>
                                     <button
                                         onClick={() => handleSort("minPrice_1")}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "minPrice_1" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
+                                        className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${activeSort === "minPrice_1" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
                                     >
                                         Giá tăng dần
                                     </button>
                                     <button
                                         onClick={() => handleSort("minPrice_-1")}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "minPrice_-1" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
+                                        className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${activeSort === "minPrice_-1" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
                                     >
                                         Giá giảm dần
                                     </button>
                                     <button
                                         onClick={() => handleSort("name_1")}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeSort === "name_1" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
+                                        className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${activeSort === "name_1" ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100"}`}
                                     >
                                         A → Z
                                     </button>
@@ -465,8 +474,8 @@ export default function CollectionPageContent({ mode }: { mode: CollectionMode }
                                 <div className="space-y-3">
                                     {collectionData && collectionData.data.length > 0 ? (
                                         collectionData.data.map((product) => (
-                                            <div key={product._id} className="flex gap-4 p-3 border border-gray-100 dark:border-gray-700 rounded-lg hover:shadow-sm transition-shadow">
-                                                <div className="w-32 h-32 flex-shrink-0">
+                                            <div key={product._id} className="flex gap-3 p-2 sm:p-3 border border-gray-100 dark:border-gray-700 rounded-lg hover:shadow-sm transition-shadow">
+                                                <div className="w-20 h-20 sm:w-28 sm:h-28 flex-shrink-0">
                                                     <Image
                                                         preview={false}
                                                         src={getProductImage(product)}
@@ -478,19 +487,19 @@ export default function CollectionPageContent({ mode }: { mode: CollectionMode }
                                                 <div className="flex-1 flex flex-col justify-between min-w-0">
                                                     <div>
                                                         <Link href={`/product/${product.slug || product._id}`}>
-                                                            <h2 className="font-medium text-sm md:text-base line-clamp-2 hover:text-blue-500 transition-colors">
+                                                            <h2 className="font-medium text-xs sm:text-sm md:text-base line-clamp-2 hover:text-blue-500 transition-colors">
                                                                 {product.name}
                                                             </h2>
                                                         </Link>
                                                     </div>
-                                                    <div className="flex items-end justify-between">
+                                                    <div className="flex items-end justify-between gap-2">
                                                         <div>
-                                                            <p className="font-bold text-lg text-blue-500">
+                                                            <p className="font-bold text-sm sm:text-base md:text-lg text-blue-500">
                                                                 {getProductDisplayPrice(product).toLocaleString()}đ
                                                             </p>
                                                             {getProductDiscount(product) > 0 && (
-                                                                <p className="text-xs text-gray-400">
-                                                                    <span className="line-through mr-2">{getProductOriginalPrice(product).toLocaleString()}đ</span>
+                                                                <p className="text-[10px] sm:text-xs text-gray-400">
+                                                                    <span className="line-through mr-1 sm:mr-2">{getProductOriginalPrice(product).toLocaleString()}đ</span>
                                                                     <span className="text-red-500">-{getProductDiscount(product).toFixed(0)}%</span>
                                                                 </p>
                                                             )}
@@ -514,10 +523,10 @@ export default function CollectionPageContent({ mode }: { mode: CollectionMode }
                                                                 });
                                                                 addToCart(product, variant);
                                                             }}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors"
+                                                            className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm rounded-lg transition-colors shrink-0"
                                                         >
                                                             <i className="fa-solid fa-cart-shopping"></i>
-                                                            <span className="hidden md:inline">Thêm vào giỏ</span>
+                                                            <span className="hidden sm:inline">Thêm</span>
                                                         </button>
                                                     </div>
                                                 </div>

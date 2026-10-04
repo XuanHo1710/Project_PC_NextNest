@@ -245,6 +245,37 @@
   opacity: 1;
 }
 
+/* ===== Carousel / Slick responsive fixes ===== */
+
+/* Each carousel slide must clip its content */
+.slick-slide > div {
+  overflow: hidden;
+}
+
+/* Scale down slick arrows on mobile */
+@media (max-width: 639px) {
+  .slick-prev,
+  .slick-next {
+    width: 18px !important;
+    height: 36px !important;
+  }
+  .slick-prev::after,
+  .slick-next::after {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  .slick-prev::before,
+  .slick-next::before {
+    font-size: 18px !important;
+  }
+}
+
+/* Product card inside carousel: prevent overflow */
+.slick-slide .card {
+  overflow: hidden;
+  min-width: 0;
+}
+
 .card-header-gift {
   background: linear-gradient(91.56deg, rgba(245, 33, 148, .1) 2.74%, rgba(250, 159, 44, .1) 96.84%);
 }
@@ -347,4 +378,169 @@ body {
 .ant-modal-open {
   padding-right: 0 !important;
   width: 100% !important;
+}
+
+/* ===== AI Chatbot Markdown Typography ===== */
+.chat-markdown {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #1f2937;
+  word-break: break-word;
+}
+
+.chat-markdown p {
+  margin-bottom: 0.45rem;
+}
+
+.chat-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-markdown strong,
+.chat-markdown b {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.chat-markdown em,
+.chat-markdown i {
+  font-style: italic;
+}
+
+.chat-markdown ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-top: 0.35rem;
+  margin-bottom: 0.45rem;
+}
+
+.chat-markdown ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin-top: 0.35rem;
+  margin-bottom: 0.45rem;
+}
+
+.chat-markdown li {
+  margin-bottom: 0.25rem;
+  line-height: 1.55;
+}
+
+.chat-markdown li:last-child {
+  margin-bottom: 0;
+}
+
+.chat-markdown h1,
+.chat-markdown h2,
+.chat-markdown h3,
+.chat-markdown h4 {
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 0.75rem;
+  margin-bottom: 0.35rem;
+  line-height: 1.35;
+}
+
+.chat-markdown h1 {
+  font-size: 1.05rem;
+}
+
+.chat-markdown h2 {
+  font-size: 0.95rem;
+}
+
+.chat-markdown h3,
+.chat-markdown h4 {
+  font-size: 0.875rem;
+}
+
+.chat-markdown h1:first-child,
+.chat-markdown h2:first-child,
+.chat-markdown h3:first-child,
+.chat-markdown h4:first-child {
+  margin-top: 0;
+}
+
+.chat-markdown code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82em;
+  background-color: #f1f5f9;
+  color: #2563eb;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  border: 1px solid #e2e8f0;
+}
+
+.chat-markdown pre {
+  background-color: #1e293b;
+  color: #f8fafc;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+  font-size: 0.8em;
+  line-height: 1.5;
+}
+
+.chat-markdown pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+}
+
+.chat-markdown blockquote {
+  border-left: 3px solid #3b82f6;
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  color: #4b5563;
+  font-style: italic;
+  background-color: #f0f7ff;
+  border-radius: 0 0.375rem 0.375rem 0;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.chat-markdown a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.chat-markdown a:hover {
+  color: #1d4ed8;
+}
+
+.chat-markdown hr {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.75rem 0;
+}
+
+.chat-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+  display: block;
+}
+
+.chat-markdown th,
+.chat-markdown td {
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+
+.chat-markdown th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.chat-markdown tr:nth-child(even) td {
+  background-color: #f8fafc;
 }

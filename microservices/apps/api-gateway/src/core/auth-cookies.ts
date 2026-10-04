@@ -19,11 +19,13 @@ export function setAuthCookies(
 ): void {
   const accessMaxAge = parseSeconds(process.env.JWT_ACCESS_EXPIRE, '3600s');
   const refreshMaxAge = parseSeconds(process.env.JWT_REFRESH_EXPIRE, '30d');
+  const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
   const common = {
     httpOnly: true,
     secure: isProduction(),
     sameSite: 'lax' as const,
     path: '/',
+    ...(cookieDomain ? { domain: cookieDomain } : {}),
   };
 
   response.cookie(`${prefix}_access_token`, accessToken, {
@@ -40,7 +42,11 @@ export function clearAuthCookies(
   response: Response,
   prefix: AuthCookiePrefix,
 ): void {
-  const common = { path: '/' };
+  const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+  const common = {
+    path: '/',
+    ...(cookieDomain ? { domain: cookieDomain } : {}),
+  };
   response.clearCookie(`${prefix}_access_token`, common);
   response.clearCookie(`${prefix}_refresh_token`, common);
 }

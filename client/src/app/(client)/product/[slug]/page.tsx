@@ -238,11 +238,21 @@ export default function ProductDetailClient() {
         addToCart(product, cartVariant);
     };
 
-    const responsiveSettings = [
-        { breakpoint: 1024, settings: { slidesToShow: 4, slidesToScroll: 1 } },
-        { breakpoint: 800, settings: { slidesToShow: 3, slidesToScroll: 1 } },
-        { breakpoint: 600, settings: { slidesToShow: 2, slidesToScroll: 1 } },
-    ];
+    // Dynamic slidesToShow based on window width (Ant Design Carousel ignores responsive prop)
+    const [slidesToShow, setSlidesToShow] = useState(5);
+    useEffect(() => {
+        const handleResize = () => {
+            const w = window.innerWidth;
+            if (w < 480) setSlidesToShow(2);
+            else if (w < 640) setSlidesToShow(2);
+            else if (w < 800) setSlidesToShow(3);
+            else if (w < 1024) setSlidesToShow(4);
+            else setSlidesToShow(5);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleAddToWishlist = (p: IProductCard) => {
         if (!user?.id) {
@@ -532,12 +542,12 @@ export default function ProductDetailClient() {
 
                     {/* Related Products / AI Recommendations */}
                     {relatedProducts && relatedProducts.length > 0 && (
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mt-6">
-                            <h2 className="font-bold text-blue-600 dark:text-white text-xl lg:text-2xl pb-4 border-b border-gray-100 flex items-center gap-2">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-3 sm:p-5 mt-6">
+                            <h2 className="font-bold text-blue-600 dark:text-white text-lg sm:text-xl lg:text-2xl pb-4 border-b border-gray-100 flex items-center gap-2">
                                 <RocketFilled className="text-blue-500" /> Sản phẩm gợi ý cho bạn
                             </h2>
                             <Carousel
-                                slidesToShow={5}
+                                slidesToShow={slidesToShow}
                                 slidesToScroll={1}
                                 draggable
                                 className="mt-6 cursor-grab"
@@ -545,11 +555,10 @@ export default function ProductDetailClient() {
                                 autoplay
                                 arrows
                                 autoplaySpeed={3000}
-                                responsive={responsiveSettings}
                             >
                                 {relatedProducts.map(item => (
                                     <div key={item._id} className="px-1.5">
-                                        <CardProduct css="hover:shadow-lg transition-all" product={item} />
+                                        <CardProduct css="p-1 sm:p-3 hover:shadow-lg transition-all" product={item} />
                                     </div>
                                 ))}
                             </Carousel>
